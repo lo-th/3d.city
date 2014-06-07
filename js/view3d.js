@@ -11,10 +11,12 @@ V3D.Base = function(){
     this.camera = null; 
     this.scene = null; 
     this.renderer = null;
+    this.timer = null;
 
     this.cam = { horizontal:90, vertical:65, distance:120 };
     this.vsize = { x:window.innerWidth, y:window.innerHeight, z:window.innerWidth/window.innerHeight};
-    this.mouse = { ox:0, oy:0, h:0, v:0, mx:0, my:0, dx:0, dy:0, down:false, over:false, moving:true };
+    this.mouse = { ox:0, oy:0, h:0, v:0, mx:0, my:0, dx:0, dy:0, down:false, over:false, drag:false, click:false };
+    this.pos =  {x:-1, y:0, z:-1};
 
     this.select = '';
     this.meshs = {};
@@ -27,27 +29,30 @@ V3D.Base = function(){
     this.notAuto = true;
 
     this.toolSet = [
-		{id:0,  tool:'residential', size:3, price:100,   color:'lime'},
-		{id:1,  tool:'commercial',  size:3, price:100,   color:'blue'},
-		{id:2,  tool:'industrial',  size:3, price:100,   color:'yellow'},
-		{id:3,  tool:'police',      size:3, price:500,   color:'darkblue'},
-		{id:4,  tool:'fire',        size:3, price:500,   color:'red'},
-		{id:5,  tool:'port',        size:4, price:3000,  color:'dodgerblue'},
-		{id:6,  tool:'airport',     size:6, price:10000, color:'violet'},
-		{id:7,  tool:'stadium',     size:4, price:5000,  color:'indigo'},
-		{id:8,  tool:'coal',        size:4, price:3000,  color:'gray'},
-		{id:9,  tool:'nuclear',     size:4, price:5000,  color:'mistyrose'},
-		{id:10, tool:'road',        size:1, price:10,    color:'black'},
-		{id:11, tool:'rail',        size:1, price:20,    color:'brown'},
-		{id:12, tool:'wire',        size:1, price:5 ,    color:'khaki'},
-		{id:13, tool:'park',        size:1, price:10,    color:'darkgreen'},
-		{id:14, tool:'query',       size:1, price:0,     color:'cyan'},
-		{id:15, tool:'bulldozer',   size:1, price:1,     color:'salmon'},
-		{id:16, tool:'none',   size:0, price:0,     color:'green'}
+        {id:0,  tool:'none',        size:0, price:0,     color:'none'},
+		{id:1,  tool:'residential', size:3, price:100,   color:'lime'},
+		{id:2,  tool:'commercial',  size:3, price:100,   color:'blue'},
+		{id:3,  tool:'industrial',  size:3, price:100,   color:'yellow'},
+		{id:4,  tool:'police',      size:3, price:500,   color:'darkblue'},
+		{id:5,  tool:'fire',        size:3, price:500,   color:'red'},
+		{id:6,  tool:'port',        size:4, price:3000,  color:'dodgerblue'},
+		{id:7,  tool:'airport',     size:6, price:10000, color:'violet'},
+		{id:8,  tool:'stadium',     size:4, price:5000,  color:'indigo'},
+		{id:9,  tool:'coal',        size:4, price:3000,  color:'gray'},
+		{id:10, tool:'nuclear',     size:4, price:5000,  color:'mistyrose'},
+		{id:11, tool:'road',        size:1, price:10,    color:'black'},
+		{id:12, tool:'rail',        size:1, price:20,    color:'brown'},
+		{id:13, tool:'wire',        size:1, price:5 ,    color:'khaki'},
+		{id:14, tool:'park',        size:1, price:10,    color:'darkgreen'},
+		{id:15, tool:'query',       size:1, price:0,     color:'cyan'},
+		{id:16, tool:'bulldozer',   size:1, price:1,     color:'salmon'}
 	];
 
-    this.loadSea3d();
+	this.currentTool = 0;
 
+
+	// start by loading 3d mesh 
+    this.loadSea3d();
 }
 
 V3D.Base.prototype = {
@@ -81,6 +86,8 @@ V3D.Base.prototype = {
         var _this = this;
 
         window.addEventListener( 'resize', function(e) { _this.resize() }, false );
+
+        this.canvas.addEventListener( 'click',  function(e) {_this.onMouseClick(e)}, false );
 
 	    this.canvas.addEventListener( 'mousemove',  function(e) {_this.onMouseMove(e)} , false );
 	    this.canvas.addEventListener( 'mousedown',  function(e) {_this.onMouseDown(e)}, false );
@@ -125,6 +132,18 @@ V3D.Base.prototype = {
 	    }
 	    //loader.parser = THREE.SEA3D.DEFAULT;
 	    loader.load( 'img/world.sea' );
+	},
+	startZoom : function(){
+		this.timer = setInterval(this.faddingZoom, 1000/60, this);
+	},
+	faddingZoom : function(t){
+		if(t.cam.distance>20){
+			t.cam.distance--;
+			t.moveCamera();
+			t.render();
+		}else{
+			clearInterval(t.timer);
+		}
 	},
     addTree : function(x,y,v){
     	var b;
@@ -186,12 +205,17 @@ V3D.Base.prototype = {
 		if ( this.land.children.length > 0 ) {
 			var intersects = this.raycaster.intersectObjects( this.land.children );
 			if ( intersects.length > 0 ) {
+				this.pos.x = Math.round(intersects[0].point.x);
+				this.pos.z = Math.round(intersects[0].point.z);
 				//logLand(intersects[0].object.name);
 				//this.select = intersects[0].object.name;
-				if(this.tool!==null){
-					if(!this.tool.visible) this.tool.visible = true;
-					this.tool.position.set(Math.round(intersects[0].point.x), 0, Math.round(intersects[0].point.z));
+				if(this.currentTool){
+					//if(!this.tool.visible) this.tool.visible = true;
+
+
+					this.tool.position.set(this.pos.x, 0, this.pos.z);
 				} 
+
 				//log(intersects[0].point.x, intersects[0].point.z)
 				/*marker.position.set( 0, 0, 0 );
 				if(intersects[0].face)marker.lookAt(intersects[0].face.normal);
@@ -199,6 +223,8 @@ V3D.Base.prototype = {
 				
 				//if(sh)shoot();
 		    } else {
+		    	this.pos.x = -1;
+		    	this.pos.z = -1;
 		    	if(this.tool!==null){
 		    		if(this.tool.visible) this.tool.visible = false;
 		    	}
@@ -208,21 +234,38 @@ V3D.Base.prototype = {
 	},
 	addTool : function(id){
 		if(this.tool !== null) this.removeTool();
-		
+
+		this.currentTool = id;
+
 		var ntool = this.toolSet[id];
 		var size = ntool.size;
 		var name = ntool.tool;
-		if(id!==16){
-			this.tool = new THREE.Mesh(new THREE.BoxGeometry(size,1,size), new THREE.MeshBasicMaterial({color:ntool.color}) )
-			if(size == 6 || size == 4) this.tool.geometry.applyMatrix(new THREE.Matrix4().makeTranslation(0.5, 0, 0.5));
+		if(id){
+			this.tool = new THREE.Object3D();
+			var m = new THREE.BoxHelper();
+			m.material.color.set( ntool.color );
+			m.material.linewidth = 1;
+			m.scale.set( size*0.5,0.5,size*0.5 );
+
+			if(size == 6 || size == 4) m.position.set(0.5, 0.51, 0.5);
+			else m.position.set(0, 0.51, 0);
+
+			this.tool.add(m);
+
+			//this.tool.matrix.applyMatrix(new THREE.Matrix4().makeTranslation(0.5, 0, 0.5));
+			//this.tool = new THREE.Mesh(new THREE.BoxGeometry(size,1,size), new THREE.MeshBasicMaterial({color:ntool.color}) )
+			//if(size == 6 || size == 4) this.tool.geometry.applyMatrix(new THREE.Matrix4().makeTranslation(0.5, 0, 0.5));
 	        this.scene.add(this.tool);
 	        this.tool.visible = false;
+
+	        
         }
         sendTool(name);
 	},
 	removeTool : function(){
 		this.scene.remove(this.tool);
 		this.tool = null;
+		this.currentTool = 0;
 	},
 	Orbit : function (origine, horizontal, vertical, distance) {
 	    var p = new THREE.Vector3();
@@ -240,8 +283,12 @@ V3D.Base.prototype = {
 	    this.camera.lookAt(this.center);
 	    //this.render();
 	},
-	onMouseDown : function (e) {
-	    e.preventDefault();
+	onMouseClick : function (e) {
+		
+		mapClick();
+		e.preventDefault();
+	},
+	onMouseDown : function (e) {   
 	    var px, py;
 	    if(e.touches){
 	        px = e.clientX || e.touches[ 0 ].pageX;
@@ -260,13 +307,15 @@ V3D.Base.prototype = {
 	    
 	    //this.rayTest();
 	    this.render();
+	    e.preventDefault();
 	},
 	onMouseUp : function (e) {
 	    this.mouse.down = false;
 	    document.body.style.cursor = 'auto';
+	    e.preventDefault();
 	},
 	onMouseMove : function (e) {
-	    e.preventDefault();
+	    //e.preventDefault();
 	    var px, py;
 	    if(e.touches){
 	        px = e.clientX || e.touches[ 0 ].pageX;
@@ -276,7 +325,7 @@ V3D.Base.prototype = {
 	        py = e.clientY;
 	    }
 	    
-	    if (this.mouse.down) {      
+	    if (this.mouse.down && !this.mouse.drag) {      
 	        document.body.style.cursor = 'move';
 	        this.cam.horizontal = ((px - this.mouse.ox) * 0.3) + this.mouse.h;
 	        this.cam.vertical = (-(py -this. mouse.oy) * 0.3) + this.mouse.v;
@@ -287,10 +336,10 @@ V3D.Base.prototype = {
 			this.rayTest();
 		}
 	    //if(!self.focus())self.focus();
-	    this.render(); 
-	},
-	onMouseWheel : function (e) {
+	    this.render();
 	    e.preventDefault();
+	},
+	onMouseWheel : function (e) {    
 	    var delta = 0;
 	    if(e.wheelDelta){delta=e.wheelDelta*-1;}
 	    else if(e.detail){delta=e.detail*20;}
@@ -299,6 +348,7 @@ V3D.Base.prototype = {
 	    if(this.cam.distance>150)this.cam.distance = 150;
 	    this.moveCamera();
 	    this.render(); 
+	    e.preventDefault();
 	},
 	gradTexture : function(color) {
 	    var c = document.createElement("canvas");

@@ -69,8 +69,18 @@ var newMap = function(){
 }
 
 var playMap = function(){
-	//gameTools = new Micro.GameTools(map);
+    var money = 20000 / difficulty; 
+
 	simulation = new Micro.Simulation( map, difficulty, speed);
+
+    // intro message
+    var messageMgr = new Micro.MessageManager();
+    messageMgr.sendMessage(Messages.WELCOME);
+    simulation.budget.setFunds(money);
+    messageMgr.sendMessage(Messages.FUNDS_CHANGED, money);
+    processMessages(messageMgr.getMessages());
+
+    // update simulation time
 	timer = setInterval(update, 1000/60);
 }
 
@@ -81,6 +91,7 @@ var update = function(){
     if (!isPaused){
         simulation.simFrame();
         simulation.updateFrontEnd();
+
         processMessages(simulation.messageManager.getMessages());
         simulation.spriteManager.moveObjects();
     }
@@ -99,7 +110,7 @@ var processMessages = function(messages) {
            // case Messages.QUERY_WINDOW_NEEDED: this.queryWindow.open(this.handleQueryClosed.bind(this)); break;
             case Messages.DATE_UPDATED: infos[0] = [TXT.months[ m.data.month ], m.data.year].join(' '); break;
             case Messages.EVAL_UPDATED: infos[1] = '| ' + TXT.cityClass[m.data.classification]; infos[2] = ' | ' + m.data.score; infos[3] = ' | ' + m.data.population; break;
-            case Messages.FUNDS_CHANGED: infos[4] = m.data; break;
+            case Messages.FUNDS_CHANGED: infos[4] = '| $'+m.data; break;
             case Messages.VALVES_UPDATED: infos[5] = '<br>' + m.data.residential; infos[6] = ' | ' + m.data.commercial; infos[7] = ' | ' + m.data.industrial; break;
             default: 
                 if (!messageOutput && TXT.goodMessages[m.message] !== undefined) { 

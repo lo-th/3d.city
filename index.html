@@ -61,6 +61,7 @@ function newMap() {
 
 function playMap() {
 	hub.initGameHub();
+    view3d.startZoom();
     cityWorker.postMessage({tell:"PLAYMAP"});
 }
 
@@ -78,6 +79,13 @@ function sendTool(name) {
     cityWorker.postMessage({tell:"TOOL", name:name});
 }
 
+function mapClick() {
+    var p = view3d.pos;
+    var t = view3d.currentTool;
+    //debug(view3d.pos.x +"/"+view3d.pos.z + "/" + view3d.currentTool)
+    if(p.x>0 && p.z>0 && t) cityWorker.postMessage({tell:"MAPCLICK", x:p.x, y:p.z});
+}
+
 function initCity() {
     cityWorker = new Worker('js/worker.city.js');
     cityWorker.postMessage = cityWorker.webkitPostMessage || cityWorker.postMessage;
@@ -89,7 +97,8 @@ function initCity() {
             view3d.paintMap(im, e.data.map, e.data.mapSize, e.data.island);
             hub.start();
         }
-        if( phase == "TOOL"){
+        if( phase == "BUILD"){
+            
 
         }
         if( phase == "RUN"){

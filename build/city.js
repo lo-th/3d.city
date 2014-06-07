@@ -290,7 +290,7 @@ var messageData = {
     TRAFFIC_JAMS: Micro.makeConstantDescriptor('Traffic jams reported'),
     TRAIN_CRASHED: Micro.makeConstantDescriptor('Train crashed'),
     VALVES_UPDATED: Micro.makeConstantDescriptor('Valves updated'),
-    WELCOME: Micro.makeConstantDescriptor('Welcome to Micropolis')
+    WELCOME: Micro.makeConstantDescriptor('Welcome to 3D city')
 };
 
 var Messages = Object.defineProperties({}, messageData);
@@ -7768,6 +7768,8 @@ Micro.Simulation.prototype = {
         Transport.registerHandlers(this.mapScanner, this.repairManager);
 
         this.budget.setFunds(20000);
+        
+
         //var simData = this._constructSimData();
         this.evaluation.evalInit();
         this.valves.setValves(this.gameLevel, this.census, this.budget);

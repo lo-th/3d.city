@@ -54,7 +54,7 @@ HUB.Base.prototype = {
     },
     initGameHub : function(){
         this.removeButtons();
-        var bname = ['residential','commercial','industrial','Police', 'Fire','Port','airport','stadium', 'coal','nuclear','road','rail','wire','park','query','bulldozer', 'none'];
+        var bname = ['none', 'residential','commercial','industrial','Police', 'Fire','Port','airport','stadium', 'coal','nuclear','road','rail','wire','park','query','bulldozer'];
         for(var i = 0; i<bname.length; i++){
             this.addButton(bname[i], null, [70,30] );
         }

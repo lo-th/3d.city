@@ -120,6 +120,8 @@ Micro.Simulation.prototype = {
         Transport.registerHandlers(this.mapScanner, this.repairManager);
 
         this.budget.setFunds(20000);
+        
+
         //var simData = this._constructSimData();
         this.evaluation.evalInit();
         this.valves.setValves(this.gameLevel, this.census, this.budget);
