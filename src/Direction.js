@@ -1,4 +1,5 @@
-Micro.Direction = function(){}
+
+Micro.Direction = function(){};
 
 Micro.Direction.prototype = {
     constructor: Micro.Direction,

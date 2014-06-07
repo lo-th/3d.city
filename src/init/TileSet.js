@@ -1,6 +1,5 @@
 
 Micro.TileSet = function(src, loadCallback, errorCallback){
- // function TileSet(src, loadCallback, errorCallback) {
     //if (!(this instanceof TileSet)) return new TileSet(src, loadCallback, errorCallback);
 
     //var e = new Error('Invalid parameter');
@@ -21,7 +20,7 @@ Micro.TileSet = function(src, loadCallback, errorCallback){
         img.onerror = function() { self._triggerCallback(false); };
         img.src = src;
     }
-}
+};
 
 Micro.TileSet.prototype = {
 
@@ -39,18 +38,12 @@ Micro.TileSet.prototype = {
         if (src instanceof Image) {
           this._verifyImage(src);
         } else {
-          var img = new Image();
-          var self = this;
+            var img = new Image();
+            var self = this;
 
-          img.onload = function() {
-            self._verifyImage(img);
-          };
-
-          img.onerror = function() {
-            self._triggerCallback(false);
-          };
-
-          img.src = src;
+            img.onload = function() { self._verifyImage(img); };
+            img.onerror = function() { self._triggerCallback(false); };
+            img.src = src;
         }
     },
 
@@ -105,7 +98,6 @@ Micro.TileSet.prototype = {
             }
         };
 
-
         for (var i = 0; i < Tile.TILE_COUNT; i++) {
             cx.clearRect(0, 0, this.tileWidth, this.tileWidth);
 
@@ -118,5 +110,4 @@ Micro.TileSet.prototype = {
             this[i].src = c.toDataURL();
         }
     }
-
-}
+};

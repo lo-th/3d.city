@@ -1,10 +1,11 @@
+
 Micro.pixToWorld = function(p) {
     return p >> 4;
-}
+};
 
 Micro.worldToPix = function(w) {
     return w << 4;
-}
+};
 
 // Attempt to move 45° towards the desired direction, either
 // clockwise or anticlockwise, whichever gets us there quicker
@@ -23,10 +24,11 @@ Micro.turnTo = function(presentDir, desiredDir) {
     if (presentDir > 8) presentDir = 1;
     if (presentDir < 1) presentDir = 8;
     return presentDir;
-}
+};
+
 Micro.absoluteValue = function(x) {
     return Math.abs(x);
-}
+};
 
 Micro.getTileValue = function(map, x, y) {
     var wX = Micro.pixToWorld(x);
@@ -60,19 +62,18 @@ Micro.getDir = function(orgX, orgY, destX, destY) {
     else if (deltaY * 2 < deltaX) i--;
     if (i < 0 || i > 12) i = 0;
     return Micro.directionTable[i];
-}
+};
 
 Micro.absoluteDistance = function(orgX, orgY, destX, destY) {
     var deltaX = destX - orgX;
     var deltaY = destY - orgY;
     return Math.abs(deltaX) + Math.abs(deltaY);
-}
+};
 
 Micro.checkWet = function(tileValue) {
     if (tileValue === Tile.HPOWER || tileValue === Tile.VPOWER || tileValue === Tile.HRAIL || tileValue === Tile.VRAIL || tileValue === Tile.BRWH || tileValue === Tile.BRWV) return true;
     else  return false;
-}
-
+};
 
 Micro.destroyMapTile = function(spriteManager, map, blockMaps, ox, oy) {
     var x = Micro.pixToWorld(ox);
@@ -91,12 +92,12 @@ Micro.destroyMapTile = function(spriteManager, map, blockMaps, ox, oy) {
     }
     if (Micro.checkWet(tileValue)) map.setTo(x, y, new Micro.Tile(Tile.RIVER));
     else map.setTo(x, y, new Micro.Tile(Tile.TINYEXP, Tile.BULLBIT | Tile.ANIMBIT));
-}
+};
 
 Micro.getDistance = function(x1, y1, x2, y2) {
     return Math.abs(x1 - x2) + Math.abs(y1 - y2);
-}
+};
 
 Micro.checkSpriteCollision = function(s1, s2) {
     return s1.frame !== 0 && s2.frame !== 0 && Micro.getDistance(s1.x, s1.y, s2.x, s2.y) < 30;
-}
+};

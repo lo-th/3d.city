@@ -53,7 +53,7 @@ Micro.checkBigZone = function(tileValue) {
         default: result = {zoneSize: 0, deltaX: 0, deltaY: 0}; break;
     }
     return result;
-}
+};
 
 Micro.checkZoneSize = function(tileValue) {
     if ((tileValue >= Tile.RESBASE - 1        && tileValue <= Tile.PORTBASE - 1) ||
@@ -68,7 +68,7 @@ Micro.checkZoneSize = function(tileValue) {
         return 4;
     }
     return 0;
-}
+};
 
 Micro.fireZone = function(map, x, y, blockMaps) {
     var tileValue = map.getTileValue(x, y);
@@ -92,7 +92,7 @@ Micro.fireZone = function(map, x, y, blockMaps) {
             if (map.getTileValue(xTem, yTem >= Tile.ROADBASE)) map.addTileFlags(xTem, yTem, Tile.BULLBIT);
         }
     }
-}
+};
 
 Micro.getLandPollutionValue = function(blockMaps, x, y) {
     var landValue = blockMaps.landValueMap.worldGet(x, y);
@@ -101,14 +101,14 @@ Micro.getLandPollutionValue = function(blockMaps, x, y) {
     if (landValue < 80) return 1;
     if (landValue < 150) return 2;
     return 3;
-}
+};
 
 Micro.incRateOfGrowth = function(blockMaps, x, y, growthDelta) {
     var currentRate = blockMaps.rateOfGrowthMap.worldGet(x, y);
     // TODO why the scale of 4 here
     var newValue = Micro.clamp(currentRate + growthDelta * 4, -200, 200);
     blockMaps.rateOfGrowthMap.worldSet(x, y, newValue);
-}
+};
 
 // Calls map.putZone after first checking for flood, fire
 // and radiation
@@ -122,4 +122,4 @@ Micro.putZone = function(map, x, y, centreTile, isPowered) {
     map.putZone(x, y, centreTile, 3);
     map.addTileFlags(x, y, Tile.BULLBIT);
     if (isPowered) map.addTileFlags(x, y, Tile.POWERBIT);
-}
+};

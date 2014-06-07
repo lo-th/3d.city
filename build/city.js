@@ -181,7 +181,8 @@ Micro.Random.prototype = {
 
 var Random = new Micro.Random();
 
-Micro.Direction = function(){}
+
+Micro.Direction = function(){};
 
 Micro.Direction.prototype = {
     constructor: Micro.Direction,
@@ -1467,7 +1468,6 @@ Tile.TILE_INVALID   = -1; // Invalid tile (not used in the world map).
 Tile.MIN_SIZE = 16; // Minimum size of tile in pixels
 
 Micro.TileSet = function(src, loadCallback, errorCallback){
- // function TileSet(src, loadCallback, errorCallback) {
     //if (!(this instanceof TileSet)) return new TileSet(src, loadCallback, errorCallback);
 
     //var e = new Error('Invalid parameter');
@@ -1488,7 +1488,7 @@ Micro.TileSet = function(src, loadCallback, errorCallback){
         img.onerror = function() { self._triggerCallback(false); };
         img.src = src;
     }
-}
+};
 
 Micro.TileSet.prototype = {
 
@@ -1506,18 +1506,12 @@ Micro.TileSet.prototype = {
         if (src instanceof Image) {
           this._verifyImage(src);
         } else {
-          var img = new Image();
-          var self = this;
+            var img = new Image();
+            var self = this;
 
-          img.onload = function() {
-            self._verifyImage(img);
-          };
-
-          img.onerror = function() {
-            self._triggerCallback(false);
-          };
-
-          img.src = src;
+            img.onload = function() { self._verifyImage(img); };
+            img.onerror = function() { self._triggerCallback(false); };
+            img.src = src;
         }
     },
 
@@ -1572,7 +1566,6 @@ Micro.TileSet.prototype = {
             }
         };
 
-
         for (var i = 0; i < Tile.TILE_COUNT; i++) {
             cx.clearRect(0, 0, this.tileWidth, this.tileWidth);
 
@@ -1585,157 +1578,84 @@ Micro.TileSet.prototype = {
             this[i].src = c.toDataURL();
         }
     }
-
-}
+};
 
 Micro.PositionMaker = function (width, height) {
-    if (arguments.length < 2 ||
-        typeof(width) !== 'number' || typeof(height) !== 'number' ||
-        width < 0 || height < 0)
-      throw new Error('Invalid parameter');
-
+    if (arguments.length < 2 || typeof(width) !== 'number' || typeof(height) !== 'number' || width < 0 || height < 0) throw new Error('Invalid parameter');
 
     function isNumber(param) {
-      return typeof(param) === 'number';
+       return typeof(param) === 'number';
     }
 
-     var validDirs = [Direction.NORTH, Direction.NORTHEAST, Direction.EAST, Direction.SOUTHEAST,
-                      Direction.SOUTH, Direction.SOUTHWEST, Direction.WEST, Direction.NORTHWEST,
-                      Direction.INVALID];
+    var validDirs = [Direction.NORTH, Direction.NORTHEAST, Direction.EAST, Direction.SOUTHEAST,
+                    Direction.SOUTH, Direction.SOUTHWEST, Direction.WEST, Direction.NORTHWEST,
+                    Direction.INVALID];
 
-     function isDirection(param) {
-       return isNumber(param) && validDirs.indexOf(param) !== -1;
-     }
+    function isDirection(param) {
+        return isNumber(param) && validDirs.indexOf(param) !== -1;
+    };
 
     var Position = function(pos, deltaX, deltaY) {
-      if (arguments.length === 0) {
-        this.x = 0;
-        this.y = 0;
-        return this;
-      }
-
-      // This overloaded constructor accepts the following parameters
-      // Position(x, y) - positive integral coordinates
-      // Position(Position p) - assign from existing position
-      // Position(Position p, Direction d) - assign from existing position and move in direction d
-      // Position(Position p, deltaX, deltaY) - assign from p and then adjust x/y coordinates
-      // Check for the possible combinations of arguments, and error out for invalid arguments
-      if ((arguments.length === 1 || arguments.length === 3) && !(pos instanceof Position))
-        throw new Error('Invalid parameter');
-      if (arguments.length === 3 && (!isNumber(deltaX) || !isNumber(deltaY)))
-        throw new Error('Invalid parameter');
-      if (arguments.length === 2 &&
-          ((isNumber(pos) && !isNumber(deltaX)) ||
-           (pos instanceof Position && !isNumber(deltaX)) ||
-           (pos instanceof Position && isNumber(deltaX) && !isDirection(deltaX)) ||
-           (!isNumber(pos) && !(pos instanceof Position))))
-        throw new Error('Invalid parameter');
-      var moveOK = true;
-      if (isNumber(pos)) {
-        // Coordinates
-        this.x = pos;
-        this.y = deltaX;
-      } else {
-        this._assignFrom(pos);
-
-        if (arguments.length === 2)
-          moveOK = this.move(deltaX);
-        else if (arguments.length === 3) {
-          this.x += deltaX;
-          this.y += deltaY;
+        if (arguments.length === 0) {
+            this.x = 0;
+            this.y = 0;
+            return this;
         }
-      }
 
-      if (this.x < 0 || this.x >= width || this.y < 0 || this.y >= height || !moveOK)
-        throw new Error('Invalid parameter');
+        // This overloaded constructor accepts the following parameters
+        // Position(x, y) - positive integral coordinates
+        // Position(Position p) - assign from existing position
+        // Position(Position p, Direction d) - assign from existing position and move in direction d
+        // Position(Position p, deltaX, deltaY) - assign from p and then adjust x/y coordinates
+        // Check for the possible combinations of arguments, and error out for invalid arguments
+        if ((arguments.length === 1 || arguments.length === 3) && !(pos instanceof Position)) throw new Error('Invalid parameter');
+        if (arguments.length === 3 && (!isNumber(deltaX) || !isNumber(deltaY))) throw new Error('Invalid parameter');
+        if (arguments.length === 2 && ((isNumber(pos) && !isNumber(deltaX)) || (pos instanceof Position && !isNumber(deltaX)) || (pos instanceof Position && isNumber(deltaX) && !isDirection(deltaX)) || (!isNumber(pos) && !(pos instanceof Position)))) throw new Error('Invalid parameter');
+        var moveOK = true;
+        if (isNumber(pos)) {
+            // Coordinates
+            this.x = pos;
+            this.y = deltaX;
+        } else {
+            this._assignFrom(pos);
+            if (arguments.length === 2) moveOK = this.move(deltaX);
+            else if (arguments.length === 3) {
+                this.x += deltaX;
+                this.y += deltaY;
+            }
+        }
+        if (this.x < 0 || this.x >= width || this.y < 0 || this.y >= height || !moveOK) throw new Error('Invalid parameter');
     };
-
 
     Position.prototype._assignFrom = function(from) {
-      this.x = from.x;
-      this.y = from.y;
+        this.x = from.x;
+        this.y = from.y;
     };
-
 
     Position.prototype.toString = function() {
-      return '(' + this.x + ', ' + this.y + ')';
+        return '(' + this.x + ', ' + this.y + ')';
     };
-
 
     Position.prototype.toInt = function() {
-      return this.y * width + this.x;
+        return this.y * width + this.x;
     };
-
 
     Position.prototype.move = function(dir) {
-      switch (dir) {
-        case Direction.INVALID:
-          return true;
-        case Direction.NORTH:
-          if (this.y > 0) {
-            this.y--;
-            return true;
-          }
-          break;
-        case Direction.NORTHEAST:
-          if (this.y > 0 && this.x < width - 1) {
-            this.y--;
-            this.x++;
-            return true;
-          }
-          break;
-        case Direction.EAST:
-          if (this.x < width - 1) {
-            this.x++;
-            return true;
-          }
-          break;
-        case Direction.SOUTHEAST:
-          if (this.y < height - 1 && this.x < width - 1) {
-            this.x++;
-            this.y++;
-            return true;
-          }
-          break;
-        case Direction.SOUTH:
-          if (this.y < height - 1) {
-            this.y++;
-            return true;
-          }
-          break;
-        case Direction.SOUTHWEST:
-          if (this.y < height - 1 && this.x > 0) {
-            this.y++;
-            this.x--;
-            return true;
-          }
-          break;
-        case Direction.WEST:
-          if (this.x > 0) {
-            this.x--;
-            return true;
-          }
-          break;
-        case Direction.NORTHWEST:
-          if (this.y > 0 && this.x > 0) {
-            this.y--;
-            this.x--;
-            return true;
-          }
-          break;
-      }
-      return false;
+        switch (dir) {
+            case Direction.INVALID: return true;
+            case Direction.NORTH: if (this.y > 0) { this.y--; return true; } break;
+            case Direction.NORTHEAST: if (this.y > 0 && this.x < width - 1) { this.y--; this.x++; return true; } break;
+            case Direction.EAST: if (this.x < width - 1) { this.x++; return true; } break;
+            case Direction.SOUTHEAST: if (this.y < height - 1 && this.x < width - 1) { this.x++; this.y++; return true; } break;
+            case Direction.SOUTH: if (this.y < height - 1) { this.y++; return true; } break;
+            case Direction.SOUTHWEST: if (this.y < height - 1 && this.x > 0) { this.y++; this.x--; return true; } break;
+            case Direction.WEST: if (this.x > 0) { this.x--; return true; } break;
+            case Direction.NORTHWEST: if (this.y > 0 && this.x > 0) { this.y--; this.x--; return true; } break;
+        }
+        return false;
     };
-
-
     return Position;
-  }
-
-
-  //return PositionMaker;
-//}
-//);
-
+};
 
 Micro.GameMap = function(width, height, defaultValue){
 
@@ -2542,17 +2462,20 @@ Micro.SplashScreen.prototype = {
     }
 }  
 
+
 Micro.unwrapTile = function(f) {
     return function(tile) {
         if (tile instanceof Micro.Tile) tile = tile.getValue();
         return f.call(null, tile);
     }
-}
+};
+
 Micro.canBulldoze = Micro.unwrapTile(function(tileValue) {
     return (tileValue >= Tile.FIRSTRIVEDGE  && tileValue <= Tile.LASTRUBBLE) ||
            (tileValue >= Tile.POWERBASE + 2 && tileValue <= Tile.POWERBASE + 12) ||
            (tileValue >= Tile.TINYEXP       && tileValue <= Tile.LASTTINYEXP + 2);
 });
+
 Micro.isCommercial = Micro.unwrapTile(function(tile) { return tile >= Tile.COMBASE && tile < Tile.INDBASE; });
 //Micro.isDriveable = Micro.unwrapTile(function(tile) { return (tile >= Tile.ROADBASE && tile <= Tile.LASTRAIL) ||  tile === Tile.RAILPOWERV || tile === Tile.RAILPOWERH; });
 Micro.isDriveable = Micro.unwrapTile(function(tile) { return (tile >= Tile.ROADBASE && tile <= Tile.LASTRAIL) ||  tile === Tile.RAILHPOWERV || tile === Tile.RAILVPOWERH; });
@@ -2571,8 +2494,6 @@ Micro.isResidentialZone = function(tile) { return tile.isZone() && Micro.isResid
 Micro.randomFire = function() { return new Micro.Tile(Tile.FIRE + (Random.getRandom16() & 3), Tile.ANIMBIT); };
 Micro.randomRubble = function() {  return new Micro.Tile(Tile.RUBBLE + (Random.getRandom16() & 3), Tile.BULLBIT); };
 Micro.HOSPITAL = function() { };
-
-Micro.isIndustrialZone = function(tile) { return tile.isZone() && Micro.isIndustrial(tile); };
 
 Micro.checkBigZone = function(tileValue) {
     var result;
@@ -2628,7 +2549,7 @@ Micro.checkBigZone = function(tileValue) {
         default: result = {zoneSize: 0, deltaX: 0, deltaY: 0}; break;
     }
     return result;
-}
+};
 
 Micro.checkZoneSize = function(tileValue) {
     if ((tileValue >= Tile.RESBASE - 1        && tileValue <= Tile.PORTBASE - 1) ||
@@ -2643,7 +2564,7 @@ Micro.checkZoneSize = function(tileValue) {
         return 4;
     }
     return 0;
-}
+};
 
 Micro.fireZone = function(map, x, y, blockMaps) {
     var tileValue = map.getTileValue(x, y);
@@ -2667,7 +2588,7 @@ Micro.fireZone = function(map, x, y, blockMaps) {
             if (map.getTileValue(xTem, yTem >= Tile.ROADBASE)) map.addTileFlags(xTem, yTem, Tile.BULLBIT);
         }
     }
-}
+};
 
 Micro.getLandPollutionValue = function(blockMaps, x, y) {
     var landValue = blockMaps.landValueMap.worldGet(x, y);
@@ -2676,14 +2597,14 @@ Micro.getLandPollutionValue = function(blockMaps, x, y) {
     if (landValue < 80) return 1;
     if (landValue < 150) return 2;
     return 3;
-}
+};
 
 Micro.incRateOfGrowth = function(blockMaps, x, y, growthDelta) {
     var currentRate = blockMaps.rateOfGrowthMap.worldGet(x, y);
     // TODO why the scale of 4 here
     var newValue = Micro.clamp(currentRate + growthDelta * 4, -200, 200);
     blockMaps.rateOfGrowthMap.worldSet(x, y, newValue);
-}
+};
 
 // Calls map.putZone after first checking for flood, fire
 // and radiation
@@ -2697,15 +2618,15 @@ Micro.putZone = function(map, x, y, centreTile, isPowered) {
     map.putZone(x, y, centreTile, 3);
     map.addTileFlags(x, y, Tile.BULLBIT);
     if (isPowered) map.addTileFlags(x, y, Tile.POWERBIT);
-}
+};
 
 Micro.pixToWorld = function(p) {
     return p >> 4;
-}
+};
 
 Micro.worldToPix = function(w) {
     return w << 4;
-}
+};
 
 // Attempt to move 45° towards the desired direction, either
 // clockwise or anticlockwise, whichever gets us there quicker
@@ -2724,10 +2645,11 @@ Micro.turnTo = function(presentDir, desiredDir) {
     if (presentDir > 8) presentDir = 1;
     if (presentDir < 1) presentDir = 8;
     return presentDir;
-}
+};
+
 Micro.absoluteValue = function(x) {
     return Math.abs(x);
-}
+};
 
 Micro.getTileValue = function(map, x, y) {
     var wX = Micro.pixToWorld(x);
@@ -2761,19 +2683,18 @@ Micro.getDir = function(orgX, orgY, destX, destY) {
     else if (deltaY * 2 < deltaX) i--;
     if (i < 0 || i > 12) i = 0;
     return Micro.directionTable[i];
-}
+};
 
 Micro.absoluteDistance = function(orgX, orgY, destX, destY) {
     var deltaX = destX - orgX;
     var deltaY = destY - orgY;
     return Math.abs(deltaX) + Math.abs(deltaY);
-}
+};
 
 Micro.checkWet = function(tileValue) {
     if (tileValue === Tile.HPOWER || tileValue === Tile.VPOWER || tileValue === Tile.HRAIL || tileValue === Tile.VRAIL || tileValue === Tile.BRWH || tileValue === Tile.BRWV) return true;
     else  return false;
-}
-
+};
 
 Micro.destroyMapTile = function(spriteManager, map, blockMaps, ox, oy) {
     var x = Micro.pixToWorld(ox);
@@ -2792,20 +2713,15 @@ Micro.destroyMapTile = function(spriteManager, map, blockMaps, ox, oy) {
     }
     if (Micro.checkWet(tileValue)) map.setTo(x, y, new Micro.Tile(Tile.RIVER));
     else map.setTo(x, y, new Micro.Tile(Tile.TINYEXP, Tile.BULLBIT | Tile.ANIMBIT));
-}
+};
 
 Micro.getDistance = function(x1, y1, x2, y2) {
     return Math.abs(x1 - x2) + Math.abs(y1 - y2);
-}
+};
 
 Micro.checkSpriteCollision = function(s1, s2) {
     return s1.frame !== 0 && s2.frame !== 0 && Micro.getDistance(s1.x, s1.y, s2.x, s2.y) < 30;
-}
-
-
-//define(['BlockMap', 'Commercial', 'Industrial', 'Residential'],
-//       function(BlockMap, Commercial, Industrial, Residential) {
-//  "use strict";
+};
 
 Micro.decRateOfGrowthMap = function(blockMaps) {
     var rateOfGrowthMap = blockMaps.rateOfGrowthMap;
@@ -2826,7 +2742,7 @@ Micro.decRateOfGrowthMap = function(blockMaps) {
             }
         }
     }
-}
+};
 
 Micro.decTrafficMap = function(blockMaps) {
     var trafficDensityMap = blockMaps.trafficDensityMap;
@@ -2842,7 +2758,7 @@ Micro.decTrafficMap = function(blockMaps) {
             else trafficDensityMap.worldSet(x, y, trafficDensity - 24);
         }
     }
-}
+};
 
 Micro.getPollutionValue = function(tileValue) {
     if (tileValue < Tile.POWERBASE) {
@@ -2858,7 +2774,7 @@ Micro.getPollutionValue = function(tileValue) {
     if (tileValue < Tile.PORTBASE) return 50;
     if (tileValue <= Tile.LASTPOWERPLANT) return 100;
     return 0;
-}
+};
 
 Micro.getCityCentreDistance = function(map, x, y) {
     var xDis, yDis;
@@ -2867,7 +2783,7 @@ Micro.getCityCentreDistance = function(map, x, y) {
     if (y > map.cityCentreY) yDis = y - map.cityCentreY;
     else yDis = map.cityCentreY - y;
     return Math.min(xDis + yDis, 64);
-}
+};
 
 // The original version of this function in the Micropolis code
 // takes a ditherFlag. However, as far as I can tell, it was
@@ -2885,15 +2801,15 @@ Micro.smoothDitherMap = function(srcMap, destMap) {
             destMap.set(x, y, value);
         }
     }
-}
+};
 
 Micro.smoothTemp1ToTemp2 = function(blockMaps) {
     Micro.smoothDitherMap(blockMaps.tempMap1, blockMaps.tempMap2);
-}
+};
 
 Micro.smoothTemp2ToTemp1 = function(blockMaps) {
     Micro.smoothDitherMap(blockMaps.tempMap2, blockMaps.tempMap1);
-}
+};
 
 // Again, the original version of this function in the Micropolis code
 // reads donDither, which is always zero. The dead code has been culled
@@ -2914,7 +2830,7 @@ Micro.smoothTerrain = function(blockMaps) {
             terrainDensityMap.set(x, y, value);
         }
     }
-}
+};
 
 Micro.pollutionTerrainLandValueScan = function(map, census, blockMaps) {
     var tempMap1 = blockMaps.tempMap1;
@@ -3007,7 +2923,7 @@ Micro.pollutionTerrainLandValueScan = function(map, census, blockMaps) {
     if (pollutedTileCount) census.pollutionAverage = Math.floor(totalPollution / pollutedTileCount);
     else census.pollutionAverage = 0;
     Micro.smoothTerrain(blockMaps);
-}
+};
 
 Micro.smoothStationMap = function(map) {
     var tempMap = new Micro.BlockMap(map);
@@ -3022,7 +2938,7 @@ Micro.smoothStationMap = function(map) {
             map.set(x, y, Math.floor(edge / 2));
         }
     }
-}
+};
 
 Micro.crimeScan = function(census, blockMaps) {
     var policeStationMap = blockMaps.policeStationMap;
@@ -3058,7 +2974,7 @@ Micro.crimeScan = function(census, blockMaps) {
     if (crimeZoneCount > 0) census.crimeAverage = Math.floor(totalCrime / crimeZoneCount);
     else census.crimeAverage = 0;
     blockMaps.policeStationEffectMap = new Micro.BlockMap(policeStationMap);
-}
+};
 
 Micro.computeComRateMap = function(map, blockMaps) {
     var comRateMap = blockMaps.comRateMap;
@@ -3070,14 +2986,14 @@ Micro.computeComRateMap = function(map, blockMaps) {
             comRateMap.set(x, y, value);
         }
     }
-}
+};
 
 Micro.getPopulationDensity = function(map, x, y, tile) {
     if (tile < Tile.COMBASE) return Residential.getZonePopulation(map, x, y, tile);
     if (tile < Tile.INDBASE) return Commercial.getZonePopulation(map, x, y, tile) * 8;
     if (tile < Tile.PORTBASE) return Industrial.getZonePopulation(map, x, y, tile) * 8;
     return 0;
-}
+};
 
 Micro.populationDensityScan = function(map, blockMaps) {
     var tempMap1 = blockMaps.tempMap1;
@@ -3122,7 +3038,7 @@ Micro.populationDensityScan = function(map, blockMaps) {
         map.cityCentreX = Math.floor(map.width * 0.5);
         map.cityCentreY = Math.floor(map.height * 0.5);
     }
-}
+};
 
 Micro.fireAnalysis = function(blockMaps) {
     var fireStationMap = blockMaps.fireStationMap;
@@ -3133,7 +3049,7 @@ Micro.fireAnalysis = function(blockMaps) {
     Micro.smoothStationMap(fireStationMap);
 
     blockMaps.fireStationEffectMap = new Micro.BlockMap(fireStationMap);
-}
+};
 
 Micro.Residential = function (SIM) {
     var sim = SIM;

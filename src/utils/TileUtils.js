@@ -1,14 +1,17 @@
+
 Micro.unwrapTile = function(f) {
     return function(tile) {
         if (tile instanceof Micro.Tile) tile = tile.getValue();
         return f.call(null, tile);
     }
-}
+};
+
 Micro.canBulldoze = Micro.unwrapTile(function(tileValue) {
     return (tileValue >= Tile.FIRSTRIVEDGE  && tileValue <= Tile.LASTRUBBLE) ||
            (tileValue >= Tile.POWERBASE + 2 && tileValue <= Tile.POWERBASE + 12) ||
            (tileValue >= Tile.TINYEXP       && tileValue <= Tile.LASTTINYEXP + 2);
 });
+
 Micro.isCommercial = Micro.unwrapTile(function(tile) { return tile >= Tile.COMBASE && tile < Tile.INDBASE; });
 //Micro.isDriveable = Micro.unwrapTile(function(tile) { return (tile >= Tile.ROADBASE && tile <= Tile.LASTRAIL) ||  tile === Tile.RAILPOWERV || tile === Tile.RAILPOWERH; });
 Micro.isDriveable = Micro.unwrapTile(function(tile) { return (tile >= Tile.ROADBASE && tile <= Tile.LASTRAIL) ||  tile === Tile.RAILHPOWERV || tile === Tile.RAILVPOWERH; });
@@ -27,5 +30,3 @@ Micro.isResidentialZone = function(tile) { return tile.isZone() && Micro.isResid
 Micro.randomFire = function() { return new Micro.Tile(Tile.FIRE + (Random.getRandom16() & 3), Tile.ANIMBIT); };
 Micro.randomRubble = function() {  return new Micro.Tile(Tile.RUBBLE + (Random.getRandom16() & 3), Tile.BULLBIT); };
 Micro.HOSPITAL = function() { };
-
-Micro.isIndustrialZone = function(tile) { return tile.isZone() && Micro.isIndustrial(tile); };

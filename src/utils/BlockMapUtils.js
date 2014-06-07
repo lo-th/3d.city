@@ -1,9 +1,4 @@
 
-
-//define(['BlockMap', 'Commercial', 'Industrial', 'Residential'],
-//       function(BlockMap, Commercial, Industrial, Residential) {
-//  "use strict";
-
 Micro.decRateOfGrowthMap = function(blockMaps) {
     var rateOfGrowthMap = blockMaps.rateOfGrowthMap;
     for (var x = 0; x < rateOfGrowthMap.width; x++) {
@@ -23,7 +18,7 @@ Micro.decRateOfGrowthMap = function(blockMaps) {
             }
         }
     }
-}
+};
 
 Micro.decTrafficMap = function(blockMaps) {
     var trafficDensityMap = blockMaps.trafficDensityMap;
@@ -39,7 +34,7 @@ Micro.decTrafficMap = function(blockMaps) {
             else trafficDensityMap.worldSet(x, y, trafficDensity - 24);
         }
     }
-}
+};
 
 Micro.getPollutionValue = function(tileValue) {
     if (tileValue < Tile.POWERBASE) {
@@ -55,7 +50,7 @@ Micro.getPollutionValue = function(tileValue) {
     if (tileValue < Tile.PORTBASE) return 50;
     if (tileValue <= Tile.LASTPOWERPLANT) return 100;
     return 0;
-}
+};
 
 Micro.getCityCentreDistance = function(map, x, y) {
     var xDis, yDis;
@@ -64,7 +59,7 @@ Micro.getCityCentreDistance = function(map, x, y) {
     if (y > map.cityCentreY) yDis = y - map.cityCentreY;
     else yDis = map.cityCentreY - y;
     return Math.min(xDis + yDis, 64);
-}
+};
 
 // The original version of this function in the Micropolis code
 // takes a ditherFlag. However, as far as I can tell, it was
@@ -82,15 +77,15 @@ Micro.smoothDitherMap = function(srcMap, destMap) {
             destMap.set(x, y, value);
         }
     }
-}
+};
 
 Micro.smoothTemp1ToTemp2 = function(blockMaps) {
     Micro.smoothDitherMap(blockMaps.tempMap1, blockMaps.tempMap2);
-}
+};
 
 Micro.smoothTemp2ToTemp1 = function(blockMaps) {
     Micro.smoothDitherMap(blockMaps.tempMap2, blockMaps.tempMap1);
-}
+};
 
 // Again, the original version of this function in the Micropolis code
 // reads donDither, which is always zero. The dead code has been culled
@@ -111,7 +106,7 @@ Micro.smoothTerrain = function(blockMaps) {
             terrainDensityMap.set(x, y, value);
         }
     }
-}
+};
 
 Micro.pollutionTerrainLandValueScan = function(map, census, blockMaps) {
     var tempMap1 = blockMaps.tempMap1;
@@ -204,7 +199,7 @@ Micro.pollutionTerrainLandValueScan = function(map, census, blockMaps) {
     if (pollutedTileCount) census.pollutionAverage = Math.floor(totalPollution / pollutedTileCount);
     else census.pollutionAverage = 0;
     Micro.smoothTerrain(blockMaps);
-}
+};
 
 Micro.smoothStationMap = function(map) {
     var tempMap = new Micro.BlockMap(map);
@@ -219,7 +214,7 @@ Micro.smoothStationMap = function(map) {
             map.set(x, y, Math.floor(edge / 2));
         }
     }
-}
+};
 
 Micro.crimeScan = function(census, blockMaps) {
     var policeStationMap = blockMaps.policeStationMap;
@@ -255,7 +250,7 @@ Micro.crimeScan = function(census, blockMaps) {
     if (crimeZoneCount > 0) census.crimeAverage = Math.floor(totalCrime / crimeZoneCount);
     else census.crimeAverage = 0;
     blockMaps.policeStationEffectMap = new Micro.BlockMap(policeStationMap);
-}
+};
 
 Micro.computeComRateMap = function(map, blockMaps) {
     var comRateMap = blockMaps.comRateMap;
@@ -267,14 +262,14 @@ Micro.computeComRateMap = function(map, blockMaps) {
             comRateMap.set(x, y, value);
         }
     }
-}
+};
 
 Micro.getPopulationDensity = function(map, x, y, tile) {
     if (tile < Tile.COMBASE) return Residential.getZonePopulation(map, x, y, tile);
     if (tile < Tile.INDBASE) return Commercial.getZonePopulation(map, x, y, tile) * 8;
     if (tile < Tile.PORTBASE) return Industrial.getZonePopulation(map, x, y, tile) * 8;
     return 0;
-}
+};
 
 Micro.populationDensityScan = function(map, blockMaps) {
     var tempMap1 = blockMaps.tempMap1;
@@ -319,7 +314,7 @@ Micro.populationDensityScan = function(map, blockMaps) {
         map.cityCentreX = Math.floor(map.width * 0.5);
         map.cityCentreY = Math.floor(map.height * 0.5);
     }
-}
+};
 
 Micro.fireAnalysis = function(blockMaps) {
     var fireStationMap = blockMaps.fireStationMap;
@@ -330,4 +325,4 @@ Micro.fireAnalysis = function(blockMaps) {
     Micro.smoothStationMap(fireStationMap);
 
     blockMaps.fireStationEffectMap = new Micro.BlockMap(fireStationMap);
-}
+};
