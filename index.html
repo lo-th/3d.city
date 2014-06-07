@@ -81,7 +81,7 @@ function sendTool(name) {
 function initCity() {
     cityWorker = new Worker('js/worker.city.js');
     cityWorker.postMessage = cityWorker.webkitPostMessage || cityWorker.postMessage;
-    cityWorker.postMessage({tell:"INIT", url:document.location.href.replace(/\/[^/]*$/,"/") + "build/city.min.js"});
+    cityWorker.postMessage({tell:"INIT", url:document.location.href.replace(/\/[^/]*$/,"/") + "build/city.3d.min.js"});
 
     cityWorker.onmessage = function(e) {
         var phase = e.data.tell;
