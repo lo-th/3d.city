@@ -26,7 +26,27 @@ V3D.Base = function(){
 
     this.notAuto = true;
 
+    this.toolSet = [
+		{id:0,  tool:'residential', size:3, price:100,   color:'lime'},
+		{id:1,  tool:'commercial',  size:3, price:100,   color:'blue'},
+		{id:2,  tool:'industrial',  size:3, price:100,   color:'yellow'},
+		{id:3,  tool:'police',      size:3, price:500,   color:'darkblue'},
+		{id:4,  tool:'fire',        size:3, price:500,   color:'red'},
+		{id:5,  tool:'port',        size:4, price:3000,  color:'dodgerblue'},
+		{id:6,  tool:'airport',     size:6, price:10000, color:'violet'},
+		{id:7,  tool:'stadium',     size:4, price:5000,  color:'indigo'},
+		{id:8,  tool:'coal',        size:4, price:3000,  color:'gray'},
+		{id:9,  tool:'nuclear',     size:4, price:5000,  color:'mistyrose'},
+		{id:10, tool:'road',        size:1, price:10,    color:'black'},
+		{id:11, tool:'rail',        size:1, price:20,    color:'brown'},
+		{id:12, tool:'wire',        size:1, price:5 ,    color:'khaki'},
+		{id:13, tool:'park',        size:1, price:10,    color:'darkgreen'},
+		{id:14, tool:'query',       size:1, price:0,     color:'cyan'},
+		{id:15, tool:'bulldozer',   size:1, price:1,     color:'salmon'}
+	];
+
     this.loadSea3d();
+
 }
 
 V3D.Base.prototype = {
@@ -181,9 +201,21 @@ V3D.Base.prototype = {
 		
 		//log(this.select);
 	},
-	addTool : function(){
-		this.tool = new THREE.Mesh(new THREE.BoxGeometry(1,1,1), new THREE.MeshBasicMaterial({color:0xff0000}) )
+	addTool : function(id){
+		id = Math.floor(Math.random()*16);
+
+		if(this.tool !== null) this.removeTool();
+		var ntool = this.toolSet[id];
+		var size = ntool.size;
+		var name = ntool.tool;
+		this.tool = new THREE.Mesh(new THREE.BoxGeometry(size,1,size), new THREE.MeshBasicMaterial({color:ntool.color}) )
+		if(size == 6 || size == 4) this.tool.geometry.applyMatrix(new THREE.Matrix4().makeTranslation(0.5, 0, 0.5));
         this.scene.add(this.tool);
+        log(name);
+	},
+	removeTool : function(){
+		this.scene.remove(this.tool);
+		this.tool = null;
 	},
 	Orbit : function (origine, horizontal, vertical, distance) {
 	    var p = new THREE.Vector3();

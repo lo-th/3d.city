@@ -1,6 +1,6 @@
 'use strict';
 
-var simulation;
+var simulation, gameTools;
 var timer;
 var infos = [];
 var mapGen;
@@ -10,6 +10,8 @@ var difficulty = 2;
 var speed = 3;
 var isPaused = false;
 var simNeededBudget = false;
+var currentTool = null;
+
 
 var tool = [];
 
@@ -29,6 +31,9 @@ self.onmessage = function (e) {
     }
 
 }
+var selectTool = function(){
+
+}
 
 var newMap = function(){
 	map = mapGen.construct(mapSize[0], mapSize[1]);
@@ -37,6 +42,7 @@ var newMap = function(){
 }
 
 var playMap = function(){
+	gameTools = new Micro.GameTools(map);
 	simulation = new Micro.Simulation( map, difficulty, speed);
 	timer = setInterval(update, 1000/60);
 }

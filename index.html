@@ -83,6 +83,9 @@ function initCity() {
             view3d.paintMap(im, e.data.map, e.data.mapSize, e.data.island);
             hub.start();
         }
+        if( phase == "TOOL"){
+            
+        }
         if( phase == "RUN"){
             log(e.data.infos.join("\n"));
         }
