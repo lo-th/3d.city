@@ -50,6 +50,7 @@ HUB.Base.prototype = {
     	this.addButton('New Map', newMap );
     	this.addButton('Play Game', playMap );
     	this.addButton('Play 2D', play2d );
+        this.addButton('Tool Test', testTool );
     },
     addButton : function(name, fun){
     	var b = this.createLabel(name, [140, 40], true);

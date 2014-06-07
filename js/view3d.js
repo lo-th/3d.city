@@ -22,6 +22,7 @@ V3D.Base = function(){
     this.trees = [];
 
     this.terrain = null;
+    this.tool = null;
 
     this.notAuto = true;
 
@@ -49,6 +50,8 @@ V3D.Base.prototype = {
 
         this.center = new THREE.Vector3();
         this.moveCamera();
+
+        
 
         var sky = this.gradTexture([[0.5,0.45, 0.2], ['#6666e6','lightskyblue', 'deepskyblue']]);
         this.back = new THREE.Mesh( new THREE.IcosahedronGeometry(300,1), new THREE.MeshBasicMaterial( { map:sky, side:THREE.BackSide, depthWrite: false }  ));
@@ -163,18 +166,24 @@ V3D.Base.prototype = {
 			var intersects = this.raycaster.intersectObjects( this.land.children );
 			if ( intersects.length > 0 ) {
 				//logLand(intersects[0].object.name);
-				this.select = intersects[0].object.name;
+				//this.select = intersects[0].object.name;
+				if(this.tool!==null) this.tool.position.set(Math.round(intersects[0].point.x), 0, Math.round(intersects[0].point.z));
+				//log(intersects[0].point.x, intersects[0].point.z)
 				/*marker.position.set( 0, 0, 0 );
 				if(intersects[0].face)marker.lookAt(intersects[0].face.normal);
 				marker.position.copy( intersects[0].point );*/
 				
 				//if(sh)shoot();
 		    } else {
-		    	this.select = '';
+		    	//this.select = '';
 		    }
 		}
 		
 		//log(this.select);
+	},
+	addTool : function(){
+		this.tool = new THREE.Mesh(new THREE.BoxGeometry(1,1,1), new THREE.MeshBasicMaterial({color:0xff0000}) )
+        this.scene.add(this.tool);
 	},
 	Orbit : function (origine, horizontal, vertical, distance) {
 	    var p = new THREE.Vector3();
@@ -236,7 +245,7 @@ V3D.Base.prototype = {
 	    } else {
 			this.rayVector.x = ( px / this.vsize.x ) * 2 - 1;
 		    this.rayVector.y = - ( py / this.vsize.y ) * 2 + 1;
-			//this.rayTest();
+			this.rayTest();
 		}
 	    //if(!self.focus())self.focus();
 	    this.render(); 
