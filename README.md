@@ -1,7 +1,7 @@
 3d.city
 =======
 
-3d game concept [LAUNCH](http://lo-th.github.io/3d.city/index.html)<br>
+3d city builder [LAUNCH](http://lo-th.github.io/3d.city/index.html)<br>
 
 Start with the exelent port of Micropolis by [graememcc](https://github.com/graememcc/micropolisJS) <br>
 I remove all thirdparty library and optimize, compact the code.
