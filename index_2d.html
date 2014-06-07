@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>2D.CITY</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <link rel="stylesheet" media="screen" type="text/css" href="css/style.css">
+
+    <script src="build/city.js"></script>
+
+</head>
+<body>
+<div class="hidden" id="opaque"></div>
+<div id="container">
+    <div id="canvasContainer"></div>
+    <div id="infobar" class="table initialHidden">
+        <div class="col info"><span id="date">Jan 1900</span></div>
+        <div class="col info">$<span id="funds">20000</span></div>
+        <div class="col info">Score: <span id="score">0</span></div>
+        <div class="col info"><span id="cclass">VILLAGE</span>(<span id="population">0</span>)</div>
+    </div>
+
+    <div class="splashWidth" id="splashContainer">
+        <div id="SplashCanvas"> Loading... </div>
+        <div class="awaitGeneration" id="splashButtons">
+            <button class="splashButton" id="splashGenerate">New map</button>
+            <button class="splashButton" id="splashPlay">Play map</button>
+        </div>
+        <fieldset class="awaitGeneration" id="difficulty">
+            <legend>Difficulty</legend>
+            <input type="radio" name="difficulty" value="0" checked="checked">Easy</input>
+            <input type="radio" name="difficulty" value="1">Medium</input>
+            <input type="radio" name="difficulty" value="2">Hard</input>
+        </fieldset>
+    </div>
+
+    <div id="toolInfo" class="initialHidden"><span id="toolOutput">&nbsp;</span></div>
+    <div id="notifications" class="initialHidden"></div>
+    <div id="buttonsInfos" class="initialHidden"></div>
+    <div id="buttons" class="initialHidden">
+        <div id="row1" class="row">
+            <button id="residentialButton" data-size="3" data-tool="residential" data-price="100" data-colour="lime" class="toolButton row unselected">Residential</button>
+            <button id="policeButton" data-size="3" data-tool="police" data-price="500" data-colour="darkblue" class="toolButton row unselected">Police</button>
+            <button id="coalButton" data-size="4" data-tool="coal" data-price="3000" data-colour="gray" class="toolButton row unselected">Coal</button>
+            <button id="wireButton" data-size="1" data-tool="wire" data-price="5" data-colour="khaki" class="toolButton row unselected">Wire</button>
+        </div>
+        <div id="row2" class="row">
+            <button id="commercialButton" data-size="3" data-tool="commercial" data-price="100" data-colour="blue" class="toolButton row unselected">Commercial</button>
+            <button id="fireButton" data-size="3" data-tool="fire" data-price="500" data-colour="red" class="toolButton row unselected">Fire</button>
+            <button id="nuclearButton" data-size="4" data-tool="nuclear" data-price="5000" data-colour="mistyrose" class="toolButton row unselected">Nuclear</button>
+            <button id="roadButton" data-size="1" data-tool="road" data-price="10" data-colour="black" class="toolButton row unselected">Road</button>
+        </div>
+        <div id="row3" class="row">
+            <button id="industrialButton" data-size="3" data-tool="industrial" data-price="100" data-colour="yellow" class="toolButton row unselected">Industrial</button>
+            <button id="portButton" data-size="4" data-tool="port" data-price="3000" data-colour="dodgerblue" class="toolButton row unselected">Port</button>
+            <button id="stadiumButton" data-size="4" data-tool="stadium" data-price="5000" data-colour="indigo" class="toolButton row unselected">Stadium</button>
+            <button id="railButton" data-size="1" data-tool="rail" data-price="20" data-colour="brown" class="toolButton row unselected">Rail</button>
+        </div>
+        <div id="row4" class="row">
+            <button id="parkButton" data-size="1" data-tool="park" data-price="10" data-colour="darkgreen" class="toolButton row unselected">Park</button>
+            <button id="airportButton" data-size="6" data-tool="airport" data-price="10000" data-colour="violet" class="toolButton row unselected">Airport</button>
+            <button id="queryButton" data-size="1" data-tool="query" data-price="0" data-colour="cyan" class="toolButton row unselected">?</button>
+            <button id="bulldozerButton" data-size="1" data-tool="bulldozer" data-price="1" data-colour="salmon" class="toolButton row unselected">Bulldozer</button>
+        </div>
+    </div>
+
+    <div id="miscControls" class="initialHidden">
+        <div id="RCIContainer" class="left"></div>
+        <div id="miscButtons" class="right">
+            <div class="table">
+                <div class="row"><button id="budgetRequest" class="miscButton">Budget</button></div>
+                <div class="row"><button id="evalRequest" class="miscButton">Evaluation</button></div>
+                <div class="row"><button id="disasterRequest" class="miscButton">Disasters</button></div>
+                <div class="row"><button id="pauseRequest" class="miscButton">Pause</button></div>
+            </div>
+        </div>
+        <div class="clr"></div>
+    </div>
+</div>
+<!-- BUDGET -->   
+<div class="hidden modal" id="budget">
+    <div id="budgetHeader" class="modalHeader">Budget</div>
+    <form id="budgetForm"><div>
+        <div id="taxInfo" class="left">Tax Collected: <span id="taxesCollected"></span></div>
+        <fieldset class="right">
+            <legend>Roads</legend>
+            <input type="range" id="roadRate" min="0" max="100" step="1" data-source="roadFund">
+        <div>
+            <label for="roadRate" id="roadRateLabel">100% of $100 = $100</label>
+        </div>
+        </fieldset>
+            </div>
+            <div class="clr"></div>
+            <div>
+                <div id="cashInfo" class="left">Cashflow: <span id="cashFlow"></span></div>
+                <fieldset class="right">
+                    <legend>Fire</legend>
+                    <input type="range" id="fireRate" min="0" max="100" step="1" data-source="fireFund">
+                    <div><label for="fireRate" id="fireRateLabel">100% of $100 = $100</label></div>
+                </fieldset>
+            </div>
+            <div class="clr"></div>
+            <div>
+                <div id="previousInfo" class="left">Previous funds: <span id="previousFunds"></span></div>
+                <fieldset class="right">
+                    <legend>Police</legend>
+                    <input type="range" id="policeRate" min="0" max="100" step="1" data-source="policeFund">
+                    <div><label for="policeRate" id="policeRateLabel">100% of $100 = $100</label></div>
+                </fieldset>
+            </div>
+            <div class="clr"></div>
+            <div>
+                <div id="currentInfo" class="left">Current funds: <span id="currentFunds"></span></div>
+                <fieldset class="right">
+                    <legend>Tax</legend>
+                    <input type="range" id="taxRate" min="0" max="20" step="1">
+                    <div><label for="taxRate" id="taxRateLabel">100% of $100 = $100</label></div>
+                </fieldset>
+            </div>
+            <div class="clr"></div>
+            <div>
+                <div id="leftButtons" class="left">
+                <button id="budgetReset">Reset</button>
+                </div>
+                <div id="budgetRightButtons" class="right">
+                <button id="budgetCancel" class="rightButtons">Cancel</button>
+                <input type="submit" id="budgetOK" class="rightButtons" value="OK">
+            </div>
+            <div class="clr"></div>
+        </div>
+    </form>
+</div>
+<!-- QUERY -->
+<div class="hidden modal" id="queryWindow">
+    <div id="queryHeader" class="modalHeader">Query</div>
+    <div id="queryDebug" class="hidden">
+        <pre>
+        Tile: <span id="queryTile"></span>
+        TileValue: <span id="queryTileValue"></span>
+        Burnable: <span id="queryTileBurnable"></span>
+        Bulldozable: <span id="queryTileBulldozable"></span>
+        Conductive: <span id="queryTileCond"></span>
+        Animated: <span id="queryTileAnim"></span>
+        Powered: <span id="queryTilePowered"></span>
+        FireStation: <span id="queryFireStationRaw"></span>
+        FireStationEffect: <span id="queryFireStationEffectRaw"></span>
+        PoliceStation: <span id="queryPoliceStationRaw"></span>
+        PoliceStationEffect: <span id="queryPoliceStationEffectRaw"></span>
+        TerrainDensity: <span id="queryTerrainDensityRaw"></span>
+        ComRate: <span id="queryComRateRaw"></span>
+        RateOfGrowth: <span id="queryRateRaw"></span>
+        Pollution: <span id="queryPollutionRaw"></span>
+        Crime: <span id="queryCrimeRaw"></span>
+        LandValue: <span id="queryLandValueRaw"></span>
+        Traffic Density: <span id="queryTrafficDensityRaw"></span>
+        Density: <span id="queryDensityRaw"></span>
+        </pre>
+    </div>
+    <pre>
+        Zone: <span id="queryZoneType"></span>
+        Density: <span id="queryDensity"></span>
+        Value: <span id="queryLandValue"></span>
+        Crime: <span id="queryCrime"></span>
+        Pollution: <span id="queryPollution"></span>
+        Growth: <span id="queryRate"></span>
+    </pre>
+    <div class="right">
+        <form id="queryForm">
+            <input type="submit" id="queryOK" class="rightButtons" value="OK">
+        </form>
+    </div>
+    <div class="clr"></div>
+</div>
+<!-- EVAL -->
+<div class="hidden modal" id="evalWindow">
+    <div id="evalHeader" class="modalHeader">Evaluation</div>
+        <pre>Public opinion:
+            Is the mayor doing a good job?:
+            Yes: <span id="evalYes"></span>% No: <span id="evalNo"></span>%
+            What are the worst problems?
+            <span id="evalProb1"></span> <span id="evalProb2"></span>
+            <span id="evalProb3"></span> <span id="evalProb4"></span>
+            Statistics:
+            Population: <span id="evalPopulation"></span>
+            Net Migration: <span id="evalMigration"></span>
+            Assessed Value: <span id="evalValue"></span>
+            Category: <span id="evalClass"></span>
+            Game Level: <span id="evalLevel"></span>
+            Score: <span id="evalScore"></span>
+            Annual change: <span id="evalScoreDelta"></span>
+        </pre>
+        <div class="right">
+            <form id="evalForm">
+                <input type="submit" id="evalOK" class="rightButtons" value="OK">
+            </form>
+        </div>
+    <div class="clr"></div>
+</div>
+<!-- DISASTER -->
+<div class="hidden modal" id="disasterWindow">
+    <div id="disasterHeader" class="modalHeader">Disasters</div>
+    <form id="disasterForm">
+        <div id="disasterSelectContainer">
+            <label id="disasterLabel" for="disasterSelect">What disaster do you want to befall this unsuspecting world?</label>
+            <select id="disasterSelect">
+                <option id="disasterNone" value="None">None</option>
+                <option id="disasterMonster" value="Monster">Monster</option>
+                <option id="disasterFire" value="Fire">Fire</option>
+                <option id="disasterFlood" value="Flood">Flood</option>
+                <option id="disasterCrash" value="Crash">Crash</option>
+                <option id="disasterMeltdown" value="Meltdown">Meltdown</option>
+                <option id="disasterTornado" value="Tornado">Tornado</option>
+            </select>
+        </div>
+        <div id="disasterButtons" class="right">
+            <button id="disasterCancel" class="rightButtons">Cancel</button>
+            <input type="submit" id="disasterOK" class="rightButtons" value="OK">
+        </div>
+        <div class="clr"></div>
+    </form>
+</div>
+<div id="debug"></div>
+<script>
+
+//var srcs = [ Micro.TileURI, Micro.SpriteURI ];
+var srcs = ['img/tiles.png', 'img/sprites.png'];
+var tileSet;
+
+window.onload = init;
+
+function init(){
+
+    var im = new Image();
+    im.onload = loadTileSet;
+    im.onerror = imgError;
+    im.src = srcs[0];
+}
+
+function loadSprites () { var sl = new Micro.SpriteLoader(srcs[1]); sl.load(spritesLoaded, spriteError); };
+function spritesLoaded (spriteImages) { var s = new Micro.SplashScreen(tileSet, spriteImages); };
+function spriteError () { alert('Failed to load sprites'); };
+
+function loadTileSet () { tileSet = new Micro.TileSet(this, loadSprites, tileSetError);};
+function tileSetError () { alert('Failed to load tileset!');};
+function imgError () { alert('Failed to load tile images!');};
+
+</script>
+</body>
+</html>

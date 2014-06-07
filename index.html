@@ -1,79 +1,88 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+<head>
+<title>3D.CITY</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+<style>
+* { margin:0; padding:0; border:0; -o-user-select:none; -ms-user-select:none; -khtml-user-select:none; -webkit-user-select:none; -moz-user-select: none;}
+html { width:100%; height:100%; }
+body { background:#6666e6; font:12px sans-serif; width:100%; height:100%; color:#fff;}
+#threeCanvas{ position:absolute; top:0; left:0px; display:block;}
+#debug{ position:absolute; padding:10px; right:0; bottom:0; text-align:right; width:10%; pointer-events:none; display:block; }
+#log{ position:absolute; padding:10px; left:0; bottom:0; width:10%; pointer-events:none; display:block;}
+#hub{ position:absolute; top:0; left:0; height:100%; width:100%; pointer-events:none; display:block; text-align:center;}
+</style>
+<script src="js/three.min.js"></script>
+<script src="js/loaders/sea3d.min.js"></script>
+<script src="js/view3d.js"></script>
+<script src="js/hub.js"></script>
+</head>
+<body>
+<canvas id="threeCanvas"></canvas>
+<div id="debug">pre alpha 0.1</div>
+<div id="log">loth 2014</div>
+<div id="hub"></div>
+<script>
+var d = document.getElementById('debug');
+var l = document.getElementById('log');
 
-  <head>
-    <meta charset='utf-8' />
-    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
-    <meta name="description" content="3d.city : " />
+var cityWorker, view3d, hub, im;
+window.onload = init;
 
-    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+function init(){
+    view3d = new V3D.Base();
+    hub = new HUB.Base();
+    //loop();
+}
 
-    <title>3d.city</title>
-  </head>
+function loop() {
+    requestAnimationFrame( loop, view3d.renderer.domElement );
+    view3d.renderer.render( view3d.scene, view3d.camera );
+    log(view3d.select);
+}
 
-  <body>
+function debug(txt){ d.innerHTML += "<br>"+txt; }
+function log(txt){ l.innerHTML = txt || '';  }
 
-    <!-- HEADER -->
-    <div id="header_wrap" class="outer">
-        <header class="inner">
-          <a id="forkme_banner" href="https://github.com/lo-th/3d.city">View on GitHub</a>
+//=======================================
+//  CITY INIT
+//=======================================
 
-          <h1 id="project_title">3d.city</h1>
-          <h2 id="project_tagline"></h2>
+function start() {
+	im = new Image();
+    im.onload = initCity;
+    im.src = 'img/tiles.png';
+}
 
-            <section id="downloads">
-              <a class="zip_download_link" href="https://github.com/lo-th/3d.city/zipball/master">Download this project as a .zip file</a>
-              <a class="tar_download_link" href="https://github.com/lo-th/3d.city/tarball/master">Download this project as a tar.gz file</a>
-            </section>
-        </header>
-    </div>
+function newMap() {
+	cityWorker.postMessage({tell:"NEWMAP"});
+}
 
-    <!-- MAIN CONTENT -->
-    <div id="main_content_wrap" class="outer">
-      <section id="main_content" class="inner">
-        <h3>
-<a name="welcome-to-github-pages" class="anchor" href="#welcome-to-github-pages"><span class="octicon octicon-link"></span></a>Welcome to GitHub Pages.</h3>
+function playMap() {
+	debug("not yet !! sorry")
+}
 
-<p>This automatic page generator is the easiest way to create beautiful pages for all of your projects. Author your page content here using GitHub Flavored Markdown, select a template crafted by a designer, and publish. After your page is generated, you can check out the new branch:</p>
+function play2d() {
+	window.location = "index_2d.html";
+}
 
-<pre><code>$ cd your_repo_root/repo_name
-$ git fetch origin
-$ git checkout gh-pages
-</code></pre>
+function initCity() {
+    cityWorker = new Worker('js/worker.city.js');
+    cityWorker.postMessage = cityWorker.webkitPostMessage || cityWorker.postMessage;
+    cityWorker.postMessage({tell:"INIT", url:document.location.href.replace(/\/[^/]*$/,"/") + "build/city.min.js"});
 
-<p>If you're using the GitHub for Mac, simply sync your repository and you'll see the new branch.</p>
+    cityWorker.onmessage = function(e) {
+        var phase = e.data.tell;
+        if( phase == "NEWMAP"){
+            view3d.paintMap(im, e.data.map, e.data.mapSize, e.data.island);
+            hub.start();
+        }
+        if( phase == "RUN"){
 
-<h3>
-<a name="designer-templates" class="anchor" href="#designer-templates"><span class="octicon octicon-link"></span></a>Designer Templates</h3>
-
-<p>We've crafted some handsome templates for you to use. Go ahead and continue to layouts to browse through them. You can easily go back to edit your page before publishing. After publishing your page, you can revisit the page generator and switch to another theme. Your Page content will be preserved if it remained markdown format.</p>
-
-<h3>
-<a name="rather-drive-stick" class="anchor" href="#rather-drive-stick"><span class="octicon octicon-link"></span></a>Rather Drive Stick?</h3>
-
-<p>If you prefer to not use the automatic generator, push a branch named <code>gh-pages</code> to your repository to create a page manually. In addition to supporting regular HTML content, GitHub Pages support Jekyll, a simple, blog aware static site generator written by our own Tom Preston-Werner. Jekyll makes it easy to create site-wide headers and footers without having to copy them across every page. It also offers intelligent blog support and other advanced templating features.</p>
-
-<h3>
-<a name="authors-and-contributors" class="anchor" href="#authors-and-contributors"><span class="octicon octicon-link"></span></a>Authors and Contributors</h3>
-
-<p>You can <a href="https://github.com/blog/821" class="user-mention">@mention</a> a GitHub username to generate a link to their profile. The resulting <code>&lt;a&gt;</code> element will link to the contributor's GitHub Profile. For example: In 2007, Chris Wanstrath (<a href="https://github.com/defunkt" class="user-mention">@defunkt</a>), PJ Hyett (<a href="https://github.com/pjhyett" class="user-mention">@pjhyett</a>), and Tom Preston-Werner (<a href="https://github.com/mojombo" class="user-mention">@mojombo</a>) founded GitHub.</p>
-
-<h3>
-<a name="support-or-contact" class="anchor" href="#support-or-contact"><span class="octicon octicon-link"></span></a>Support or Contact</h3>
-
-<p>Having trouble with Pages? Check out the documentation at <a href="http://help.github.com/pages">http://help.github.com/pages</a> or contact <a href="mailto:support@github.com">support@github.com</a> and we’ll help you sort it out.</p>
-      </section>
-    </div>
-
-    <!-- FOOTER  -->
-    <div id="footer_wrap" class="outer">
-      <footer class="inner">
-        <p class="copyright">3d.city maintained by <a href="https://github.com/lo-th">lo-th</a></p>
-        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
-      </footer>
-    </div>
-
-    
-
-  </body>
+        }
+    }
+}
+</script>
+</body>
 </html>
