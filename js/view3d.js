@@ -42,7 +42,8 @@ V3D.Base = function(){
 		{id:12, tool:'wire',        size:1, price:5 ,    color:'khaki'},
 		{id:13, tool:'park',        size:1, price:10,    color:'darkgreen'},
 		{id:14, tool:'query',       size:1, price:0,     color:'cyan'},
-		{id:15, tool:'bulldozer',   size:1, price:1,     color:'salmon'}
+		{id:15, tool:'bulldozer',   size:1, price:1,     color:'salmon'},
+		{id:16, tool:'none',   size:0, price:0,     color:'green'}
 	];
 
     this.loadSea3d();
@@ -202,16 +203,19 @@ V3D.Base.prototype = {
 		//log(this.select);
 	},
 	addTool : function(id){
-		id = Math.floor(Math.random()*16);
+		//if(!id) id = Math.floor(Math.random()*16);
 
 		if(this.tool !== null) this.removeTool();
+		
 		var ntool = this.toolSet[id];
 		var size = ntool.size;
 		var name = ntool.tool;
-		this.tool = new THREE.Mesh(new THREE.BoxGeometry(size,1,size), new THREE.MeshBasicMaterial({color:ntool.color}) )
-		if(size == 6 || size == 4) this.tool.geometry.applyMatrix(new THREE.Matrix4().makeTranslation(0.5, 0, 0.5));
-        this.scene.add(this.tool);
-        log(name);
+		if(id!==16){
+			this.tool = new THREE.Mesh(new THREE.BoxGeometry(size,1,size), new THREE.MeshBasicMaterial({color:ntool.color}) )
+			if(size == 6 || size == 4) this.tool.geometry.applyMatrix(new THREE.Matrix4().makeTranslation(0.5, 0, 0.5));
+	        this.scene.add(this.tool);
+        }
+        sendTool(name);
 	},
 	removeTool : function(){
 		this.scene.remove(this.tool);

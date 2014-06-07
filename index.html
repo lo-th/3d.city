@@ -60,7 +60,7 @@ function newMap() {
 }
 
 function playMap() {
-	debug("not yet !! sorry");
+	hub.initGameHub();
     cityWorker.postMessage({tell:"PLAYMAP"});
 }
 
@@ -68,8 +68,14 @@ function play2d() {
 	window.location = "index_2d.html";
 }
 
-function testTool() {
-    view3d.addTool();
+function addTool(id) {
+    //console.log(id)
+    view3d.addTool(id);
+}
+
+function sendTool(name) {
+    //console.log(name);
+    cityWorker.postMessage({tell:"TOOL", name:name});
 }
 
 function initCity() {
@@ -84,7 +90,7 @@ function initCity() {
             hub.start();
         }
         if( phase == "TOOL"){
-            
+
         }
         if( phase == "RUN"){
             log(e.data.infos.join("\n"));

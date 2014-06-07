@@ -50,18 +50,38 @@ HUB.Base.prototype = {
     	this.addButton('New Map', newMap );
     	this.addButton('Play Game', playMap );
     	this.addButton('Play 2D', play2d );
-        this.addButton('Tool Test', testTool );
+        //this.addButton('Tool Test', testTool );
     },
-    addButton : function(name, fun){
-    	var b = this.createLabel(name, [140, 40], true);
-    	b.style.cssText = 'margin:10px; pointer-events:auto; border:1px solid rgba(255,255,255,0);';
+    initGameHub : function(){
+        this.removeButtons();
+        var bname = ['residential','commercial','industrial','Police', 'Fire','Port','airport','stadium', 'coal','nuclear','road','rail','wire','park','query','bulldozer', 'none'];
+        for(var i = 0; i<bname.length; i++){
+            this.addButton(bname[i], null, [70,30] );
+        }
+        for(var i = 0; i<this.buttons.length; i++){
+            this.buttons[i].name = i;
+            this.buttons[i].addEventListener('click',  function(e){addTool(this.name)}, false);
+        }
+    },
+    addButton : function(name, fun, size){
+        if(!size) size = [140, 40];
+    	var b = this.createLabel(name, size, true);
+    	if(size[0]>100) b.style.cssText = 'margin:10px; pointer-events:auto; border:1px solid rgba(255,255,255,0);';
+        else b.style.cssText = 'margin:4px; pointer-events:auto; border:1px solid rgba(255,255,255,0);';
     	this.hub.appendChild( b );
 
     	b.addEventListener( 'mouseover', function ( e ) { e.preventDefault(); this.style.border = '1px solid rgba(255,255,255,1)'; this.style.backgroundColor = 'rgba(0,0,0,0.3)';  }, false );
 	    b.addEventListener( 'mouseout', function ( e ) { e.preventDefault(); this.style.border = '1px solid rgba(255,255,255,0)'; this.style.backgroundColor = 'rgba(255,255,255,0)';  }, false );
-	    b.addEventListener('click',fun || function(e){}, false);
+	    if(fun!==null) b.addEventListener('click', fun || function(e){}, false);
 
     	this.buttons.push(b);
+    },
+    removeButtons : function(){
+        var i = this.buttons.length;
+        while(i--){
+            this.hub.removeChild( this.buttons[i] );
+        }
+        this.buttons = [];
     },
     createLabel : function(text, size, b) {
 		var color = 'white';//'rgba(255,255,255,1)'; //"#FFFFFF";
@@ -77,7 +97,10 @@ HUB.Base.prototype = {
 		ctx = c.getContext("2d");
 		//ctx.font = 'italic '+40+'pt Calibri';
 		ctx.font = 'bold '+26+'pt Calibri';
-		if(b)ctx.font = 'bold '+20+'pt Calibri';
+		if(b){
+            if(size[0]>100) ctx.font = 'bold '+20+'pt Calibri';
+            else ctx.font = 'normal '+10+'pt Calibri';
+        }
 		ctx.textAlign = "center";
 		ctx.textBaseline = "middle";
 		

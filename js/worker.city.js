@@ -13,7 +13,7 @@ var simNeededBudget = false;
 var currentTool = null;
 
 
-var tool = [];
+//var tool = [];
 
 self.onmessage = function (e) {
 	var p = e.data.tell;
@@ -21,28 +21,56 @@ self.onmessage = function (e) {
 	if( p == "INIT" ){
 		importScripts(e.data.url);
 		mapGen  = new Micro.generateMap();
+
 		newMap();
     }
     if( p == "NEWMAP" ){
     	newMap();
+    }
+    if( p == "TOOL" ){
+    	tool(e.data.name);
+    }
+    if( p == "MAPCLICK" ){
+    	mapClick(e.data.x, e.data.y);
     }
     if( p == "PLAYMAP" ){
     	playMap();
     }
 
 }
-var selectTool = function(){
+var tool = function(name){
+	if(currentTool!==null) currentTool.clear();
+    if(name !== "none") currentTool = gameTools[name];
+    else currentTool = null;
+}
+
+var mapClick = function(x,y){
+	if(currentTool!==null){
+        var budget = simulation.budget;
+        var evaluation = simulation.evaluation;
+        var messageMgr = new Micro.MessageManager();
+        currentTool.doTool(x, y, messageMgr, simulation.blockMaps );
+        currentTool.modifyIfEnoughFunding(budget, messageMgr);
+        var tell = "";
+        switch (currentTool.result) {
+            case currentTool.TOOLRESULT_NEEDS_BULLDOZE: tell = TXT.toolMessages.needsDoze; break;
+            case currentTool.TOOLRESULT_NO_MONEY: tell = TXT.toolMessages.noMoney; break; 
+            default: tell = '&nbsp;';
+        }
+        processMessages(messageMgr.getMessages());
+	}
 
 }
 
 var newMap = function(){
 	map = mapGen.construct(mapSize[0], mapSize[1]);
+	gameTools = new Micro.GameTools(map);
     var val = map.genFull();
 	self.postMessage({ tell:"NEWMAP", map:val, mapSize:mapSize, island:map.isIsland });
 }
 
 var playMap = function(){
-	gameTools = new Micro.GameTools(map);
+	//gameTools = new Micro.GameTools(map);
 	simulation = new Micro.Simulation( map, difficulty, speed);
 	timer = setInterval(update, 1000/60);
 }
