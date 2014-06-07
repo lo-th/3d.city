@@ -13,7 +13,7 @@ Micro.Game = function(gameMap, tileSet, spriteSheet, difficulty) {
     difficulty = difficulty || 0;
 
     this.gameMap = gameMap;
-    this.tileSet = tileSet;
+    this.tileSet = tileSet || null;
     this.notification = new Micro.Notification();
     this.simulation = new Micro.Simulation(this.gameMap, difficulty, 3);
     this.rci = new Micro.RCI('RCIContainer');
@@ -22,8 +22,12 @@ Micro.Game = function(gameMap, tileSet, spriteSheet, difficulty) {
     this.evalWindow = new Micro.EvaluationWindow('opaque', 'evalWindow');
     this.disasterWindow = new Micro.DisasterWindow('opaque', 'disasterWindow');
 
-    this.gameCanvas = new Micro.GameCanvas('canvasContainer');
-    this.gameCanvas.init(this.gameMap, this.tileSet, spriteSheet);
+    this.gameCanvas = null;
+    if(this.tileSet !== null){
+        this.gameCanvas = new Micro.GameCanvas('canvasContainer');
+        this.gameCanvas.init(this.gameMap, this.tileSet, spriteSheet);
+    }
+
     this.inputStatus = new Micro.InputStatus(this.gameMap);
     this.mouse = null;
     this.sprites = null;
@@ -346,7 +350,7 @@ Micro.Game.prototype = {
         U.gameCanvas.paint(U.mouse, U.sprite, U.isPaused);
         var t4 = new Date();
 
-        U.debug.innerHTML = "input:" +(t1-t0)+" sim:"+(t2-t1)+" sprite:"+(t3-t2)+" paint:"+(t4-t3) +"<br> total:"+(t4-t0)+ "<br>"+U.isPaused ;
+        U.debug.innerHTML = "input:" +(t1-t0)+" sim:"+(t2-t1)+" sprite:"+(t3-t2)+" paint:"+(t4-t3) +" total:"+(t4-t0)+ " "+U.isPaused ;
 
       
         //U.delay = U.timerStep - (Date.now()-U.timeStart);
