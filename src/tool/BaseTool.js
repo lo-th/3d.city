@@ -54,4 +54,4 @@ Micro.BaseTool.prototype = {
     setAutoBulldoze: function(value) {
         this.autoBulldoze = value;
     }
-}
+};

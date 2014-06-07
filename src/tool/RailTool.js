@@ -55,19 +55,15 @@ Micro.RailTool.prototype.layRail = function(x, y) {
             return this.TOOLRESULT_FAILED;
 
         case Tile.LHPOWER: this._worldEffects.setTile(x, y, Tile.RAILVPOWERH, Tile.CONDBIT | Tile.BURNBIT | Tile.BULLBIT); break;
-
         case Tile.LVPOWER: this._worldEffects.setTile(x, y, Tile.RAILHPOWERV, Tile.CONDBIT | Tile.BURNBIT | Tile.BULLBIT); break;
-
         case Tile.ROADS: this._worldEffects.setTile(x, y, Tile.VRAILROAD, Tile.BURNBIT | Tile.BULLBIT); break;
-
         case Tile.ROADS2: this._worldEffects.setTile(x, y, Tile.HRAILROAD, Tile.BURNBIT | Tile.BULLBIT); break;
-
         default: return this.TOOLRESULT_FAILED;
-      }
+    }
 
-      this.addCost(cost);
-      this.checkZoneConnections(x, y);
-      return this.TOOLRESULT_OK;
+    this.addCost(cost);
+    this.checkZoneConnections(x, y);
+    return this.TOOLRESULT_OK;
 };
 
 Micro.RailTool.prototype.doTool = function(x, y, messageManager, blockMaps) {

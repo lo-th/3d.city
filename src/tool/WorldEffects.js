@@ -11,7 +11,7 @@ Micro.fromKey = function(k) {
 Micro.WorldEffects = function (map) {
     this._map = map;
     this._data = {};
-}
+};
 
 Micro.WorldEffects.prototype = {
     constructor: Micro.WorldEffects,
@@ -41,4 +41,4 @@ Micro.WorldEffects.prototype = {
             this._map.setTo(coords, this._data[keys[i]]);
         }
     }
-}
+};

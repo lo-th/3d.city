@@ -59,7 +59,6 @@ var mapClick = function(x,y){
         }
         processMessages(messageMgr.getMessages());
 	}
-
 }
 
 var newMap = function(){

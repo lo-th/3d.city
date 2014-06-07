@@ -188,7 +188,10 @@ V3D.Base.prototype = {
 			if ( intersects.length > 0 ) {
 				//logLand(intersects[0].object.name);
 				//this.select = intersects[0].object.name;
-				if(this.tool!==null) this.tool.position.set(Math.round(intersects[0].point.x), 0, Math.round(intersects[0].point.z));
+				if(this.tool!==null){
+					if(!this.tool.visible) this.tool.visible = true;
+					this.tool.position.set(Math.round(intersects[0].point.x), 0, Math.round(intersects[0].point.z));
+				} 
 				//log(intersects[0].point.x, intersects[0].point.z)
 				/*marker.position.set( 0, 0, 0 );
 				if(intersects[0].face)marker.lookAt(intersects[0].face.normal);
@@ -196,15 +199,14 @@ V3D.Base.prototype = {
 				
 				//if(sh)shoot();
 		    } else {
+		    	if(this.tool!==null){
+		    		if(this.tool.visible) this.tool.visible = false;
+		    	}
 		    	//this.select = '';
 		    }
 		}
-		
-		//log(this.select);
 	},
 	addTool : function(id){
-		//if(!id) id = Math.floor(Math.random()*16);
-
 		if(this.tool !== null) this.removeTool();
 		
 		var ntool = this.toolSet[id];
@@ -214,6 +216,7 @@ V3D.Base.prototype = {
 			this.tool = new THREE.Mesh(new THREE.BoxGeometry(size,1,size), new THREE.MeshBasicMaterial({color:ntool.color}) )
 			if(size == 6 || size == 4) this.tool.geometry.applyMatrix(new THREE.Matrix4().makeTranslation(0.5, 0, 0.5));
 	        this.scene.add(this.tool);
+	        this.tool.visible = false;
         }
         sendTool(name);
 	},

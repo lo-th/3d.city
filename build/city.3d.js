@@ -3903,7 +3903,7 @@ Micro.fromKey = function(k) {
 Micro.WorldEffects = function (map) {
     this._map = map;
     this._data = {};
-}
+};
 
 Micro.WorldEffects.prototype = {
     constructor: Micro.WorldEffects,
@@ -3933,7 +3933,7 @@ Micro.WorldEffects.prototype = {
             this._map.setTo(coords, this._data[keys[i]]);
         }
     }
-}
+};
 
 Micro.BaseTool = function(){
     this.TOOLRESULT_OK = 0;
@@ -3990,7 +3990,7 @@ Micro.BaseTool.prototype = {
     setAutoBulldoze: function(value) {
         this.autoBulldoze = value;
     }
-}
+};
 
 Micro.RoadTable = [
     Tile.ROADS, Tile.ROADS2, Tile.ROADS, Tile.ROADS3,
@@ -4141,7 +4141,7 @@ Micro.BaseToolConnector.prototype.checkBorder = function(x, y, size) {
 Micro.ParkTool = function (map) {
     Micro.BaseTool.call( this );
     this.init(10, map, true);
-}
+};
 
 Micro.ParkTool.prototype = Object.create( Micro.BaseTool.prototype );
 
@@ -4160,82 +4160,62 @@ Micro.ParkTool.prototype.doTool = function(x, y, messageManager, blockMaps) {
     this._worldEffects.setTile(x, y, tileValue, tileFlags);
     this.addCost(10);
     this.result = this.TOOLRESULT_OK;
-}
+};
 
-
-//  return ParkTool;
-//});
-
-/*
-
-define(['BaseTool', 'Messages', 'Random', 'Tile', 'Micro', 'Micro'],
-       function(BaseTool, Messages, Random, Tile, Micro, Micro) {
-  "use strict";
-*/
-  Micro.BulldozerTool = function (map) {
+Micro.BulldozerTool = function (map) {
     Micro.BaseTool.call( this );
     this.init(10, map, true);
-  }
+}
 
-  Micro.BulldozerTool.prototype = Object.create( Micro.BaseTool.prototype );
- // Micro.BaseTool.makeTool(BulldozerTool);
+Micro.BulldozerTool.prototype = Object.create( Micro.BaseTool.prototype );
 
-
-  Micro.BulldozerTool.prototype.putRubble = function(x, y, size) {
+Micro.BulldozerTool.prototype.putRubble = function(x, y, size) {
     for (var xx = x; xx < x + size; xx++) {
-      for (var yy = y; yy < y + size; yy++)  {
-        if (this._map.testBounds(xx, yy)) {
-          var tile = this._worldEffects.getTile(xx, yy);
-
-          if (tile != Tile.RADTILE && tile != Tile.DIRT)
-            this._worldEffects.setTile(xx, yy, Tile.TINYEXP + Random.getRandom(2), Tile.ANIMBIT | Tile.BULLBIT);
+        for (var yy = y; yy < y + size; yy++)  {
+            if (this._map.testBounds(xx, yy)) {
+                var tile = this._worldEffects.getTile(xx, yy);
+                if (tile != Tile.RADTILE && tile != Tile.DIRT) this._worldEffects.setTile(xx, yy, Tile.TINYEXP + Random.getRandom(2), Tile.ANIMBIT | Tile.BULLBIT);
+            }
         }
-      }
     }
-  };
+};
 
-
-  Micro.BulldozerTool.prototype.layDoze = function(x, y) {
+Micro.BulldozerTool.prototype.layDoze = function(x, y) {
     var tile = this._worldEffects.getTile(x, y);
 
-    if (!tile.isBulldozable())
-      return this.TOOLRESULT_FAILED;
+    if (!tile.isBulldozable()) return this.TOOLRESULT_FAILED;
 
     tile = tile.getValue();
     tile = Micro.normalizeRoad(tile);
 
     switch (tile) {
-      case Tile.HBRIDGE:
-      case Tile.VBRIDGE:
-      case Tile.BRWV:
-      case Tile.BRWH:
-      case Tile.HBRDG0:
-      case Tile.HBRDG1:
-      case Tile.HBRDG2:
-      case Tile.HBRDG3:
-      case Tile.VBRDG0:
-      case Tile.VBRDG1:
-      case Tile.VBRDG2:
-      case Tile.VBRDG3:
-      case Tile.HPOWER:
-      case Tile.VPOWER:
-      case Tile.HRAIL:
-      case Tile.VRAIL:
-        this._worldEffects.setTile(x, y, Tile.RIVER);
+        case Tile.HBRIDGE:
+        case Tile.VBRIDGE:
+        case Tile.BRWV:
+        case Tile.BRWH:
+        case Tile.HBRDG0:
+        case Tile.HBRDG1:
+        case Tile.HBRDG2:
+        case Tile.HBRDG3:
+        case Tile.VBRDG0:
+        case Tile.VBRDG1:
+        case Tile.VBRDG2:
+        case Tile.VBRDG3:
+        case Tile.HPOWER:
+        case Tile.VPOWER:
+        case Tile.HRAIL:
+        case Tile.VRAIL:
+            this._worldEffects.setTile(x, y, Tile.RIVER);
         break;
 
-      default:
-        this._worldEffects.setTile(x, y, Tile.DIRT);
-        break;
+        default: this._worldEffects.setTile(x, y, Tile.DIRT); break;
     }
 
     this.addCost(1);
-
     return this.TOOLRESULT_OK;
-  };
+};
 
-
-  Micro.BulldozerTool.prototype.doTool = function(x, y, messageManager, blockMaps) {
+Micro.BulldozerTool.prototype.doTool = function(x, y, messageManager, blockMaps) {
     if (!this._map.testBounds(x, y)) this.result = this.TOOLRESULT_FAILED;
 
     var tile = this._worldEffects.getTile(x, y);
@@ -4246,67 +4226,53 @@ define(['BaseTool', 'Messages', 'Random', 'Tile', 'Micro', 'Micro'],
     var deltaY;
 
     if (tile.isZone()) {
-      zoneSize = Micro.checkZoneSize(tileValue);
-      deltaX = 0;
-      deltaY = 0;
+        zoneSize = Micro.checkZoneSize(tileValue);
+        deltaX = 0;
+        deltaY = 0;
     } else {
-      var result = Micro.checkBigZone(tileValue);
-      zoneSize = result.zoneSize;
-      deltaX = result.deltaX;
-      deltaY = result.deltaY;
+        var result = Micro.checkBigZone(tileValue);
+        zoneSize = result.zoneSize;
+        deltaX = result.deltaX;
+        deltaY = result.deltaY;
     }
 
     if (zoneSize > 0) {
-      this.addCost(this.bulldozerCost);
+        this.addCost(this.bulldozerCost);
 
-      var dozeX = x;
-      var dozeY = y;
-      var centerX = x + deltaX;
-      var centerY = y + deltaY;
+        var dozeX = x;
+        var dozeY = y;
+        var centerX = x + deltaX;
+        var centerY = y + deltaY;
 
-      switch (zoneSize) {
-        case 3:
-          messageManager.sendMessage(Messages.SOUND_EXPLOSIONHIGH);
-          this.putRubble(centerX - 1, centerY - 1, 3);
-          break;
+        switch (zoneSize) {
+            case 3:
+                messageManager.sendMessage(Messages.SOUND_EXPLOSIONHIGH);
+                this.putRubble(centerX - 1, centerY - 1, 3);
+            break;
+            case 4:
+                messageManager.sendMessage(Messages.SOUND_EXPLOSIONLOW);
+                this.putRubble(centerX - 1, centerY - 1, 4);
+            break;
+            case 6:
+                messageManager.sendMessage(Messages.SOUND_EXPLOSIONHIGH);
+                messageManager.sendMessage(Messages.SOUND_EXPLOSIONLOW);
+                this.putRubble(centerX - 1, centerY - 1, 6);
+            break;
+        }
 
-        case 4:
-          messageManager.sendMessage(Messages.SOUND_EXPLOSIONLOW);
-          this.putRubble(centerX - 1, centerY - 1, 4);
-          break;
-
-        case 6:
-          messageManager.sendMessage(Messages.SOUND_EXPLOSIONHIGH);
-          messageManager.sendMessage(Messages.SOUND_EXPLOSIONLOW);
-          this.putRubble(centerX - 1, centerY - 1, 6);
-          break;
-      }
-
-      this.result = this.TOOLRESULT_OK;
+        this.result = this.TOOLRESULT_OK;
     }
 
     var toolResult;
     if (tileValue === Tile.RIVER || tileValue === Tile.REDGE || tileValue === Tile.CHANNEL) {
-      toolResult = this.layDoze(x, y);
-
-      if (tileValue !== this._worldEffects.getTileValue(x, y))
-        this.addCost(5);
+        toolResult = this.layDoze(x, y);
+        if (tileValue !== this._worldEffects.getTileValue(x, y)) this.addCost(5);
     } else {
-      toolResult =  this.layDoze(x, y);
+        toolResult =  this.layDoze(x, y);
     }
 
     this.result = toolResult;
-  };
-
-
- // return BulldozerTool;
-//});
-
-/* 
-
-/*define(['BaseTool', 'Connector', 'Tile', 'TileUtils'],
-       function(BaseTool, Connector, Tile, TileUtils) {
-  "use strict";*/
+};
 
 Micro.BuildingTool = function(cost, centreTile, map, size, animated) {
     Micro.BaseToolConnector.call( this );
@@ -4314,106 +4280,81 @@ Micro.BuildingTool = function(cost, centreTile, map, size, animated) {
     this.centreTile = centreTile;
     this.size = size;
     this.animated = animated;
-  }
+};
 
-  Micro.BuildingTool.prototype = Object.create( Micro.BaseToolConnector.prototype );
+Micro.BuildingTool.prototype = Object.create( Micro.BaseToolConnector.prototype );
 
-
-  Micro.BuildingTool.prototype.putBuilding = function(leftX, topY) {
+Micro.BuildingTool.prototype.putBuilding = function(leftX, topY) {
     var posX, posY, tileValue, tileFlags;
     var baseTile = this.centreTile - this.size - 1;
 
     for (var dy = 0; dy < this.size; dy++) {
-      posY = topY + dy;
+        posY = topY + dy;
 
-      for (var dx = 0; dx < this.size; dx++) {
-        posX = leftX + dx;
-        tileValue = baseTile;
-        tileFlags = Tile.BNCNBIT;
+        for (var dx = 0; dx < this.size; dx++) {
+            posX = leftX + dx;
+            tileValue = baseTile;
+            tileFlags = Tile.BNCNBIT;
 
-        if (dx === 1) {
-          if (dy === 1)
-            tileFlags |= Tile.ZONEBIT;
-          else if (dy === 2 && this.animated)
-            tileFlags |= Tile.ANIMBIT;
+            if (dx === 1) {
+                if (dy === 1) tileFlags |= Tile.ZONEBIT;
+                else if (dy === 2 && this.animated) tileFlags |= Tile.ANIMBIT;
+            }
+            this._worldEffects.setTile(posX, posY, tileValue, tileFlags);
+            baseTile++;
         }
-
-        this._worldEffects.setTile(posX, posY, tileValue, tileFlags);
-
-        baseTile++;
-      }
     }
-  };
+};
 
-
-  Micro.BuildingTool.prototype.prepareBuildingSite = function(leftX, topY) {
+Micro.BuildingTool.prototype.prepareBuildingSite = function(leftX, topY) {
     // Check that the entire site is on the map
-    if (leftX < 0 || leftX + this.size > this._map.width)
-      return this.TOOLRESULT_FAILED;
-
-    if (topY < 0 || topY + this.size > this._map.height)
-      return this.TOOLRESULT_FAILED;
+    if (leftX < 0 || leftX + this.size > this._map.width) return this.TOOLRESULT_FAILED;
+    if (topY < 0 || topY + this.size > this._map.height) return this.TOOLRESULT_FAILED;
 
     var posX, posY, tileValue;
 
     // Check whether the tiles are clear
     for (var dy = 0; dy < this.size; dy++) {
-      posY = topY + dy;
+        posY = topY + dy;
+        for (var dx = 0; dx < this.size; dx++) {
+            posX = leftX + dx;
+            tileValue = this._worldEffects.getTileValue(posX, posY);
 
-      for (var dx = 0; dx < this.size; dx++) {
-        posX = leftX + dx;
+            if (tileValue === Tile.DIRT) continue;
+            if (!this.autoBulldoze) {
+                // No Tile.DIRT and no bull-dozer => not buildable
+                return this.TOOLRESULT_NEEDS_BULLDOZE;
+            }
 
-        tileValue = this._worldEffects.getTileValue(posX, posY);
-
-        if (tileValue === Tile.DIRT)
-          continue;
-
-        if (!this.autoBulldoze) {
-          // No Tile.DIRT and no bull-dozer => not buildable
-          return this.TOOLRESULT_NEEDS_BULLDOZE;
-        }
-
-        if (!Micro.canBulldoze(tileValue)) {
-          // tilevalue cannot be auto-bulldozed
-          return this.TOOLRESULT_NEEDS_BULLDOZE;
-        }
-
+            if (!Micro.canBulldoze(tileValue)) {
+                // tilevalue cannot be auto-bulldozed
+                return this.TOOLRESULT_NEEDS_BULLDOZE;
+            }
         this._worldEffects.setTile(posX, posY, Tile.DIRT);
         this.addCost(this.bulldozerCost);
-      }
+        }
     }
-
     return this.TOOLRESULT_OK;
-  };
+};
 
-
-  Micro.BuildingTool.prototype.buildBuilding = function(x, y) {
+Micro.BuildingTool.prototype.buildBuilding = function(x, y) {
     // Correct to top left
     x--;
     y--;
 
     var prepareResult = this.prepareBuildingSite(x, y);
-    if (prepareResult !== this.TOOLRESULT_OK)
-      return prepareResult;
+    if (prepareResult !== this.TOOLRESULT_OK) return prepareResult;
 
     this.addCost(this.toolCost);
-
     this.putBuilding(x, y);
-
     this.checkBorder(x, y);
 
     return this.TOOLRESULT_OK;
-  };
+};
 
-
-  Micro.BuildingTool.prototype.doTool = function(x, y, messageManager, blockMaps) {
+Micro.BuildingTool.prototype.doTool = function(x, y, messageManager, blockMaps) {
     this.result = this.buildBuilding(x, y);
-  };
-
-
- // return BuildingTool;
-//});
-
+};
 
 Micro.RailTool = function (map) {
     Micro.BaseToolConnector.call( this );
@@ -4471,19 +4412,15 @@ Micro.RailTool.prototype.layRail = function(x, y) {
             return this.TOOLRESULT_FAILED;
 
         case Tile.LHPOWER: this._worldEffects.setTile(x, y, Tile.RAILVPOWERH, Tile.CONDBIT | Tile.BURNBIT | Tile.BULLBIT); break;
-
         case Tile.LVPOWER: this._worldEffects.setTile(x, y, Tile.RAILHPOWERV, Tile.CONDBIT | Tile.BURNBIT | Tile.BULLBIT); break;
-
         case Tile.ROADS: this._worldEffects.setTile(x, y, Tile.VRAILROAD, Tile.BURNBIT | Tile.BULLBIT); break;
-
         case Tile.ROADS2: this._worldEffects.setTile(x, y, Tile.HRAILROAD, Tile.BURNBIT | Tile.BULLBIT); break;
-
         default: return this.TOOLRESULT_FAILED;
-      }
+    }
 
-      this.addCost(cost);
-      this.checkZoneConnections(x, y);
-      return this.TOOLRESULT_OK;
+    this.addCost(cost);
+    this.checkZoneConnections(x, y);
+    return this.TOOLRESULT_OK;
 };
 
 Micro.RailTool.prototype.doTool = function(x, y, messageManager, blockMaps) {
@@ -4570,115 +4507,78 @@ Micro.WireTool.prototype.doTool = function(x, y, messageManager, blockMaps) {
     this.result = this.layWire(x, y);
 };
 
-/*
-define(['BaseTool', 'Connector', 'Tile', 'Micro'],
-       function(BaseTool, Connector, Tile, Micro) {
-  "use strict";
- */
-  Micro.RoadTool = function (map) {
+
+Micro.RoadTool = function (map) {
     Micro.BaseToolConnector.call( this );
     this.init(10, map, true, true);
-  }
+}
 
-  Micro.RoadTool.prototype = Object.create( Micro.BaseToolConnector.prototype );
+Micro.RoadTool.prototype = Object.create( Micro.BaseToolConnector.prototype );
 
-
-
-  Micro.RoadTool.prototype.layRoad = function(x, y) {
+Micro.RoadTool.prototype.layRoad = function(x, y) {
     this.doAutoBulldoze(x, y);
     var tile = this._worldEffects.getTileValue(x, y);
     var cost = 10;
 
     switch (tile) {
-      case Tile.DIRT:
-        this._worldEffects.setTile(x, y, Tile.ROADS, Tile.BULLBIT | Tile.BURNBIT);
-        break;
+        case Tile.DIRT: this._worldEffects.setTile(x, y, Tile.ROADS, Tile.BULLBIT | Tile.BURNBIT); break;
+        case Tile.RIVER:
+        case Tile.REDGE:
+        case Tile.CHANNEL:
+            cost = 50;
+            if (x < this._map.width - 1) {
+                tile = this._worldEffects.getTileValue(x + 1, y);
+                tile = Micro.normalizeRoad(tile);
 
-      case Tile.RIVER:
-      case Tile.REDGE:
-      case Tile.CHANNEL:
-        cost = 50;
+                if (tile === Tile.VRAILROAD || tile === Tile.HBRIDGE || (tile >= Tile.ROADS && tile <= Tile.HROADPOWER)) {
+                    this._worldEffects.setTile(x, y, Tile.HBRIDGE, Tile.BULLBIT);
+                    break;
+                }
+            }
+            if (x > 0) {
+                tile = this._worldEffects.getTileValue(x - 1, y);
+                tile = Micro.normalizeRoad(tile);
 
-        if (x < this._map.width - 1) {
-          tile = this._worldEffects.getTileValue(x + 1, y);
-          tile = Micro.normalizeRoad(tile);
+                if (tile === Tile.VRAILROAD || tile === Tile.HBRIDGE || (tile >= Tile.ROADS && tile <= Tile.INTERSECTION)) {
+                    this._worldEffects.setTile(x, y, Tile.HBRIDGE, Tile.BULLBIT);
+                    break;
+                }
+            }
+            if (y < this._map.height - 1) {
+                tile = this._worldEffects.getTileValue(x, y + 1);
+                tile = Micro.normalizeRoad(tile);
 
-          if (tile === Tile.VRAILROAD || tile === Tile.HBRIDGE ||
-              (tile >= Tile.ROADS && tile <= Tile.HROADPOWER)) {
-            this._worldEffects.setTile(x, y, Tile.HBRIDGE, Tile.BULLBIT);
-            break;
-          }
-        }
+                if (tile === Tile.HRAILROAD || tile === Tile.VROADPOWER || (tile >= Tile.VBRIDGE && tile <= Tile.INTERSECTION)) {
+                    this._worldEffects.setTile(x, y, Tile.VBRIDGE, Tile.BULLBIT);
+                    break;
+                }
+            }
+            if (y > 0) {
+                tile = this._worldEffects.getTileValue(x, y - 1);
+                tile = Micro.normalizeRoad(tile);
 
-        if (x > 0) {
-          tile = this._worldEffects.getTileValue(x - 1, y);
-          tile = Micro.normalizeRoad(tile);
+                if (tile === Tile.HRAILROAD || tile === Tile.VROADPOWER || (tile >= Tile.VBRIDGE && tile <= Tile.INTERSECTION)) {
+                    this._worldEffects.setTile(x, y, Tile.VBRIDGE, Tile.BULLBIT);
+                    break;
+                }
+            }
+            return this.TOOLRESULT_FAILED;
 
-          if (tile === Tile.VRAILROAD || tile === Tile.HBRIDGE ||
-              (tile >= Tile.ROADS && tile <= Tile.INTERSECTION)) {
-            this._worldEffects.setTile(x, y, Tile.HBRIDGE, Tile.BULLBIT);
-            break;
-          }
-        }
-
-        if (y < this._map.height - 1) {
-          tile = this._worldEffects.getTileValue(x, y + 1);
-          tile = Micro.normalizeRoad(tile);
-
-          if (tile === Tile.HRAILROAD || tile === Tile.VROADPOWER ||
-              (tile >= Tile.VBRIDGE && tile <= Tile.INTERSECTION)) {
-            this._worldEffects.setTile(x, y, Tile.VBRIDGE, Tile.BULLBIT);
-            break;
-          }
-        }
-
-        if (y > 0) {
-          tile = this._worldEffects.getTileValue(x, y - 1);
-          tile = Micro.normalizeRoad(tile);
-
-          if (tile === Tile.HRAILROAD || tile === Tile.VROADPOWER ||
-              (tile >= Tile.VBRIDGE && tile <= Tile.INTERSECTION)) {
-            this._worldEffects.setTile(x, y, Tile.VBRIDGE, Tile.BULLBIT);
-            break;
-          }
-        }
-
-        return this.TOOLRESULT_FAILED;
-
-      case Tile.LHPOWER:
-        this._worldEffects.setTile(x, y, Tile.VROADPOWER | Tile.CONDBIT | Tile.BURNBIT | Tile.BULLBIT);
-        break;
-
-      case Tile.LVPOWER:
-        this._worldEffects.setTile(x, y, Tile.HROADPOWER | Tile.CONDBIT | Tile.BURNBIT | Tile.BULLBIT);
-        break;
-
-      case Tile.LHRAIL:
-        this._worldEffects.setTile(x, y, Tile.HRAILROAD | Tile.BURNBIT | Tile.BULLBIT);
-        break;
-
-      case Tile.LVRAIL:
-        this._worldEffects.setTile(x, y, Tile.VRAILROAD | Tile.BURNBIT | Tile.BULLBIT);
-        break;
-
-      default:
-        return this.TOOLRESULT_FAILED;
+        case Tile.LHPOWER: this._worldEffects.setTile(x, y, Tile.VROADPOWER | Tile.CONDBIT | Tile.BURNBIT | Tile.BULLBIT); break;
+        case Tile.LVPOWER: this._worldEffects.setTile(x, y, Tile.HROADPOWER | Tile.CONDBIT | Tile.BURNBIT | Tile.BULLBIT); break;
+        case Tile.LHRAIL: this._worldEffects.setTile(x, y, Tile.HRAILROAD | Tile.BURNBIT | Tile.BULLBIT); break;
+        case Tile.LVRAIL: this._worldEffects.setTile(x, y, Tile.VRAILROAD | Tile.BURNBIT | Tile.BULLBIT); break;
+        default: return this.TOOLRESULT_FAILED;
     }
 
     this.addCost(cost);
     this.checkZoneConnections(x, y);
     return this.TOOLRESULT_OK;
-  };
+};
 
-
-  Micro.RoadTool.prototype.doTool = function(x, y, messageManager, blockMaps) {
+Micro.RoadTool.prototype.doTool = function(x, y, messageManager, blockMaps) {
     this.result = this.layRoad(x, y);
-  };
-
-
-//  return RoadTool;
-//});
-
+};
 /*
 
  
@@ -4857,43 +4757,27 @@ define(['BaseTool', 'Messages', 'Text', 'Tile'],
 //  return QueryTool;
 //});
 
-/* micropolisJS. Adapted from Micropolis by Graeme McCutcheon.
- *
- * This code is released under the GNU GPL v3, with some additional terms.
- * Please see the files LICENSE and COPYING for details. Alternatively,
- * consult http://micropolisjs.graememcc.co.uk/LICENSE and
- * http://micropolisjs.graememcc.co.uk/COPYING
- *
- */
 
-/*define(['BuildingTool', 'BulldozerTool', 'ParkTool', 'RailTool', 'RoadTool', 'QueryTool', 'Tile', 'WireTool'],
-       function(BuildingTool, BulldozerTool, ParkTool, RailTool, RoadTool, QueryTool, Tile, WireTool) {
-  "use strict";*/
 Micro.GameTools = function (map) {
     return {
-      airport: new Micro.BuildingTool(10000, Tile.AIRPORT, map, 6, false),
-      bulldozer: new Micro.BulldozerTool(map),
-      coal: new Micro.BuildingTool(3000, Tile.POWERPLANT, map, 4, false),
-      commercial: new Micro.BuildingTool(100, Tile.COMCLR, map, 3, false),
-      fire: new Micro.BuildingTool(500, Tile.FIRESTATION, map, 3, false),
-      industrial: new Micro.BuildingTool(100, Tile.INDCLR, map, 3, false),
-      nuclear: new Micro.BuildingTool(5000, Tile.NUCLEAR, map, 4, true),
-      park: new Micro.ParkTool(map),
-      police: new Micro.BuildingTool(500, Tile.POLICESTATION, map, 3, false),
-      port: new Micro.BuildingTool(3000, Tile.PORT, map, 4, false),
-      rail: new Micro.RailTool(map),
-      residential: new Micro.BuildingTool(100, Tile.FREEZ, map, 3, false),
-      road: new Micro.RoadTool(map),
-      query: new Micro.QueryTool(map),
-      stadium: new Micro.BuildingTool(5000, Tile.STADIUM, map, 4, false),
-      wire: new Micro.WireTool(map),
+        airport: new Micro.BuildingTool(10000, Tile.AIRPORT, map, 6, false),
+        bulldozer: new Micro.BulldozerTool(map),
+        coal: new Micro.BuildingTool(3000, Tile.POWERPLANT, map, 4, false),
+        commercial: new Micro.BuildingTool(100, Tile.COMCLR, map, 3, false),
+        fire: new Micro.BuildingTool(500, Tile.FIRESTATION, map, 3, false),
+        industrial: new Micro.BuildingTool(100, Tile.INDCLR, map, 3, false),
+        nuclear: new Micro.BuildingTool(5000, Tile.NUCLEAR, map, 4, true),
+        park: new Micro.ParkTool(map),
+        police: new Micro.BuildingTool(500, Tile.POLICESTATION, map, 3, false),
+        port: new Micro.BuildingTool(3000, Tile.PORT, map, 4, false),
+        rail: new Micro.RailTool(map),
+        residential: new Micro.BuildingTool(100, Tile.FREEZ, map, 3, false),
+        road: new Micro.RoadTool(map),
+        query: new Micro.QueryTool(map),
+        stadium: new Micro.BuildingTool(5000, Tile.STADIUM, map, 4, false),
+        wire: new Micro.WireTool(map),
     };
-  }
-
-
-//  return gameTools;
-//});
-
+};
 
 Micro.BaseSprite = function(){}
 
