@@ -10,3 +10,5 @@ you can try [2d version](http://lo-th.github.io/3d.city/index_2d.html) (some opt
 
 The goal is create full 3d city builder with game simulation in a worker,<br>
 with massive use of Three.js and Sea3d.
+
+work in progress
