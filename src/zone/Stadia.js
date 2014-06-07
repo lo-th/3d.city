@@ -32,6 +32,4 @@ Micro.Stadia = function (SIM) {
             repairManager.addAction(Tile.STADIUM, 15, 4);
         }
     }
-}
-
-//var Stadia = new Micro.Stadia();
+};

@@ -1,3 +1,4 @@
+
 Micro.Industrial = function (SIM) {
     var sim = SIM;
     // Industrial tiles have 'populations' from 1 to 4,
@@ -103,6 +104,4 @@ Micro.Industrial = function (SIM) {
         },
         getZonePopulation: getZonePopulation
     };
-}
-
-//var Industrial = new Micro.Industrial();
+};

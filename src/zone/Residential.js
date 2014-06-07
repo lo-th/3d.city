@@ -1,8 +1,6 @@
 
 Micro.Residential = function (SIM) {
     var sim = SIM;
-
-    //var Residential = function () {
     // Residential tiles have 'populations' of 16, 24, 32 or 40
     // and value from 0 to 3. The tiles are laid out in
     // increasing order of land value, cycling through
@@ -221,71 +219,6 @@ Micro.Residential = function (SIM) {
         }
     };
 
-    /*var residentialFound = function(map, x, y, simData) {
-        var lpValue;
-
-        simData.census.resZonePop += 1;
-        var tileValue = map.getTileValue(x, y);
-        var tilePop = getZonePopulation(map, x, y, tileValue);
-        simData.census.resPop += tilePop;
-        var zonePower = map.getTile(x, y).isPowered();
-
-        var trafficOK = Micro.ROUTE_FOUND;
-        if (tilePop > Random.getRandom(35)) {
-            // Try driving from residential to commercial
-            trafficOK = simData.trafficManager.makeTraffic(x, y, simData.blockMaps, Micro.isCommercial);
-
-            // Trigger outward migration if not connected to road network
-            if (trafficOK ===  Micro.NO_ROAD_FOUND) {
-                lpValue = Micro.getLandPollutionValue(simData.blockMaps, x, y);
-                doMigrationOut(map, x, y, simData.blockMaps, tilePop, lpValue, zonePower);
-                return;
-            }
-        }
-
-        // Occasionally assess and perhaps modify the tile (or always in the
-        // case of an empty zone)
-        if (tileValue === Tile.FREEZ || Random.getChance(7)) {
-            var locationScore = evalResidential(simData.blockMaps, x, y, trafficOK);
-            var zoneScore = simData.valves.resValve + locationScore;
-
-            if (!zonePower) zoneScore = -500;
-
-            if (trafficOK && (zoneScore > -350) && ((zoneScore - 26380) > Random.getRandom16Signed())) {
-                // If we have a reasonable population and this zone is empty, make a
-                // hospital
-                if (tilePop === 0 && ((Random.getRandom16() & 3) === 0)) {
-                    makeHospital(map, x, y, simData, zonePower);
-                    return;
-                }
-
-                lpValue = Micro.getLandPollutionValue(simData.blockMaps, x, y);
-                doMigrationIn(map, x, y, simData.blockMaps, tilePop, lpValue, zonePower);
-                return;
-            }
-
-            if (zoneScore < 350 && ((zoneScore + 26380) < Random.getRandom16Signed())) {
-                lpValue = Micro.getLandPollutionValue(simData.blockMaps, x, y);
-                doMigrationOut(map, x, y, simData.blockMaps, tilePop, lpValue, zonePower);
-            }
-        }
-    };
-
-    var makeHospital = function(map, x, y, simData, zonePower) {
-        if (simData.census.needHospital > 0) {
-            Micro.putZone(map, x, y, Tile.HOSPITAL, zonePower);
-            simData.census.needHospital = 0;
-            return;
-        } 
-    };
-
-    var hospitalFound = function(map, x, y, simData) {
-        simData.census.hospitalPop += 1;
-        if (simData.census.needHospital === -1) {
-            if (Random.getRandom(20) === 0) Micro.putZone(map, x, y, Tile.FREEZ);
-        }
-    };*/
-
     return {
         registerHandlers: function(mapScanner, repairManager) {
             mapScanner.addAction(Micro.isResidentialZone, residentialFound);
@@ -294,6 +227,4 @@ Micro.Residential = function (SIM) {
         },
         getZonePopulation:getZonePopulation
     };
-}
-
-//var Residential = new Micro.Residential();
+};

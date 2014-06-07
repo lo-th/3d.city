@@ -145,6 +145,4 @@ Micro.Road = function (SIM) {
             mapScanner.addAction(Micro.isRoad, roadFound);
         }
     }
-}
-
-//var Road = new Micro.Road();
+};

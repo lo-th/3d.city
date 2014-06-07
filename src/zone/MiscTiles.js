@@ -1,6 +1,6 @@
+
 Micro.MiscTiles = function (SIM) {
     var sim = SIM;
-
     var xDelta = [-1,  0,  1,  0 ];
     var yDelta = [ 0, -1,  0,  1 ];
 
@@ -62,6 +62,4 @@ Micro.MiscTiles = function (SIM) {
             mapScanner.addAction(Micro.isManualExplosion, explosionFound, true);
         }
     };
-}
-
-//var MiscTiles = new Micro.MiscTiles();
+};

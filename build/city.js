@@ -3137,8 +3137,6 @@ Micro.fireAnalysis = function(blockMaps) {
 
 Micro.Residential = function (SIM) {
     var sim = SIM;
-
-    //var Residential = function () {
     // Residential tiles have 'populations' of 16, 24, 32 or 40
     // and value from 0 to 3. The tiles are laid out in
     // increasing order of land value, cycling through
@@ -3357,71 +3355,6 @@ Micro.Residential = function (SIM) {
         }
     };
 
-    /*var residentialFound = function(map, x, y, simData) {
-        var lpValue;
-
-        simData.census.resZonePop += 1;
-        var tileValue = map.getTileValue(x, y);
-        var tilePop = getZonePopulation(map, x, y, tileValue);
-        simData.census.resPop += tilePop;
-        var zonePower = map.getTile(x, y).isPowered();
-
-        var trafficOK = Micro.ROUTE_FOUND;
-        if (tilePop > Random.getRandom(35)) {
-            // Try driving from residential to commercial
-            trafficOK = simData.trafficManager.makeTraffic(x, y, simData.blockMaps, Micro.isCommercial);
-
-            // Trigger outward migration if not connected to road network
-            if (trafficOK ===  Micro.NO_ROAD_FOUND) {
-                lpValue = Micro.getLandPollutionValue(simData.blockMaps, x, y);
-                doMigrationOut(map, x, y, simData.blockMaps, tilePop, lpValue, zonePower);
-                return;
-            }
-        }
-
-        // Occasionally assess and perhaps modify the tile (or always in the
-        // case of an empty zone)
-        if (tileValue === Tile.FREEZ || Random.getChance(7)) {
-            var locationScore = evalResidential(simData.blockMaps, x, y, trafficOK);
-            var zoneScore = simData.valves.resValve + locationScore;
-
-            if (!zonePower) zoneScore = -500;
-
-            if (trafficOK && (zoneScore > -350) && ((zoneScore - 26380) > Random.getRandom16Signed())) {
-                // If we have a reasonable population and this zone is empty, make a
-                // hospital
-                if (tilePop === 0 && ((Random.getRandom16() & 3) === 0)) {
-                    makeHospital(map, x, y, simData, zonePower);
-                    return;
-                }
-
-                lpValue = Micro.getLandPollutionValue(simData.blockMaps, x, y);
-                doMigrationIn(map, x, y, simData.blockMaps, tilePop, lpValue, zonePower);
-                return;
-            }
-
-            if (zoneScore < 350 && ((zoneScore + 26380) < Random.getRandom16Signed())) {
-                lpValue = Micro.getLandPollutionValue(simData.blockMaps, x, y);
-                doMigrationOut(map, x, y, simData.blockMaps, tilePop, lpValue, zonePower);
-            }
-        }
-    };
-
-    var makeHospital = function(map, x, y, simData, zonePower) {
-        if (simData.census.needHospital > 0) {
-            Micro.putZone(map, x, y, Tile.HOSPITAL, zonePower);
-            simData.census.needHospital = 0;
-            return;
-        } 
-    };
-
-    var hospitalFound = function(map, x, y, simData) {
-        simData.census.hospitalPop += 1;
-        if (simData.census.needHospital === -1) {
-            if (Random.getRandom(20) === 0) Micro.putZone(map, x, y, Tile.FREEZ);
-        }
-    };*/
-
     return {
         registerHandlers: function(mapScanner, repairManager) {
             mapScanner.addAction(Micro.isResidentialZone, residentialFound);
@@ -3430,137 +3363,103 @@ Micro.Residential = function (SIM) {
         },
         getZonePopulation:getZonePopulation
     };
-}
+};
 
-//var Residential = new Micro.Residential();
-/* micropolisJS. Adapted from Micropolis by Graeme McCutcheon.
- *
- * This code is released under the GNU GPL v3, with some additional terms.
- * Please see the files LICENSE and COPYING for details. Alternatively,
- * consult http://micropolisjs.graememcc.co.uk/LICENSE and
- * http://micropolisjs.graememcc.co.uk/COPYING
- *
- */
-
-//define([ 'Traffic', 'Micro'],
-  //     function( Traffic, Micro) {
-  //"use strict";
-//var Commercial = function () {
 Micro.Commercial = function (SIM) {
-  var sim = SIM;
-  // Commercial tiles have 'populations' from 1 to 5,
-  // and value from 0 to 3. The tiles are laid out in
-  // increasing order of land value, cycling through
-  // each population value
-  var getZonePopulation = function(map, x, y, tileValue) {
-    if (tileValue instanceof Micro.Tile) tileValue = new Micro.Tile().getValue()
-    //COMCLEAR)
-    if (tileValue === Tile.COMCLR) return 0;
+    var sim = SIM;
+    // Commercial tiles have 'populations' from 1 to 5,
+    // and value from 0 to 3. The tiles are laid out in
+    // increasing order of land value, cycling through
+    // each population value
+    var getZonePopulation = function(map, x, y, tileValue) {
+        if (tileValue instanceof Micro.Tile) tileValue = new Micro.Tile().getValue(); //COMCLEAR)
+        if (tileValue === Tile.COMCLR) return 0;
+        return Math.floor((tileValue - Tile.CZB) / 9) % 5 + 1;
+    };
 
-    return Math.floor((tileValue - Tile.CZB) / 9) % 5 + 1;
-  };
+    var placeCommercial = function(map, x, y, population, lpValue, zonePower) {
+        var centreTile = ((lpValue * 5) + population) * 9 + Tile.CZB;
+        Micro.putZone(map, x, y, centreTile, zonePower);
+    };
 
+    var doMigrationIn = function(map, x, y, blockMaps, population, lpValue, zonePower) {
+        var landValue = blockMaps.landValueMap.worldGet(x, y);
+        landValue = landValue >> 5;
 
-  var placeCommercial = function(map, x, y, population, lpValue, zonePower) {
-    var centreTile = ((lpValue * 5) + population) * 9 + Tile.CZB;
-    Micro.putZone(map, x, y, centreTile, zonePower);
-  };
+        if (population > landValue) return;
 
+        // Desirable zone: migrate
+        if (population < 5) {
+            placeCommercial(map, x, y, population, lpValue, zonePower);
+            Micro.incRateOfGrowth(blockMaps, x, y, 8);
+        }
+    };
 
-  var doMigrationIn = function(map, x, y, blockMaps, population, lpValue, zonePower) {
-    var landValue = blockMaps.landValueMap.worldGet(x, y);
-    landValue = landValue >> 5;
+    var doMigrationOut = function(map, x, y, blockMaps, population, lpValue, zonePower) {
+        if (population > 1) {
+            placeCommercial(map, x, y, population - 2, lpValue, zonePower);
+            Micro.incRateOfGrowth(blockMaps, x, y, -8);
+            return;
+        }
+        if (population === 1) {
+            Micro.putZone(map, x, y, Tile.COMCLR, zonePower);
+            Micro.incRateOfGrowth(blockMaps, x, y, -8);
+        }
+    };
 
-    if (population > landValue)
-      return;
+    var evalCommercial = function(blockMaps, x, y, traffic) {
+        if (traffic === Micro.NO_ROAD_FOUND) return -3000;
+        var comRate = blockMaps.comRateMap.worldGet(x, y);
+        return comRate;
+    };
 
-    // Desirable zone: migrate
-    if (population < 5) {
-      placeCommercial(map, x, y, population, lpValue, zonePower);
-      Micro.incRateOfGrowth(blockMaps, x, y, 8);
+    var commercialFound = function(map, x, y, simData) {
+        var lpValue;
+        sim.census.comZonePop += 1;
+        var tileValue = map.getTileValue(x, y);
+        var tilePop = getZonePopulation(map, x, y, tileValue);
+        sim.census.comPop += tilePop;
+        var zonePower = map.getTile(x, y).isPowered();
+
+        var trafficOK = Micro.ROUTE_FOUND;
+        if (tilePop > Random.getRandom(5)) {
+            // Try driving from commercial to industrial
+            trafficOK = sim.traffic.makeTraffic(x, y, sim.blockMaps, Micro.isIndustrial);
+            // Trigger outward migration if not connected to road network
+            if (trafficOK ===  Micro.NO_ROAD_FOUND) {
+                lpValue = Micro.getLandPollutionValue(sim.blockMaps, x, y);
+                doMigrationOut(map, x, y, sim.blockMaps, tilePop, lpValue, zonePower);
+                return;
+            }
+        }
+
+        // Occasionally assess and perhaps modify the tile
+        if (Random.getChance(7)) {
+            var locationScore = evalCommercial(sim.blockMaps, x, y, trafficOK);
+            var zoneScore = sim.valves.comValve + locationScore;
+
+            if (!zonePower) zoneScore = -500;
+
+            if (trafficOK && (zoneScore > -350) && ((zoneScore - 26380) > Random.getRandom16Signed())) {
+                lpValue = Micro.getLandPollutionValue(sim.blockMaps, x, y);
+                doMigrationIn(map, x, y, sim.blockMaps, tilePop, lpValue, zonePower);
+                return;
+            }
+
+            if (zoneScore < 350 && ((zoneScore + 26380) < Random.getRandom16Signed())) {
+                lpValue = Micro.getLandPollutionValue(sim.blockMaps, x, y);
+                doMigrationOut(map, x, y, sim.blockMaps, tilePop, lpValue, zonePower);
+            }
+        }
+    };
+
+    return {
+        registerHandlers: function(mapScanner, repairManager) {
+            mapScanner.addAction(Micro.isCommercialZone, commercialFound);
+        },
+        getZonePopulation: getZonePopulation
     }
-  };
-
-
-  var doMigrationOut = function(map, x, y, blockMaps, population, lpValue, zonePower) {
-    if (population > 1) {
-      placeCommercial(map, x, y, population - 2, lpValue, zonePower);
-      Micro.incRateOfGrowth(blockMaps, x, y, -8);
-      return;
-    }
-
-    if (population === 1) {
-      Micro.putZone(map, x, y, Tile.COMCLR, zonePower);
-      Micro.incRateOfGrowth(blockMaps, x, y, -8);
-    }
-  };
-
-
-  var evalCommercial = function(blockMaps, x, y, traffic) {
-    if (traffic === Micro.NO_ROAD_FOUND)
-      return -3000;
-
-    var comRate = blockMaps.comRateMap.worldGet(x, y);
-    return comRate;
-  };
-
-
-  var commercialFound = function(map, x, y, simData) {
-    var lpValue;
-
-    sim.census.comZonePop += 1;
-    var tileValue = map.getTileValue(x, y);
-    var tilePop = getZonePopulation(map, x, y, tileValue);
-    sim.census.comPop += tilePop;
-    var zonePower = map.getTile(x, y).isPowered();
-
-    var trafficOK = Micro.ROUTE_FOUND;
-    if (tilePop > Random.getRandom(5)) {
-      // Try driving from commercial to industrial
-      trafficOK = sim.traffic.makeTraffic(x, y, sim.blockMaps, Micro.isIndustrial);
-
-      // Trigger outward migration if not connected to road network
-      if (trafficOK ===  Micro.NO_ROAD_FOUND) {
-          lpValue = Micro.getLandPollutionValue(sim.blockMaps, x, y);
-          doMigrationOut(map, x, y, sim.blockMaps, tilePop, lpValue, zonePower);
-          return;
-      }
-    }
-
-    // Occasionally assess and perhaps modify the tile
-    if (Random.getChance(7)) {
-      var locationScore = evalCommercial(sim.blockMaps, x, y, trafficOK);
-      var zoneScore = sim.valves.comValve + locationScore;
-
-      if (!zonePower)
-        zoneScore = -500;
-
-      if (trafficOK && (zoneScore > -350) &&
-          ((zoneScore - 26380) > Random.getRandom16Signed())) {
-        lpValue = Micro.getLandPollutionValue(sim.blockMaps, x, y);
-        doMigrationIn(map, x, y, sim.blockMaps, tilePop, lpValue, zonePower);
-        return;
-      }
-
-      if (zoneScore < 350 &&
-          ((zoneScore + 26380) < Random.getRandom16Signed())) {
-        lpValue = Micro.getLandPollutionValue(sim.blockMaps, x, y);
-        doMigrationOut(map, x, y, sim.blockMaps, tilePop, lpValue, zonePower);
-      }
-    }
-  };
-
-
-  //var Commercial = {
-  return {
-    registerHandlers: function(mapScanner, repairManager) {
-      mapScanner.addAction(Micro.isCommercialZone, commercialFound);
-    },
-    getZonePopulation: getZonePopulation
-  }
-}
-
-//var Commercial = new Micro.Commercial();
+};
 
 Micro.Industrial = function (SIM) {
     var sim = SIM;
@@ -3667,12 +3566,10 @@ Micro.Industrial = function (SIM) {
         },
         getZonePopulation: getZonePopulation
     };
-}
+};
 
-//var Industrial = new Micro.Industrial();
 Micro.MiscTiles = function (SIM) {
     var sim = SIM;
-
     var xDelta = [-1,  0,  1,  0 ];
     var yDelta = [ 0, -1,  0,  1 ];
 
@@ -3734,9 +3631,7 @@ Micro.MiscTiles = function (SIM) {
             mapScanner.addAction(Micro.isManualExplosion, explosionFound, true);
         }
     };
-}
-
-//var MiscTiles = new Micro.MiscTiles();
+};
 
 Micro.Road = function (SIM) {
     var sim = SIM;
@@ -3884,9 +3779,7 @@ Micro.Road = function (SIM) {
             mapScanner.addAction(Micro.isRoad, roadFound);
         }
     }
-}
-
-//var Road = new Micro.Road();
+};
 
 Micro.Stadia = function (SIM) {
     var sim = SIM;
@@ -3921,126 +3814,99 @@ Micro.Stadia = function (SIM) {
             repairManager.addAction(Tile.STADIUM, 15, 4);
         }
     }
-}
-
-//var Stadia = new Micro.Stadia();
+};
 
 Micro.EmergencyServices = function (SIM) {
-  var sim = SIM;
-//var EmergencyServices = function () {
+    var sim = SIM;
 
-  var handleService = function(censusStat, budgetEffect, blockMap) {
-    return function(map, x, y, simData) {
-      sim.census[censusStat] += 1;
+    var handleService = function(censusStat, budgetEffect, blockMap) {
+        return function(map, x, y, simData) {
+            sim.census[censusStat] += 1;
+            var effect = sim.budget[budgetEffect];
+            var isPowered = map.getTile(x, y).isPowered();
+            // Unpowered buildings are half as effective
+            if (!isPowered) effect = Math.floor(effect / 2);
 
-      var effect = sim.budget[budgetEffect];
-      var isPowered = map.getTile(x, y).isPowered();
-      // Unpowered buildings are half as effective
-      if (!isPowered)
-        effect = Math.floor(effect / 2);
+            var pos = new map.Position(x, y);
+            var connectedToRoads = sim.traffic.findPerimeterRoad(pos);
+            if (!connectedToRoads) effect = Math.floor(effect / 2);
 
-      var pos = new map.Position(x, y);
-      var connectedToRoads = sim.traffic.findPerimeterRoad(pos);
-      if (!connectedToRoads)
-        effect = Math.floor(effect / 2);
-
-      var currentEffect = sim.blockMaps[blockMap].worldGet(x, y);
-      currentEffect += effect;
-      sim.blockMaps[blockMap].worldSet(x, y, currentEffect);
-    }
-  };
-
-
-  var policeStationFound = handleService('policeStationPop', 'policeEffect', 'policeStationMap');
-  var fireStationFound = handleService('fireStationPop', 'fireEffect', 'fireStationMap');
-
-
-  //var EmergencyServices = {
-  return {
-    registerHandlers: function(mapScanner, repairManager) {
-      mapScanner.addAction(Tile.POLICESTATION, policeStationFound);
-      mapScanner.addAction(Tile.FIRESTATION, fireStationFound);
-    }
-  }
-
-}
-
-//var EmergencyServices = new Micro.EmergencyServices();
-Micro.Transport = function (SIM) {
-  var sim = SIM;
-  
-  var railFound = function(map, x, y, simData) {
-    sim.census.railTotal += 1;
-    sim.spriteManager.generateTrain(sim.census, x, y);
-
-    if (sim.budget.shouldDegradeRoad()) {
-      if (Random.getChance(511)) {
-        var currentTile = map.getTile(x, y);
-
-        // Don't degrade tiles with power lines
-        if (currentTile.isConductive())
-          return;
-
-        if (sim.budget.roadEffect < (Random.getRandom16() & 31)) {
-          var mapValue = currentTile.getValue();
-
-          // Replace bridge tiles with water, otherwise rubble
-          var tile = map.getTile(x, y);
-          if (tile < Tile.RAILBASE + 2)
-            map.setTo(x, y, Tile.RIVER);
-          else
-            map.setTo(x, y, Micro.randomRubble());
+            var currentEffect = sim.blockMaps[blockMap].worldGet(x, y);
+            currentEffect += effect;
+            sim.blockMaps[blockMap].worldSet(x, y, currentEffect);
         }
-      }
+    };
+
+    var policeStationFound = handleService('policeStationPop', 'policeEffect', 'policeStationMap');
+    var fireStationFound = handleService('fireStationPop', 'fireEffect', 'fireStationMap');
+
+    return {
+        registerHandlers: function(mapScanner, repairManager) {
+            mapScanner.addAction(Tile.POLICESTATION, policeStationFound);
+            mapScanner.addAction(Tile.FIRESTATION, fireStationFound);
+        }
     }
-  };
+};
 
+Micro.Transport = function (SIM) {
+    var sim = SIM;
 
-  var airportFound = function(map, x, y, simData) {
-    sim.census.airportPop += 1;
+    var railFound = function(map, x, y, simData) {
+        sim.census.railTotal += 1;
+        sim.spriteManager.generateTrain(sim.census, x, y);
 
-    var tile = map.getTile(x, y);
-    if (tile.isPowered()) {
-      if (map.getTileValue(x + 1, y - 1) === Tile.RADAR)
-        map.setTo(x + 1, y - 1, new Micro.Tile(Tile.RADAR0, Tile.CONDBIT | Tile.ANIMBIT | Tile.BURNBIT));
+        if (sim.budget.shouldDegradeRoad()) {
+            if (Random.getChance(511)) {
+                var currentTile = map.getTile(x, y);
 
-      if (Random.getRandom(5) === 0) {
-        sim.spriteManager.generatePlane(x, y);
-        return;
-      }
+                // Don't degrade tiles with power lines
+                if (currentTile.isConductive()) return;
 
-      if (Random.getRandom(12) === 0)
-        sim.spriteManager.generateCopter(x, y);
-    } else {
-        map.setTo(x + 1, y - 1, new Micro.Tile(Tile.RADAR, Tile.CONDBIT | Tile.BURNBIT));
+                if (sim.budget.roadEffect < (Random.getRandom16() & 31)) {
+                    var mapValue = currentTile.getValue();
+
+                    // Replace bridge tiles with water, otherwise rubble
+                    var tile = map.getTile(x, y);
+                    if (tile < Tile.RAILBASE + 2) map.setTo(x, y, Tile.RIVER);
+                    else map.setTo(x, y, Micro.randomRubble());
+                }
+            }
+        }
+    };
+
+    var airportFound = function(map, x, y, simData) {
+        sim.census.airportPop += 1;
+
+        var tile = map.getTile(x, y);
+        if (tile.isPowered()) {
+            if (map.getTileValue(x + 1, y - 1) === Tile.RADAR) map.setTo(x + 1, y - 1, new Micro.Tile(Tile.RADAR0, Tile.CONDBIT | Tile.ANIMBIT | Tile.BURNBIT));
+            if (Random.getRandom(5) === 0) {
+                sim.spriteManager.generatePlane(x, y);
+                return;
+            }
+            if (Random.getRandom(12) === 0) sim.spriteManager.generateCopter(x, y);
+        } else {
+            map.setTo(x + 1, y - 1, new Micro.Tile(Tile.RADAR, Tile.CONDBIT | Tile.BURNBIT));
+        }
+    };
+
+    var portFound = function(map, x, y, simData) {
+        sim.census.seaportPop += 1;
+        var tile = map.getTile(x, y);
+        if (tile.isPowered() && sim.spriteManager.getSprite(Micro.SPRITE_SHIP) === null) sim.spriteManager.generateShip();
+    };
+
+    return {
+        registerHandlers: function(mapScanner, repairManager) {
+            mapScanner.addAction(Micro.isRail, railFound);
+            mapScanner.addAction(Tile.PORT, portFound);
+            mapScanner.addAction(Tile.AIRPORT, airportFound);
+
+            repairManager.addAction(Tile.PORT, 15, 4);
+            repairManager.addAction(Tile.AIRPORT, 7, 6);
+        }
     }
-  };
-
-
-  var portFound = function(map, x, y, simData) {
-    sim.census.seaportPop += 1;
-
-    var tile = map.getTile(x, y);
-    if (tile.isPowered() && sim.spriteManager.getSprite(Micro.SPRITE_SHIP) === null) sim.spriteManager.generateShip();
-  };
-
-
- // var Transport = {
-return {
-    registerHandlers: function(mapScanner, repairManager) {
-      mapScanner.addAction(Micro.isRail, railFound);
-      mapScanner.addAction(Tile.PORT, portFound);
-      mapScanner.addAction(Tile.AIRPORT, airportFound);
-
-      repairManager.addAction(Tile.PORT, 15, 4);
-      repairManager.addAction(Tile.AIRPORT, 7, 6);
-    }
-  }
-
-}
-
-//var Transport = new Micro.Transport();
-
+};
 
 Micro.toKey = function(x, y) {
     return [x, y].join(',');
