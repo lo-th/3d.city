@@ -3,6 +3,7 @@ var transMessage = self.webkitPostMessage || self.postMessage;
 
 var CITY = {};
 var timer;
+var timestep = 1000/30;
 var Game;
 /*var ab = new ArrayBuffer( 1 );
 transferableMessage( ab, [ab] );
@@ -25,12 +26,14 @@ var update = function(){
         Game.processMessages(Game.simulation.messageManager.getMessages());
         Game.simulation.spriteManager.moveObjects();
     }
-    Game.animatedTiles();
+    Game.getTiles();
+    //Game.animatedTiles();
     Game.calculateSprites();
     //sprite = calculateSpritesForPaint();
     //gameCanvas.paint(mouse, sprite, isPaused);
     //transMessage({ tell:"RUN", infos:Game.infos, sprites:Game.map.genFull() });
-    transMessage({ tell:"RUN", infos:Game.infos, tiles:Game.tilesData, sprites:Game.spritesData});
+    transMessage({ tell:"RUN", infos:Game.infos, tiles:Game.tilesData, anims:Game.animsData, sprites:Game.spritesData});
+    //transMessage({ tell:"RUN", infos:Game.infos, tiles:Game.map.tilesData, anims:Game.animsData, sprites:Game.spritesData});
 };
 
 CITY.Game = function(url) {
@@ -54,7 +57,10 @@ CITY.Game = function(url) {
     this.sprites = [];
 
     this.spritesData = null;
+    this.animsData = null;
     this.tilesData = null;
+
+    this.needMapUpdate = false;
 
 
     this.newMap();
@@ -64,7 +70,7 @@ CITY.Game.prototype = {
     constructor: CITY.Game,
     newMap : function(){
         this.map = this.mapGen.construct(this.mapSize[0], this.mapSize[1]);
-        transMessage({ tell:"NEWMAP", map:this.map.genFull(), mapSize:this.mapSize, island:this.map.isIsland });
+        transMessage({ tell:"NEWMAP", map:this.map.tilesData, mapSize:this.mapSize, island:this.map.isIsland });
     },
     playMap : function(){
         var money = 20000 / this.difficulty; 
@@ -80,15 +86,28 @@ CITY.Game.prototype = {
         this.processMessages(messageMgr.getMessages());
 
         // update simulation time
-        timer = setInterval(update, 1000/60);
+        timer = setInterval(update, timestep);
+    },
+    getTiles : function() {
+        if(this.needMapUpdate){
+            this.tilesData = this.map.tilesData;
+            /*var i = this.map.data.length;
+            this.tilesData = new M_ARRAY_TYPE(i);
+            while(i--){
+                this.tilesData[i] = this.map.data[i].getValue()
+            }*/
+            this.needMapUpdate = false;
+        } else {
+            this.tilesData = null;
+        }
     },
     animatedTiles : function() {
         var animTiles = this.animationManager.getTiles(0, 0, this.mapSize[0] + 1, this.mapSize[1] + 1, this.isPaused);
         var i = animTiles.length;
-        this.tilesData = new M_ARRAY_TYPE(i); 
+        this.animsData = new M_ARRAY_TYPE(i); 
         while(i--){
             var tile = animTiles[i];
-            this.tilesData[i] = [tile.tileValue, tile.x, tile.y];
+            this.animsData[i] = [tile.tileValue, tile.x, tile.y];
         }
     },
     calculateSprites : function() {
@@ -146,7 +165,11 @@ CITY.Game.prototype = {
             switch (this.currentTool.result) {
                 case this.currentTool.TOOLRESULT_NEEDS_BULLDOZE: tell = TXT.toolMessages.needsDoze; break;
                 case this.currentTool.TOOLRESULT_NO_MONEY: tell = TXT.toolMessages.noMoney; break; 
-                default: tell = '&nbsp;'; transMessage({tell:"BUILD", x:x, y:y, id:id });  break;
+                default: 
+                    tell = '&nbsp;';
+                    if( id >= 11  && id != 15 ) this.needMapUpdate = true;
+                    transMessage({tell:"BUILD", x:x, y:y, id:id });  
+                break;
             }
             this.processMessages(messageMgr.getMessages());
         }

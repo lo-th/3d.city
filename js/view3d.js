@@ -22,11 +22,12 @@ V3D.Base = function(){
     this.meshs = {};
 
     this.trees = [];
+    this.mapSize =null;
 
     this.terrain = null;
     this.tool = null;
 
-    this.notAuto = true;
+    this.notAuto = false;
 
     this.toolSet = [
         {id:0,  tool:'none',        size:0, sy:0,    price:0,     color:'none'},
@@ -105,6 +106,7 @@ V3D.Base.prototype = {
 	        body.attachEvent("onmousewheel" ,  function(e) {_this.onMouseWheel(e)}); // ie
 	    }
 	    //this.render();
+	    loop();
 	    start();
     },
     loadSea3d : function (){
@@ -175,9 +177,9 @@ V3D.Base.prototype = {
 	    this.renderer.setSize(this.vsize.x,this.vsize.y, true);
 	    this.render();
 	},
-	updateTerrain : function(canvas, size, island){	
-		this.center.x = size[0]*0.5;
-		this.center.z = size[1]*0.5;
+	updateTerrain : function(canvas, island){	
+		this.center.x = this.mapSize[0]*0.5;
+		this.center.z = this.mapSize[1]*0.5;
 		this.moveCamera();
 		this.back.position.copy(this.center);
 		
@@ -194,8 +196,13 @@ V3D.Base.prototype = {
 			this.terrain.material.map = new THREE.Texture(canvas);
 	        this.terrain.material.map.needsUpdate = true;
 		}
-		this.terrain.scale.set(size[0], 1, size[1]);
-		this.terrain.position.set((size[0]*0.5)-0.5, 0, (size[1]*0.5)-0.5);
+		this.terrain.scale.set(this.mapSize[0], 1, this.mapSize[1]);
+		this.terrain.position.set((this.mapSize[0]*0.5)-0.5, 0, (this.mapSize[1]*0.5)-0.5);
+	    this.render();
+	},
+	reMapTerrain : function(canvas){
+		this.terrain.material.map = new THREE.Texture(canvas);
+	    this.terrain.material.map.needsUpdate = true;
 	    this.render();
 	},
 	rayTest : function () {
@@ -263,7 +270,7 @@ V3D.Base.prototype = {
         sendTool(name);
 	},
 	build : function(x,y,id){
-		if(id == 15 || id == 16) return;
+		if(id >= 11) return;
 		var ntool = this.toolSet[id];
 		var size = ntool.size;
 		var sizey = ntool.sy;
@@ -376,25 +383,27 @@ V3D.Base.prototype = {
 	    texture.needsUpdate = true;
 	    return texture;
 	},
-	paintMap : function(src, ar, mapSize, island) {
+	paintMap : function(src, ar, mapSize, island, isStart) {
 		this.clearTree();
+		if(mapSize) this.mapSize = mapSize;
 		var c = document.createElement('canvas');
 		var ctx = c.getContext("2d");
-		c.width = mapSize[0]*16;
-		c.height = mapSize[1]*16;
-		var y = mapSize[1];
+		c.width = this.mapSize[0]*16;
+		c.height = this.mapSize[1]*16;
+		var y = this.mapSize[1];
 		var x, v, px, py, n = ar.length;
 		while(y--){
-			x = mapSize[0];
+			x = this.mapSize[0];
 			while(x--){
 				n--;
 				v = ar[n];
-				if(v > 20 && v < 44){ this.addTree(x, y, v); v=0 };
+				//if(v > 20 && v < 44){ this.addTree(x, y, v); v=0 };
 				px = v % 32 * 16;
                 py = Math.floor(v / 32) * 16;
 				ctx.drawImage(src,px, py, 16, 16, x*16, y*16, 16, 16);
 			}
 		}
-		this.updateTerrain(c, mapSize, island);
+		if(isStart)this.updateTerrain(c, island);
+		else this.reMapTerrain(c);
 	}
 }

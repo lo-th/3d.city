@@ -1561,10 +1561,10 @@ Micro.GameMap = function(width, height, defaultValue){
 
 
     this.data = new Array(this.width*this.height);//[];
-    this.mapValue = new M_ARRAY_TYPE(this.width*this.height);//new Array(this.width*this.height);
-    /*var i = this.width*this.height;
-    while(i--){this.data[i] = new Micro.Tile();}
-    console.log(this.data.length)*/
+    this.tilesData = new M_ARRAY_TYPE(this.width*this.height);//new Array(this.width*this.height);
+    var i = this.width*this.height;
+    while(i--){this.tilesData[i] = 0;}
+    /*console.log(this.data.length)*/
 
     // Generally set externally
     this.cityCentreX = Math.floor(this.width * 0.5);
@@ -1576,13 +1576,13 @@ Micro.GameMap = function(width, height, defaultValue){
 Micro.GameMap.prototype = {
 
     constructor: Micro.GameMap,
-    genFull : function(){
+    /*genFull : function(){
         var i = this.data.length;
         while(i--){
-            this.mapValue[i] = this.data[i].getValue();
+            this.tilesData[i] = this.data[i].getValue();
         }
-        return this.mapValue;
-    },
+        return this.tilesData;
+    },*/
 
     _calculateIndex : function(x, y) {
         return x + y * this.width;
@@ -1690,6 +1690,7 @@ Micro.GameMap.prototype = {
         var tileIndex = this._calculateIndex(x, y);
         if (!(tileIndex in this.data)) this.data[tileIndex] = new Micro.Tile(this.defaultValue);
         this.data[tileIndex].set(value, flags);
+        this.tilesData[tileIndex] = value;
     },
     setTo : function(x, y, tile) {
         var e = new Error('Invalid parameter');
@@ -1700,6 +1701,7 @@ Micro.GameMap.prototype = {
 
         var tileIndex = this._calculateIndex(x, y);
         this.data[tileIndex] = tile;
+        this.tilesData[tileIndex] = tile.getValue();
     },
     setTileValue : function(x, y, value) {
         var e = new Error('Invalid parameter');
@@ -1711,6 +1713,7 @@ Micro.GameMap.prototype = {
         var tileIndex = this._calculateIndex(x, y);
         if (!(tileIndex in this.data)) this.data[tileIndex] = new Micro.Tile(this.defaultValue);
         this.data[tileIndex].setValue(value);
+        this.tilesData[tileIndex] = value;
     },
     setTileFlags : function(x, y, flags) {
         var e = new Error('Invalid parameter');

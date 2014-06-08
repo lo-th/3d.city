@@ -33,13 +33,13 @@ window.onload = init;
 function init(){
     view3d = new V3D.Base();
     hub = new HUB.Base();
+
     //loop();
 }
 
 function loop() {
     requestAnimationFrame( loop, view3d.renderer.domElement );
     view3d.renderer.render( view3d.scene, view3d.camera );
-    log(view3d.select);
 }
 
 function debug(txt){ d.innerHTML += "<br>"+txt; }
@@ -48,6 +48,9 @@ function log(txt){ l.innerHTML = txt || '';  }
 //=======================================
 //  CITY INIT
 //=======================================
+
+var tilesData;
+var spriteData;
 
 function start() {
 	im = new Image();
@@ -91,7 +94,7 @@ function initCity() {
     cityWorker.onmessage = function(e) {
         var phase = e.data.tell;
         if( phase == "NEWMAP"){
-            view3d.paintMap(im, e.data.map, e.data.mapSize, e.data.island);
+            view3d.paintMap(im, e.data.map, e.data.mapSize, e.data.island, true);
             hub.start();
         }
         if( phase == "BUILD"){
@@ -99,7 +102,11 @@ function initCity() {
         }
         if( phase == "RUN"){
             //var str = new String(e.data.sprites);
-            log(e.data.infos.join("\n")+'<br>anims:'+ e.data.tiles.length + " | sprites:" + e.data.sprites.length);
+            log(e.data.infos.join("\n"));
+            //log(e.data.infos.join("\n")+'<br>anims:'+ e.data.anims.length + " | sprites:" + e.data.sprites.length);
+            tilesData = e.data.tiles;
+            if(tilesData!==null) view3d.paintMap(im, tilesData);
+            spriteData = e.data.sprites;
             //log(str.toString());
         }
     }
