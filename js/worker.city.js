@@ -26,14 +26,14 @@ var update = function(){
         Game.processMessages(Game.simulation.messageManager.getMessages());
         Game.simulation.spriteManager.moveObjects();
     }
-    Game.getTiles();
+    //Game.getTiles();
     //Game.animatedTiles();
     Game.calculateSprites();
     //sprite = calculateSpritesForPaint();
     //gameCanvas.paint(mouse, sprite, isPaused);
     //transMessage({ tell:"RUN", infos:Game.infos, sprites:Game.map.genFull() });
-    transMessage({ tell:"RUN", infos:Game.infos, tiles:Game.tilesData, anims:Game.animsData, sprites:Game.spritesData});
-    //transMessage({ tell:"RUN", infos:Game.infos, tiles:Game.map.tilesData, anims:Game.animsData, sprites:Game.spritesData});
+    //transMessage({ tell:"RUN", infos:Game.infos, tiles:Game.tilesData, anims:Game.animsData, sprites:Game.spritesData});
+    transMessage({ tell:"RUN", infos:Game.infos, tiles:Game.map.tilesData, anims:Game.animsData, sprites:Game.spritesData});
 };
 
 CITY.Game = function(url) {
@@ -41,7 +41,7 @@ CITY.Game = function(url) {
 
     this.mapSize = [128,128];
     this.difficulty = 2;
-    this.speed = 3;
+    this.speed = 2;
     this.mapGen = new Micro.generateMap();
 
     this.simulation = null;
@@ -96,7 +96,7 @@ CITY.Game.prototype = {
             while(i--){
                 this.tilesData[i] = this.map.data[i].getValue()
             }*/
-            this.needMapUpdate = false;
+            //this.needMapUpdate = false;
         } else {
             this.tilesData = null;
         }

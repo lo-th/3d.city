@@ -20,7 +20,7 @@ body { background:#6666e6; font:12px sans-serif; width:100%; height:100%; color:
 </head>
 <body>
 <canvas id="threeCanvas"></canvas>
-<div id="debug">pre alpha 0.2</div>
+<div id="debug">pre alpha 0.3</div>
 <div id="log">loth 2014</div>
 <div id="hub"></div>
 <script>
@@ -39,6 +39,7 @@ function init(){
 
 function loop() {
     requestAnimationFrame( loop, view3d.renderer.domElement );
+    if(tilesData!==null) view3d.paintMap(tilesData);
     view3d.renderer.render( view3d.scene, view3d.camera );
 }
 
@@ -49,8 +50,8 @@ function log(txt){ l.innerHTML = txt || '';  }
 //  CITY INIT
 //=======================================
 
-var tilesData;
-var spriteData;
+var tilesData = null;;
+var spriteData = null;;
 
 function start() {
 	im = new Image();
@@ -87,6 +88,7 @@ function mapClick() {
 }
 
 function initCity() {
+    view3d.imageSrc = im;
     cityWorker = new Worker('js/worker.city.js');
     cityWorker.postMessage = cityWorker.webkitPostMessage || cityWorker.postMessage;
     cityWorker.postMessage({tell:"INIT", url:document.location.href.replace(/\/[^/]*$/,"/") + "build/city.3d.min.js"});
@@ -94,7 +96,7 @@ function initCity() {
     cityWorker.onmessage = function(e) {
         var phase = e.data.tell;
         if( phase == "NEWMAP"){
-            view3d.paintMap(im, e.data.map, e.data.mapSize, e.data.island, true);
+            view3d.paintMap(e.data.map, e.data.mapSize, e.data.island, true);
             hub.start();
         }
         if( phase == "BUILD"){
@@ -105,7 +107,7 @@ function initCity() {
             log(e.data.infos.join("\n"));
             //log(e.data.infos.join("\n")+'<br>anims:'+ e.data.anims.length + " | sprites:" + e.data.sprites.length);
             tilesData = e.data.tiles;
-            if(tilesData!==null) view3d.paintMap(im, tilesData);
+            //if(tilesData!==null) view3d.paintMap(im, tilesData);
             spriteData = e.data.sprites;
             //log(str.toString());
         }

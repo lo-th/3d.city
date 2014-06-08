@@ -12,6 +12,10 @@ V3D.Base = function(){
     this.scene = null; 
     this.renderer = null;
     this.timer = null;
+    this.imageSrc = null;
+    this.mapCanvas = null;
+
+    this.Bulldoze = false;
 
     this.cam = { horizontal:90, vertical:65, distance:120 };
     this.vsize = { x:window.innerWidth, y:window.innerHeight, z:window.innerWidth/window.innerHeight};
@@ -71,12 +75,14 @@ V3D.Base.prototype = {
     	this.rayVector = new THREE.Vector3( 0, 0, 1 );
     	this.projector = new THREE.Projector();
     	this.raycaster = new THREE.Raycaster();
+    	
         
         this.land = new THREE.Object3D();
         this.scene.add( this.land );
 
         this.center = new THREE.Vector3();
         this.moveCamera();
+
 
         
 
@@ -177,7 +183,7 @@ V3D.Base.prototype = {
 	    this.renderer.setSize(this.vsize.x,this.vsize.y, true);
 	    this.render();
 	},
-	updateTerrain : function(canvas, island){	
+	updateTerrain : function(island){	
 		this.center.x = this.mapSize[0]*0.5;
 		this.center.z = this.mapSize[1]*0.5;
 		this.moveCamera();
@@ -188,22 +194,22 @@ V3D.Base.prototype = {
 
         if(this.terrain === null){
 			//this.terrain = this.meshs['plane'].clone();
-			this.terrain = new THREE.Mesh( new THREE.PlaneGeometry( 1, 1, 1, 1 ),  new THREE.MeshBasicMaterial({map:new THREE.Texture(canvas)}) );
+			this.terrain = new THREE.Mesh( new THREE.PlaneGeometry( 1, 1, 1, 1 ),  new THREE.MeshBasicMaterial({map:new THREE.Texture(this.mapCanvas)}) );
 			this.terrain.material.map.needsUpdate = true;
             this.terrain.geometry.applyMatrix(new THREE.Matrix4().makeRotationX(-90*this.ToRad));
 			this.land.add( this.terrain );
 		} else {
-			this.terrain.material.map = new THREE.Texture(canvas);
+			//this.terrain.material.map = new THREE.Texture(this.mapCanvas);
 	        this.terrain.material.map.needsUpdate = true;
 		}
 		this.terrain.scale.set(this.mapSize[0], 1, this.mapSize[1]);
 		this.terrain.position.set((this.mapSize[0]*0.5)-0.5, 0, (this.mapSize[1]*0.5)-0.5);
 	    this.render();
 	},
-	reMapTerrain : function(canvas){
-		this.terrain.material.map = new THREE.Texture(canvas);
+	reMapTerrain : function(){
+		//this.terrain.material.map = new THREE.Texture(this.mapCanvas);
 	    this.terrain.material.map.needsUpdate = true;
-	    this.render();
+	    //this.render();
 	},
 	rayTest : function () {
 		this.projector.unprojectVector( this.rayVector, this.camera );
@@ -270,17 +276,21 @@ V3D.Base.prototype = {
         sendTool(name);
 	},
 	build : function(x,y,id){
+		if(id==16){
+			this.mapCtx.drawImage(this.imageSrc,0, 0, 16, 16, x*16, y*16, 16, 16);
+		    //this.mapCtx.drawImage(this.imageSrc,2*16, 0, 16, 16, x*16, y*16, 16, 16);
+		}
 		if(id >= 11) return;
 		var ntool = this.toolSet[id];
 		var size = ntool.size;
 		var sizey = ntool.sy;
 		var name = ntool.tool;
-		var b = new THREE.Mesh(new THREE.BoxGeometry(size,sizey,size), new THREE.MeshBasicMaterial({color:ntool.color}) );
+		var b = new THREE.Mesh(new THREE.BoxGeometry(size,sizey,size), new THREE.MeshBasicMaterial({color:ntool.color, transparent:true, opacity:0.5}) );
 		if(size == 6 || size == 4) b.geometry.applyMatrix(new THREE.Matrix4().makeTranslation(0.5, sizey*0.5, 0.5));
 		else b.geometry.applyMatrix(new THREE.Matrix4().makeTranslation(0, sizey*0.5, 0));
 		b.position.set(x, 0, y);
 		this.scene.add(b);
-		this.render();
+		//this.render();
 	},
 	removeTool : function(){
 		this.scene.remove(this.tool);
@@ -383,13 +393,21 @@ V3D.Base.prototype = {
 	    texture.needsUpdate = true;
 	    return texture;
 	},
-	paintMap : function(src, ar, mapSize, island, isStart) {
+	paintMap : function(ar, mapSize, island, isStart) {
 		this.clearTree();
-		if(mapSize) this.mapSize = mapSize;
-		var c = document.createElement('canvas');
-		var ctx = c.getContext("2d");
-		c.width = this.mapSize[0]*16;
-		c.height = this.mapSize[1]*16;
+		
+		if(this.mapCanvas==null){
+			this.mapCanvas = document.createElement('canvas');
+			this.mapCtx = this.mapCanvas.getContext("2d");
+		}
+		if(mapSize){ 
+			this.mapSize = mapSize;
+			this.mapCanvas.width = this.mapSize[0]*16;
+		    this.mapCanvas.height = this.mapSize[1]*16;
+		}
+		//var c = document.createElement('canvas');
+		//var ctx = c.getContext("2d");
+		
 		var y = this.mapSize[1];
 		var x, v, px, py, n = ar.length;
 		while(y--){
@@ -397,13 +415,20 @@ V3D.Base.prototype = {
 			while(x--){
 				n--;
 				v = ar[n];
+
 				//if(v > 20 && v < 44){ this.addTree(x, y, v); v=0 };
 				px = v % 32 * 16;
                 py = Math.floor(v / 32) * 16;
-				ctx.drawImage(src,px, py, 16, 16, x*16, y*16, 16, 16);
+                if(isStart){
+                    this.mapCtx.drawImage(this.imageSrc,px, py, 16, 16, x*16, y*16, 16, 16);
+                }
+                else{
+                	if(v>43) this.mapCtx.drawImage(this.imageSrc,px, py, 16, 16, x*16, y*16, 16, 16);
+                }
+				//if(!isStart && v!==0)
 			}
 		}
-		if(isStart)this.updateTerrain(c, island);
-		else this.reMapTerrain(c);
+		if(isStart)this.updateTerrain(island);
+		else this.reMapTerrain();
 	}
 }

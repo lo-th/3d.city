@@ -49,7 +49,7 @@ HUB.Base.prototype = {
     initStartHub : function(){
     	this.addButton('New Map', newMap );
     	this.addButton('Play Game', playMap );
-    	this.addButton('Play 2D', play2d );
+    	//this.addButton('Play 2D', play2d );
         //this.addButton('Tool Test', testTool );
     },
     initGameHub : function(){
