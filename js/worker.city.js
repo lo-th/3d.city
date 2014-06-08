@@ -31,7 +31,7 @@ self.onmessage = function (e) {
     	tool(e.data.name);
     }
     if( p == "MAPCLICK" ){
-    	mapClick(e.data.x, e.data.y);
+    	mapClick(e.data.x, e.data.y, e.data.id);
     }
     if( p == "PLAYMAP" ){
     	playMap();
@@ -44,19 +44,20 @@ var tool = function(name){
     else currentTool = null;
 }
 
-var mapClick = function(x,y){
+var mapClick = function(x,y,id){
 	if(currentTool!==null){
         var budget = simulation.budget;
         var evaluation = simulation.evaluation;
         var messageMgr = new Micro.MessageManager();
         currentTool.doTool(x, y, messageMgr, simulation.blockMaps );
         currentTool.modifyIfEnoughFunding(budget, messageMgr);
-        var tell = "";
+        var tell = "";   
         switch (currentTool.result) {
             case currentTool.TOOLRESULT_NEEDS_BULLDOZE: tell = TXT.toolMessages.needsDoze; break;
             case currentTool.TOOLRESULT_NO_MONEY: tell = TXT.toolMessages.noMoney; break; 
-            default: tell = '&nbsp;';
+            default: tell = '&nbsp;'; self.postMessage({tell:"BUILD", x:x, y:y, id:id });  break;
         }
+        
         processMessages(messageMgr.getMessages());
 	}
 }
@@ -85,8 +86,6 @@ var playMap = function(){
 }
 
 var update = function(){
-	//handleInput();
-    //mouse = U.calculateMouseForPaint();
 
     if (!isPaused){
         simulation.simFrame();

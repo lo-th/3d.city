@@ -29,23 +29,23 @@ V3D.Base = function(){
     this.notAuto = true;
 
     this.toolSet = [
-        {id:0,  tool:'none',        size:0, price:0,     color:'none'},
-		{id:1,  tool:'residential', size:3, price:100,   color:'lime'},
-		{id:2,  tool:'commercial',  size:3, price:100,   color:'blue'},
-		{id:3,  tool:'industrial',  size:3, price:100,   color:'yellow'},
-		{id:4,  tool:'police',      size:3, price:500,   color:'darkblue'},
-		{id:5,  tool:'fire',        size:3, price:500,   color:'red'},
-		{id:6,  tool:'port',        size:4, price:3000,  color:'dodgerblue'},
-		{id:7,  tool:'airport',     size:6, price:10000, color:'violet'},
-		{id:8,  tool:'stadium',     size:4, price:5000,  color:'indigo'},
-		{id:9,  tool:'coal',        size:4, price:3000,  color:'gray'},
-		{id:10, tool:'nuclear',     size:4, price:5000,  color:'mistyrose'},
-		{id:11, tool:'road',        size:1, price:10,    color:'black'},
-		{id:12, tool:'rail',        size:1, price:20,    color:'brown'},
-		{id:13, tool:'wire',        size:1, price:5 ,    color:'khaki'},
-		{id:14, tool:'park',        size:1, price:10,    color:'darkgreen'},
-		{id:15, tool:'query',       size:1, price:0,     color:'cyan'},
-		{id:16, tool:'bulldozer',   size:1, price:1,     color:'salmon'}
+        {id:0,  tool:'none',        size:0, sy:0,    price:0,     color:'none'},
+		{id:1,  tool:'residential', size:3, sy:1,    price:100,   color:'lime'},
+		{id:2,  tool:'commercial',  size:3, sy:1,    price:100,   color:'blue'},
+		{id:3,  tool:'industrial',  size:3, sy:1,    price:100,   color:'yellow'},
+		{id:4,  tool:'police',      size:3, sy:1.2,  price:500,   color:'darkblue'},
+		{id:5,  tool:'fire',        size:3, sy:1.2,  price:500,   color:'red'},
+		{id:6,  tool:'port',        size:4, sy:0.5,  price:3000,  color:'dodgerblue'},
+		{id:7,  tool:'airport',     size:6, sy:0.5,  price:10000, color:'violet'},
+		{id:8,  tool:'stadium',     size:4, sy:2,    price:5000,  color:'indigo'},
+		{id:9,  tool:'coal',        size:4, sy:2,    price:3000,  color:'gray'},
+		{id:10, tool:'nuclear',     size:4, sy:2,    price:5000,  color:'mistyrose'},
+		{id:11, tool:'road',        size:1, sy:0.1,  price:10,    color:'black'},
+		{id:12, tool:'rail',        size:1, sy:0.1,  price:20,    color:'brown'},
+		{id:13, tool:'wire',        size:1, sy:0.1,  price:5 ,    color:'khaki'},
+		{id:14, tool:'park',        size:1, sy:0.1,  price:10,    color:'darkgreen'},
+		{id:15, tool:'query',       size:1, sy:0,    price:0,     color:'cyan'},
+		{id:16, tool:'bulldozer',   size:1, sy:0,    price:1,     color:'salmon'}
 	];
 
 	this.currentTool = 0;
@@ -261,6 +261,20 @@ V3D.Base.prototype = {
 	        
         }
         sendTool(name);
+	},
+	build : function(x,y,id){
+		console.log("build");
+		if(id == 15 || id == 16) return;
+		var ntool = this.toolSet[id];
+		var size = ntool.size;
+		var sizey = ntool.sy;
+		var name = ntool.tool;
+		var b = new THREE.Mesh(new THREE.BoxGeometry(size,sizey,size), new THREE.MeshBasicMaterial({color:ntool.color}) );
+		if(size == 6 || size == 4) b.geometry.applyMatrix(new THREE.Matrix4().makeTranslation(0.5, sizey*0.5, 0.5));
+		else b.geometry.applyMatrix(new THREE.Matrix4().makeTranslation(0, sizey*0.5, 0));
+		b.position.set(x, 0, y);
+		this.scene.add(b);
+		this.render();
 	},
 	removeTool : function(){
 		this.scene.remove(this.tool);

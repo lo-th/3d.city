@@ -70,20 +70,17 @@ function play2d() {
 }
 
 function addTool(id) {
-    //console.log(id)
     view3d.addTool(id);
 }
 
 function sendTool(name) {
-    //console.log(name);
     cityWorker.postMessage({tell:"TOOL", name:name});
 }
 
 function mapClick() {
     var p = view3d.pos;
-    var t = view3d.currentTool;
-    //debug(view3d.pos.x +"/"+view3d.pos.z + "/" + view3d.currentTool)
-    if(p.x>0 && p.z>0 && t) cityWorker.postMessage({tell:"MAPCLICK", x:p.x, y:p.z});
+    var id = view3d.currentTool;
+    if(p.x>0 && p.z>0 && id) cityWorker.postMessage({tell:"MAPCLICK", x:p.x, y:p.z, id:id });
 }
 
 function initCity() {
@@ -98,8 +95,7 @@ function initCity() {
             hub.start();
         }
         if( phase == "BUILD"){
-            
-
+            view3d.build(e.data.x, e.data.y, e.data.id);
         }
         if( phase == "RUN"){
             log(e.data.infos.join("\n"));
