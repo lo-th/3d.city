@@ -3,7 +3,6 @@
 	"src/Random.js",
 	"src/Direction.js",
 	"src/Messages.js",
-	"src/Notification.js",
 	"src/MessageManager.js",
 	"src/Text.js",
 	"src/Census.js",

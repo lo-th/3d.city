@@ -30,9 +30,9 @@ V3D.Base = function(){
 
     this.toolSet = [
         {id:0,  tool:'none',        size:0, sy:0,    price:0,     color:'none'},
-		{id:1,  tool:'residential', size:3, sy:1,    price:100,   color:'lime'},
-		{id:2,  tool:'commercial',  size:3, sy:1,    price:100,   color:'blue'},
-		{id:3,  tool:'industrial',  size:3, sy:1,    price:100,   color:'yellow'},
+		{id:1,  tool:'residential', size:3, sy:0.2,  price:100,   color:'lime'},
+		{id:2,  tool:'commercial',  size:3, sy:0.2,  price:100,   color:'blue'},
+		{id:3,  tool:'industrial',  size:3, sy:0.2,  price:100,   color:'yellow'},
 		{id:4,  tool:'police',      size:3, sy:1.2,  price:500,   color:'darkblue'},
 		{id:5,  tool:'fire',        size:3, sy:1.2,  price:500,   color:'red'},
 		{id:6,  tool:'port',        size:4, sy:0.5,  price:3000,  color:'dodgerblue'},
@@ -41,8 +41,8 @@ V3D.Base = function(){
 		{id:9,  tool:'coal',        size:4, sy:2,    price:3000,  color:'gray'},
 		{id:10, tool:'nuclear',     size:4, sy:2,    price:5000,  color:'mistyrose'},
 		{id:11, tool:'road',        size:1, sy:0.1,  price:10,    color:'black'},
-		{id:12, tool:'rail',        size:1, sy:0.1,  price:20,    color:'brown'},
-		{id:13, tool:'wire',        size:1, sy:0.1,  price:5 ,    color:'khaki'},
+		{id:12, tool:'rail',        size:1, sy:0.15, price:20,    color:'brown'},
+		{id:13, tool:'wire',        size:1, sy:0.05, price:5 ,    color:'khaki'},
 		{id:14, tool:'park',        size:1, sy:0.1,  price:10,    color:'darkgreen'},
 		{id:15, tool:'query',       size:1, sy:0,    price:0,     color:'cyan'},
 		{id:16, tool:'bulldozer',   size:1, sy:0,    price:1,     color:'salmon'}
@@ -263,7 +263,6 @@ V3D.Base.prototype = {
         sendTool(name);
 	},
 	build : function(x,y,id){
-		console.log("build");
 		if(id == 15 || id == 16) return;
 		var ntool = this.toolSet[id];
 		var size = ntool.size;

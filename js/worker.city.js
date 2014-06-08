@@ -57,7 +57,6 @@ var mapClick = function(x,y,id){
             case currentTool.TOOLRESULT_NO_MONEY: tell = TXT.toolMessages.noMoney; break; 
             default: tell = '&nbsp;'; self.postMessage({tell:"BUILD", x:x, y:y, id:id });  break;
         }
-        
         processMessages(messageMgr.getMessages());
 	}
 }
