@@ -15,6 +15,13 @@ V3D.Base = function(){
     this.imageSrc = null;
     this.mapCanvas = null;
 
+    this.miniCanvas = [];
+    this.miniCtx = [];
+    this.txtNeedUpdate = [];
+    this.miniTerrain = [];
+
+    this.forceUpdate = [-1,-1];
+
     this.Bulldoze = false;
 
     this.cam = { horizontal:90, vertical:65, distance:120 };
@@ -192,23 +199,39 @@ V3D.Base.prototype = {
 		if(island>0) this.back.material.map = this.gradTexture([[0.51,0.49, 0.3], ['#6666e6','lightskyblue', 'deepskyblue']]);//this.back.material.color.setHex(0x6666e6);
 		else this.back.material.map = this.gradTexture([[0.51,0.49, 0.3], ['#cc7f66','lightskyblue', 'deepskyblue']]);//this.back.material.color.setHex(0xcc7f66);
 
-        if(this.terrain === null){
+        if(this.miniTerrain.length === 0){
+        	var n = 0;
+        	for(var i=0; i<8; i++){
+        		for(var j=0; j<8; j++){
+	        		this.miniTerrain[n] = new THREE.Mesh( new THREE.PlaneGeometry( 16, 16, 1, 1 ),  new THREE.MeshBasicMaterial({map:new THREE.Texture(this.miniCanvas[n])}) );
+	        		this.miniTerrain[n].geometry.applyMatrix(new THREE.Matrix4().makeRotationX(-90*this.ToRad));
+	        		this.miniTerrain[n].position.set((8+j*16)-0.5,0,(8+i*16)-0.5);
+	        		this.land.add( this.miniTerrain[n] );
+	        		this.miniTerrain[n].material.map.needsUpdate = true;
+	        		n++;
+	        	}
+	        }
 			//this.terrain = this.meshs['plane'].clone();
-			this.terrain = new THREE.Mesh( new THREE.PlaneGeometry( 1, 1, 1, 1 ),  new THREE.MeshBasicMaterial({map:new THREE.Texture(this.mapCanvas)}) );
+		/*	this.terrain = new THREE.Mesh( new THREE.PlaneGeometry( 1, 1, 1, 1 ),  new THREE.MeshBasicMaterial({map:new THREE.Texture(this.mapCanvas)}) );
 			this.terrain.material.map.needsUpdate = true;
             this.terrain.geometry.applyMatrix(new THREE.Matrix4().makeRotationX(-90*this.ToRad));
-			this.land.add( this.terrain );
+			//this.land.add( this.terrain );
 		} else {
 			//this.terrain.material.map = new THREE.Texture(this.mapCanvas);
-	        this.terrain.material.map.needsUpdate = true;
+	        this.terrain.material.map.needsUpdate = true;*/
 		}
-		this.terrain.scale.set(this.mapSize[0], 1, this.mapSize[1]);
-		this.terrain.position.set((this.mapSize[0]*0.5)-0.5, 0, (this.mapSize[1]*0.5)-0.5);
-	    this.render();
+		//this.terrain.scale.set(this.mapSize[0], 1, this.mapSize[1]);
+		//this.terrain.position.set((this.mapSize[0]*0.5)-0.5, 0, (this.mapSize[1]*0.5)-0.5);
+	    //this.render();
 	},
-	reMapTerrain : function(){
+	reMapTerrain : function(list){
+		var i = 64;
+		while(i--){
+			if(this.txtNeedUpdate[i]){ this.miniTerrain[i].material.map.needsUpdate = true; this.txtNeedUpdate[i] = 0;}
+		}
+		
 		//this.terrain.material.map = new THREE.Texture(this.mapCanvas);
-	    this.terrain.material.map.needsUpdate = true;
+	    //this.terrain.material.map.needsUpdate = true;
 	    //this.render();
 	},
 	rayTest : function () {
@@ -277,7 +300,8 @@ V3D.Base.prototype = {
 	},
 	build : function(x,y,id){
 		if(id==16){
-			this.mapCtx.drawImage(this.imageSrc,0, 0, 16, 16, x*16, y*16, 16, 16);
+			this.forceUpdate = [x, y];
+			//this.mapCtx.drawImage(this.imageSrc,0, 0, 16, 16, x*16, y*16, 16, 16);
 		    //this.mapCtx.drawImage(this.imageSrc,2*16, 0, 16, 16, x*16, y*16, 16, 16);
 		}
 		if(id >= 11) return;
@@ -396,20 +420,28 @@ V3D.Base.prototype = {
 	paintMap : function(ar, mapSize, island, isStart) {
 		this.clearTree();
 		
-		if(this.mapCanvas==null){
-			this.mapCanvas = document.createElement('canvas');
-			this.mapCtx = this.mapCanvas.getContext("2d");
+		if( this.miniCanvas.length === 0 ){
+			for(var i=0; i<64; i++){
+				this.miniCanvas[i] = document.createElement('canvas');
+				this.miniCanvas[i].width = this.miniCanvas[i].height = 256;
+        		this.miniCtx[i] = this.miniCanvas[i].getContext("2d");
+        		this.txtNeedUpdate[i] = 0;		
+        	}
+
+			//this.mapCanvas = document.createElement('canvas');
+			//this.mapCtx = this.mapCanvas.getContext("2d");
 		}
 		if(mapSize){ 
 			this.mapSize = mapSize;
-			this.mapCanvas.width = this.mapSize[0]*16;
-		    this.mapCanvas.height = this.mapSize[1]*16;
+			//this.mapCanvas.width = this.mapSize[0]*16;
+		    //this.mapCanvas.height = this.mapSize[1]*16;
 		}
 		//var c = document.createElement('canvas');
 		//var ctx = c.getContext("2d");
-		
+		//var list = [];
+		var force = false;
 		var y = this.mapSize[1];
-		var x, v, px, py, n = ar.length;
+		var x, v, px, py, n = ar.length, l, cy=0, cx=0;
 		while(y--){
 			x = this.mapSize[0];
 			while(x--){
@@ -419,16 +451,38 @@ V3D.Base.prototype = {
 				//if(v > 20 && v < 44){ this.addTree(x, y, v); v=0 };
 				px = v % 32 * 16;
                 py = Math.floor(v / 32) * 16;
+
+                cy = Math.floor(y/16);
+                cx = Math.floor(x/16);
+
+                
+
                 if(isStart){
-                    this.mapCtx.drawImage(this.imageSrc,px, py, 16, 16, x*16, y*16, 16, 16);
+                    //this.mapCtx.drawImage(this.imageSrc,px, py, 16, 16, x*16, y*16, 16, 16);
+                    l = cx+(cy*8);
+                	this.miniCtx[l].drawImage(this.imageSrc,px, py, 16, 16, ((x-(cx*16))*16),((y-(cy*16))*16), 16, 16);
+                	this.updateTerrain(island);
+                	this.txtNeedUpdate[l] = 1;
+                    
+                    ///this.miniCtx[cx+(cy*8)].drawImage(this.imageSrc,px, py, 16, 16, ((x-(cx*16))*16),((y-(cy*16))*16), 16, 16);
+                 
                 }
                 else{
-                	if(v>43) this.mapCtx.drawImage(this.imageSrc,px, py, 16, 16, x*16, y*16, 16, 16);
+                	if(x===this.forceUpdate[0] && y===this.forceUpdate[1]) force=true;
+                	if(v>43 || force){ 
+                		l = cx+(cy*8);
+                		this.miniCtx[l].drawImage(this.imageSrc,px, py, 16, 16, ((x-(cx*16))*16),((y-(cy*16))*16), 16, 16);
+                		this.txtNeedUpdate[l] = 1;
+                		if(force)force = false;
+                	}
+                	
                 }
 				//if(!isStart && v!==0)
 			}
 		}
-		if(isStart)this.updateTerrain(island);
-		else this.reMapTerrain();
+		
+		//if(isStart)this.updateTerrain(island);
+		this.reMapTerrain();
+		this.forceUpdate = [-1,-1];
 	}
 }
