@@ -1692,7 +1692,7 @@ Micro.GameMap = function(width, height, defaultValue){
 
 
     this.data = new Array(this.width*this.height);//[];
-    this.value = new M_ARRAY_TYPE(this.width*this.height);//new Array(this.width*this.height);
+    this.mapValue = new M_ARRAY_TYPE(this.width*this.height);//new Array(this.width*this.height);
     /*var i = this.width*this.height;
     while(i--){this.data[i] = new Micro.Tile();}
     console.log(this.data.length)*/
@@ -1710,9 +1710,9 @@ Micro.GameMap.prototype = {
     genFull : function(){
         var i = this.data.length;
         while(i--){
-            this.value[i] = this.data[i].getValue();
+            this.mapValue[i] = this.data[i].getValue();
         }
-        return this.value;
+        return this.mapValue;
     },
 
     _calculateIndex : function(x, y) {

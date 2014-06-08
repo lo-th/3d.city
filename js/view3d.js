@@ -40,9 +40,9 @@ V3D.Base = function(){
 		{id:8,  tool:'stadium',     size:4, sy:2,    price:5000,  color:'indigo'},
 		{id:9,  tool:'coal',        size:4, sy:2,    price:3000,  color:'gray'},
 		{id:10, tool:'nuclear',     size:4, sy:2,    price:5000,  color:'mistyrose'},
-		{id:11, tool:'road',        size:1, sy:0.1,  price:10,    color:'black'},
-		{id:12, tool:'rail',        size:1, sy:0.15, price:20,    color:'brown'},
-		{id:13, tool:'wire',        size:1, sy:0.05, price:5 ,    color:'khaki'},
+		{id:11, tool:'road',        size:1, sy:0.1,  price:10,    color:'black'   ,drag:true},
+		{id:12, tool:'rail',        size:1, sy:0.15, price:20,    color:'brown'   ,drag:true},
+		{id:13, tool:'wire',        size:1, sy:0.05, price:5 ,    color:'khaki'   ,drag:true},
 		{id:14, tool:'park',        size:1, sy:0.1,  price:10,    color:'darkgreen'},
 		{id:15, tool:'query',       size:1, sy:0,    price:0,     color:'cyan'},
 		{id:16, tool:'bulldozer',   size:1, sy:0,    price:1,     color:'salmon'}

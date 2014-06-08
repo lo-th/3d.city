@@ -26,7 +26,6 @@ Micro.GameCanvas.prototype = {
         if (arguments.length < 3) throw e;
         if (!tileSet.loaded) throw new Error('TileSet not ready!');
 
-
         this._spriteSheet = spriteSheet;
         this._tileSet = tileSet;
         var w = this._tileSet.tileWidth;

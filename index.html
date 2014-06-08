@@ -98,7 +98,9 @@ function initCity() {
             view3d.build(e.data.x, e.data.y, e.data.id);
         }
         if( phase == "RUN"){
-            log(e.data.infos.join("\n"));
+            //var str = new String(e.data.sprites);
+            log(e.data.infos.join("\n")+'<br>anims:'+ e.data.tiles.length + " | sprites:" + e.data.sprites.length);
+            //log(str.toString());
         }
     }
 }

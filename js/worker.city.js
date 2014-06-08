@@ -17,6 +17,22 @@ self.onmessage = function (e) {
     if( p == "MAPCLICK" ) Game.mapClick(e.data.x, e.data.y, e.data.id);
 };
 
+var update = function(){
+    if (!Game.isPaused){
+        Game.simulation.simFrame();
+        Game.simulation.updateFrontEnd();
+
+        Game.processMessages(Game.simulation.messageManager.getMessages());
+        Game.simulation.spriteManager.moveObjects();
+    }
+    Game.animatedTiles();
+    Game.calculateSprites();
+    //sprite = calculateSpritesForPaint();
+    //gameCanvas.paint(mouse, sprite, isPaused);
+    //transMessage({ tell:"RUN", infos:Game.infos, sprites:Game.map.genFull() });
+    transMessage({ tell:"RUN", infos:Game.infos, tiles:Game.tilesData, sprites:Game.spritesData});
+};
+
 CITY.Game = function(url) {
     importScripts(url);
 
@@ -27,6 +43,7 @@ CITY.Game = function(url) {
 
     this.simulation = null;
     this.gameTools = null;
+    this.animationManager = null;
     this.map = null;
 
     this.isPaused = false;
@@ -34,21 +51,13 @@ CITY.Game = function(url) {
     this.currentTool = null;
     this.timer = null;
     this.infos = [];
+    this.sprites = [];
+
+    this.spritesData = null;
+    this.tilesData = null;
+
 
     this.newMap();
-};
-
-var update = function(){
-    if (!Game.isPaused){
-        Game.simulation.simFrame();
-        Game.simulation.updateFrontEnd();
-
-        Game.processMessages(Game.simulation.messageManager.getMessages());
-        Game.simulation.spriteManager.moveObjects();
-    }
-    //sprite = calculateSpritesForPaint();
-    //gameCanvas.paint(mouse, sprite, isPaused);
-    transMessage({ tell:"RUN", infos:Game.infos });;
 };
 
 CITY.Game.prototype = {
@@ -60,6 +69,7 @@ CITY.Game.prototype = {
     playMap : function(){
         var money = 20000 / this.difficulty; 
         this.gameTools = new Micro.GameTools(this.map);
+        this.animationManager = new Micro.AnimationManager(this.map);
         this.simulation = new Micro.Simulation( this.map, this.difficulty, this.speed);
 
         // intro message
@@ -72,13 +82,23 @@ CITY.Game.prototype = {
         // update simulation time
         timer = setInterval(update, 1000/60);
     },
+    animatedTiles : function() {
+        var animTiles = this.animationManager.getTiles(0, 0, this.mapSize[0] + 1, this.mapSize[1] + 1, this.isPaused);
+        var i = animTiles.length;
+        this.tilesData = new M_ARRAY_TYPE(i); 
+        while(i--){
+            var tile = animTiles[i];
+            this.tilesData[i] = [tile.tileValue, tile.x, tile.y];
+        }
+    },
     calculateSprites : function() {
-        /*var origin = this.gameCanvas.getTileOrigin();
-        var end = this.gameCanvas.getMaxTile();
-        var spriteList = simulation.spriteManager.getSpritesInView(origin.x, origin.y, end.x + 1, end.y + 1);
-
-        if (spriteList.length === 0) return null;
-        return spriteList;*/
+        this.sprites = this.simulation.spriteManager.getSpritesInView(0, 0, this.mapSize[0] + 1, this.mapSize[1] + 1);
+        var i = this.sprites.length;
+        this.spritesData = new M_ARRAY_TYPE(i);
+        while(i--){
+            var sprite = this.sprites[i];
+            this.spritesData[i] = [sprite.type, sprite.frame, sprite.x, sprite.y];
+        }
     },
     processMessages : function(messages) {
         var messageOutput = false;
