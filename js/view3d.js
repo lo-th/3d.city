@@ -138,7 +138,7 @@ V3D.Base.prototype = {
 	        body.attachEvent("onmousewheel" ,  function(e) {_this.onMouseWheel(e)}); // ie
 	    }
 	    //this.render();
-	    loop();
+	    
 	    start();
     },
     loadSea3d : function (){
