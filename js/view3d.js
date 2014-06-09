@@ -30,7 +30,7 @@ V3D.Base = function(){
 
     this.cam = { horizontal:90, vertical:45, distance:120 };
     this.vsize = { x:window.innerWidth, y:window.innerHeight, z:window.innerWidth/window.innerHeight};
-    this.mouse = { ox:0, oy:0, h:0, v:0, mx:0, my:0, dx:0, dy:0, down:false, over:false, drag:false, click:false };
+    this.mouse = { ox:0, oy:0, h:0, v:0, mx:0, my:0, dx:0, dy:0, down:false, over:false, drag:false, click:false , move:true};
     this.pos =  {x:-1, y:0, z:-1};
 
     this.select = '';
@@ -311,7 +311,7 @@ V3D.Base.prototype = {
 		var sizey = ntool.sy;
 		var name = ntool.tool;
 		if(id){
-			
+			this.mouse.move = false;
 			this.tool = new THREE.Mesh(new THREE.BoxGeometry(size,sizey,size), new THREE.MeshBasicMaterial({color:ntool.color, transparent:true, opacity:0.5}) )
 			if(size == 6 || size == 4) this.tool.geometry.applyMatrix(new THREE.Matrix4().makeTranslation(0.5, sizey*0.5, 0.5));
 			else this.tool.geometry.applyMatrix(new THREE.Matrix4().makeTranslation(0, sizey*0.5, 0));
@@ -331,6 +331,8 @@ V3D.Base.prototype = {
 	        //this.tool.visible = false;
 
 	        
+        } else {
+        	this.mouse.move = true;
         }
         sendTool(name);
 	},
@@ -418,7 +420,7 @@ V3D.Base.prototype = {
 	        py = e.clientY;
 	    }
 	    
-	    if (this.mouse.down && !this.mouse.drag) {      
+	    if (this.mouse.down && this.mouse.move) {      
 	        document.body.style.cursor = 'move';
 	        this.cam.horizontal = ((px - this.mouse.ox) * 0.3) + this.mouse.h;
 	        this.cam.vertical = (-(py -this. mouse.oy) * 0.3) + this.mouse.v;
