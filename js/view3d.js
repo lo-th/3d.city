@@ -6,8 +6,12 @@
 var V3D = { REVISION: '0.1a' };
 
 V3D.Base = function(){
+	this.container = document.getElementById( 'container' );
+
+	this.isWithBackground = false;
+	
 	this.ToRad = Math.PI / 180;
-	this.canvas = document.getElementById("threeCanvas");
+	//this.canvas = document.getElementById("threeCanvas");
     this.camera = null; 
     this.scene = null; 
     this.renderer = null;
@@ -20,11 +24,11 @@ V3D.Base = function(){
     this.txtNeedUpdate = [];
     this.miniTerrain = [];
 
-    this.forceUpdate = [-1,-1];
+    this.forceUpdate = { x:-1, y:-1 };
 
     this.Bulldoze = false;
 
-    this.cam = { horizontal:90, vertical:65, distance:120 };
+    this.cam = { horizontal:90, vertical:45, distance:120 };
     this.vsize = { x:window.innerWidth, y:window.innerHeight, z:window.innerWidth/window.innerHeight};
     this.mouse = { ox:0, oy:0, h:0, v:0, mx:0, my:0, dx:0, dy:0, down:false, over:false, drag:false, click:false };
     this.pos =  {x:-1, y:0, z:-1};
@@ -70,10 +74,7 @@ V3D.Base = function(){
 V3D.Base.prototype = {
     constructor: V3D.Base,
     init:function() {
-
-    	this.renderer = new THREE.WebGLRenderer({ canvas:this.canvas, antialias:false });
-    	this.renderer.setSize( this.vsize.x, this.vsize.y, true );
-    	this.renderer.autoClear = false;
+    	
 
     	this.scene = new THREE.Scene();
     	this.camera = new THREE.PerspectiveCamera( 50, this.vsize.z, 0.1, 1000 );
@@ -91,26 +92,44 @@ V3D.Base.prototype = {
         this.moveCamera();
 
 
+         //this.renderer = new THREE.WebGLRenderer({ canvas:this.canvas, antialias:false });
+    	this.renderer = new THREE.WebGLRenderer({ precision: "mediump", antialias:false });
+    	this.renderer.sortObjects = false;
+    	//this.renderer.setSize( this.vsize.x, this.vsize.y, true );
+    	this.renderer.setSize( this.vsize.x, this.vsize.y );
+    	//this.renderer.autoClear = this.isWithBackground;
+    	var _this = this;
+    	this.container.appendChild( _this.renderer.domElement );
+
+        if(this.isWithBackground ){
+        	var sky = this.gradTexture([[0.5,0.45, 0.2], ['#6666e6','lightskyblue', 'deepskyblue']]);
+            this.back = new THREE.Mesh( new THREE.IcosahedronGeometry(300,1), new THREE.MeshBasicMaterial( { map:sky, side:THREE.BackSide, depthWrite: false }  ));
+            this.scene.add( this.back );
+            this.renderer.autoClear = false;
+        }
+
         
 
-        var sky = this.gradTexture([[0.5,0.45, 0.2], ['#6666e6','lightskyblue', 'deepskyblue']]);
-        this.back = new THREE.Mesh( new THREE.IcosahedronGeometry(300,1), new THREE.MeshBasicMaterial( { map:sky, side:THREE.BackSide, depthWrite: false }  ));
-        this.scene.add( this.back );
+       
 
-        var _this = this;
 
+
+
+    	
         window.addEventListener( 'resize', function(e) { _this.resize() }, false );
 
-        this.canvas.addEventListener( 'click',  function(e) {_this.onMouseClick(e)}, false );
 
-	    this.canvas.addEventListener( 'mousemove',  function(e) {_this.onMouseMove(e)} , false );
-	    this.canvas.addEventListener( 'mousedown',  function(e) {_this.onMouseDown(e)}, false );
-	    this.canvas.addEventListener( 'mouseup',  function(e) {_this.onMouseUp(e)}, false );
-	    this.canvas.addEventListener( 'mouseout',  function(e) {_this.onMouseUp(e)}, false );
+        
+        this.container.addEventListener( 'click',  function(e) {_this.onMouseClick(e)}, false );
+
+	    this.container.addEventListener( 'mousemove',  function(e) {_this.onMouseMove(e)} , false );
+	    this.container.addEventListener( 'mousedown',  function(e) {_this.onMouseDown(e)}, false );
+	    this.container.addEventListener( 'mouseup',  function(e) {_this.onMouseUp(e)}, false );
+	    this.container.addEventListener( 'mouseout',  function(e) {_this.onMouseUp(e)}, false );
 	    
-	    this.canvas.addEventListener( 'touchstart',  function(e) {_this.onMouseDown(e)}, false );
-	    this.canvas.addEventListener( 'touchend',  function(e) {_this.onMouseUp(e)}, false );
-	    this.canvas.addEventListener( 'touchmove',  function(e) {_this.onMouseMove(e)}, false );
+	    this.container.addEventListener( 'touchstart',  function(e) {_this.onMouseDown(e)}, false );
+	    this.container.addEventListener( 'touchend',  function(e) {_this.onMouseUp(e)}, false );
+	    this.container.addEventListener( 'touchmove',  function(e) {_this.onMouseMove(e)}, false );
 	    var body = document.body;
 	    if( body.addEventListener ){
 	        body.addEventListener( 'mousewheel',  function(e) {_this.onMouseWheel(e)}, false ); //chrome
@@ -155,7 +174,7 @@ V3D.Base.prototype = {
 		if(t.cam.distance>20){
 			t.cam.distance--;
 			t.moveCamera();
-			t.render();
+			//t.render();
 		}else{
 			clearInterval(t.timer);
 		}
@@ -177,35 +196,49 @@ V3D.Base.prototype = {
     		this.trees = [];
     	}
     },
-    render:function(){
+    /*render:function(){
     	if(!this.notAuto) return;
     	this.renderer.clear();
     	this.renderer.render( this.scene, this.camera );
     	//log(this.select);
-    },
+    },*/
     resize: function(){
     	this.vsize = { x:window.innerWidth, y:window.innerHeight, z:window.innerWidth/window.innerHeight};
 	    this.camera.aspect = this.vsize.z;
 	    this.camera.updateProjectionMatrix();
-	    this.renderer.setSize(this.vsize.x,this.vsize.y, true);
-	    this.render();
+	    this.renderer.setSize(this.vsize.x,this.vsize.y);
+	    //this.render();
 	},
 	updateTerrain : function(island){	
 		this.center.x = this.mapSize[0]*0.5;
 		this.center.z = this.mapSize[1]*0.5;
 		this.moveCamera();
-		this.back.position.copy(this.center);
-		
-		if(island>0) this.back.material.map = this.gradTexture([[0.51,0.49, 0.3], ['#6666e6','lightskyblue', 'deepskyblue']]);//this.back.material.color.setHex(0x6666e6);
-		else this.back.material.map = this.gradTexture([[0.51,0.49, 0.3], ['#cc7f66','lightskyblue', 'deepskyblue']]);//this.back.material.color.setHex(0xcc7f66);
+		//this.back.position.copy(this.center);
+		if(this.isWithBackground ){
+		    if(island>0) this.back.material.map = this.gradTexture([[0.51,0.49, 0.3], ['#6666e6','lightskyblue', 'deepskyblue']]);
+		    else this.back.material.map = this.gradTexture([[0.51,0.49, 0.3], ['#cc7f66','lightskyblue', 'deepskyblue']]);//this.back.material.color.setHex(0xcc7f66);
+		} else {
+			if(island>0) this.renderer.setClearColor( 0x6666e6, 1 );
+			else this.renderer.setClearColor( 0xcc7f66, 1 );
+		}
 
         if(this.miniTerrain.length === 0){
-        	var n = 0;
+        	var matrix = new THREE.Matrix4();
+        	var pyGeometry = this.meshs['plane'].geometry;//new THREE.PlaneTypedGeometry( 16, 16 );
+				//pyGeometry.uvs[ 5 ] = 0.5;
+				//pyGeometry.uvs[ 7 ] = 0.5;
+				//pyGeometry.applyMatrix( matrix.makeRotationX( - Math.PI / 2 ) );
+        	var n = 0, texture;
         	for(var i=0; i<8; i++){
         		for(var j=0; j<8; j++){
-	        		this.miniTerrain[n] = new THREE.Mesh( new THREE.PlaneGeometry( 16, 16, 1, 1 ),  new THREE.MeshBasicMaterial({map:new THREE.Texture(this.miniCanvas[n])}) );
-	        		this.miniTerrain[n].geometry.applyMatrix(new THREE.Matrix4().makeRotationX(-90*this.ToRad));
+        			texture = new THREE.Texture(this.miniCanvas[n])
+        			texture.magFilter = THREE.NearestFilter;
+				    texture.minFilter = THREE.LinearMipMapLinearFilter;
+	        		//this.miniTerrain[n] = new THREE.Mesh( new THREE.PlaneGeometry( 16, 16, 1, 1 ),  new THREE.MeshBasicMaterial({map:new THREE.Texture(this.miniCanvas[n])}) );
+	        		this.miniTerrain[n] = new THREE.Mesh( pyGeometry,  new THREE.MeshBasicMaterial({map:texture}) );
+	        		//this.miniTerrain[n].geometry.applyMatrix(new THREE.Matrix4().makeRotationX(-90*this.ToRad));
 	        		this.miniTerrain[n].position.set((8+j*16)-0.5,0,(8+i*16)-0.5);
+	        		this.miniTerrain[n].scale.set(16, 1, 16);
 	        		this.land.add( this.miniTerrain[n] );
 	        		this.miniTerrain[n].material.map.needsUpdate = true;
 	        		n++;
@@ -261,9 +294,9 @@ V3D.Base.prototype = {
 		    } else {
 		    	this.pos.x = -1;
 		    	this.pos.z = -1;
-		    	if(this.tool!==null){
-		    		if(this.tool.visible) this.tool.visible = false;
-		    	}
+		    	//if(this.tool!==null){
+		    	//	if(this.tool.visible) this.tool.visible = false;
+		    	//}
 		    	//this.select = '';
 		    }
 		}
@@ -275,24 +308,27 @@ V3D.Base.prototype = {
 
 		var ntool = this.toolSet[id];
 		var size = ntool.size;
+		var sizey = ntool.sy;
 		var name = ntool.tool;
 		if(id){
-			this.tool = new THREE.Object3D();
-			var m = new THREE.BoxHelper();
-			m.material.color.set( ntool.color );
-			m.material.linewidth = 1;
-			m.scale.set( size*0.5,0.5,size*0.5 );
-
-			if(size == 6 || size == 4) m.position.set(0.5, 0.51, 0.5);
-			else m.position.set(0, 0.51, 0);
-
-			this.tool.add(m);
+			
+			this.tool = new THREE.Mesh(new THREE.BoxGeometry(size,sizey,size), new THREE.MeshBasicMaterial({color:ntool.color, transparent:true, opacity:0.5}) )
+			if(size == 6 || size == 4) this.tool.geometry.applyMatrix(new THREE.Matrix4().makeTranslation(0.5, sizey*0.5, 0.5));
+			else this.tool.geometry.applyMatrix(new THREE.Matrix4().makeTranslation(0, sizey*0.5, 0));
+			//this.tool = new THREE.Object3D();
+			//var m = new THREE.BoxHelper();
+			//m.material.color.set( ntool.color );
+			//m.material.linewidth = 1;
+			//m.scale.set( size*0.5,0.5,size*0.5 );
+			//if(size == 6 || size == 4) m.position.set(0.5, 0.51, 0.5);
+			//else m.position.set(0, 0.51, 0);
+			//this.tool.add(m);
 
 			//this.tool.matrix.applyMatrix(new THREE.Matrix4().makeTranslation(0.5, 0, 0.5));
 			//this.tool = new THREE.Mesh(new THREE.BoxGeometry(size,1,size), new THREE.MeshBasicMaterial({color:ntool.color}) )
 			//if(size == 6 || size == 4) this.tool.geometry.applyMatrix(new THREE.Matrix4().makeTranslation(0.5, 0, 0.5));
 	        this.scene.add(this.tool);
-	        this.tool.visible = false;
+	        //this.tool.visible = false;
 
 	        
         }
@@ -300,7 +336,8 @@ V3D.Base.prototype = {
 	},
 	build : function(x,y,id){
 		if(id==16){
-			this.forceUpdate = [x, y];
+			this.forceUpdate.x = x;
+			this.forceUpdate.y = y;
 			//this.mapCtx.drawImage(this.imageSrc,0, 0, 16, 16, x*16, y*16, 16, 16);
 		    //this.mapCtx.drawImage(this.imageSrc,2*16, 0, 16, 16, x*16, y*16, 16, 16);
 		}
@@ -338,11 +375,12 @@ V3D.Base.prototype = {
 	    //this.render();
 	},
 	onMouseClick : function (e) {
-		
-		mapClick();
 		e.preventDefault();
+		mapClick();
+		
 	},
 	onMouseDown : function (e) {   
+		e.preventDefault();
 	    var px, py;
 	    if(e.touches){
 	        px = e.clientX || e.touches[ 0 ].pageX;
@@ -360,16 +398,17 @@ V3D.Base.prototype = {
 	    this.mouse.down = true;
 	    
 	    //this.rayTest();
-	    this.render();
-	    e.preventDefault();
+	    //this.render();
+	    
 	},
 	onMouseUp : function (e) {
+		e.preventDefault();
 	    this.mouse.down = false;
 	    document.body.style.cursor = 'auto';
-	    e.preventDefault();
+	    
 	},
 	onMouseMove : function (e) {
-	    //e.preventDefault();
+	    e.preventDefault();
 	    var px, py;
 	    if(e.touches){
 	        px = e.clientX || e.touches[ 0 ].pageX;
@@ -390,10 +429,10 @@ V3D.Base.prototype = {
 			this.rayTest();
 		}
 	    //if(!self.focus())self.focus();
-	    this.render();
-	    e.preventDefault();
+	    //this.render();
 	},
-	onMouseWheel : function (e) {    
+	onMouseWheel : function (e) { 
+		e.preventDefault();   
 	    var delta = 0;
 	    if(e.wheelDelta){delta=e.wheelDelta*-1;}
 	    else if(e.detail){delta=e.detail*20;}
@@ -401,9 +440,14 @@ V3D.Base.prototype = {
 	    if(this.cam.distance<2)this.cam.distance = 2;
 	    if(this.cam.distance>150)this.cam.distance = 150;
 	    this.moveCamera();
-	    this.render(); 
-	    e.preventDefault();
+	    //this.render(); 
 	},
+
+
+
+
+
+
 	gradTexture : function(color) {
 	    var c = document.createElement("canvas");
 	    var ct = c.getContext("2d");
@@ -418,7 +462,7 @@ V3D.Base.prototype = {
 	    return texture;
 	},
 	paintMap : function(ar, mapSize, island, isStart) {
-		this.clearTree();
+		//if(isStart){this.clearTree();}
 		
 		if( this.miniCanvas.length === 0 ){
 			for(var i=0; i<64; i++){
@@ -448,7 +492,7 @@ V3D.Base.prototype = {
 				n--;
 				v = ar[n];
 
-				//if(v > 20 && v < 44){ this.addTree(x, y, v); v=0 };
+				//if(isStart){if(v > 20 && v < 44){ this.addTree(x, y, v); v=0;};}
 				px = v % 32 * 16;
                 py = Math.floor(v / 32) * 16;
 
@@ -468,7 +512,7 @@ V3D.Base.prototype = {
                  
                 }
                 else{
-                	if(x===this.forceUpdate[0] && y===this.forceUpdate[1]) force=true;
+                	if(x===this.forceUpdate.x && y===this.forceUpdate.y){ force=true; this.forceUpdate.x=-1; this.forceUpdate.y=-1 }
                 	if(v>43 || force){ 
                 		l = cx+(cy*8);
                 		this.miniCtx[l].drawImage(this.imageSrc,px, py, 16, 16, ((x-(cx*16))*16),((y-(cy*16))*16), 16, 16);
@@ -483,6 +527,5 @@ V3D.Base.prototype = {
 		
 		//if(isStart)this.updateTerrain(island);
 		this.reMapTerrain();
-		this.forceUpdate = [-1,-1];
 	}
 }
