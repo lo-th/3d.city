@@ -120,7 +120,7 @@ V3D.Base.prototype = {
 
 
         
-        this.container.addEventListener( 'click',  function(e) {_this.onMouseClick(e)}, false );
+       // this.container.addEventListener( 'click',  function(e) {_this.onMouseClick(e)}, false );
 
 	    this.container.addEventListener( 'mousemove',  function(e) {_this.onMouseMove(e)} , false );
 	    this.container.addEventListener( 'mousedown',  function(e) {_this.onMouseDown(e)}, false );
@@ -283,6 +283,7 @@ V3D.Base.prototype = {
 
 
 					this.tool.position.set(this.pos.x, 0, this.pos.z);
+					if(this.mouse.click){mapClick();this.mouse.click=false};
 				} 
 
 				//log(intersects[0].point.x, intersects[0].point.z)
@@ -376,11 +377,11 @@ V3D.Base.prototype = {
 	    this.camera.lookAt(this.center);
 	    //this.render();
 	},
-	onMouseClick : function (e) {
+	/*onMouseClick : function (e) {
 		e.preventDefault();
 		mapClick();
 		
-	},
+	},*/
 	onMouseDown : function (e) {   
 		e.preventDefault();
 	    var px, py;
@@ -398,6 +399,7 @@ V3D.Base.prototype = {
 	    this.mouse.h = this.cam.horizontal;
 	    this.mouse.v = this.cam.vertical;
 	    this.mouse.down = true;
+	    this.mouse.click = true;
 	    
 	    //this.rayTest();
 	    //this.render();
