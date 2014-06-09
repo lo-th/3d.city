@@ -26,6 +26,7 @@ body {  padding:0; margin: 0px; background:#6666e6; font:12px sans-serif; width:
 <script>
 var d = document.getElementById('debug');
 var l = document.getElementById('log');
+var timestep = 1000/30;
 
 var cityWorker, view3d, hub, im;
 window.onload = init;
@@ -39,7 +40,7 @@ function init(){
 
 function loop() {
     requestAnimationFrame( loop, view3d.renderer.domElement );
-    if(tilesData!==null) view3d.paintMap(tilesData);
+    if(tilesData!==null && newup){ view3d.paintMap(tilesData); newup=false; }
     render();
 }
 
@@ -54,8 +55,13 @@ function log(txt){ l.innerHTML = txt || '';  }
 //  CITY INIT
 //=======================================
 
-var tilesData = null;;
-var spriteData = null;;
+//var ARRAY_TYPE;
+//if(!ARRAY_TYPE) { ARRAY_TYPE = (typeof Float32Array !== 'undefined') ? Float32Array : Array; }
+
+var tilesData = null;//new ARRAY_TYPE(128*128);
+var spriteData = null;
+var trans = false;
+var newup = false;
 
 function start() {
 	im = new Image();
@@ -103,6 +109,8 @@ function initCity() {
         var phase = e.data.tell;
         if( phase == "NEWMAP"){
             view3d.paintMap(e.data.map, e.data.mapSize, e.data.island, true);
+            trans = e.data.trans;
+            console.log(trans);
             hub.start();
         }
         if( phase == "BUILD"){
@@ -112,10 +120,12 @@ function initCity() {
             //var str = new String(e.data.sprites);
             log(e.data.infos.join("\n"));
             //log(e.data.infos.join("\n")+'<br>anims:'+ e.data.anims.length + " | sprites:" + e.data.sprites.length);
-            tilesData = e.data.tiles;
+            tilesData = e.data.tilesData;
+            newup = true;
             //if(tilesData!==null) view3d.paintMap(im, tilesData);
             spriteData = e.data.sprites;
             //log(str.toString());
+            if(trans) setTimeout( cityWorker.postMessage({tell:"RUN", tilesData:tilesData},[tilesData.buffer]), timestep); 
         }
     }
 }

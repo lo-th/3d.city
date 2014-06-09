@@ -3,11 +3,12 @@ var transMessage = self.webkitPostMessage || self.postMessage;
 
 var CITY = {};
 var timer;
-var timestep = 1000/30;
+var timestep = 1000/10;
 var Game;
-/*var ab = new ArrayBuffer( 1 );
-transferableMessage( ab, [ab] );
-var SUPPORT_TRANSFERABLE = ( ab.byteLength === 0 );*/
+
+var ab = new ArrayBuffer( 1 );
+transMessage( ab, [ab] );
+var trans = false;// ( ab.byteLength === 0 );
 
 self.onmessage = function (e) {
 	var p = e.data.tell;
@@ -16,6 +17,29 @@ self.onmessage = function (e) {
     if( p == "PLAYMAP" ) Game.playMap();
     if( p == "TOOL" ) Game.tool(e.data.name);
     if( p == "MAPCLICK" ) Game.mapClick(e.data.x, e.data.y, e.data.id);
+    if( p == "RUN" && trans) updateTrans(e.data);
+};
+
+var updateTrans = function(data){
+    if (!Game.isPaused){
+        Game.simulation.simFrame();
+        Game.simulation.updateFrontEnd();
+
+        Game.processMessages(Game.simulation.messageManager.getMessages());
+        Game.simulation.spriteManager.moveObjects();
+    }
+    //Game.getTiles();
+    //Game.animatedTiles();
+    Game.calculateSprites();
+    //sprite = calculateSpritesForPaint();
+    //gameCanvas.paint(mouse, sprite, isPaused);
+    //transMessage({ tell:"RUN", infos:Game.infos, sprites:Game.map.genFull() });
+    //transMessage({ tell:"RUN", infos:Game.infos, tiles:Game.tilesData, anims:Game.animsData, sprites:Game.spritesData});
+    var tilesData = data.tilesData;
+    var i = tilesData.length;
+    while(i--){tilesData[i] = Game.map.tilesData[i];}
+
+    transMessage({ tell:"RUN", infos:Game.infos, tilesData:tilesData, anims:Game.animsData, sprites:Game.spritesData}, [tilesData.buffer]);
 };
 
 var update = function(){
@@ -33,7 +57,9 @@ var update = function(){
     //gameCanvas.paint(mouse, sprite, isPaused);
     //transMessage({ tell:"RUN", infos:Game.infos, sprites:Game.map.genFull() });
     //transMessage({ tell:"RUN", infos:Game.infos, tiles:Game.tilesData, anims:Game.animsData, sprites:Game.spritesData});
-    transMessage({ tell:"RUN", infos:Game.infos, tiles:Game.map.tilesData, anims:Game.animsData, sprites:Game.spritesData});
+    var tilesData = Game.map.tilesData;
+
+    transMessage({ tell:"RUN", infos:Game.infos, tilesData:tilesData, anims:Game.animsData, sprites:Game.spritesData});
 };
 
 CITY.Game = function(url) {
@@ -70,7 +96,7 @@ CITY.Game.prototype = {
     constructor: CITY.Game,
     newMap : function(){
         this.map = this.mapGen.construct(this.mapSize[0], this.mapSize[1]);
-        transMessage({ tell:"NEWMAP", map:this.map.tilesData, mapSize:this.mapSize, island:this.map.isIsland });
+        transMessage({ tell:"NEWMAP", map:this.map.tilesData, mapSize:this.mapSize, island:this.map.isIsland, trans:trans });
     },
     playMap : function(){
         var money = 20000 / this.difficulty; 
@@ -86,21 +112,22 @@ CITY.Game.prototype = {
         this.processMessages(messageMgr.getMessages());
 
         // update simulation time
-        timer = setInterval(update, timestep);
+        if(!trans) timer = setInterval(update, timestep);
+        else update();
     },
-    getTiles : function() {
+    /*getTiles : function() {
         if(this.needMapUpdate){
             this.tilesData = this.map.tilesData;
-            /*var i = this.map.data.length;
+            var i = this.map.data.length;
             this.tilesData = new M_ARRAY_TYPE(i);
             while(i--){
                 this.tilesData[i] = this.map.data[i].getValue()
-            }*/
+            }
             //this.needMapUpdate = false;
         } else {
             this.tilesData = null;
         }
-    },
+    },*/
     animatedTiles : function() {
         var animTiles = this.animationManager.getTiles(0, 0, this.mapSize[0] + 1, this.mapSize[1] + 1, this.isPaused);
         var i = animTiles.length;

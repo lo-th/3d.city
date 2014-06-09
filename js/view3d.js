@@ -37,7 +37,7 @@ V3D.Base = function(){
     this.meshs = {};
 
     this.trees = [];
-    this.mapSize =null;
+    this.mapSize = [128,128];
 
     this.terrain = null;
     this.tool = null;
@@ -224,19 +224,21 @@ V3D.Base.prototype = {
 
         if(this.miniTerrain.length === 0){
         	var matrix = new THREE.Matrix4();
-        	var pyGeometry = this.meshs['plane'].geometry;//new THREE.PlaneTypedGeometry( 16, 16 );
-				//pyGeometry.uvs[ 5 ] = 0.5;
-				//pyGeometry.uvs[ 7 ] = 0.5;
-				//pyGeometry.applyMatrix( matrix.makeRotationX( - Math.PI / 2 ) );
+        	var pyGeometry = this.meshs['plane'].geometry;
+        	//new THREE.PlaneTypedGeometry( 16, 16 );
+			//pyGeometry.applyMatrix( matrix.makeRotationX( - Math.PI / 2 ) );
+
         	var n = 0, texture;
         	for(var i=0; i<8; i++){
         		for(var j=0; j<8; j++){
         			texture = new THREE.Texture(this.miniCanvas[n])
         			texture.magFilter = THREE.NearestFilter;
 				    texture.minFilter = THREE.LinearMipMapLinearFilter;
-	        		//this.miniTerrain[n] = new THREE.Mesh( new THREE.PlaneGeometry( 16, 16, 1, 1 ),  new THREE.MeshBasicMaterial({map:new THREE.Texture(this.miniCanvas[n])}) );
-	        		this.miniTerrain[n] = new THREE.Mesh( pyGeometry,  new THREE.MeshBasicMaterial({map:texture}) );
-	        		//this.miniTerrain[n].geometry.applyMatrix(new THREE.Matrix4().makeRotationX(-90*this.ToRad));
+
+	        		this.miniTerrain[n] = new THREE.Mesh( new THREE.PlaneGeometry( 1, 1, 16, 16 ),  new THREE.MeshBasicMaterial({map:new THREE.Texture(this.miniCanvas[n])}) );
+	        		this.miniTerrain[n].geometry.applyMatrix(new THREE.Matrix4().makeRotationX(-90*this.ToRad));
+	        		//this.miniTerrain[n] = new THREE.Mesh( pyGeometry,  new THREE.MeshBasicMaterial({map:texture}) );
+	        		
 	        		this.miniTerrain[n].position.set((8+j*16)-0.5,0,(8+i*16)-0.5);
 	        		this.miniTerrain[n].scale.set(16, 1, 16);
 	        		this.land.add( this.miniTerrain[n] );
