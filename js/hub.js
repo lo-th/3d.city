@@ -26,8 +26,12 @@ HUB.Base.prototype = {
     	this.full.style.cssText ='position:absolute; background:rgba(102,102,230,1); top:0px; left:0px; width:100%; height:100%; pointer-events:none; display:block;';
     	this.title = this.createLabel("3D.CITY", [200, 80]);
     	this.title.style.cssText = 'position:absolute; top:50%; left:50%; margin-top:-40px; margin-left:-100px; width:200px; height:80px; pointer-events:none;';
+        this.subtitle = document.createElement('div');
+        this.subtitle.style.cssText = 'position:absolute; top:50%; left:50%; margin-top:20px; margin-left:-100px; width:200px; height:80px; pointer-events:none;';
+        this.subtitle.innerHTML = "Generating world...";
 
     	this.full.appendChild( this.title );
+        this.full.appendChild( this.subtitle );
     	this.hub.appendChild( this.full );
     },
     start:function(){
