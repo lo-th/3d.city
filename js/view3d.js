@@ -469,12 +469,12 @@ V3D.Base.prototype = {
 		return m;
 	},
 	build : function(x,y){
-		if(this.currentTool.tool=='bulldozer'){
+		//if(this.currentTool.tool=='bulldozer'){
 			//this.forceUpdate.x = x;
 			//this.forceUpdate.y = y;
 
-			this.removeTree(x,y);
-		}
+		//	this.removeTree(x,y);
+		//}
 		//if(id >= 11) return;
 		if(this.currentTool.build){
 			//var ntool = this.toolSet[id];
@@ -499,6 +499,8 @@ V3D.Base.prototype = {
 			else b.geometry.applyMatrix(new THREE.Matrix4().makeTranslation(0, sizey*0.5, 0));
 			b.position.set(x, 0, y);
 			this.scene.add(b);
+		} else {
+			if(this.currentTool.tool!=='query')this.removeTree(x,y);
 		}
 	},
 	removeTool : function(){
