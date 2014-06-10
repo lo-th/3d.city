@@ -3,7 +3,7 @@ var transMessage = self.webkitPostMessage || self.postMessage;
 
 var CITY = {};
 var timer;
-var timestep = 1000/10;
+var timestep = 1000/30;
 var Game;
 
 var ab = new ArrayBuffer( 1 );
@@ -57,9 +57,9 @@ var update = function(){
     //gameCanvas.paint(mouse, sprite, isPaused);
     //transMessage({ tell:"RUN", infos:Game.infos, sprites:Game.map.genFull() });
     //transMessage({ tell:"RUN", infos:Game.infos, tiles:Game.tilesData, anims:Game.animsData, sprites:Game.spritesData});
-    var tilesData = Game.map.tilesData;
+    //var tilesData = Game.map.tilesData;
 
-    transMessage({ tell:"RUN", infos:Game.infos, tilesData:tilesData, anims:Game.animsData, sprites:Game.spritesData});
+    transMessage({ tell:"RUN", infos:Game.infos, tilesData:Game.map.tilesData, anims:Game.animsData, sprites:Game.spritesData});
 };
 
 CITY.Game = function(url) {
@@ -86,6 +86,8 @@ CITY.Game = function(url) {
     this.animsData = null;
     this.tilesData = null;
 
+    this.spritesData  = [];
+
     //this.needMapUpdate = false;
 
 
@@ -99,7 +101,7 @@ CITY.Game.prototype = {
         transMessage({ tell:"NEWMAP", tilesData:this.map.tilesData, mapSize:this.mapSize, island:this.map.isIsland, trans:trans });
     },
     playMap : function(){
-        var money = 20000 / this.difficulty; 
+        var money = 12000 / this.difficulty; 
         this.gameTools = new Micro.GameTools(this.map);
         this.animationManager = new Micro.AnimationManager(this.map);
         this.simulation = new Micro.Simulation( this.map, this.difficulty, this.speed);
@@ -140,10 +142,10 @@ CITY.Game.prototype = {
     calculateSprites : function() {
         this.sprites = this.simulation.spriteManager.getSpritesInView(0, 0, this.mapSize[0] + 1, this.mapSize[1] + 1);
         var i = this.sprites.length;
-        this.spritesData = new M_ARRAY_TYPE(i);
+        //this.spritesData = new M_ARRAY_TYPE(i);
         while(i--){
             var sprite = this.sprites[i];
-            this.spritesData[i] = [sprite.type, sprite.frame, sprite.x, sprite.y];
+            this.spritesData[i] = [sprite.type, sprite.frame, sprite.x || 0, sprite.y || 0];
         }
     },
     processMessages : function(messages) {

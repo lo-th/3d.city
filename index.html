@@ -21,7 +21,7 @@ body {  padding:0; margin: 0px; background:#6666e6; font:12px sans-serif; width:
 </head>
 <body>
 <div id="container"></div>
-<div id="debug">pre alpha 0.4</div>
+<div id="debug">pre alpha 0.5</div>
 <div id="log">loth 2014</div>
 <div id="hub"></div>
 <script>
@@ -58,7 +58,7 @@ function loop() {
     if(newup){ 
         view3d.paintMap(); 
         view3d.moveSprite();
-        log(gameData.join("\n"));
+        hub.showInfo();
         newup=false; 
     }
     view3d.renderer.render( view3d.scene, view3d.camera );

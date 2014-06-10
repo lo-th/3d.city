@@ -5574,8 +5574,7 @@ Micro.SpriteManager.prototype = {
         this.makeSprite(Micro.SPRITE_AIRPLANE, Micro.worldToPix(x), Micro.worldToPix(y));
     },
     generateTrain : function(census, x, y) {
-        if (census.totalPop > 20 &&
-            this.getSprite(Micro.SPRITE_TRAIN) === null && Random.getRandom(25) === 0) this.makeSprite(Micro.SPRITE_TRAIN,Micro.worldToPix(x) + 8,Micro.worldToPix(y) + 8);
+        if (census.totalPop > 20 && this.getSprite(Micro.SPRITE_TRAIN) === null && Random.getRandom(25) === 0) this.makeSprite(Micro.SPRITE_TRAIN,Micro.worldToPix(x) + 8, Micro.worldToPix(y) + 8);
     },
     generateShip : function() {
     // XXX This code is borked. The map generator will never

@@ -45,26 +45,6 @@ V3D.Base = function(){
 
     this.notAuto = false;
 
-    /*this.toolSet = [
-        {id:0,  tool:'none',        size:0, sy:0,    price:0,     color:'none'       ,drag:0  },
-		{id:1,  tool:'residential', size:3, sy:0.2,  price:100,   color:'lime'       ,drag:0  },
-		{id:2,  tool:'commercial',  size:3, sy:0.2,  price:100,   color:'blue'       ,drag:0  },
-		{id:3,  tool:'industrial',  size:3, sy:0.2,  price:100,   color:'yellow'     ,drag:0  },
-		{id:4,  tool:'police',      size:3, sy:1.2,  price:500,   color:'darkblue'   ,drag:0  },
-		{id:5,  tool:'fire',        size:3, sy:1.2,  price:500,   color:'red'        ,drag:0  },
-		{id:6,  tool:'port',        size:4, sy:0.5,  price:3000,  color:'dodgerblue' ,drag:0  },
-		{id:7,  tool:'airport',     size:6, sy:0.5,  price:10000, color:'violet'     ,drag:0  },
-		{id:8,  tool:'stadium',     size:4, sy:2,    price:5000,  color:'indigo'     ,drag:0  },
-		{id:9,  tool:'coal',        size:4, sy:2,    price:3000,  color:'gray'       ,drag:0  },
-		{id:10, tool:'nuclear',     size:4, sy:2,    price:5000,  color:'mistyrose'  ,drag:0  },
-		{id:11, tool:'road',        size:1, sy:0.1,  price:10,    color:'black'      ,drag:1  },
-		{id:12, tool:'rail',        size:1, sy:0.15, price:20,    color:'brown'      ,drag:1  },
-		{id:13, tool:'wire',        size:1, sy:0.05, price:5 ,    color:'khaki'      ,drag:1  },
-		{id:14, tool:'park',        size:1, sy:0.1,  price:10,    color:'darkgreen'  ,drag:0  },
-		{id:15, tool:'query',       size:1, sy:0,    price:0,     color:'cyan'       ,drag:0  },
-		{id:16, tool:'bulldozer',   size:1, sy:0,    price:1,     color:'salmon'     ,drag:1  }
-	];*/
-
 	this.toolSet = [
         {id:0,  tool:'none',        name:'',  build:0, size:0, sy:0,    price:0,     color:'none'       ,drag:0  },
 		{id:1,  tool:'residential', name:'R', build:1, size:3, sy:0.2,  price:100,   color:'lime'       ,drag:0  },
@@ -72,15 +52,15 @@ V3D.Base = function(){
 		{id:3,  tool:'industrial',  name:'I', build:1, size:3, sy:0.2,  price:100,   color:'yellow'     ,drag:0  },
 
 		{id:4,  tool:'police',      name:'',  build:1, size:3, sy:1.2,  price:500,   color:'darkblue'   ,drag:0  },
-		{id:5,  tool:'park',        name:'',  build:0, size:1, sy:0.1,  price:10,    color:'darkgreen'  ,drag:0  },
+		{id:5,  tool:'park',        name:'',  build:1, size:1, sy:0.1,  price:10,    color:'darkgreen'  ,drag:0  },
 		{id:6,  tool:'fire',        name:'',  build:1, size:3, sy:1.2,  price:500,   color:'red'        ,drag:0  },
 
 		{id:7,  tool:'road',        name:'',  build:0, size:1, sy:0.1,  price:10,    color:'black'      ,drag:1  },
-		{id:8,  tool:'rail',        name:'',  build:0, size:1, sy:0.15, price:20,    color:'brown'      ,drag:1  },
-		{id:9,  tool:'wire',        name:'',  build:0, size:1, sy:0.05, price:5 ,    color:'khaki'      ,drag:1  },
+		{id:8, tool:'bulldozer',   name:'',  build:0, size:1, sy:0,    price:1,     color:'salmon'     ,drag:1  },
+		{id:9,  tool:'rail',        name:'',  build:0, size:1, sy:0.15, price:20,    color:'brown'      ,drag:1  },
 
 		{id:10, tool:'coal',        name:'',  build:1, size:4, sy:2,    price:3000,  color:'gray'       ,drag:0  },
-		{id:11, tool:'bulldozer',   name:'',  build:0, size:1, sy:0,    price:1,     color:'salmon'     ,drag:1  },
+		{id:11,  tool:'wire',        name:'',  build:0, size:1, sy:0.05, price:5 ,    color:'khaki'      ,drag:1  },	
 		{id:12, tool:'nuclear',     name:'',  build:1, size:4, sy:2,    price:5000,  color:'mistyrose'  ,drag:0  },
 
 		{id:13, tool:'port',        name:'',  build:1, size:4, sy:0.5,  price:3000,  color:'dodgerblue' ,drag:0  },
@@ -97,10 +77,11 @@ V3D.Base = function(){
 	this.heightData = new ARRAY_TYPE(128*128);
 	//this.perlin = new ImprovedNoise();
 
-	this.treeList = [];
 	this.treeMeshs = [];
 	this.treeLists = [];
-	this.treeMesh = null;
+
+	this.spriteLists = [];
+	this.spriteMeshs = [];
 
 
 	// start by loading 3d mesh 
@@ -238,38 +219,23 @@ V3D.Base.prototype = {
     },
     populateTree:function(){
     	//this.treeMeshs = [];
+    	this.tempTreeLayers = [];
     	var m = new THREE.Matrix4(), ar;
     	var l = 64;
     	while(l--){
     		var g = new THREE.Geometry();
     		if(this.treeLists[l]){
-	    		var i = this.treeLists[l].length;///this.treeList.length;
+	    		var i = this.treeLists[l].length;
 	    		while(i--){
-	    			ar = this.treeLists[l][i];//this.treeList[i];
-	    			//if(ar[4]===l){
+	    			ar = this.treeLists[l][i];
 	    			m.makeTranslation(ar[0],ar[1],ar[2]);
 	    			g.merge( this.treeGeo[0], m );
-	    			//}
 	    		}
 	    	    this.treeMeshs[l] = new THREE.Mesh( g, this.meshs['tree21'].material);
 	    	    this.scene.add(this.treeMeshs[l]);
+	    	    this.tempTreeLayers[l] = 0;
 	    	}
     	}
-
-
-
-    	/*var g = new THREE.Geometry();
-    	var m = new THREE.Matrix4();
-    	
-    	var i = this.treeList.length;
-    	while(i--){
-    		ar = this.treeList[i];
-    		m.makeTranslation(ar[0],ar[1],ar[2]);
-    		g.merge( this.treeGeo[0], m );
-    	}
-
-    	this.treeMesh = new THREE.Mesh( g, this.meshs['tree21'].material);
-    	this.scene.add(this.treeMesh);*/
     },
     clearTree : function(){
     	var l = 64;
@@ -279,27 +245,55 @@ V3D.Base.prototype = {
     		    this.treeMeshs[l].geometry.dispose();
     		}
     	}
-    	/*if(this.treeMesh){
-    		this.scene.remove(this.treeMesh);
-    		this.treeMesh.geometry.dispose();
-    	}*/
     	this.treeMeshs = [];
     	this.treeLists = [];
-    	//this.treeList = [];
     },
-    rebuildTree : function(){
-    	var n = Math.floor(Math.random()*this.treeList.length);
+    removeTreePack : function(ar){
+    	//this.tempTreeLayers = [];
+    	var i = ar.length;
+    	while(i--){
+    		this.removeTree(ar[i][0], ar[i][1], true);
+    	}
+    	// rebuild layers
+    	i = this.tempTreeLayers.length;
+    	while(i--){
+    		if(this.tempTreeLayers[i] === 1){ this.rebuildTreeLayer(i); }
+    	}
+    },
+    removeTree : function(x, z, m){
+    	var l = this.findLayer(x, z);
+		if(this.treeLists[l]){
+			var i = this.treeLists[l].length;
+    		while(i--){
+    			ar = this.treeLists[l][i];
+    			if(ar[0] == x && ar[2]==z){
+    				this.treeLists[l].splice(i, 1);
+    				if(!m){ 
+    					this.rebuildTreeLayer(l); 
+    					return; 
+    				} else {
+    					// multy trees
+    					this.tempTreeLayers[l] = 1;
+    				}
+    			} 
+    		}
+		}
+    },
+    rebuildTreeLayer : function(l){
+    	this.scene.remove(this.treeMeshs[l]);
+    	this.treeMeshs[l].geometry.dispose();
 
-
-
-
-    	/*this.treeList.pop();
-    	if(this.treeMesh){
-    		this.scene.remove(this.treeMesh);
-    		this.treeMesh.geometry.dispose();
-    	}*/
-    	//this.populateTree();
-    	//this.treeList = [];
+    	var m = new THREE.Matrix4(), ar;
+    	var g = new THREE.Geometry();
+    	var i = this.treeLists[l].length;
+    	while(i--){
+	    	ar = this.treeLists[l][i];
+	    	m.makeTranslation(ar[0],ar[1],ar[2]);
+	    	g.merge( this.treeGeo[0], m );
+	    }
+	    this.treeMeshs[l] = new THREE.Mesh( g, this.meshs['tree21'].material);
+	    this.scene.add(this.treeMeshs[l]);
+	    this.tempTreeLayers[l] = 0;
     },
 
 
@@ -357,7 +351,6 @@ V3D.Base.prototype = {
 
         	this.terrainTxt[n] = texture;
         }
-
 	},
 	generateHeight : function ( width, height ) {
 
@@ -401,6 +394,12 @@ V3D.Base.prototype = {
 		return data;
 	},*/
 
+	findLayer:function(x,z){
+		var cy = Math.floor(z/16);
+        var cx = Math.floor(x/16);
+		return cx+(cy*8);
+	},
+
 
 	//------------------------------------------RAY
 
@@ -415,6 +414,7 @@ V3D.Base.prototype = {
 			if ( intersects.length > 0 ) {
 				this.pos.x = Math.round(intersects[0].point.x);
 				this.pos.z = Math.round(intersects[0].point.z);
+				
 
 				if(this.currentTool){
 					this.tool.position.set(this.pos.x, 0, this.pos.z);
@@ -459,7 +459,8 @@ V3D.Base.prototype = {
 		
 		var mid = size*0.5;
 		var d = 0, y=0.02;
-		if(size == 6 || size == 4) d=0.5;
+		if(size == 4) d=0.5;
+		else if(size == 6 ) d=1.5;
 		var geo = new THREE.Geometry();
 		var vertices = [ new THREE.Vector3( -mid+d, y, -mid+d ), new THREE.Vector3( -mid+d, y, mid+d ), new THREE.Vector3( mid+d, y, mid+d ), new THREE.Vector3( mid+d, y, -mid+d ) ];
 	    geo.vertices.push( vertices[ 0 ], vertices[ 1 ], vertices[ 1 ], vertices[ 2 ], vertices[ 2 ], vertices[ 3 ], vertices[ 3 ], vertices[ 0 ] );
@@ -469,17 +470,32 @@ V3D.Base.prototype = {
 	},
 	build : function(x,y){
 		if(this.currentTool.tool=='bulldozer'){
-			this.forceUpdate.x = x;
-			this.forceUpdate.y = y;
+			//this.forceUpdate.x = x;
+			//this.forceUpdate.y = y;
+
+			this.removeTree(x,y);
 		}
 		//if(id >= 11) return;
 		if(this.currentTool.build){
 			//var ntool = this.toolSet[id];
 			var size = this.currentTool.size;
 			var sizey = this.currentTool.sy;
+
+			var tar 
+			if(size == 1 ) tar = [ [x, y] ];
+			else if(size == 3 ) tar = [ [x, y], [x-1, y], [x+1, y],  [x, y-1], [x-1, y-1], [x+1, y-1],   [x, y+1], [x-1, y+1], [x+1, y+1] ];
+			else if(size == 4) tar = [ [x, y], [x-1, y], [x+1, y],  [x, y-1], [x-1, y-1], [x+1, y-1],   [x, y+1], [x-1, y+1], [x+1, y+1],       [x+2, y-1],  [x+2, y] , [x+2, y+1] , [x+2, y+2], [x-1, y+2], [x, y+2], [x+1, y+2]   ];
+			else if(size == 6) tar = [ [x, y], [x-1, y], [x+1, y],  [x, y-1], [x-1, y-1], [x+1, y-1],   [x, y+1], [x-1, y+1], [x+1, y+1],       [x+2, y-1],  [x+2, y] , [x+2, y+1] , [x+2, y+2],   [x-1, y+2], [x, y+2], [x+1, y+2], 
+				[x+3, y-1], [x+4, y-1],   [x+3, y], [x+4, y], [x+3, y+1], [x+4, y+1], [x+3, y+2], [x+4, y+2], [x+3, y+3], [x+4, y+3], [x+3, y+4], [x+4, y+4], 
+				[x-1, y+3], [x-1, y+4], [x, y+3], [x, y+4],  [x+1, y+3], [x+1, y+4], [x+2, y+3], [x+2, y+4]
+			];
+
+			this.removeTreePack(tar);
+
 			//var name = ntool.tool;
 			var b = new THREE.Mesh(new THREE.BoxGeometry(size,sizey,size), new THREE.MeshBasicMaterial({color:this.currentTool.color, transparent:true, opacity:0.5}) );
-			if(size == 6 || size == 4) b.geometry.applyMatrix(new THREE.Matrix4().makeTranslation(0.5, sizey*0.5, 0.5));
+			if(size == 4) b.geometry.applyMatrix(new THREE.Matrix4().makeTranslation(0.5, sizey*0.5, 0.5));
+			else if(size == 6) b.geometry.applyMatrix(new THREE.Matrix4().makeTranslation(1.5, sizey*0.5, 1.5));
 			else b.geometry.applyMatrix(new THREE.Matrix4().makeTranslation(0, sizey*0.5, 0));
 			b.position.set(x, 0, y);
 			this.scene.add(b);
@@ -591,7 +607,7 @@ V3D.Base.prototype = {
 
 
 
-
+	// -----------------------
 
 
 	gradTexture : function(color) {
@@ -683,7 +699,37 @@ V3D.Base.prototype = {
 
 	moveSprite : function(){
 		if(!spriteData) return;
-		
-
+		var i = spriteData.length;
+		var pos = new THREE.Vector3(0,0.25,0);
+		var frame = 0;
+		//log(i)
+		while(i--){
+			var c = spriteData[i];
+			frame = c[1];
+			pos.x =  Math.round((c[2]-8)/16);
+			pos.z =  Math.round((c[3]-8)/16);
+			//log( frame)
+			if(this.spriteMeshs[i] == null) this.addSprite( i, c[0] );
+			//this.spriteMeshs[i].position.copy(pos);
+			this.spriteMeshs[i].position.lerp(pos, 0.6);
+			this.spriteMeshs[i].rotation.y = this.rotationSprite(c[0], frame);
+		}
+	},
+	rotationSprite : function(v, f){
+		var r = 0;
+		if(v===1){// train
+			if(f===1) r = 0;
+			else if(f===2) r = 90*this.ToRad;
+			else if(f===3) r = -45*this.ToRad;
+			else if(f===4) r = 45*this.ToRad;
+		}
+		return r;
+	},
+	addSprite : function(i, v){
+		var m = new THREE.Mesh(new THREE.BoxGeometry(0.5,0.5,1.5), new THREE.MeshBasicMaterial({color:0xff0000}) );
+		this.scene.add(m);
+		this.spriteMeshs[i] = m;
+		//console.log('new Sprite' + v)
 	}
+
 }
