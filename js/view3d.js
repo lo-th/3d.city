@@ -8,10 +8,9 @@ var V3D = { REVISION: '0.1a' };
 V3D.Base = function(){
 	this.container = document.getElementById( 'container' );
 
-	this.isWithBackground = false;
+	this.isWithBackground = true;
 	
 	this.ToRad = Math.PI / 180;
-	//this.canvas = document.getElementById("threeCanvas");
     this.camera = null; 
     this.scene = null; 
     this.renderer = null;
@@ -23,6 +22,7 @@ V3D.Base = function(){
     this.miniCtx = [];
     this.txtNeedUpdate = [];
     this.miniTerrain = [];
+    this.terrainTxt = [];
 
     this.forceUpdate = { x:-1, y:-1 };
 
@@ -40,6 +40,7 @@ V3D.Base = function(){
     this.mapSize = [128,128];
 
     this.terrain = null;
+
     this.tool = null;
 
     this.notAuto = false;
@@ -65,6 +66,13 @@ V3D.Base = function(){
 	];
 
 	this.currentTool = 0;
+
+
+	this.heightData = new ARRAY_TYPE(128*128);
+	//this.perlin = new ImprovedNoise();
+
+	this.treeList = [];
+	this.treeMesh = null;
 
 
 	// start by loading 3d mesh 
@@ -109,16 +117,9 @@ V3D.Base.prototype = {
         }
 
         
-
-       
-
-
-
-
-    	
         window.addEventListener( 'resize', function(e) { _this.resize() }, false );
 
-
+        //this.generateHeight( 129, 129 );
         
        // this.container.addEventListener( 'click',  function(e) {_this.onMouseClick(e)}, false );
 
@@ -141,6 +142,28 @@ V3D.Base.prototype = {
 	    
 	    start();
     },
+
+    resize: function(){
+    	this.vsize = { x:window.innerWidth, y:window.innerHeight, z:window.innerWidth/window.innerHeight};
+	    this.camera.aspect = this.vsize.z;
+	    this.camera.updateProjectionMatrix();
+	    this.renderer.setSize(this.vsize.x,this.vsize.y);
+	},
+	startZoom : function(){
+		this.timer = setInterval(this.faddingZoom, 1000/60, this);
+	},
+	faddingZoom : function(t){
+		if(t.cam.distance>20){
+			t.cam.distance--;
+			t.moveCamera();
+		}else clearInterval(t.timer);
+	},
+
+
+
+	//----------------------------------- SEA3D IMPORT
+
+
     loadSea3d : function (){
     	_this = this;
 	    var s = 1;
@@ -162,113 +185,156 @@ V3D.Base.prototype = {
 	            
 	            //scene.add(m);
 	        }
+	        _this.defineTreeGeo();
 	        _this.init();
 	    }
 	    //loader.parser = THREE.SEA3D.DEFAULT;
 	    loader.load( 'img/world.sea' );
 	},
-	startZoom : function(){
-		this.timer = setInterval(this.faddingZoom, 1000/60, this);
+	
+
+	//----------------------------------- TREE TEST
+
+	defineTreeGeo : function(){
+		this.treeGeo = [];
+		this.treeGeo[0] = this.meshs['tree21'].geometry;
+
+		var i = this.treeGeo.length;
+		// reverse geometry
+		var m = new THREE.Matrix4().makeScale(1, 1, -1);
+		while(i--) this.treeGeo[i].applyMatrix(m);
 	},
-	faddingZoom : function(t){
-		if(t.cam.distance>20){
-			t.cam.distance--;
-			t.moveCamera();
-			//t.render();
-		}else{
-			clearInterval(t.timer);
-		}
-	},
-    addTree : function(x,y,v){
-    	var b;
-    	if(this.meshs['tree'+v]) b = this.meshs['tree'+v].clone();
-    	else b = this.meshs['tree21'].clone();
-        b.position.set(x,0,y);
-        this.scene.add( b );
-        this.trees.push(b);
+    addTree : function(x,y,z,v){
+    	this.treeList.push([x,y,z,v]);
+    },
+    populateTree:function(){
+    	var g = new THREE.Geometry();
+    	var m = new THREE.Matrix4();
+    	
+    	var i = this.treeList.length;
+    	while(i--){
+    		ar = this.treeList[i];
+    		m.makeTranslation(ar[0],ar[1],ar[2]);
+    		g.merge( this.treeGeo[0], m );
+    	}
+
+    	this.treeMesh = new THREE.Mesh( g, this.meshs['tree21'].material);
+    	this.scene.add(this.treeMesh);
     },
     clearTree : function(){
-    	if ( this.trees.length > 0 ) {
-    		var i = this.trees.length;
-    		while(i--){
-    			this.scene.remove( this.trees[i] );
-    		}
-    		this.trees = [];
+    	if(this.treeMesh){
+    		this.scene.remove(this.treeMesh);
+    		this.treeMesh.geometry.dispose();
     	}
+    	this.treeList = [];
     },
-    /*render:function(){
-    	if(!this.notAuto) return;
-    	this.renderer.clear();
-    	this.renderer.render( this.scene, this.camera );
-    	//log(this.select);
-    },*/
-    resize: function(){
-    	this.vsize = { x:window.innerWidth, y:window.innerHeight, z:window.innerWidth/window.innerHeight};
-	    this.camera.aspect = this.vsize.z;
-	    this.camera.updateProjectionMatrix();
-	    this.renderer.setSize(this.vsize.x,this.vsize.y);
-	    //this.render();
-	},
-	updateTerrain : function(island){	
+
+
+
+
+
+    //------------------------------------ TERRAIN MAP
+
+
+
+
+	updateTerrain : function(island){
+
 		this.center.x = this.mapSize[0]*0.5;
 		this.center.z = this.mapSize[1]*0.5;
 		this.moveCamera();
-		//this.back.position.copy(this.center);
+
+		// background update
 		if(this.isWithBackground ){
 		    if(island>0) this.back.material.map = this.gradTexture([[0.51,0.49, 0.3], ['#6666e6','lightskyblue', 'deepskyblue']]);
-		    else this.back.material.map = this.gradTexture([[0.51,0.49, 0.3], ['#cc7f66','lightskyblue', 'deepskyblue']]);//this.back.material.color.setHex(0xcc7f66);
+		    else this.back.material.map = this.gradTexture([[0.51,0.49, 0.3], ['#cc7f66','lightskyblue', 'deepskyblue']]);		    
+		    this.back.position.copy(this.center);
 		} else {
 			if(island>0) this.renderer.setClearColor( 0x6666e6, 1 );
 			else this.renderer.setClearColor( 0xcc7f66, 1 );
 		}
 
+		// create terrain if not existe
         if(this.miniTerrain.length === 0){
         	var matrix = new THREE.Matrix4();
         	var pyGeometry = this.meshs['plane'].geometry;
-        	//new THREE.PlaneTypedGeometry( 16, 16 );
-			//pyGeometry.applyMatrix( matrix.makeRotationX( - Math.PI / 2 ) );
 
-        	var n = 0, texture;
+        	var n = 0, texture, geo, mat;
         	for(var i=0; i<8; i++){
         		for(var j=0; j<8; j++){
-        			texture = new THREE.Texture(this.miniCanvas[n])
-        			texture.magFilter = THREE.NearestFilter;
-				    texture.minFilter = THREE.LinearMipMapLinearFilter;
 
-	        		this.miniTerrain[n] = new THREE.Mesh( new THREE.PlaneGeometry( 1, 1, 16, 16 ),  new THREE.MeshBasicMaterial({map:new THREE.Texture(this.miniCanvas[n])}) );
-	        		this.miniTerrain[n].geometry.applyMatrix(new THREE.Matrix4().makeRotationX(-90*this.ToRad));
-	        		//this.miniTerrain[n] = new THREE.Mesh( pyGeometry,  new THREE.MeshBasicMaterial({map:texture}) );
-	        		
+				    geo = new THREE.PlaneGeometry( 16, 16, 16, 16 );
+	        		geo.applyMatrix(new THREE.Matrix4().makeRotationX( - Math.PI / 2 ));
+
+	        		this.miniTerrain[n] = new THREE.Mesh(geo, new THREE.MeshBasicMaterial() );
+
 	        		this.miniTerrain[n].position.set((8+j*16)-0.5,0,(8+i*16)-0.5);
-	        		this.miniTerrain[n].scale.set(16, 1, 16);
 	        		this.land.add( this.miniTerrain[n] );
-	        		this.miniTerrain[n].material.map.needsUpdate = true;
 	        		n++;
 	        	}
 	        }
-			//this.terrain = this.meshs['plane'].clone();
-		/*	this.terrain = new THREE.Mesh( new THREE.PlaneGeometry( 1, 1, 1, 1 ),  new THREE.MeshBasicMaterial({map:new THREE.Texture(this.mapCanvas)}) );
-			this.terrain.material.map.needsUpdate = true;
-            this.terrain.geometry.applyMatrix(new THREE.Matrix4().makeRotationX(-90*this.ToRad));
-			//this.land.add( this.terrain );
-		} else {
-			//this.terrain.material.map = new THREE.Texture(this.mapCanvas);
-	        this.terrain.material.map.needsUpdate = true;*/
-		}
-		//this.terrain.scale.set(this.mapSize[0], 1, this.mapSize[1]);
-		//this.terrain.position.set((this.mapSize[0]*0.5)-0.5, 0, (this.mapSize[1]*0.5)-0.5);
-	    //this.render();
+	    }
+
+	    // update start map texture
+        n = this.miniTerrain.length, texture;
+        while(n--){
+        	texture = new THREE.Texture( this.miniCanvas[n] );
+        	texture.magFilter = THREE.NearestFilter;
+        	texture.minFilter = THREE.LinearMipMapLinearFilter;
+        	texture.needsUpdate = true;
+        	this.miniTerrain[n].material.map = texture;
+
+        	this.terrainTxt[n] = texture;
+        }
+
 	},
-	reMapTerrain : function(list){
-		var i = 64;
-		while(i--){
-			if(this.txtNeedUpdate[i]){ this.miniTerrain[i].material.map.needsUpdate = true; this.txtNeedUpdate[i] = 0;}
+	generateHeight : function ( width, height ) {
+
+				var size = width * height, data = new Uint8Array( size ),
+				perlin = new ImprovedNoise(), quality = 1, z = 0;//Math.random() * 100;
+
+				for ( var j = 0; j < 4; j ++ ) {
+
+					for ( var i = 0; i < size; i ++ ) {
+
+						var x = i % width, y = ~~ ( i / width );
+						data[ i ] += Math.abs( perlin.noise( x / quality, y / quality, z ) * quality * 1.75 );
+
+					}
+
+					quality *= 5;
+
+				}
+
+				return data;
+
+			},
+	/*generateHeight : function ( width, height, z, xo, yo) {
+		//var size = , 
+		var data = new Uint8Array( width * height );
+		var perlin = new ImprovedNoise();
+		var quality = 1, n = 0;
+		var freq = 1///120;
+		//for ( var j = 0; j <4; j ++ ) {
+		//	for ( var i = 0; i < size; i ++ ) {
+		for ( var j = xo; j < width+xo; j ++ ) {
+		 	for ( var i = yo; i < height+yo; i ++ ) {
+				//ar x = i % width, y = ~~ ( i / width );
+				data[ n ] =  ( Math.abs(noise( (j / freq), (i / freq)), 100 ) );//*
+				//data[ i ] += Math.abs( perlin.noise( (x*xo) / quality, (y*yo) / quality, z ) * quality * 1.75 );
+				n++
+			}
+			//quality *= 5;
 		}
-		
-		//this.terrain.material.map = new THREE.Texture(this.mapCanvas);
-	    //this.terrain.material.map.needsUpdate = true;
-	    //this.render();
-	},
+		console.log(data.length, data[10])
+		return data;
+	},*/
+
+
+	//------------------------------------------RAY
+
+
+
 	rayTest : function () {
 		this.projector.unprojectVector( this.rayVector, this.camera );
 		this.raycaster.set( this.camera.position, this.rayVector.sub( this.camera.position ).normalize() );
@@ -278,73 +344,52 @@ V3D.Base.prototype = {
 			if ( intersects.length > 0 ) {
 				this.pos.x = Math.round(intersects[0].point.x);
 				this.pos.z = Math.round(intersects[0].point.z);
-				//logLand(intersects[0].object.name);
-				//this.select = intersects[0].object.name;
+
 				if(this.currentTool){
-					//if(!this.tool.visible) this.tool.visible = true;
-
-
 					this.tool.position.set(this.pos.x, 0, this.pos.z);
-					if(this.mouse.click){mapClick();this.mouse.click=false};
-				} 
-
-				//log(intersects[0].point.x, intersects[0].point.z)
-				/*marker.position.set( 0, 0, 0 );
-				if(intersects[0].face)marker.lookAt(intersects[0].face.normal);
-				marker.position.copy( intersects[0].point );*/
-				
-				//if(sh)shoot();
+					if(this.mouse.click) mapClick();this.mouse.click=false;
+				}
 		    } else {
 		    	this.pos.x = -1;
 		    	this.pos.z = -1;
-		    	//if(this.tool!==null){
-		    	//	if(this.tool.visible) this.tool.visible = false;
-		    	//}
-		    	//this.select = '';
 		    }
 		}
 	},
+
+
+
+	//------------------------------------------TOOL
+
+
 	addTool : function(id){
 		if(this.tool !== null) this.removeTool();
-
 		this.currentTool = id;
-
 		var ntool = this.toolSet[id];
-		var size = ntool.size;
-		var sizey = ntool.sy;
 		var name = ntool.tool;
 		if(id){
 			this.mouse.move = false;
-			this.tool = new THREE.Mesh(new THREE.BoxGeometry(size,sizey,size), new THREE.MeshBasicMaterial({color:ntool.color, transparent:true, opacity:0.5}) )
-			if(size == 6 || size == 4) this.tool.geometry.applyMatrix(new THREE.Matrix4().makeTranslation(0.5, sizey*0.5, 0.5));
-			else this.tool.geometry.applyMatrix(new THREE.Matrix4().makeTranslation(0, sizey*0.5, 0));
-			//this.tool = new THREE.Object3D();
-			//var m = new THREE.BoxHelper();
-			//m.material.color.set( ntool.color );
-			//m.material.linewidth = 1;
-			//m.scale.set( size*0.5,0.5,size*0.5 );
-			//if(size == 6 || size == 4) m.position.set(0.5, 0.51, 0.5);
-			//else m.position.set(0, 0.51, 0);
-			//this.tool.add(m);
-
-			//this.tool.matrix.applyMatrix(new THREE.Matrix4().makeTranslation(0.5, 0, 0.5));
-			//this.tool = new THREE.Mesh(new THREE.BoxGeometry(size,1,size), new THREE.MeshBasicMaterial({color:ntool.color}) )
-			//if(size == 6 || size == 4) this.tool.geometry.applyMatrix(new THREE.Matrix4().makeTranslation(0.5, 0, 0.5));
+			this.tool = this.customTool(ntool.size, ntool.color);
 	        this.scene.add(this.tool);
-	        //this.tool.visible = false;
-
-	        
         } else {
         	this.mouse.move = true;
         }
         sendTool(name);
 	},
+	customTool : function(size, color){
+		var mid = size*0.5;
+		var d = 0;
+		if(size == 6 || size == 4) d=0.5;
+		var geo = new THREE.Geometry();
+		var vertices = [ new THREE.Vector3( - mid+d, 0.2, -mid+d ), new THREE.Vector3( - mid+d, 0.2, mid+d ), new THREE.Vector3(  mid+d,  0.2, mid+d ), new THREE.Vector3(  mid+d,  0.2, -mid+d ) ];
+	    geo.vertices.push( vertices[ 0 ], vertices[ 1 ], vertices[ 1 ], vertices[ 2 ], vertices[ 2 ], vertices[ 3 ], vertices[ 3 ], vertices[ 0 ] );
+		var m =  new THREE.Line( geo, new THREE.LineBasicMaterial( { color: color, linewidth:3 } ), THREE.LinePieces );
+		m.overdraw = true;
+		return m;
+	},
 	build : function(x,y,id){
 		if(id==16){
 			this.forceUpdate.x = x;
 			this.forceUpdate.y = y;
-			//this.mapCtx.drawImage(this.imageSrc,0, 0, 16, 16, x*16, y*16, 16, 16);
-		    //this.mapCtx.drawImage(this.imageSrc,2*16, 0, 16, 16, x*16, y*16, 16, 16);
 		}
 		if(id >= 11) return;
 		var ntool = this.toolSet[id];
@@ -356,13 +401,20 @@ V3D.Base.prototype = {
 		else b.geometry.applyMatrix(new THREE.Matrix4().makeTranslation(0, sizey*0.5, 0));
 		b.position.set(x, 0, y);
 		this.scene.add(b);
-		//this.render();
 	},
 	removeTool : function(){
 		this.scene.remove(this.tool);
+		this.tool.geometry.dispose();
 		this.tool = null;
 		this.currentTool = 0;
 	},
+
+
+
+	//---------------------------------------------------
+
+
+
 	Orbit : function (origine, horizontal, vertical, distance) {
 	    var p = new THREE.Vector3();
 	    if(vertical>87)vertical=87;
@@ -467,9 +519,14 @@ V3D.Base.prototype = {
 	    texture.needsUpdate = true;
 	    return texture;
 	},
+
+	// -----------------------
+
+
 	paintMap : function(ar, mapSize, island, isStart) {
-		//if(isStart){this.clearTree();}
+		if(isStart) this.clearTree();
 		
+		// create mini canvas if not existe
 		if( this.miniCanvas.length === 0 ){
 			for(var i=0; i<64; i++){
 				this.miniCanvas[i] = document.createElement('canvas');
@@ -477,47 +534,32 @@ V3D.Base.prototype = {
         		this.miniCtx[i] = this.miniCanvas[i].getContext("2d");
         		this.txtNeedUpdate[i] = 0;		
         	}
+		}
 
-			//this.mapCanvas = document.createElement('canvas');
-			//this.mapCtx = this.mapCanvas.getContext("2d");
-		}
-		if(mapSize){ 
-			this.mapSize = mapSize;
-			//this.mapCanvas.width = this.mapSize[0]*16;
-		    //this.mapCanvas.height = this.mapSize[1]*16;
-		}
-		//var c = document.createElement('canvas');
-		//var ctx = c.getContext("2d");
-		//var list = [];
+		if(mapSize) this.mapSize = mapSize;
+		
 		var force = false;
 		var y = this.mapSize[1];
-		var x, v, px, py, n = ar.length, l, cy=0, cx=0;
+		var x, v, px, py, n = ar.length, l, cy, cx;
 		while(y--){
 			x = this.mapSize[0];
 			while(x--){
 				n--;
 				v = ar[n];
 
-				//if(isStart){if(v > 20 && v < 44){ this.addTree(x, y, v); v=0;};}
+				if(isStart){if(v > 20 && v < 44){ this.addTree( x, 0, y, v ); v=0;};}
+				//if(isStart){if(v > 20 && v < 44){ v=0;};}
 				px = v % 32 * 16;
                 py = Math.floor(v / 32) * 16;
 
                 cy = Math.floor(y/16);
                 cx = Math.floor(x/16);
 
-                
-
-                if(isStart){
-                    //this.mapCtx.drawImage(this.imageSrc,px, py, 16, 16, x*16, y*16, 16, 16);
+                if(isStart){ // full draw for new map
                     l = cx+(cy*8);
                 	this.miniCtx[l].drawImage(this.imageSrc,px, py, 16, 16, ((x-(cx*16))*16),((y-(cy*16))*16), 16, 16);
-                	this.updateTerrain(island);
-                	this.txtNeedUpdate[l] = 1;
-                    
-                    ///this.miniCtx[cx+(cy*8)].drawImage(this.imageSrc,px, py, 16, 16, ((x-(cx*16))*16),((y-(cy*16))*16), 16, 16);
-                 
                 }
-                else{
+                else{ // draw only need update
                 	if(x===this.forceUpdate.x && y===this.forceUpdate.y){ force=true; this.forceUpdate.x=-1; this.forceUpdate.y=-1 }
                 	if(v>43 || force){ 
                 		l = cx+(cy*8);
@@ -525,13 +567,20 @@ V3D.Base.prototype = {
                 		this.txtNeedUpdate[l] = 1;
                 		if(force)force = false;
                 	}
-                	
                 }
-				//if(!isStart && v!==0)
 			}
 		}
 		
-		//if(isStart)this.updateTerrain(island);
-		this.reMapTerrain();
+		if(isStart){
+			this.updateTerrain(island);
+			this.populateTree();
+		} else {
+			i = 64;
+		    while(i--) if(this.txtNeedUpdate[i]){ this.terrainTxt[i].needsUpdate = true; this.txtNeedUpdate[i] = 0;}	
+		}
 	}
+
+
+
+	//--------------------
 }

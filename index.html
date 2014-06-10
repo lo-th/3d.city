@@ -13,13 +13,14 @@ body {  padding:0; margin: 0px; background:#6666e6; font:12px sans-serif; width:
 </style>
 <script src="js/three.min.js"></script>
 <script src="js/loaders/sea3d.min.js"></script>
+<script src="js/ImprovedNoise.js"></script>
+<script src="js/noise.js"></script>
 <script src="js/view3d.js"></script>
 <script src="js/hub.js"></script>
 
 </head>
 <body>
 <div id="container"></div>
-<!--<canvas id="threeCanvas"></canvas>-->
 <div id="debug">pre alpha 0.3</div>
 <div id="log">loth 2014</div>
 <div id="hub"></div>
@@ -55,8 +56,8 @@ function log(txt){ l.innerHTML = txt || '';  }
 //  CITY INIT
 //=======================================
 
-//var ARRAY_TYPE;
-//if(!ARRAY_TYPE) { ARRAY_TYPE = (typeof Float32Array !== 'undefined') ? Float32Array : Array; }
+var ARRAY_TYPE;
+if(!ARRAY_TYPE) { ARRAY_TYPE = (typeof Float32Array !== 'undefined') ? Float32Array : Array; }
 
 var tilesData = null;//new ARRAY_TYPE(128*128);
 var spriteData = null;
@@ -110,7 +111,7 @@ function initCity() {
         if( phase == "NEWMAP"){
             view3d.paintMap(e.data.map, e.data.mapSize, e.data.island, true);
             trans = e.data.trans;
-            console.log(trans);
+            //console.log(trans);
             hub.start();
         }
         if( phase == "BUILD"){
@@ -121,9 +122,10 @@ function initCity() {
             log(e.data.infos.join("\n"));
             //log(e.data.infos.join("\n")+'<br>anims:'+ e.data.anims.length + " | sprites:" + e.data.sprites.length);
             tilesData = e.data.tilesData;
-            newup = true;
+
             //if(tilesData!==null) view3d.paintMap(im, tilesData);
             spriteData = e.data.sprites;
+            newup = true;
             //log(str.toString());
             if(trans) setTimeout( cityWorker.postMessage({tell:"RUN", tilesData:tilesData},[tilesData.buffer]), timestep); 
         }
