@@ -611,7 +611,8 @@ V3D.Base.prototype = {
 	// -----------------------
 
 
-	paintMap : function(ar, mapSize, island, isStart) {
+	paintMap : function( mapSize, island, isStart) {
+		if(!tilesData) return;
 		if(isStart) this.clearTree();
 		
 		// create mini canvas if not existe
@@ -628,7 +629,7 @@ V3D.Base.prototype = {
 		
 		var force = false;
 		var y = this.mapSize[1];
-		var x, v, px, py, n = ar.length, cy, cx, layer;
+		var x, v, px, py, n = tilesData.length, cy, cx, layer;
 		while(y--){
 			x = this.mapSize[0];
 			while(x--){
@@ -639,7 +640,7 @@ V3D.Base.prototype = {
 				layer = cx+(cy*8);
 
 				n--;
-				v = ar[n];
+				v = tilesData[n];
 
 				if(isStart){ if(v > 20 && v < 44){ this.addTree( x, 0, y, v, layer ); v=0;}; }
 				//if(isStart){if(v > 20 && v < 44){ v=0;};}
@@ -672,9 +673,17 @@ V3D.Base.prototype = {
 			i = 64;
 		    while(i--) if(this.txtNeedUpdate[i]){ this.terrainTxt[i].needsUpdate = true; this.txtNeedUpdate[i] = 0;}	
 		}
-	}
+	},
 
 
 
 	//--------------------
+
+
+
+	moveSprite : function(){
+		if(!spriteData) return;
+		
+
+	}
 }

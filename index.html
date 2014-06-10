@@ -29,25 +29,25 @@ var d = document.getElementById('debug');
 var l = document.getElementById('log');
 var timestep = 1000/30;
 
+var tilesData = null;//new ARRAY_TYPE(128*128);
+var spriteData = null;
+var gameData = null;
+
+var trans = false;
+var newup = false;
+
 var cityWorker, view3d, hub, im;
-window.onload = init;
+
 
 function debug(txt){ d.innerHTML += "<br>"+txt; }
 function log(txt){ l.innerHTML = txt || '';  }
 
+window.onload = init;
 
 function init(){
     view3d = new V3D.Base();
     hub = new HUB.Base();
 }
-
-
-
-function render() {
-    
-}
-
-
 
 //=======================================
 //  3D LOOP
@@ -55,8 +55,15 @@ function render() {
 
 function loop() {
     requestAnimationFrame( loop, view3d.renderer.domElement );
-    if(tilesData!==null && newup){ view3d.paintMap(tilesData); newup=false; }
+    if(newup){ 
+        view3d.paintMap(); 
+        view3d.moveSprite();
+        log(gameData.join("\n"));
+        newup=false; 
+    }
     view3d.renderer.render( view3d.scene, view3d.camera );
+
+
 }
 
 //=======================================
@@ -66,10 +73,7 @@ function loop() {
 var ARRAY_TYPE;
 if(!ARRAY_TYPE) { ARRAY_TYPE = (typeof Float32Array !== 'undefined') ? Float32Array : Array; }
 
-var tilesData = null;//new ARRAY_TYPE(128*128);
-var spriteData = null;
-var trans = false;
-var newup = false;
+
 
 function start() {
 	im = new Image();
@@ -111,25 +115,23 @@ function initCity() {
     cityWorker.onmessage = function(e) {
         var phase = e.data.tell;
         if( phase == "NEWMAP"){
-            view3d.paintMap(e.data.map, e.data.mapSize, e.data.island, true);
-            trans = e.data.trans;
-            //console.log(trans);
+            tilesData = e.data.tilesData;
+            view3d.paintMap( e.data.mapSize, e.data.island, true);
+            //trans = e.data.trans;
             hub.start();
         }
         if( phase == "BUILD"){
             view3d.build(e.data.x, e.data.y, e.data.id);
         }
         if( phase == "RUN"){
-            //var str = new String(e.data.sprites);
-            log(e.data.infos.join("\n"));
-            //log(e.data.infos.join("\n")+'<br>anims:'+ e.data.anims.length + " | sprites:" + e.data.sprites.length);
-            tilesData = e.data.tilesData;
 
-            //if(tilesData!==null) view3d.paintMap(im, tilesData);
+            gameData = e.data.infos;
+            tilesData = e.data.tilesData;
             spriteData = e.data.sprites;
+
             newup = true;
-            //log(str.toString());
-            if(trans) setTimeout( cityWorker.postMessage({tell:"RUN", tilesData:tilesData},[tilesData.buffer]), timestep); 
+
+            //if(trans) setTimeout( cityWorker.postMessage({tell:"RUN", tilesData:tilesData},[tilesData.buffer]), timestep); 
         }
     }
 }

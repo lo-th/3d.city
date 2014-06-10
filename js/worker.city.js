@@ -96,7 +96,7 @@ CITY.Game.prototype = {
     constructor: CITY.Game,
     newMap : function(){
         this.map = this.mapGen.construct(this.mapSize[0], this.mapSize[1]);
-        transMessage({ tell:"NEWMAP", map:this.map.tilesData, mapSize:this.mapSize, island:this.map.isIsland, trans:trans });
+        transMessage({ tell:"NEWMAP", tilesData:this.map.tilesData, mapSize:this.mapSize, island:this.map.isIsland, trans:trans });
     },
     playMap : function(){
         var money = 20000 / this.difficulty; 
