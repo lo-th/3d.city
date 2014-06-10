@@ -21,7 +21,7 @@ body {  padding:0; margin: 0px; background:#6666e6; font:12px sans-serif; width:
 </head>
 <body>
 <div id="container"></div>
-<div id="debug">pre alpha 0.3</div>
+<div id="debug">pre alpha 0.4</div>
 <div id="log">loth 2014</div>
 <div id="hub"></div>
 <script>
@@ -32,25 +32,32 @@ var timestep = 1000/30;
 var cityWorker, view3d, hub, im;
 window.onload = init;
 
+function debug(txt){ d.innerHTML += "<br>"+txt; }
+function log(txt){ l.innerHTML = txt || '';  }
+
+
 function init(){
     view3d = new V3D.Base();
     hub = new HUB.Base();
-
-    //loop();
 }
+
+
+
+function render() {
+    
+}
+
+
+
+//=======================================
+//  3D LOOP
+//=======================================
 
 function loop() {
     requestAnimationFrame( loop, view3d.renderer.domElement );
     if(tilesData!==null && newup){ view3d.paintMap(tilesData); newup=false; }
-    render();
-}
-
-function render() {
     view3d.renderer.render( view3d.scene, view3d.camera );
 }
-
-function debug(txt){ d.innerHTML += "<br>"+txt; }
-function log(txt){ l.innerHTML = txt || '';  }
 
 //=======================================
 //  CITY INIT
@@ -80,12 +87,8 @@ function playMap() {
     cityWorker.postMessage({tell:"PLAYMAP"});
 }
 
-function play2d() {
-	window.location = "index_2d.html";
-}
-
-function addTool(id) {
-    view3d.addTool(id);
+function selectTool(id) {
+    view3d.selectTool(id);
 }
 
 function sendTool(name) {
@@ -94,8 +97,7 @@ function sendTool(name) {
 
 function mapClick() {
     var p = view3d.pos;
-    var id = view3d.currentTool;
-    if(p.x>0 && p.z>0 && id) cityWorker.postMessage({tell:"MAPCLICK", x:p.x, y:p.z, id:id });
+    if(p.x>0 && p.z>0) cityWorker.postMessage({tell:"MAPCLICK", x:p.x, y:p.z });
 }
 
 function initCity() {

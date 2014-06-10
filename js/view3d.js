@@ -45,33 +45,61 @@ V3D.Base = function(){
 
     this.notAuto = false;
 
-    this.toolSet = [
-        {id:0,  tool:'none',        size:0, sy:0,    price:0,     color:'none'},
-		{id:1,  tool:'residential', size:3, sy:0.2,  price:100,   color:'lime'},
-		{id:2,  tool:'commercial',  size:3, sy:0.2,  price:100,   color:'blue'},
-		{id:3,  tool:'industrial',  size:3, sy:0.2,  price:100,   color:'yellow'},
-		{id:4,  tool:'police',      size:3, sy:1.2,  price:500,   color:'darkblue'},
-		{id:5,  tool:'fire',        size:3, sy:1.2,  price:500,   color:'red'},
-		{id:6,  tool:'port',        size:4, sy:0.5,  price:3000,  color:'dodgerblue'},
-		{id:7,  tool:'airport',     size:6, sy:0.5,  price:10000, color:'violet'},
-		{id:8,  tool:'stadium',     size:4, sy:2,    price:5000,  color:'indigo'},
-		{id:9,  tool:'coal',        size:4, sy:2,    price:3000,  color:'gray'},
-		{id:10, tool:'nuclear',     size:4, sy:2,    price:5000,  color:'mistyrose'},
-		{id:11, tool:'road',        size:1, sy:0.1,  price:10,    color:'black'   ,drag:true},
-		{id:12, tool:'rail',        size:1, sy:0.15, price:20,    color:'brown'   ,drag:true},
-		{id:13, tool:'wire',        size:1, sy:0.05, price:5 ,    color:'khaki'   ,drag:true},
-		{id:14, tool:'park',        size:1, sy:0.1,  price:10,    color:'darkgreen'},
-		{id:15, tool:'query',       size:1, sy:0,    price:0,     color:'cyan'},
-		{id:16, tool:'bulldozer',   size:1, sy:0,    price:1,     color:'salmon'}
+    /*this.toolSet = [
+        {id:0,  tool:'none',        size:0, sy:0,    price:0,     color:'none'       ,drag:0  },
+		{id:1,  tool:'residential', size:3, sy:0.2,  price:100,   color:'lime'       ,drag:0  },
+		{id:2,  tool:'commercial',  size:3, sy:0.2,  price:100,   color:'blue'       ,drag:0  },
+		{id:3,  tool:'industrial',  size:3, sy:0.2,  price:100,   color:'yellow'     ,drag:0  },
+		{id:4,  tool:'police',      size:3, sy:1.2,  price:500,   color:'darkblue'   ,drag:0  },
+		{id:5,  tool:'fire',        size:3, sy:1.2,  price:500,   color:'red'        ,drag:0  },
+		{id:6,  tool:'port',        size:4, sy:0.5,  price:3000,  color:'dodgerblue' ,drag:0  },
+		{id:7,  tool:'airport',     size:6, sy:0.5,  price:10000, color:'violet'     ,drag:0  },
+		{id:8,  tool:'stadium',     size:4, sy:2,    price:5000,  color:'indigo'     ,drag:0  },
+		{id:9,  tool:'coal',        size:4, sy:2,    price:3000,  color:'gray'       ,drag:0  },
+		{id:10, tool:'nuclear',     size:4, sy:2,    price:5000,  color:'mistyrose'  ,drag:0  },
+		{id:11, tool:'road',        size:1, sy:0.1,  price:10,    color:'black'      ,drag:1  },
+		{id:12, tool:'rail',        size:1, sy:0.15, price:20,    color:'brown'      ,drag:1  },
+		{id:13, tool:'wire',        size:1, sy:0.05, price:5 ,    color:'khaki'      ,drag:1  },
+		{id:14, tool:'park',        size:1, sy:0.1,  price:10,    color:'darkgreen'  ,drag:0  },
+		{id:15, tool:'query',       size:1, sy:0,    price:0,     color:'cyan'       ,drag:0  },
+		{id:16, tool:'bulldozer',   size:1, sy:0,    price:1,     color:'salmon'     ,drag:1  }
+	];*/
+
+	this.toolSet = [
+        {id:0,  tool:'none',        name:'',  build:0, size:0, sy:0,    price:0,     color:'none'       ,drag:0  },
+		{id:1,  tool:'residential', name:'R', build:1, size:3, sy:0.2,  price:100,   color:'lime'       ,drag:0  },
+		{id:2,  tool:'commercial',  name:'C', build:1, size:3, sy:0.2,  price:100,   color:'blue'       ,drag:0  },
+		{id:3,  tool:'industrial',  name:'I', build:1, size:3, sy:0.2,  price:100,   color:'yellow'     ,drag:0  },
+
+		{id:4,  tool:'police',      name:'',  build:1, size:3, sy:1.2,  price:500,   color:'darkblue'   ,drag:0  },
+		{id:5,  tool:'park',        name:'',  build:0, size:1, sy:0.1,  price:10,    color:'darkgreen'  ,drag:0  },
+		{id:6,  tool:'fire',        name:'',  build:1, size:3, sy:1.2,  price:500,   color:'red'        ,drag:0  },
+
+		{id:7,  tool:'road',        name:'',  build:0, size:1, sy:0.1,  price:10,    color:'black'      ,drag:1  },
+		{id:8,  tool:'rail',        name:'',  build:0, size:1, sy:0.15, price:20,    color:'brown'      ,drag:1  },
+		{id:9,  tool:'wire',        name:'',  build:0, size:1, sy:0.05, price:5 ,    color:'khaki'      ,drag:1  },
+
+		{id:10, tool:'coal',        name:'',  build:1, size:4, sy:2,    price:3000,  color:'gray'       ,drag:0  },
+		{id:11, tool:'bulldozer',   name:'',  build:0, size:1, sy:0,    price:1,     color:'salmon'     ,drag:1  },
+		{id:12, tool:'nuclear',     name:'',  build:1, size:4, sy:2,    price:5000,  color:'mistyrose'  ,drag:0  },
+
+		{id:13, tool:'port',        name:'',  build:1, size:4, sy:0.5,  price:3000,  color:'dodgerblue' ,drag:0  },
+		{id:14, tool:'stadium',     name:'',  build:1, size:4, sy:2,    price:5000,  color:'indigo'     ,drag:0  },
+		{id:15, tool:'airport',     name:'',  build:1, size:6, sy:0.5,  price:10000, color:'violet'     ,drag:0  },
+		
+		{id:16, tool:'query',       build:0, size:1, sy:0,    price:0,     color:'cyan'       ,drag:0  },
+		
 	];
 
-	this.currentTool = 0;
+	this.currentTool = null;
 
 
 	this.heightData = new ARRAY_TYPE(128*128);
 	//this.perlin = new ImprovedNoise();
 
 	this.treeList = [];
+	this.treeMeshs = [];
+	this.treeLists = [];
 	this.treeMesh = null;
 
 
@@ -179,11 +207,8 @@ V3D.Base.prototype = {
 		        } else {
 		        	m.material = new THREE.MeshBasicMaterial({ color:0xffffff });
 		        }
-	            m.scale.set(s,s,-s);
-	            //_this.getFaces(m);
+	            //m.scale.set(s,s,-s);
 	            _this.meshs[m.name] = m;
-	            
-	            //scene.add(m);
 	        }
 	        _this.defineTreeGeo();
 	        _this.init();
@@ -195,6 +220,8 @@ V3D.Base.prototype = {
 
 	//----------------------------------- TREE TEST
 
+
+
 	defineTreeGeo : function(){
 		this.treeGeo = [];
 		this.treeGeo[0] = this.meshs['tree21'].geometry;
@@ -204,11 +231,34 @@ V3D.Base.prototype = {
 		var m = new THREE.Matrix4().makeScale(1, 1, -1);
 		while(i--) this.treeGeo[i].applyMatrix(m);
 	},
-    addTree : function(x,y,z,v){
-    	this.treeList.push([x,y,z,v]);
+    addTree : function(x,y,z,v,layer){
+    	//this.treeList.push([x,y,z,v,layer]);
+    	if(!this.treeLists[layer])this.treeLists[layer]=[];
+    	this.treeLists[layer].push([x,y,z,v,layer]);
     },
     populateTree:function(){
-    	var g = new THREE.Geometry();
+    	//this.treeMeshs = [];
+    	var m = new THREE.Matrix4(), ar;
+    	var l = 64;
+    	while(l--){
+    		var g = new THREE.Geometry();
+    		if(this.treeLists[l]){
+	    		var i = this.treeLists[l].length;///this.treeList.length;
+	    		while(i--){
+	    			ar = this.treeLists[l][i];//this.treeList[i];
+	    			//if(ar[4]===l){
+	    			m.makeTranslation(ar[0],ar[1],ar[2]);
+	    			g.merge( this.treeGeo[0], m );
+	    			//}
+	    		}
+	    	    this.treeMeshs[l] = new THREE.Mesh( g, this.meshs['tree21'].material);
+	    	    this.scene.add(this.treeMeshs[l]);
+	    	}
+    	}
+
+
+
+    	/*var g = new THREE.Geometry();
     	var m = new THREE.Matrix4();
     	
     	var i = this.treeList.length;
@@ -219,17 +269,38 @@ V3D.Base.prototype = {
     	}
 
     	this.treeMesh = new THREE.Mesh( g, this.meshs['tree21'].material);
-    	this.scene.add(this.treeMesh);
+    	this.scene.add(this.treeMesh);*/
     },
     clearTree : function(){
+    	var l = 64;
+    	while(l--){
+    		if(this.treeMeshs[l]){
+    			this.scene.remove(this.treeMeshs[l]);
+    		    this.treeMeshs[l].geometry.dispose();
+    		}
+    	}
+    	/*if(this.treeMesh){
+    		this.scene.remove(this.treeMesh);
+    		this.treeMesh.geometry.dispose();
+    	}*/
+    	this.treeMeshs = [];
+    	this.treeLists = [];
+    	//this.treeList = [];
+    },
+    rebuildTree : function(){
+    	var n = Math.floor(Math.random()*this.treeList.length);
+
+
+
+
+    	/*this.treeList.pop();
     	if(this.treeMesh){
     		this.scene.remove(this.treeMesh);
     		this.treeMesh.geometry.dispose();
-    	}
-    	this.treeList = [];
+    	}*/
+    	//this.populateTree();
+    	//this.treeList = [];
     },
-
-
 
 
 
@@ -347,7 +418,9 @@ V3D.Base.prototype = {
 
 				if(this.currentTool){
 					this.tool.position.set(this.pos.x, 0, this.pos.z);
-					if(this.mouse.click) mapClick();this.mouse.click=false;
+					if(this.mouse.click || this.mouse.drag) mapClick();
+
+					this.mouse.click=false;
 				}
 		    } else {
 		    	this.pos.x = -1;
@@ -361,52 +434,62 @@ V3D.Base.prototype = {
 	//------------------------------------------TOOL
 
 
-	addTool : function(id){
+	selectTool : function(id){
+		this.pos.x = -1;
+		this.pos.z = -1;
+		//this.rebuildTree()
 		if(this.tool !== null) this.removeTool();
-		this.currentTool = id;
-		var ntool = this.toolSet[id];
-		var name = ntool.tool;
+		//this.currentTool = this.toolSet[id];//id;
+		//var ntool = this.toolSet[id];
+		//var name = ntool.tool;
 		if(id){
+			this.currentTool = this.toolSet[id];
 			this.mouse.move = false;
-			this.tool = this.customTool(ntool.size, ntool.color);
+			this.tool = this.customTool();//ntool.size, ntool.color);
 	        this.scene.add(this.tool);
         } else {
+        	this.currentTool = null;
         	this.mouse.move = true;
         }
-        sendTool(name);
+        sendTool(this.toolSet[id].tool);
 	},
 	customTool : function(size, color){
+		var size = this.currentTool.size;
+		var color = this.currentTool.color;
+		
 		var mid = size*0.5;
-		var d = 0;
+		var d = 0, y=0.02;
 		if(size == 6 || size == 4) d=0.5;
 		var geo = new THREE.Geometry();
-		var vertices = [ new THREE.Vector3( - mid+d, 0.2, -mid+d ), new THREE.Vector3( - mid+d, 0.2, mid+d ), new THREE.Vector3(  mid+d,  0.2, mid+d ), new THREE.Vector3(  mid+d,  0.2, -mid+d ) ];
+		var vertices = [ new THREE.Vector3( -mid+d, y, -mid+d ), new THREE.Vector3( -mid+d, y, mid+d ), new THREE.Vector3( mid+d, y, mid+d ), new THREE.Vector3( mid+d, y, -mid+d ) ];
 	    geo.vertices.push( vertices[ 0 ], vertices[ 1 ], vertices[ 1 ], vertices[ 2 ], vertices[ 2 ], vertices[ 3 ], vertices[ 3 ], vertices[ 0 ] );
 		var m =  new THREE.Line( geo, new THREE.LineBasicMaterial( { color: color, linewidth:3 } ), THREE.LinePieces );
 		m.overdraw = true;
 		return m;
 	},
-	build : function(x,y,id){
-		if(id==16){
+	build : function(x,y){
+		if(this.currentTool.tool=='bulldozer'){
 			this.forceUpdate.x = x;
 			this.forceUpdate.y = y;
 		}
-		if(id >= 11) return;
-		var ntool = this.toolSet[id];
-		var size = ntool.size;
-		var sizey = ntool.sy;
-		var name = ntool.tool;
-		var b = new THREE.Mesh(new THREE.BoxGeometry(size,sizey,size), new THREE.MeshBasicMaterial({color:ntool.color, transparent:true, opacity:0.5}) );
-		if(size == 6 || size == 4) b.geometry.applyMatrix(new THREE.Matrix4().makeTranslation(0.5, sizey*0.5, 0.5));
-		else b.geometry.applyMatrix(new THREE.Matrix4().makeTranslation(0, sizey*0.5, 0));
-		b.position.set(x, 0, y);
-		this.scene.add(b);
+		//if(id >= 11) return;
+		if(this.currentTool.build){
+			//var ntool = this.toolSet[id];
+			var size = this.currentTool.size;
+			var sizey = this.currentTool.sy;
+			//var name = ntool.tool;
+			var b = new THREE.Mesh(new THREE.BoxGeometry(size,sizey,size), new THREE.MeshBasicMaterial({color:this.currentTool.color, transparent:true, opacity:0.5}) );
+			if(size == 6 || size == 4) b.geometry.applyMatrix(new THREE.Matrix4().makeTranslation(0.5, sizey*0.5, 0.5));
+			else b.geometry.applyMatrix(new THREE.Matrix4().makeTranslation(0, sizey*0.5, 0));
+			b.position.set(x, 0, y);
+			this.scene.add(b);
+		}
 	},
 	removeTool : function(){
 		this.scene.remove(this.tool);
 		this.tool.geometry.dispose();
 		this.tool = null;
-		this.currentTool = 0;
+		this.currentTool = null;
 	},
 
 
@@ -453,7 +536,11 @@ V3D.Base.prototype = {
 	    this.mouse.h = this.cam.horizontal;
 	    this.mouse.v = this.cam.vertical;
 	    this.mouse.down = true;
-	    this.mouse.click = true;
+	    
+	    if(this.currentTool){
+	    	this.mouse.click = true;
+	        if(this.currentTool.drag) this.mouse.drag = true;
+	    }
 	    
 	    //this.rayTest();
 	    //this.render();
@@ -462,6 +549,7 @@ V3D.Base.prototype = {
 	onMouseUp : function (e) {
 		e.preventDefault();
 	    this.mouse.down = false;
+	    this.mouse.drag = false;
 	    document.body.style.cursor = 'auto';
 	    
 	},
@@ -540,31 +628,37 @@ V3D.Base.prototype = {
 		
 		var force = false;
 		var y = this.mapSize[1];
-		var x, v, px, py, n = ar.length, l, cy, cx;
+		var x, v, px, py, n = ar.length, cy, cx, layer;
 		while(y--){
 			x = this.mapSize[0];
 			while(x--){
+
+				// find layer
+				cy = Math.floor(y/16);
+                cx = Math.floor(x/16);
+				layer = cx+(cy*8);
+
 				n--;
 				v = ar[n];
 
-				if(isStart){if(v > 20 && v < 44){ this.addTree( x, 0, y, v ); v=0;};}
+				if(isStart){ if(v > 20 && v < 44){ this.addTree( x, 0, y, v, layer ); v=0;}; }
 				//if(isStart){if(v > 20 && v < 44){ v=0;};}
 				px = v % 32 * 16;
                 py = Math.floor(v / 32) * 16;
 
-                cy = Math.floor(y/16);
-                cx = Math.floor(x/16);
+                //cy = Math.floor(y/16);
+                //cx = Math.floor(x/16);
 
                 if(isStart){ // full draw for new map
-                    l = cx+(cy*8);
-                	this.miniCtx[l].drawImage(this.imageSrc,px, py, 16, 16, ((x-(cx*16))*16),((y-(cy*16))*16), 16, 16);
+                    //l = cx+(cy*8);
+                	this.miniCtx[layer].drawImage(this.imageSrc,px, py, 16, 16, ((x-(cx*16))*16),((y-(cy*16))*16), 16, 16);
                 }
                 else{ // draw only need update
                 	if(x===this.forceUpdate.x && y===this.forceUpdate.y){ force=true; this.forceUpdate.x=-1; this.forceUpdate.y=-1 }
                 	if(v>43 || force){ 
-                		l = cx+(cy*8);
-                		this.miniCtx[l].drawImage(this.imageSrc,px, py, 16, 16, ((x-(cx*16))*16),((y-(cy*16))*16), 16, 16);
-                		this.txtNeedUpdate[l] = 1;
+                		//l = cx+(cy*8);
+                		this.miniCtx[layer].drawImage(this.imageSrc,px, py, 16, 16, ((x-(cx*16))*16),((y-(cy*16))*16), 16, 16);
+                		this.txtNeedUpdate[layer] = 1;
                 		if(force)force = false;
                 	}
                 }

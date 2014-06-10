@@ -16,7 +16,7 @@ self.onmessage = function (e) {
     if( p == "NEWMAP" ) Game.newMap(); 
     if( p == "PLAYMAP" ) Game.playMap();
     if( p == "TOOL" ) Game.tool(e.data.name);
-    if( p == "MAPCLICK" ) Game.mapClick(e.data.x, e.data.y, e.data.id);
+    if( p == "MAPCLICK" ) Game.mapClick(e.data.x, e.data.y);
     if( p == "RUN" && trans) updateTrans(e.data);
 };
 
@@ -86,7 +86,7 @@ CITY.Game = function(url) {
     this.animsData = null;
     this.tilesData = null;
 
-    this.needMapUpdate = false;
+    //this.needMapUpdate = false;
 
 
     this.newMap();
@@ -181,7 +181,7 @@ CITY.Game.prototype = {
         if(name !== "none") this.currentTool = this.gameTools[name];
         else this.currentTool = null;
     },
-    mapClick : function(x,y,id){
+    mapClick : function(x,y){
         if(this.currentTool!==null){
             var budget = this.simulation.budget;
             var evaluation = this.simulation.evaluation;
@@ -194,8 +194,8 @@ CITY.Game.prototype = {
                 case this.currentTool.TOOLRESULT_NO_MONEY: tell = TXT.toolMessages.noMoney; break; 
                 default: 
                     tell = '&nbsp;';
-                    if( id >= 11  && id != 15 ) this.needMapUpdate = true;
-                    transMessage({tell:"BUILD", x:x, y:y, id:id });  
+                    //if( id >= 11  && id != 15 ) this.needMapUpdate = true;
+                    transMessage({tell:"BUILD", x:x, y:y });  
                 break;
             }
             this.processMessages(messageMgr.getMessages());

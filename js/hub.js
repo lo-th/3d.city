@@ -51,33 +51,60 @@ HUB.Base.prototype = {
     	}
     },
     initStartHub : function(){
-    	this.addButton('New Map', newMap );
-    	this.addButton('Play Game', playMap );
-    	//this.addButton('Play 2D', play2d );
-        //this.addButton('Tool Test', testTool );
+    	this.addButton('New Map');
+    	this.addButton('Play Game');
+
+        this.buttons[0].addEventListener('click',  function ( e ) { e.preventDefault(); newMap(); }, false);
+        this.buttons[1].addEventListener('click',  function ( e ) { e.preventDefault(); playMap(); }, false);
     },
     initGameHub : function(){
         this.removeButtons();
-        var bname = ['MOVE', 'residential','commercial','industrial','Police', 'Fire','Port','airport','stadium', 'coal','nuclear','road','rail','wire','park','query','bulldozer'];
+        this.toolSet = document.createElement('div');
+        this.toolSet.style.cssText ='position:absolute; top:60px; left:12px; width:180px; height:500px; pointer-events:none; display:block;';
+        this.hub.appendChild( this.toolSet );
+        this.toolInfo = document.createElement('div');
+        this.toolInfo.style.cssText ='margin-left:10px; margin-right:10px; margin-top:10px; width:160px; height:40px; pointer-events:none; font-size:14px;';
+        this.toolSet.appendChild( this.toolInfo );
+        this.toolInfo.innerHTML = "Selecte<br>Tool";
+
+        //var bname = ['MOVE', 'residential','commercial','industrial','Police', 'Fire','Port','airport','stadium', 'coal','nuclear','road','rail','wire','park','query','bulldozer'];
+        var bname = ['MOVE', 'residential','commercial','industrial','Police', 'park', 'Fire','road','rail','wire','coal','bulldozer','nuclear', 'Port','stadium','airport','query'];
         for(var i = 0; i<bname.length; i++){
-            if(i==0)this.addButton(bname[i], null, [60,40] );
-            else this.addButton(bname[i], null, [70,30] );
+            if(i==0) this.addButton(bname[i], [180,40] );
+            else if(i<4)this.addButton(bname[i], [50,70], true, this.showInfo );
+            else this.addButton(bname[i], [50,50], true, this.showInfo );
         }
         for(var i = 0; i<this.buttons.length; i++){
             this.buttons[i].name = i;
-            this.buttons[i].addEventListener('click',  function(e){addTool(this.name)}, false);
+            this.buttons[i].addEventListener('click',  function(e){ e.preventDefault(); selectTool(this.name); }, false);
         }
     },
-    addButton : function(name, fun, size){
+    showInfo : function(id, t){
+        var name = view3d.toolSet[id].tool;
+        name = name.charAt(0).toUpperCase() + name.substring(1).toLowerCase()//name[0].toUpperCase();
+
+        t.toolInfo.innerHTML = name+'<br>'+view3d.toolSet[id].price+"$";
+    },
+    addButton : function(name, size, tool, extra){
         if(!size) size = [140, 40];
     	var b = this.createLabel(name, size, true);
-    	if(size[0]>100) b.style.cssText = 'margin:10px; pointer-events:auto; border:1px solid rgba(255,255,255,0);';
-        else b.style.cssText = 'margin:4px; pointer-events:auto; border:1px solid rgba(255,255,255,0);';
-    	this.hub.appendChild( b );
+    	if(!tool){
+            if(name == 'MOVE'){
+                b.style.cssText = 'position:absolute; left:0; top:0; margin:10px; pointer-events:auto; border:2px solid rgba(255,255,255,0);';
+                this.hub.appendChild( b );
+            } else {
+                b.style.cssText = 'margin:10px; pointer-events:auto; border:2px solid rgba(255,255,255,0);';
+                this.hub.appendChild( b );
+            }
+        } else {
+            b.style.cssText = 'margin:2px; pointer-events:auto; border:2px solid rgba(255,255,255,0);';
+            this.toolSet.appendChild( b );
+        }
 
-    	b.addEventListener( 'mouseover', function ( e ) { e.preventDefault(); this.style.border = '1px solid rgba(255,255,255,1)'; this.style.backgroundColor = 'rgba(0,0,0,0.3)';  }, false );
-	    b.addEventListener( 'mouseout', function ( e ) { e.preventDefault(); this.style.border = '1px solid rgba(255,255,255,0)'; this.style.backgroundColor = 'rgba(255,255,255,0)';  }, false );
-	    if(fun!==null) b.addEventListener('click', fun || function(e){}, false);
+        var _this = this;
+    	b.addEventListener( 'mouseover', function ( e ) { e.preventDefault(); this.style.border = '2px solid rgba(255,255,255,1)'; this.style.backgroundColor = 'rgba(0,0,0,0.3)'; if(extra) extra(this.name, _this) }, false );
+	    b.addEventListener( 'mouseout', function ( e ) { e.preventDefault(); this.style.border = '2px solid rgba(255,255,255,0)'; this.style.backgroundColor = 'rgba(255,255,255,0)';   }, false );
+	    //if(fun!==null) b.addEventListener('click', fun || function(e){}, false);
 
     	this.buttons.push(b);
     },
@@ -117,8 +144,8 @@ HUB.Base.prototype = {
 		ctx.fillText(text, px, py);
 
 		if(b){
-			ctx.strokeStyle = 'rgba(255,255,255,0.5)';
-			ctx.lineWidth=2;
+			ctx.strokeStyle = 'rgba(255,255,255,1)';
+			ctx.lineWidth=4;
 			ctx.strokeRect(0,0,c.width,c.height);
 		}
 		return c;
