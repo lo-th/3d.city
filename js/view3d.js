@@ -81,7 +81,9 @@ V3D.Base = function(){
 
 	this.treeMeshs = [];
 	this.treeLists = [];
-	this.treeMaterial = null;
+	
+	this.worldMaterial = null;
+	this.worldTexture = null;
 
 	this.spriteLists = [];
 	this.spriteMeshs = [];
@@ -200,6 +202,13 @@ V3D.Base.prototype = {
 	            //m.scale.set(s,s,-s);
 	            _this.meshs[m.name] = m;
 	        }
+
+	        _this.worldTexture = _this.meshs['train'].material.map;
+	        _this.worldTexture.magFilter = THREE.NearestFilter;
+        	_this.worldTexture.minFilter = THREE.LinearMipMapLinearFilter;
+        	_this.worldTexture.needsUpdate = true;
+	        _this.worldMaterial = new THREE.MeshBasicMaterial( {map:_this.worldTexture} );
+
 	        _this.defineSpriteGeo();
 	        _this.defineTreeGeo();
 	        _this.init();
@@ -218,11 +227,6 @@ V3D.Base.prototype = {
 			this.spriteGeo[i].applyMatrix(m);
 		}
 	},
-	
-
-	//----------------------------------- TREE TEST
-
-
 
 	defineTreeGeo : function(){
 		this.treeGeo = [];
@@ -236,7 +240,7 @@ V3D.Base.prototype = {
 		this.treeGeo[6] = this.meshs['tree2'].geometry;
 		this.treeGeo[7] = this.meshs['tree2'].geometry.clone();
 
-		this.treeMaterial = this.meshs['tree0'].material;
+		//this.worldMaterial = this.meshs['tree0'].material;
 
 		var i = this.treeGeo.length;
 		// reverse geometry
@@ -247,6 +251,13 @@ V3D.Base.prototype = {
 			this.treeGeo[i].applyMatrix( m2.makeRotationY( (Math.random()*360)*this.ToRad ) );
 		}
 	},
+	
+
+	//----------------------------------- TREE TEST
+
+
+
+	
     addTree : function(x,y,z,v,layer){
     	// v  21 to 43
     	if(!this.treeLists[layer]) this.treeLists[layer]=[];
@@ -270,7 +281,7 @@ V3D.Base.prototype = {
 	    			g.merge( this.treeGeo[ar[3]], m );
 	    			//else g.merge( this.treeGeo[4+rand], m );
 	    		}
-	    	    this.treeMeshs[l] = new THREE.Mesh( g, this.treeMaterial );
+	    	    this.treeMeshs[l] = new THREE.Mesh( g, this.worldMaterial );
 	    	    this.scene.add(this.treeMeshs[l]);
 	    	    this.tempTreeLayers[l] = 0;
 	    	}
@@ -331,7 +342,7 @@ V3D.Base.prototype = {
 	    	//g.merge( this.treeGeo[0], m );
 	    	g.merge( this.treeGeo[ar[3]], m );
 	    }
-	    this.treeMeshs[l] = new THREE.Mesh( g, this.treeMaterial);
+	    this.treeMeshs[l] = new THREE.Mesh( g, this.worldMaterial);
 	    this.scene.add(this.treeMeshs[l]);
 	    this.tempTreeLayers[l] = 0;
     },
@@ -775,7 +786,7 @@ V3D.Base.prototype = {
 	addSprite : function(i, v){
 		var m;
 		if(v==1){
-			m = new THREE.Mesh(this.spriteGeo[0], new THREE.MeshBasicMaterial({color:0x909090}) );
+			m = new THREE.Mesh(this.spriteGeo[0], this.worldMaterial );
 		    this.scene.add(m);
 		    this.spriteMeshs[i] = m;
 		}
