@@ -5,6 +5,8 @@ var CITY = {};
 var timer;
 var timestep = 1000/30;
 var Game;
+var pcount = 0;
+var power;
 
 var ab = new ArrayBuffer( 1 );
 transMessage( ab, [ab] );
@@ -43,12 +45,18 @@ var updateTrans = function(data){
 };
 
 var update = function(){
+    power = null;
     if (!Game.isPaused){
+        pcount++;
         Game.simulation.simFrame();
         Game.simulation.updateFrontEnd();
 
         Game.processMessages(Game.simulation.messageManager.getMessages());
         Game.simulation.spriteManager.moveObjects();
+        if(pcount==30){
+            pcount = 0;
+            power = Game.map.powerData;
+        }
     }
     //Game.getTiles();
     //Game.animatedTiles();
@@ -59,7 +67,7 @@ var update = function(){
     //transMessage({ tell:"RUN", infos:Game.infos, tiles:Game.tilesData, anims:Game.animsData, sprites:Game.spritesData});
     //var tilesData = Game.map.tilesData;
 
-    transMessage({ tell:"RUN", infos:Game.infos, tilesData:Game.map.tilesData, powerData:Game.map.powerData, sprites:Game.spritesData});
+    transMessage({ tell:"RUN", infos:Game.infos, tilesData:Game.map.tilesData, powerData:power, sprites:Game.spritesData});
 };
 
 CITY.Game = function(url) {

@@ -34,8 +34,11 @@ var spriteData = null;
 var gameData = null;
 var powerData = null;
 
+
+
 var trans = false;
 var newup = false;
+var powerup = false;
 
 var cityWorker, view3d, hub, im;
 
@@ -59,9 +62,13 @@ function loop() {
     if(newup){ 
         view3d.paintMap(); 
         view3d.moveSprite();
-        view3d.showPower();
+        
         hub.showInfo();
         newup=false; 
+    }
+    if(powerup){
+        view3d.showPower();
+        powerup = false;
     }
     view3d.renderer.render( view3d.scene, view3d.camera );
 
@@ -133,6 +140,7 @@ function initCity() {
             spriteData = e.data.sprites;
 
             newup = true;
+            if(powerData) powerup = true;
 
             //if(trans) setTimeout( cityWorker.postMessage({tell:"RUN", tilesData:tilesData},[tilesData.buffer]), timestep); 
         }
