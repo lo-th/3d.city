@@ -92,6 +92,8 @@ HUB.Base.prototype = {
         this.hub.appendChild( this.infoSet );
     },
 
+    // 
+
     //------------------------------------------
 
     showInfo : function(){
