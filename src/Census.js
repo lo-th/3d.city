@@ -11,8 +11,11 @@ Micro.Census = function(){
     this.totalPop = 0;
 
     var createArray = function(arrName) {
+        //this[arrName] = new M_ARRAY_TYPE(120);
         this[arrName] = [];
-        for (var a = 0; a < 120; a++) this[arrName][a] = 0;
+        //for (var a = 0; a < 120; a++) this[arrName][a] = 0;
+        var a = 120;
+        while(a--) this[arrName][a] = 0;
     }
 
     for (var i = 0; i < Micro.arrs.length; i++) {
@@ -66,12 +69,9 @@ Micro.Census.prototype = {
 
         var resPopScaled = this.resPop >> 8;
 
-        if (this.hospitalPop < this.resPopScaled)
-          this.needHospital = 1;
-        else if (this.hospitalPop > this.resPopScaled)
-          this.needHospital = -1;
-        else if (this.hospitalPop === this.resPopScaled)
-          this.needHospital = 0;
+        if (this.hospitalPop < this.resPopScaled) this.needHospital = 1;
+        else if (this.hospitalPop > this.resPopScaled) this.needHospital = -1;
+        else if (this.hospitalPop === this.resPopScaled) this.needHospital = 0;
 
         this.changed = true;
     },

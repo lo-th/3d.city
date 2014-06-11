@@ -32,6 +32,7 @@ var timestep = 1000/30;
 var tilesData = null;//new ARRAY_TYPE(128*128);
 var spriteData = null;
 var gameData = null;
+var powerData = null;
 
 var trans = false;
 var newup = false;
@@ -58,6 +59,7 @@ function loop() {
     if(newup){ 
         view3d.paintMap(); 
         view3d.moveSprite();
+        view3d.showPower();
         hub.showInfo();
         newup=false; 
     }
@@ -127,6 +129,7 @@ function initCity() {
 
             gameData = e.data.infos;
             tilesData = e.data.tilesData;
+            powerData = e.data.powerData;
             spriteData = e.data.sprites;
 
             newup = true;

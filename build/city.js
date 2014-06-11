@@ -457,8 +457,11 @@ Micro.Census = function(){
     this.totalPop = 0;
 
     var createArray = function(arrName) {
+        //this[arrName] = new M_ARRAY_TYPE(120);
         this[arrName] = [];
-        for (var a = 0; a < 120; a++) this[arrName][a] = 0;
+        //for (var a = 0; a < 120; a++) this[arrName][a] = 0;
+        var a = 120;
+        while(a--) this[arrName][a] = 0;
     }
 
     for (var i = 0; i < Micro.arrs.length; i++) {
@@ -512,12 +515,9 @@ Micro.Census.prototype = {
 
         var resPopScaled = this.resPop >> 8;
 
-        if (this.hospitalPop < this.resPopScaled)
-          this.needHospital = 1;
-        else if (this.hospitalPop > this.resPopScaled)
-          this.needHospital = -1;
-        else if (this.hospitalPop === this.resPopScaled)
-          this.needHospital = 0;
+        if (this.hospitalPop < this.resPopScaled) this.needHospital = 1;
+        else if (this.hospitalPop > this.resPopScaled) this.needHospital = -1;
+        else if (this.hospitalPop === this.resPopScaled) this.needHospital = 0;
 
         this.changed = true;
     },
@@ -1692,7 +1692,10 @@ Micro.GameMap = function(width, height, defaultValue){
 
 
     this.data = new Array(this.width*this.height);//[];
-    this.tilesData = new M_ARRAY_TYPE(this.width*this.height);//new Array(this.width*this.height);
+
+    this.tilesData = new M_ARRAY_TYPE(this.width*this.height);
+    this.powerData = new M_ARRAY_TYPE(this.width*this.height);
+
     var i = this.width*this.height;
     while(i--){this.tilesData[i] = 0;}
     /*console.log(this.data.length)*/
@@ -6261,8 +6264,8 @@ Micro.MapScanner.prototype = {
                 if (tile.isZone()) {
                     this.sim.repairManager.checkTile(x, y, this.sim._cityTime);
                     //var powered = tile.isPowered();
-                    if (tile.isPowered()) this.sim.census.poweredZoneCount += 1;
-                    else this.sim.census.unpoweredZoneCount += 1;
+                    if (tile.isPowered()){ this.sim.census.poweredZoneCount += 1; this._map.powerData[id] = 1; }
+                    else {this.sim.census.unpoweredZoneCount += 1; this._map.powerData[id] = 2; }
                 }
                 i = this._actions.length;
                 while(i--){
@@ -6368,7 +6371,7 @@ Micro.PowerManager.prototype = {
         var dX = [-1, 2, 1, 2];
         var dY = [-1, -1, 0, 0];
 
-        for (var i = 0; i < 4; i++) map.addTileFlags(x + dX[i], y + dY[i], Tile.ANIMBIT); 
+        if(!this.sim.is3D) for (var i = 0; i < 4; i++) map.addTileFlags(x + dX[i], y + dY[i], Tile.ANIMBIT); 
     },
     nuclearPowerFound : function(map, x, y, simData) {
         var meltdownTable = [30000, 20000, 10000];
@@ -6382,8 +6385,8 @@ Micro.PowerManager.prototype = {
         this._powerStack.push(new map.Position(x, y));
         //console.log(x, y, new map.Position(x, y))
 
-        // Ensure animation bits set
-        for (var i = 0; i < 4; i++)  map.addTileFlags(x, y, Tile.ANIMBIT | Tile.CONDBIT | Tile.POWERBIT | Tile.BURNBIT);
+        // Ensure animation bits set   no animation for 3d
+        if(!this.sim.is3D) for (var i = 0; i < 4; i++)  map.addTileFlags(x, y, Tile.ANIMBIT | Tile.CONDBIT | Tile.POWERBIT | Tile.BURNBIT);
     },
     registerHandlers : function(mapScanner, repairManager) {
         mapScanner.addAction(Tile.POWERPLANT, this.coalPowerFound.bind(this));
@@ -7565,7 +7568,9 @@ Micro.BlockMap.prototype = {
     clear : function() {
         var maxY = Math.floor(this.mapHeight / this.blockSize) + 1;
         var maxX = Math.floor(this.mapWidth / this.blockSize) + 1;
-        for (var y = 0; y < maxY; y++) this.data[y] = Micro.makeArrayOf(maxX, this.defaultValue);
+        //for (var y = 0; y < maxY; y++) this.data[y] = Micro.makeArrayOf(maxX, this.defaultValue);
+        var y = maxY;
+        while(y--) this.data[y] = Micro.makeArrayOf(maxX, this.defaultValue);
     },
     get : function(x, y) {
         return this.data[y][x];
@@ -7587,7 +7592,7 @@ Micro.BlockMap.prototype = {
 
 var Residential, Commercial, Industrial, Transport, Road, EmergencyServices, MiscTiles, Stadia;
 
-Micro.Simulation = function(gameMap, gameLevel, speed) {
+Micro.Simulation = function(gameMap, gameLevel, speed, is3D) {
     if (gameLevel !== Micro.LEVEL_EASY && gameLevel !== Micro.LEVEL_MED && gameLevel !== Micro.LEVEL_HARD) throw new Error('Invalid level!');
     if (speed !== Micro.SPEED_PAUSED && speed !== Micro.SPEED_SLOW && speed !== Micro.SPEED_MED && speed !== Micro.SPEED_FAST) throw new Error('Invalid speed!');
 
@@ -7595,6 +7600,8 @@ Micro.Simulation = function(gameMap, gameLevel, speed) {
     this.gameLevel = gameLevel;
 
     this.div = this.map.width / 8;
+
+    this.is3D = is3D || false;
 
     this.speed = speed;
     this.speedCycle = 0;

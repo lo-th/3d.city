@@ -3,6 +3,8 @@
 //                 THREE JS & SEA3D                     //
 //------------------------------------------------------//
 
+'use strict';
+
 var V3D = { REVISION: '0.1a' };
 
 V3D.Base = function(){
@@ -67,7 +69,7 @@ V3D.Base = function(){
 		{id:14, tool:'stadium',     name:'',  build:1, size:4, sy:2,    price:5000,  color:'indigo'     ,drag:0  },
 		{id:15, tool:'airport',     name:'',  build:1, size:6, sy:0.5,  price:10000, color:'violet'     ,drag:0  },
 		
-		{id:16, tool:'query',       build:0, size:1, sy:0,    price:0,     color:'cyan'       ,drag:0  },
+		{id:16, tool:'query',       name:'?', build:0, size:1, sy:0,    price:0,     color:'cyan'       ,drag:0  },
 		
 	];
 
@@ -83,6 +85,9 @@ V3D.Base = function(){
 
 	this.spriteLists = [];
 	this.spriteMeshs = [];
+
+	this.powerMeshs = [];
+	this.powerMaterial = null;
 
 
 	// start by loading 3d mesh 
@@ -108,6 +113,8 @@ V3D.Base.prototype = {
 
         this.center = new THREE.Vector3();
         this.moveCamera();
+
+        this.powerMaterial = new THREE.SpriteMaterial({map:this.powerTexture(), transparent:true})
 
 
          //this.renderer = new THREE.WebGLRenderer({ canvas:this.canvas, antialias:false });
@@ -175,7 +182,7 @@ V3D.Base.prototype = {
 
 
     loadSea3d : function (){
-    	_this = this;
+    	var _this = this;
 	    var s = 1;
 	    var loader = new THREE.SEA3D( true );
 	    loader.onComplete = function( e ) {
@@ -280,7 +287,7 @@ V3D.Base.prototype = {
     	}
     },
     removeTree : function(x, z, m){
-    	var l = this.findLayer(x, z);
+    	var l = this.findLayer(x, z), ar;
 		if(this.treeLists[l]){
 			var i = this.treeLists[l].length;
     		while(i--){
@@ -417,10 +424,17 @@ V3D.Base.prototype = {
 	//------------------------------------------LAYER 8X8
 
 
-	findLayer:function(x,z){
+	findLayer : function(x,z){
 		var cy = Math.floor(z/16);
         var cx = Math.floor(x/16);
 		return cx+(cy*8);
+	},
+
+	findPosition : function(id){
+		var n = Math.floor(id/this.mapSize[1]);
+		var y = n;
+		var x = id-(n*this.mapSize[1]);
+		return [x,y];
 	},
 
 
@@ -714,8 +728,7 @@ V3D.Base.prototype = {
 
 
 
-	//--------------------
-
+	//-------------------- sprite
 
 
 	moveSprite : function(){
@@ -751,6 +764,59 @@ V3D.Base.prototype = {
 		this.scene.add(m);
 		this.spriteMeshs[i] = m;
 		//console.log('new Sprite' + v)
+	},
+
+
+
+
+	//-----------------------power zone
+
+
+	showPower : function(){
+		if(!powerData) return;
+		var i = powerData.length;
+		while(i--){
+			if(powerData[i]==2){ if(this.powerMeshs[i] == null) this.addPowerMesh(i, this.findPosition(i)); }
+			else if(powerData[i]==1){ if(this.powerMeshs[i] !== null) this.removePowerMesh(i); }
+		}
+	},
+	addPowerMesh : function(i, ar){
+		//var m = new THREE.Mesh(new THREE.BoxGeometry(0.5,0.5,0.5), this.powerMaterial );
+
+		var m = new THREE.Sprite( this.powerMaterial );
+		//m.scale.set( 2, 2, 1 );
+		m.position.set(ar[0], 1, ar[1]);
+		this.scene.add(m);
+		this.powerMeshs[i] = m;
+	},
+	removePowerMesh : function(i){
+		this.scene.remove(this.powerMeshs[i]);
+		this.powerMeshs[i] = null;
+	},
+	powerTexture : function() {
+	    var c = document.createElement("canvas");
+	    var ctx = c.getContext("2d");
+	    c.width = c.height = 64;
+	    var grd = ctx.createLinearGradient(0,0,64,64);
+		grd.addColorStop(0.3,"yellow");
+		grd.addColorStop(1,"red")
+		ctx.beginPath();
+		ctx.moveTo(44,0);
+		ctx.lineTo(10,34);
+		ctx.lineTo(34,34);
+		ctx.lineTo(20,64);
+		ctx.lineTo(54,30);
+		ctx.lineTo(30,30);
+		ctx.lineTo(44,0);
+		ctx.closePath();
+		ctx.strokeStyle="red";
+		ctx.stroke();
+		ctx.fillStyle = grd;
+		ctx.fill();
+	    var texture = new THREE.Texture(c);
+	    texture.needsUpdate = true;
+	    return texture;
 	}
+
 
 }

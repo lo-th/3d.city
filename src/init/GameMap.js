@@ -39,7 +39,10 @@ Micro.GameMap = function(width, height, defaultValue){
 
 
     this.data = new Array(this.width*this.height);//[];
-    this.tilesData = new M_ARRAY_TYPE(this.width*this.height);//new Array(this.width*this.height);
+
+    this.tilesData = new M_ARRAY_TYPE(this.width*this.height);
+    this.powerData = new M_ARRAY_TYPE(this.width*this.height);
+
     var i = this.width*this.height;
     while(i--){this.tilesData[i] = 0;}
     /*console.log(this.data.length)*/

@@ -57,7 +57,9 @@ Micro.BlockMap.prototype = {
     clear : function() {
         var maxY = Math.floor(this.mapHeight / this.blockSize) + 1;
         var maxX = Math.floor(this.mapWidth / this.blockSize) + 1;
-        for (var y = 0; y < maxY; y++) this.data[y] = Micro.makeArrayOf(maxX, this.defaultValue);
+        //for (var y = 0; y < maxY; y++) this.data[y] = Micro.makeArrayOf(maxX, this.defaultValue);
+        var y = maxY;
+        while(y--) this.data[y] = Micro.makeArrayOf(maxX, this.defaultValue);
     },
     get : function(x, y) {
         return this.data[y][x];

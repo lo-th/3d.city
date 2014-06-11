@@ -36,8 +36,8 @@ Micro.MapScanner.prototype = {
                 if (tile.isZone()) {
                     this.sim.repairManager.checkTile(x, y, this.sim._cityTime);
                     //var powered = tile.isPowered();
-                    if (tile.isPowered()) this.sim.census.poweredZoneCount += 1;
-                    else this.sim.census.unpoweredZoneCount += 1;
+                    if (tile.isPowered()){ this.sim.census.poweredZoneCount += 1; this._map.powerData[id] = 1; }
+                    else {this.sim.census.unpoweredZoneCount += 1; this._map.powerData[id] = 2; }
                 }
                 i = this._actions.length;
                 while(i--){

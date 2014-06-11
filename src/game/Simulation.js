@@ -1,7 +1,7 @@
 
 var Residential, Commercial, Industrial, Transport, Road, EmergencyServices, MiscTiles, Stadia;
 
-Micro.Simulation = function(gameMap, gameLevel, speed) {
+Micro.Simulation = function(gameMap, gameLevel, speed, is3D) {
     if (gameLevel !== Micro.LEVEL_EASY && gameLevel !== Micro.LEVEL_MED && gameLevel !== Micro.LEVEL_HARD) throw new Error('Invalid level!');
     if (speed !== Micro.SPEED_PAUSED && speed !== Micro.SPEED_SLOW && speed !== Micro.SPEED_MED && speed !== Micro.SPEED_FAST) throw new Error('Invalid speed!');
 
@@ -9,6 +9,8 @@ Micro.Simulation = function(gameMap, gameLevel, speed) {
     this.gameLevel = gameLevel;
 
     this.div = this.map.width / 8;
+
+    this.is3D = is3D || false;
 
     this.speed = speed;
     this.speedCycle = 0;

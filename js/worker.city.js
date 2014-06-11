@@ -59,7 +59,7 @@ var update = function(){
     //transMessage({ tell:"RUN", infos:Game.infos, tiles:Game.tilesData, anims:Game.animsData, sprites:Game.spritesData});
     //var tilesData = Game.map.tilesData;
 
-    transMessage({ tell:"RUN", infos:Game.infos, tilesData:Game.map.tilesData, anims:Game.animsData, sprites:Game.spritesData});
+    transMessage({ tell:"RUN", infos:Game.infos, tilesData:Game.map.tilesData, powerData:Game.map.powerData, sprites:Game.spritesData});
 };
 
 CITY.Game = function(url) {
@@ -104,7 +104,7 @@ CITY.Game.prototype = {
         var money = 20000 / this.difficulty; 
         this.gameTools = new Micro.GameTools(this.map);
         this.animationManager = new Micro.AnimationManager(this.map);
-        this.simulation = new Micro.Simulation( this.map, this.difficulty, this.speed);
+        this.simulation = new Micro.Simulation( this.map, this.difficulty, this.speed, true);
 
         // intro message
         var messageMgr = new Micro.MessageManager();
