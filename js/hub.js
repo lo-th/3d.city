@@ -24,6 +24,7 @@ HUB.Base.prototype = {
     intro:function(){
     	this.full = document.createElement('div'); 
     	this.full.style.cssText ='position:absolute; background:rgba(102,102,230,1); top:0px; left:0px; width:100%; height:100%; pointer-events:none; display:block;';
+        //this.full.style.cssText ='position:absolute; background:rgba(102,102,230,1); top:0; left:0; bottom:0; right:0%; pointer-events:none; display:block;  text-align:center;';
     	this.title = this.createLabel("3D.CITY", [200, 80]);
     	this.title.style.cssText = 'position:absolute; top:50%; left:50%; margin-top:-40px; margin-left:-100px; width:200px; height:80px; pointer-events:none;';
         this.subtitle = document.createElement('div');

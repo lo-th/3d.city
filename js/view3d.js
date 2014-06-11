@@ -85,6 +85,7 @@ V3D.Base = function(){
 
 	this.spriteLists = [];
 	this.spriteMeshs = [];
+	this.spriteGeo = null;
 
 	this.powerMeshs = [];
 	this.powerMaterial = null;
@@ -199,11 +200,23 @@ V3D.Base.prototype = {
 	            //m.scale.set(s,s,-s);
 	            _this.meshs[m.name] = m;
 	        }
+	        _this.defineSpriteGeo();
 	        _this.defineTreeGeo();
 	        _this.init();
 	    }
 	    //loader.parser = THREE.SEA3D.DEFAULT;
 	    loader.load( 'img/world.sea' );
+	},
+
+
+	defineSpriteGeo : function(){
+		this.spriteGeo = [];
+		this.spriteGeo[0] = this.meshs['train'].geometry;
+		var i = this.spriteGeo.length;
+		var m = new THREE.Matrix4().makeScale(1, 1, -1);
+		while(i--) {
+			this.spriteGeo[i].applyMatrix(m);
+		}
 	},
 	
 
@@ -349,7 +362,7 @@ V3D.Base.prototype = {
 		// create terrain if not existe
         if(this.miniTerrain.length === 0){
         	var matrix = new THREE.Matrix4();
-        	var pyGeometry = this.meshs['plane'].geometry;
+        	//var pyGeometry = this.meshs['plane'].geometry;
 
         	var n = 0, texture, geo, mat;
         	for(var i=0; i<8; i++){
@@ -734,7 +747,7 @@ V3D.Base.prototype = {
 	moveSprite : function(){
 		if(!spriteData) return;
 		var i = spriteData.length;
-		var pos = new THREE.Vector3(0,0.25,0);
+		var pos = new THREE.Vector3();
 		var frame = 0;
 		//log(i)
 		while(i--){
@@ -760,9 +773,13 @@ V3D.Base.prototype = {
 		return r;
 	},
 	addSprite : function(i, v){
-		var m = new THREE.Mesh(new THREE.BoxGeometry(0.5,0.5,1.5), new THREE.MeshBasicMaterial({color:0xff0000}) );
-		this.scene.add(m);
-		this.spriteMeshs[i] = m;
+		var m;
+		if(v==1){
+			m = new THREE.Mesh(this.spriteGeo[0], new THREE.MeshBasicMaterial({color:0x909090}) );
+		    this.scene.add(m);
+		    this.spriteMeshs[i] = m;
+		}
+		
 		//console.log('new Sprite' + v)
 	},
 
