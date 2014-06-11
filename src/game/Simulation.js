@@ -11,6 +11,7 @@ Micro.Simulation = function(gameMap, gameLevel, speed, is3D) {
     this.div = this.map.width / 8;
 
     this.is3D = is3D || false;
+    this.needPower = [];
 
     this.speed = speed;
     this.speedCycle = 0;
@@ -161,9 +162,11 @@ Micro.Simulation.prototype = {
     },*/
     simulate : function() {
         this.phaseCycle &= 15;
+
         var speedIndex = this.speed - 1;
         switch (this.phaseCycle){
             case 0:
+                //this.needPower = [];
                 if (++this.simCycle > 1023) this.simCycle = 0;
                 if (this.doInitialEval) { this.doInitialEval = false;  this.evaluation.cityEvaluation(); }
                 this.cityTime++;

@@ -754,8 +754,8 @@ V3D.Base.prototype = {
 		if(v===1){// train
 			if(f===1) r = 0;
 			else if(f===2) r = 90*this.ToRad;
-			else if(f===3) r = -45*this.ToRad;
-			else if(f===4) r = 45*this.ToRad;
+			else if(f===3) r = 45*this.ToRad;
+			else if(f===4) r = -45*this.ToRad;
 		}
 		return r;
 	},
@@ -774,8 +774,22 @@ V3D.Base.prototype = {
 
 	showPower : function(){
 		if(!powerData) return;
-		var i = powerData.length;
+		var i = powerData.length, pos;
+
+		/*var j = this.powerMeshs.length;
+		while(j--){
+			if( !powerData[j] ) this.removePowerMesh(j);
+		}*/
+
 		while(i--){
+			/*if(this.powerMeshs[i] == null) this.addPowerMesh(i, this.findPosition(powerData[i]));
+			else{
+				pos = this.findPosition(powerData[i]);
+			    this.powerMeshs[i].position.set(pos[0], 1, pos[1]);
+			}*/
+
+
+
 			if(powerData[i]==2){ if(this.powerMeshs[i] == null) this.addPowerMesh(i, this.findPosition(i)); }
 			else if(powerData[i]==1){ if(this.powerMeshs[i] !== null) this.removePowerMesh(i); }
 		}

@@ -5449,7 +5449,8 @@ Micro.MapScanner.prototype = {
                     this.sim.repairManager.checkTile(x, y, this.sim._cityTime);
                     //var powered = tile.isPowered();
                     if (tile.isPowered()){ this.sim.census.poweredZoneCount += 1; this._map.powerData[id] = 1; }
-                    else {this.sim.census.unpoweredZoneCount += 1; this._map.powerData[id] = 2; }
+                    else {this.sim.census.unpoweredZoneCount += 1; this._map.powerData[id] = 2;// this.sim.needPower.push(id);
+                     }
                 }
                 i = this._actions.length;
                 while(i--){
@@ -6423,6 +6424,7 @@ Micro.Simulation = function(gameMap, gameLevel, speed, is3D) {
     this.div = this.map.width / 8;
 
     this.is3D = is3D || false;
+    this.needPower = [];
 
     this.speed = speed;
     this.speedCycle = 0;
@@ -6573,9 +6575,11 @@ Micro.Simulation.prototype = {
     },*/
     simulate : function() {
         this.phaseCycle &= 15;
+
         var speedIndex = this.speed - 1;
         switch (this.phaseCycle){
             case 0:
+                //this.needPower = [];
                 if (++this.simCycle > 1023) this.simCycle = 0;
                 if (this.doInitialEval) { this.doInitialEval = false;  this.evaluation.cityEvaluation(); }
                 this.cityTime++;

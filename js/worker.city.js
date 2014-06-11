@@ -24,6 +24,7 @@ self.onmessage = function (e) {
 
 var updateTrans = function(data){
     if (!Game.isPaused){
+        Game.simulation.needPower = [];
         Game.simulation.simFrame();
         Game.simulation.updateFrontEnd();
 
@@ -48,6 +49,7 @@ var update = function(){
     power = null;
     if (!Game.isPaused){
         pcount++;
+        //Game.simulation.needPower = [];
         Game.simulation.simFrame();
         Game.simulation.updateFrontEnd();
 
@@ -56,6 +58,7 @@ var update = function(){
         if(pcount==30){
             pcount = 0;
             power = Game.map.powerData;
+            //power = Game.simulation.needPower;
         }
     }
     //Game.getTiles();
