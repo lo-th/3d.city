@@ -8,8 +8,8 @@ var Game;
 var pcount = 0;
 var power;
 
-var ab = new ArrayBuffer( 1 );
-transMessage( ab, [ab] );
+//var ab = new ArrayBuffer( 1 );
+//transMessage( ab, [ab] );
 var trans = false;// ( ab.byteLength === 0 );
 
 self.onmessage = function (e) {
