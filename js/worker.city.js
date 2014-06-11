@@ -101,7 +101,7 @@ CITY.Game.prototype = {
         transMessage({ tell:"NEWMAP", tilesData:this.map.tilesData, mapSize:this.mapSize, island:this.map.isIsland, trans:trans });
     },
     playMap : function(){
-        var money = 12000 / this.difficulty; 
+        var money = 20000 / this.difficulty; 
         this.gameTools = new Micro.GameTools(this.map);
         this.animationManager = new Micro.AnimationManager(this.map);
         this.simulation = new Micro.Simulation( this.map, this.difficulty, this.speed);
