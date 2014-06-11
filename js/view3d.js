@@ -56,11 +56,11 @@ V3D.Base = function(){
 		{id:6,  tool:'fire',        name:'',  build:1, size:3, sy:1.2,  price:500,   color:'red'        ,drag:0  },
 
 		{id:7,  tool:'road',        name:'',  build:0, size:1, sy:0.1,  price:10,    color:'black'      ,drag:1  },
-		{id:8, tool:'bulldozer',   name:'',  build:0, size:1, sy:0,    price:1,     color:'salmon'     ,drag:1  },
+		{id:8, tool:'bulldozer',    name:'',  build:0, size:1, sy:0,    price:1,     color:'salmon'     ,drag:1  },
 		{id:9,  tool:'rail',        name:'',  build:0, size:1, sy:0.15, price:20,    color:'brown'      ,drag:1  },
 
 		{id:10, tool:'coal',        name:'',  build:1, size:4, sy:2,    price:3000,  color:'gray'       ,drag:0  },
-		{id:11,  tool:'wire',        name:'',  build:0, size:1, sy:0.05, price:5 ,    color:'khaki'      ,drag:1  },	
+		{id:11,  tool:'wire',       name:'',  build:0, size:1, sy:0.05, price:5 ,    color:'khaki'      ,drag:1  },	
 		{id:12, tool:'nuclear',     name:'',  build:1, size:4, sy:2,    price:5000,  color:'mistyrose'  ,drag:0  },
 
 		{id:13, tool:'port',        name:'',  build:1, size:4, sy:0.5,  price:3000,  color:'dodgerblue' ,drag:0  },
@@ -79,6 +79,7 @@ V3D.Base = function(){
 
 	this.treeMeshs = [];
 	this.treeLists = [];
+	this.treeMaterial = null;
 
 	this.spriteLists = [];
 	this.spriteMeshs = [];
@@ -205,17 +206,33 @@ V3D.Base.prototype = {
 
 	defineTreeGeo : function(){
 		this.treeGeo = [];
-		this.treeGeo[0] = this.meshs['tree21'].geometry;
+		this.treeGeo[0] = this.meshs['tree0'].geometry;
+		this.treeGeo[1] = this.meshs['tree0'].geometry.clone();
+		this.treeGeo[2] = this.meshs['tree0'].geometry.clone();
+		this.treeGeo[3] = this.meshs['tree0'].geometry.clone();
+
+		this.treeGeo[4] = this.meshs['tree1'].geometry;
+		this.treeGeo[5] = this.meshs['tree1'].geometry.clone();
+		this.treeGeo[6] = this.meshs['tree2'].geometry;
+		this.treeGeo[7] = this.meshs['tree2'].geometry.clone();
+
+		this.treeMaterial = this.meshs['tree0'].material;
 
 		var i = this.treeGeo.length;
 		// reverse geometry
 		var m = new THREE.Matrix4().makeScale(1, 1, -1);
-		while(i--) this.treeGeo[i].applyMatrix(m);
+		var m2 = new THREE.Matrix4();
+		while(i--) {
+			this.treeGeo[i].applyMatrix(m);
+			this.treeGeo[i].applyMatrix( m2.makeRotationY( (Math.random()*360)*this.ToRad ) );
+		}
 	},
     addTree : function(x,y,z,v,layer){
-    	//this.treeList.push([x,y,z,v,layer]);
-    	if(!this.treeLists[layer])this.treeLists[layer]=[];
-    	this.treeLists[layer].push([x,y,z,v,layer]);
+    	// v  21 to 43
+    	if(!this.treeLists[layer]) this.treeLists[layer]=[];
+    	var r = Math.floor(Math.random()*4);
+    	if(v>=36) r+=4;
+    	this.treeLists[layer].push([x,y,z,r]);
     },
     populateTree:function(){
     	//this.treeMeshs = [];
@@ -227,11 +244,13 @@ V3D.Base.prototype = {
     		if(this.treeLists[l]){
 	    		var i = this.treeLists[l].length;
 	    		while(i--){
+	    			//rand = Math.floor(Math.random()*4);
 	    			ar = this.treeLists[l][i];
 	    			m.makeTranslation(ar[0],ar[1],ar[2]);
-	    			g.merge( this.treeGeo[0], m );
+	    			g.merge( this.treeGeo[ar[3]], m );
+	    			//else g.merge( this.treeGeo[4+rand], m );
 	    		}
-	    	    this.treeMeshs[l] = new THREE.Mesh( g, this.meshs['tree21'].material);
+	    	    this.treeMeshs[l] = new THREE.Mesh( g, this.treeMaterial );
 	    	    this.scene.add(this.treeMeshs[l]);
 	    	    this.tempTreeLayers[l] = 0;
 	    	}
@@ -289,9 +308,10 @@ V3D.Base.prototype = {
     	while(i--){
 	    	ar = this.treeLists[l][i];
 	    	m.makeTranslation(ar[0],ar[1],ar[2]);
-	    	g.merge( this.treeGeo[0], m );
+	    	//g.merge( this.treeGeo[0], m );
+	    	g.merge( this.treeGeo[ar[3]], m );
 	    }
-	    this.treeMeshs[l] = new THREE.Mesh( g, this.meshs['tree21'].material);
+	    this.treeMeshs[l] = new THREE.Mesh( g, this.treeMaterial);
 	    this.scene.add(this.treeMeshs[l]);
 	    this.tempTreeLayers[l] = 0;
     },
@@ -394,6 +414,9 @@ V3D.Base.prototype = {
 		return data;
 	},*/
 
+	//------------------------------------------LAYER 8X8
+
+
 	findLayer:function(x,z){
 		var cy = Math.floor(z/16);
         var cx = Math.floor(x/16);
@@ -469,13 +492,9 @@ V3D.Base.prototype = {
 		return m;
 	},
 	build : function(x,y){
-		//if(this.currentTool.tool=='bulldozer'){
-			//this.forceUpdate.x = x;
-			//this.forceUpdate.y = y;
+		
+		if(this.currentTool.tool==='query') return;
 
-		//	this.removeTree(x,y);
-		//}
-		//if(id >= 11) return;
 		if(this.currentTool.build){
 			//var ntool = this.toolSet[id];
 			var size = this.currentTool.size;
@@ -500,7 +519,11 @@ V3D.Base.prototype = {
 			b.position.set(x, 0, y);
 			this.scene.add(b);
 		} else {
-			if(this.currentTool.tool!=='query')this.removeTree(x,y);
+			this.removeTree(x,y);
+			if(this.currentTool.tool==='bulldozer'){
+				this.forceUpdate.x = x;
+		        this.forceUpdate.y = y;
+		    }
 		}
 	},
 	removeTool : function(){
@@ -665,20 +688,16 @@ V3D.Base.prototype = {
 				px = v % 32 * 16;
                 py = Math.floor(v / 32) * 16;
 
-                //cy = Math.floor(y/16);
-                //cx = Math.floor(x/16);
 
                 if(isStart){ // full draw for new map
-                    //l = cx+(cy*8);
                 	this.miniCtx[layer].drawImage(this.imageSrc,px, py, 16, 16, ((x-(cx*16))*16),((y-(cy*16))*16), 16, 16);
                 }
                 else{ // draw only need update
                 	if(x===this.forceUpdate.x && y===this.forceUpdate.y){ force=true; this.forceUpdate.x=-1; this.forceUpdate.y=-1 }
                 	if(v>43 || force){ 
-                		//l = cx+(cy*8);
+                		if(force){force = false;  if(v > 20 && v < 44){px = 0; py=0;}};// bulldozer
                 		this.miniCtx[layer].drawImage(this.imageSrc,px, py, 16, 16, ((x-(cx*16))*16),((y-(cy*16))*16), 16, 16);
                 		this.txtNeedUpdate[layer] = 1;
-                		if(force)force = false;
                 	}
                 }
 			}
