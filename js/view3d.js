@@ -5,7 +5,7 @@
 
 'use strict';
 
-var V3D = { REVISION: '0.1a' };
+var V3D = { REVISION: '0.2a' };
 
 V3D.Base = function(){
 	this.container = document.getElementById( 'container' );
@@ -38,60 +38,89 @@ V3D.Base = function(){
     this.select = '';
     this.meshs = {};
 
-    this.trees = [];
     this.mapSize = [128,128];
+    this.nlayers = 64;
 
     this.terrain = null;
 
     this.tool = null;
-
-    this.notAuto = false;
-
 	this.toolSet = [
-        {id:0,  tool:'none',        name:'',  build:0, size:0, sy:0,    price:0,     color:'none'       ,drag:0  },
-		{id:1,  tool:'residential', name:'R', build:1, size:3, sy:0.2,  price:100,   color:'lime'       ,drag:0  },
-		{id:2,  tool:'commercial',  name:'C', build:1, size:3, sy:0.2,  price:100,   color:'blue'       ,drag:0  },
-		{id:3,  tool:'industrial',  name:'I', build:1, size:3, sy:0.2,  price:100,   color:'yellow'     ,drag:0  },
+        {id:0,  tool:'none',        geo:0,    name:'',  build:0, size:0, sy:0,    price:0,     color:'none'       ,drag:0  },
+		{id:1,  tool:'residential', geo:1,    name:'R', build:1, size:3, sy:0.2,  price:100,   color:'lime'       ,drag:0  },
+		{id:2,  tool:'commercial',  geo:2,    name:'C', build:1, size:3, sy:0.2,  price:100,   color:'blue'       ,drag:0  },
+		{id:3,  tool:'industrial',  geo:3,    name:'I', build:1, size:3, sy:0.2,  price:100,   color:'yellow'     ,drag:0  },
 
-		{id:4,  tool:'police',      name:'',  build:1, size:3, sy:1.2,  price:500,   color:'darkblue'   ,drag:0  },
-		{id:5,  tool:'park',        name:'',  build:1, size:1, sy:0.1,  price:10,    color:'darkgreen'  ,drag:0  },
-		{id:6,  tool:'fire',        name:'',  build:1, size:3, sy:1.2,  price:500,   color:'red'        ,drag:0  },
+		{id:4,  tool:'police',      geo:4,    name:'',  build:1, size:3, sy:1.2,  price:500,   color:'darkblue'   ,drag:0  },
+		{id:5,  tool:'park',        geo:5,    name:'',  build:1, size:1, sy:0.02,  price:10,    color:'darkgreen'  ,drag:0  },
+		{id:6,  tool:'fire',        geo:7,    name:'',  build:1, size:3, sy:1.2,  price:500,   color:'red'        ,drag:0  },
 
-		{id:7,  tool:'road',        name:'',  build:0, size:1, sy:0.1,  price:10,    color:'black'      ,drag:1  },
-		{id:8, tool:'bulldozer',    name:'',  build:0, size:1, sy:0,    price:1,     color:'salmon'     ,drag:1  },
-		{id:9,  tool:'rail',        name:'',  build:0, size:1, sy:0.15, price:20,    color:'brown'      ,drag:1  },
+		{id:7,  tool:'road',        geo:0,    name:'',  build:0, size:1, sy:0.1,  price:10,    color:'black'      ,drag:1  },
+		{id:8,  tool:'bulldozer',   geo:0,    name:'',  build:0, size:1, sy:0,    price:1,     color:'salmon'     ,drag:1  },
+		{id:9,  tool:'rail',        geo:0,    name:'',  build:0, size:1, sy:0.15, price:20,    color:'brown'      ,drag:1  },
 
-		{id:10, tool:'coal',        name:'',  build:1, size:4, sy:2,    price:3000,  color:'gray'       ,drag:0  },
-		{id:11,  tool:'wire',       name:'',  build:0, size:1, sy:0.05, price:5 ,    color:'khaki'      ,drag:1  },	
-		{id:12, tool:'nuclear',     name:'',  build:1, size:4, sy:2,    price:5000,  color:'mistyrose'  ,drag:0  },
+		{id:10, tool:'coal',        geo:8,    name:'',  build:1, size:4, sy:2,    price:3000,  color:'gray'       ,drag:0  },
+		{id:11, tool:'wire',        geo:0,    name:'',  build:0, size:1, sy:0.05, price:5 ,    color:'khaki'      ,drag:1  },	
+		{id:12, tool:'nuclear',     geo:9,    name:'',  build:1, size:4, sy:2,    price:5000,  color:'mistyrose'  ,drag:0  },
 
-		{id:13, tool:'port',        name:'',  build:1, size:4, sy:0.5,  price:3000,  color:'dodgerblue' ,drag:0  },
-		{id:14, tool:'stadium',     name:'',  build:1, size:4, sy:2,    price:5000,  color:'indigo'     ,drag:0  },
-		{id:15, tool:'airport',     name:'',  build:1, size:6, sy:0.5,  price:10000, color:'violet'     ,drag:0  },
+		{id:13, tool:'port',        geo:10,   name:'',  build:1, size:4, sy:0.5,  price:3000,  color:'dodgerblue' ,drag:0  },
+		{id:14, tool:'stadium',     geo:11,   name:'',  build:1, size:4, sy:2,    price:5000,  color:'indigo'     ,drag:0  },
+		{id:15, tool:'airport',     geo:12,   name:'',  build:1, size:6, sy:0.5,  price:10000, color:'violet'     ,drag:0  },
 		
-		{id:16, tool:'query',       name:'?', build:0, size:1, sy:0,    price:0,     color:'cyan'       ,drag:0  },
-		
+		{id:16, tool:'query',       geo:0,    name:'?', build:0, size:1, sy:0,    price:0,     color:'cyan'       ,drag:0  }
 	];
 
 	this.currentTool = null;
 
-
 	this.heightData = new ARRAY_TYPE(128*128);
 	//this.perlin = new ImprovedNoise();
 
-	this.treeMeshs = [];
-	this.treeLists = [];
 	
-	this.worldMaterial = null;
+	// textures
 	this.worldTexture = null;
+	this.centralTexture = null;
+	this.serviceTexture = null;
+	this.buildingTexture = null;
+
+	// material
+	this.worldMaterial = null;
+    this.centralMaterial = null;
+    this.serviceMaterial = null;
+    this.buildingMaterial = null;
+
+	// geometry
+	this.buildingGeo = null;
+	this.residentialGeo = null;
+	this.commercialGeo = null;
+	this.industrialGeo = null;
+	this.spriteGeo = null;
+	this.treeGeo = null;
+	this.houseGeo = null;
 
 	this.spriteLists = [];
 	this.spriteMeshs = [];
-	this.spriteGeo = null;
+
+	this.treeMeshs = [];
+	this.treeLists = [];
+	this.tempTreeLayers = [];
 
 	this.powerMeshs = [];
 	this.powerMaterial = null;
 
+	this.buildingMeshs = [];
+	this.buildingLists = [];
+	this.tempBuildingLayers = [];
+
+	this.houseMeshs = [];
+	this.houseLists = [];
+	this.tempHouseLayers = [];
+
+	this.buildingStaticMeshs = [];
+	this.buildingStaticLists = [];
+
+	this.H = [249, 250, 251, 252, 253, 254, 256, 257, 258, 259, 260];
+	this.R = [244, 265, 274, 283, 292, 301, 310, 319, 328, 337, 346, 355, 364, 373, 382, 391, 400, 409, 418];
+	this.C = [427, 436, 445, 454, 463, 475, 481, 490, 499, 508, 517, 526, 535, 544, 553, 562, 571, 580, 589, 598, 607];
+	this.I = [616, 625, 634, 643, 652, 661, 670, 679, 688];
 
 	// start by loading 3d mesh 
     this.loadSea3d();
@@ -141,7 +170,6 @@ V3D.Base.prototype = {
 
         //this.generateHeight( 129, 129 );
         
-       // this.container.addEventListener( 'click',  function(e) {_this.onMouseClick(e)}, false );
 
 	    this.container.addEventListener( 'mousemove',  function(e) {_this.onMouseMove(e)} , false );
 	    this.container.addEventListener( 'mousedown',  function(e) {_this.onMouseDown(e)}, false );
@@ -209,12 +237,98 @@ V3D.Base.prototype = {
         	_this.worldTexture.needsUpdate = true;
 	        _this.worldMaterial = new THREE.MeshBasicMaterial( {map:_this.worldTexture} );
 
+	        _this.buildingTexture = _this.meshs['r_00'].material.map;
+	        _this.buildingTexture.magFilter = THREE.NearestFilter;
+        	_this.buildingTexture.minFilter = THREE.LinearMipMapLinearFilter;
+        	_this.buildingTexture.needsUpdate = true;
+        	_this.buildingMaterial = new THREE.MeshBasicMaterial( {map:_this.buildingTexture} );
+
+        	_this.centralTexture = _this.meshs['nuclear'].material.map;
+        	_this.centralTexture.magFilter = THREE.NearestFilter;
+        	_this.centralTexture.minFilter = THREE.LinearMipMapLinearFilter;
+        	_this.centralTexture.needsUpdate = true;
+        	_this.centralMaterial = new THREE.MeshBasicMaterial( {map:_this.centralTexture} );
+
+        	_this.serviceTexture = _this.meshs['police'].material.map;
+        	_this.serviceTexture.magFilter = THREE.NearestFilter;
+        	_this.serviceTexture.minFilter = THREE.LinearMipMapLinearFilter;
+        	_this.serviceTexture.needsUpdate = true;
+        	_this.serviceMaterial = new THREE.MeshBasicMaterial( {map:_this.serviceTexture} );
+
+
+	        _this.defineBuildingGeo();
 	        _this.defineSpriteGeo();
 	        _this.defineTreeGeo();
 	        _this.init();
 	    }
-	    //loader.parser = THREE.SEA3D.DEFAULT;
+	    loader.parser = THREE.SEA3D.DEFAULT;
 	    loader.load( 'img/world.sea' );
+	},
+
+
+
+	//----------------------------------- 3D GEOMETRY
+
+	defineBuildingGeo : function(){
+		var i, m = new THREE.Matrix4().makeScale(1, 1, -1);
+
+		this.buildingGeo = [];
+		this.buildingGeo[0] = null;
+		this.buildingGeo[1] = null;
+		this.buildingGeo[2] = null;
+		this.buildingGeo[3] = null;
+
+		this.buildingGeo[4] = this.meshs['police'].geometry;
+		this.buildingGeo[5] = this.meshs['park_1'].geometry;
+		this.buildingGeo[6] = this.meshs['park_2'].geometry;
+		this.buildingGeo[7] = this.meshs['fire'].geometry;
+
+
+		this.buildingGeo[8] = this.meshs['coal'].geometry;
+		this.buildingGeo[9] = this.meshs['nuclear'].geometry;
+
+		this.buildingGeo[10] = this.meshs['port'].geometry;
+		this.buildingGeo[11] = this.meshs['stadium'].geometry;
+		this.buildingGeo[12] = this.meshs['airport'].geometry;
+
+		this.residentialGeo = [];
+		this.commercialGeo = [];
+		this.industrialGeo = [];
+
+		this.houseGeo = [];
+
+		i = 9;
+		while(i--){
+			this.industrialGeo[i] = this.meshs['i_0'+i].geometry;
+			this.industrialGeo[i].applyMatrix(m);
+		}
+
+		i = 19;
+		while(i--){
+			if(i<10) this.residentialGeo[i] = this.meshs['r_0'+i].geometry;
+			else this.residentialGeo[i] = this.meshs['r_'+i].geometry;
+			this.residentialGeo[i].applyMatrix(m);
+		}
+
+		i = 21;
+		while(i--){
+			if(i<10) this.commercialGeo[i] = this.meshs['c_0'+i].geometry;
+			else this.commercialGeo[i] = this.meshs['c_'+i].geometry;
+			this.commercialGeo[i].applyMatrix(m);
+		}
+
+		i = 11;
+		while(i--){
+			if(i<10) this.houseGeo[i] = this.meshs['rh_0'+i].geometry;
+			else this.houseGeo[i] = this.meshs['rh_'+i].geometry;
+			this.houseGeo[i].applyMatrix(m);
+		}
+
+		i = this.buildingGeo.length;
+		while(i--) {
+			if(this.buildingGeo[i] !== null) this.buildingGeo[i].applyMatrix(m);
+		}
+	
 	},
 
 
@@ -222,9 +336,9 @@ V3D.Base.prototype = {
 		this.spriteGeo = [];
 		this.spriteGeo[0] = this.meshs['train'].geometry;
 		var i = this.spriteGeo.length;
-		var m = new THREE.Matrix4().makeScale(1, 1, -1);
+		var m = new THREE.Matrix4();
 		while(i--) {
-			this.spriteGeo[i].applyMatrix(m);
+			this.spriteGeo[i].applyMatrix( m.makeScale(1, 1, -1) );
 		}
 	},
 
@@ -244,10 +358,10 @@ V3D.Base.prototype = {
 
 		var i = this.treeGeo.length;
 		// reverse geometry
-		var m = new THREE.Matrix4().makeScale(1, 1, -1);
+		var m = new THREE.Matrix4();
 		var m2 = new THREE.Matrix4();
 		while(i--) {
-			this.treeGeo[i].applyMatrix(m);
+			this.treeGeo[i].applyMatrix( m.makeScale(1, 1, -1) );
 			this.treeGeo[i].applyMatrix( m2.makeRotationY( (Math.random()*360)*this.ToRad ) );
 		}
 	},
@@ -256,8 +370,6 @@ V3D.Base.prototype = {
 	//----------------------------------- TREE TEST
 
 
-
-	
     addTree : function(x,y,z,v,layer){
     	// v  21 to 43
     	if(!this.treeLists[layer]) this.treeLists[layer]=[];
@@ -267,9 +379,9 @@ V3D.Base.prototype = {
     },
     populateTree:function(){
     	//this.treeMeshs = [];
-    	this.tempTreeLayers = [];
+    	//this.tempTreeLayers = [];
     	var m = new THREE.Matrix4(), ar;
-    	var l = 64;
+    	var l = this.nlayers;
     	while(l--){
     		var g = new THREE.Geometry();
     		if(this.treeLists[l]){
@@ -287,8 +399,8 @@ V3D.Base.prototype = {
 	    	}
     	}
     },
-    clearTree : function(){
-    	var l = 64;
+    clearAllTrees : function(){
+    	var l = this.nlayers;
     	while(l--){
     		if(this.treeMeshs[l]){
     			this.scene.remove(this.treeMeshs[l]);
@@ -540,7 +652,7 @@ V3D.Base.prototype = {
 
 			var tar 
 			if(size == 1 ) tar = [ [x, y] ];
-			else if(size == 3 ) tar = [ [x, y], [x-1, y], [x+1, y],  [x, y-1], [x-1, y-1], [x+1, y-1],   [x, y+1], [x-1, y+1], [x+1, y+1] ];
+			else if(size == 3) tar = [ [x, y], [x-1, y], [x+1, y],  [x, y-1], [x-1, y-1], [x+1, y-1],   [x, y+1], [x-1, y+1], [x+1, y+1] ];
 			else if(size == 4) tar = [ [x, y], [x-1, y], [x+1, y],  [x, y-1], [x-1, y-1], [x+1, y-1],   [x, y+1], [x-1, y+1], [x+1, y+1],       [x+2, y-1],  [x+2, y] , [x+2, y+1] , [x+2, y+2], [x-1, y+2], [x, y+2], [x+1, y+2]   ];
 			else if(size == 6) tar = [ [x, y], [x-1, y], [x+1, y],  [x, y-1], [x-1, y-1], [x+1, y-1],   [x, y+1], [x-1, y+1], [x+1, y+1],       [x+2, y-1],  [x+2, y] , [x+2, y+1] , [x+2, y+2],   [x-1, y+2], [x, y+2], [x+1, y+2], 
 				[x+3, y-1], [x+4, y-1],   [x+3, y], [x+4, y], [x+3, y+1], [x+4, y+1], [x+3, y+2], [x+4, y+2], [x+3, y+3], [x+4, y+3], [x+3, y+4], [x+4, y+4], 
@@ -549,13 +661,31 @@ V3D.Base.prototype = {
 
 			this.removeTreePack(tar);
 
-			//var name = ntool.tool;
-			var b = new THREE.Mesh(new THREE.BoxGeometry(size,sizey,size), new THREE.MeshBasicMaterial({color:this.currentTool.color, transparent:true, opacity:0.5}) );
+			
+			/*var b = new THREE.Mesh(new THREE.BoxGeometry(size,sizey,size), new THREE.MeshBasicMaterial({color:this.currentTool.color, transparent:true, opacity:0.5}) );
 			if(size == 4) b.geometry.applyMatrix(new THREE.Matrix4().makeTranslation(0.5, sizey*0.5, 0.5));
 			else if(size == 6) b.geometry.applyMatrix(new THREE.Matrix4().makeTranslation(1.5, sizey*0.5, 1.5));
 			else b.geometry.applyMatrix(new THREE.Matrix4().makeTranslation(0, sizey*0.5, 0));
 			b.position.set(x, 0, y);
-			this.scene.add(b);
+			this.scene.add(b);*/
+
+			var v = this.currentTool.geo;
+
+			
+
+
+			if(v<4 && v!==0)this.addBaseBuilding(x, 0, y, v);
+			if(v==8 || v==9){
+			    var mii = new THREE.Mesh( this.buildingGeo[v], this.centralMaterial );
+			    mii.position.set(x, 0, y);
+			    this.scene.add(mii);
+			}
+			if(v==11|| v==4 || v==5 || v==7){
+				var miii = new THREE.Mesh( this.buildingGeo[v], this.serviceMaterial );
+			    miii.position.set(x, 0, y);
+			    this.scene.add(miii);
+			}
+
 		} else {
 			this.removeTree(x,y);
 			if(this.currentTool.tool==='bulldozer'){
@@ -571,7 +701,147 @@ V3D.Base.prototype = {
 		this.currentTool = null;
 	},
 
+	//--------------------------------------------------HOUSE CREATE/UPDATE/DELETE
 
+	addBaseHouse : function(x,y,z){
+		//console.log('h add !!')
+		var layer = this.findLayer(x,z);
+		var pos = [ [x, z], [x-1, z], [x+1, z], [x, z-1], [x-1, z-1], [x+1, z-1], [x, z+1], [x-1, z+1], [x+1, z+1] ];
+
+		if(!this.houseLists[layer]) this.houseLists[layer]=[];
+		var i = 9;
+		while(i--){
+			this.houseLists[layer].push([pos[i][0],y,pos[i][1], 0 ]);
+		}
+	},
+
+	removeBaseHouse : function(x,y,z){
+		//console.log('h remove !!')
+		var layer = this.findLayer(x,z);
+		var pos = [ [x, z], [x-1, z], [x+1, z], [x, z-1], [x-1, z-1], [x+1, z-1], [x, z+1], [x-1, z+1], [x+1, z+1] ];
+		var i = this.houseLists[layer].length, h, j;
+		while(i--){
+			h = this.houseLists[layer][i];
+			j = 9;
+			while(j--){
+			    if(h[0] === pos[j][0] && h[2] === pos[j][1]) this.houseLists[layer].splice(i, 1);
+		    }
+		}
+		this.rebuildHouseLayer(layer);
+	},
+
+	rebuildHouseLayer : function(l){
+    	if(this.houseMeshs[l] !== undefined ){
+    		if(this.houseMeshs[l] !== null ){
+	    	    this.scene.remove(this.houseMeshs[l]);
+	        	this.houseMeshs[l].geometry.dispose();
+	        	this.houseMeshs[l] = null;
+	        }
+	    }
+
+    	var m = new THREE.Matrix4(), ar, k;
+    	var g = new THREE.Geometry();
+    	var i = this.houseLists[l].length;
+    	if(i!==0){
+	    	while(i--){
+		    	ar = this.houseLists[l][i];
+		    	m.makeTranslation(ar[0],ar[1],ar[2]);
+		    	k = this.H.length;
+		    	while(k--){ if(ar[3]===this.H[k]) g.merge( this.houseGeo[k], m );}
+		    	//while(k--){ if(ar[3]===this.H[k]) g.merge( this.houseGeo[0], m );}
+		    }
+		    this.houseMeshs[l] = new THREE.Mesh( g, this.buildingMaterial);
+		    this.scene.add(this.houseMeshs[l]);
+		    this.tempHouseLayers[l] = 0;
+		}
+    },
+
+
+	//--------------------------------------------------BUILDING CREATE/UPDATE
+
+	addBaseBuilding : function(x,y,z,v){
+		var layer = this.findLayer(x,z);
+		var c = 244;
+		if(v==2) c= 427;
+		if(v==3) c=616;
+
+		//var hh = 0;
+		// if residential add house list
+		//if(c==244){
+		   // hh = 1;
+		   // addBaseHouse(x,y,z,0);
+		//}
+
+    	if(!this.buildingLists[layer]) this.buildingLists[layer]=[];
+    	this.buildingLists[layer].push([x,y,z,c, 0]);
+    	//this.tempBuildingLayers[layer] = 1;
+
+    	
+    	 
+
+    	//this.populateBaseBuilding(layer);
+    	this.rebuildBuildingLayer(layer);
+    },
+
+    /*populateBaseBuilding:function( l ){
+    	if(this.buildingMeshs[l] !== undefined ){
+    		this.scene.remove(this.buildingMeshs[l]);
+    		if(this.buildingMeshs[l].geometry)this.buildingMeshs[l].geometry.dispose();
+    	}
+    	var m = new THREE.Matrix4(), ar;
+    	var g = new THREE.Geometry();
+    	var i = this.buildingLists[l].length;
+
+    	while(i--){
+	    	ar = this.buildingLists[l][i];
+	    	m.makeTranslation(ar[0],ar[1],ar[2]);
+	    	if(ar[3] == 244) g.merge( this.residentialGeo[0], m );
+	    	else if(ar[3] == 427) g.merge( this.commercialGeo[0], m );
+	    	else if(ar[3] == 616) g.merge( this.industrialGeo[0], m );
+	    }
+	    this.buildingMeshs[l] = new THREE.Mesh( g, this.buildingMaterial );
+	    this.scene.add(this.buildingMeshs[l]);
+    },
+    redrawBuildings:function(){
+    	
+
+    },*/
+    rebuildBuildingLayer : function(l){
+    	if(this.buildingMeshs[l] !== undefined ){
+    	    this.scene.remove(this.buildingMeshs[l]);
+        	this.buildingMeshs[l].geometry.dispose();
+        }
+
+    	var m = new THREE.Matrix4(), ar, k;
+    	var g = new THREE.Geometry();
+    	var i = this.buildingLists[l].length;
+    	while(i--){
+	    	ar = this.buildingLists[l][i];
+	    	m.makeTranslation(ar[0],ar[1],ar[2]);
+	    	k = this.R.length;
+	    	while(k--){ 
+	    		if(ar[3]===this.R[k]){
+	    			g.merge( this.residentialGeo[k], m );
+	    			// if residential basic add house list
+	    			//if(ar[3]==244){ this.buildingLists[l][i][4] = 1; this.addBaseHouse(ar[0],ar[1],ar[2]); }
+	    			//else { if(ar[4]==1){ this.buildingLists[l][i][4] = 0;  this.removeBaseHouse(ar[0],ar[1],ar[2]);} }
+
+	    			if(k===0 && ar[4]===0){ this.buildingLists[l][i][4] = 1; this.addBaseHouse(ar[0],ar[1],ar[2]); }
+	    			else if(k>0 && ar[4]===1){ this.buildingLists[l][i][4] = 0;  this.removeBaseHouse(ar[0],ar[1],ar[2]); } 
+
+	    		}
+	    	}
+
+	    	k = this.C.length;
+	    	while(k--){ if(ar[3]===this.C[k]) g.merge( this.commercialGeo[k], m );}
+
+	    	k = this.I.length;
+	    	while(k--){ if(ar[3]===this.I[k]) g.merge( this.industrialGeo[k], m );}
+	    }
+	    this.buildingMeshs[l] = new THREE.Mesh( g, this.buildingMaterial);
+	    this.scene.add(this.buildingMeshs[l]);
+	    this.tempBuildingLayers[l] = 0;
+    },
 
 	//---------------------------------------------------
 
@@ -692,11 +962,13 @@ V3D.Base.prototype = {
 
 	paintMap : function( mapSize, island, isStart) {
 		if(!tilesData) return;
-		if(isStart) this.clearTree();
+
+		if(isStart) this.clearAllTrees();
+		else{ this.tempBuildingLayers = []; this.tempHouseLayers = []; }
 		
 		// create mini canvas if not existe
 		if( this.miniCanvas.length === 0 ){
-			for(var i=0; i<64; i++){
+			for(var i=0; i<this.nlayers; i++){
 				this.miniCanvas[i] = document.createElement('canvas');
 				this.miniCanvas[i].width = this.miniCanvas[i].height = 256;
         		this.miniCtx[i] = this.miniCanvas[i].getContext("2d");
@@ -708,7 +980,7 @@ V3D.Base.prototype = {
 		
 		var force = false;
 		var y = this.mapSize[1];
-		var x, v, px, py, n = tilesData.length, cy, cx, layer;
+		var x, v, px, py, n = tilesData.length, cy, cx, layer, ar;
 		while(y--){
 			x = this.mapSize[0];
 			while(x--){
@@ -732,25 +1004,75 @@ V3D.Base.prototype = {
                 }
                 else{ // draw only need update
                 	if(x===this.forceUpdate.x && y===this.forceUpdate.y){ force=true; this.forceUpdate.x=-1; this.forceUpdate.y=-1 }
-                	if(v>43 || force){ 
+                	if((v>43 && v<240) || force){ // road . rail . wire
                 		if(force){force = false;  if(v > 20 && v < 44){px = 0; py=0;}};// bulldozer
                 		this.miniCtx[layer].drawImage(this.imageSrc,px, py, 16, 16, ((x-(cx*16))*16),((y-(cy*16))*16), 16, 16);
                 		this.txtNeedUpdate[layer] = 1;
                 	}
+                	else if(v>240 || v==0){
+                		if((v>248 && v<261) || v==0){
+                			if(this.houseLists[layer]){
+                				i = this.houseLists[layer].length;
+		                		while(i--){
+		                			ar = this.houseLists[layer][i];
+		                			if( ar[0] === x && ar[2] === y ){ 
+			                			if( ar[3] !== v ){
+			                				this.houseLists[layer][i][3] = v;
+				                			this.tempHouseLayers[layer] = 1;
+			                			}
+			                		}
+		                		}
+                			}
+                		}else{
+	                		if(this.buildingLists[layer]){
+		                		i = this.buildingLists[layer].length;
+		                		while(i--){
+		                			ar = this.buildingLists[layer][i];
+		                			if( ar[0] === x && ar[2] === y ){ 
+		                				if( ar[3] !== v ){
+			                				this.buildingLists[layer][i][3] = v;
+			                				this.tempBuildingLayers[layer] = 1;
+			                			}
+		                				
+		                			}
+		                		}
+		                	}
+		                }
+                	}
+
+                	
+                	//this.tempBuildingLayers
+                	// 240 - 422 residential  -- center empty 244; test 3*3 house 249-260  r1:265  -- r18
+                	// 423 - 611 comercial    -- center empty 427; ------------------------c1:436 - c2:445 - c3:454 - c4:463 - c5:472 - c6:481 - c7:490 - c8:499 - c9:508 - c10:      -- c20:607
+                	// 612 - 692 industrial   -- center empty 616; ------------------------i1:625 - i2:634 - i3: -- i8:
+                	// 9
                 }
 			}
 		}
+
+
 		
 		if(isStart){
 			this.updateTerrain(island);
 			this.populateTree();
 		} else {
-			i = 64;
+			i = this.nlayers;
 		    while(i--) if(this.txtNeedUpdate[i]){ this.terrainTxt[i].needsUpdate = true; this.txtNeedUpdate[i] = 0;}	
+
+		     i = this.tempHouseLayers.length;
+		    while(i--) if(this.tempHouseLayers[i] === 1){ this.rebuildHouseLayer(i); }
+
+		    i = this.tempBuildingLayers.length;
+		    while(i--) if(this.tempBuildingLayers[i] === 1){ this.rebuildBuildingLayer(i); }
+
+		   
+    	
 		}
 	},
 
-
+/*this.residences = [244, 265, 274, 283, 292, 301, 310, 319, 328, 337, 346, 355, 364, 373, 382, 391, 400, 409, 418 ];
+this.commercials = [427, 436, 445, 454, 463, 475, 481, 490, 499, 508, 517, 526, 535, 544, 553, 562, 571, 580, 589, 598, 607];
+this.industrials = [616, 625, 634, 643, 652, 661, 670, 679, 688];*/
 
 	//-------------------- sprite
 
@@ -767,7 +1089,7 @@ V3D.Base.prototype = {
 			pos.x =  Math.round((c[2]-8)/16);
 			pos.z =  Math.round((c[3]-8)/16);
 			//log( frame)
-			if(this.spriteMeshs[i] == null) this.addSprite( i, c[0] );
+			if(this.spriteMeshs[i] == null) this.addSprite( i, c[0], pos );
 			//this.spriteMeshs[i].position.copy(pos);
 			this.spriteMeshs[i].position.lerp(pos, 0.6);
 			this.spriteMeshs[i].rotation.y = this.rotationSprite(c[0], frame);
@@ -783,15 +1105,14 @@ V3D.Base.prototype = {
 		}
 		return r;
 	},
-	addSprite : function(i, v){
+	addSprite : function(i, v, p){
 		var m;
-		if(v==1){
+		if(v==1){// train
 			m = new THREE.Mesh(this.spriteGeo[0], this.worldMaterial );
+			m.position.set(p.x, 0, p.z);
 		    this.scene.add(m);
 		    this.spriteMeshs[i] = m;
 		}
-		
-		//console.log('new Sprite' + v)
 	},
 
 
