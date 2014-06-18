@@ -466,8 +466,18 @@ V3D.Base.prototype = {
 
 	updateTerrain : function(island){
 
+		
+
 		this.center.x = this.mapSize[0]*0.5;
 		this.center.z = this.mapSize[1]*0.5;
+
+		if( this.isWithHeight ){
+		    this.applyHeight();
+		    this.center.y = this.heightData[this.findId(this.center.x,this.center.z)];
+		} else {
+			this.center.y = 0;
+		}
+
 		this.moveCamera();
 
 		// background update
@@ -515,7 +525,7 @@ V3D.Base.prototype = {
         	this.terrainTxt[n] = texture;
         } 
 
-        if( this.isWithHeight ) this.applyHeight();
+        
 	},
 
 	//------------------------------------------HEIGHT
@@ -554,7 +564,6 @@ V3D.Base.prototype = {
 			if(l && d) data[n]=data[n-129];
 			
 		}
-
 		return data;
 	},
 	resetHeight : function () {
@@ -564,18 +573,7 @@ V3D.Base.prototype = {
 		}
 		this.applyHeight();
 		this.isWithHeight = false;
-		/*var w = this.mapSize[0];
-		var h = this.mapSize[1];
-		var layer, pos;
-		var i = w * h;
-		while(i--){
-			pos = this.findPosition(i);
-			layer = this.findLayer(pos[0], pos[1]);
-			this.moveFaces(this.miniTerrain[layer], i, 0);
-		}*/
-
 	},
-
 	applyHeight : function () {
 		var i = this.heightData.length;
 		var pos, layer, h, v;
@@ -1102,8 +1100,8 @@ V3D.Base.prototype = {
 				v = tilesData[n];
 
 				if(isStart){ 
-					//if(v > 1 && v < 21){ // water
-					if(v > 1 && v < 5){ // water
+					if(v > 1 && v < 21){ // water
+					//if(v > 1 && v < 5){ // water
 						if( this.isWithHeight ) this.heightData[ n ] = 0; 
 					}
 					if(v > 20 && v < 44){// tree
