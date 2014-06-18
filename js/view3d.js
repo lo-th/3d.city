@@ -11,6 +11,7 @@ V3D.Base = function(){
 	this.container = document.getElementById( 'container' );
 
 	this.isWithBackground = true;
+	this.isWithHeight = false;
 	
 	this.ToRad = Math.PI / 180;
     this.camera = null; 
@@ -32,7 +33,7 @@ V3D.Base = function(){
 
     this.cam = { horizontal:90, vertical:45, distance:120 };
     this.vsize = { x:window.innerWidth, y:window.innerHeight, z:window.innerWidth/window.innerHeight};
-    this.mouse = { ox:0, oy:0, h:0, v:0, mx:0, my:0, dx:0, dy:0, down:false, over:false, drag:false, click:false , move:true};
+    this.mouse = { ox:0, oy:0, h:0, v:0, mx:0, my:0, dx:0, dy:0, down:false, over:false, drag:false, click:false , move:true, button:0 };
     this.pos =  {x:-1, y:0, z:-1};
 
     this.select = '';
@@ -51,7 +52,7 @@ V3D.Base = function(){
 		{id:3,  tool:'industrial',  geo:3,    name:'I', build:1, size:3, sy:0.2,  price:100,   color:'yellow'     ,drag:0  },
 
 		{id:4,  tool:'police',      geo:4,    name:'',  build:1, size:3, sy:1.2,  price:500,   color:'darkblue'   ,drag:0  },
-		{id:5,  tool:'park',        geo:5,    name:'',  build:1, size:1, sy:0.02,  price:10,    color:'darkgreen'  ,drag:0  },
+		{id:5,  tool:'park',        geo:5,    name:'',  build:1, size:1, sy:0.02, price:10,    color:'darkgreen'  ,drag:0  },
 		{id:6,  tool:'fire',        geo:7,    name:'',  build:1, size:3, sy:1.2,  price:500,   color:'red'        ,drag:0  },
 
 		{id:7,  tool:'road',        geo:0,    name:'',  build:0, size:1, sy:0.1,  price:10,    color:'black'      ,drag:1  },
@@ -71,8 +72,8 @@ V3D.Base = function(){
 
 	this.currentTool = null;
 
-	this.heightData = new ARRAY_TYPE(128*128);
-	//this.perlin = new ImprovedNoise();
+	this.heightData = null;
+	this.tempHeightLayers = [];
 
 	
 	// textures
@@ -159,7 +160,7 @@ V3D.Base.prototype = {
     	this.container.appendChild( _this.renderer.domElement );
 
         if(this.isWithBackground ){
-        	var sky = this.gradTexture([[0.5,0.45, 0.2], ['#6666e6','lightskyblue', 'deepskyblue']]);
+        	var sky = this.gradTexture([[0.5,0.45, 0.2], ['#6666e6','lightskyblue','deepskyblue']]);
             this.back = new THREE.Mesh( new THREE.IcosahedronGeometry(300,1), new THREE.MeshBasicMaterial( { map:sky, side:THREE.BackSide, depthWrite: false }  ));
             this.scene.add( this.back );
             this.renderer.autoClear = false;
@@ -167,8 +168,6 @@ V3D.Base.prototype = {
 
         
         window.addEventListener( 'resize', function(e) { _this.resize() }, false );
-
-        //this.generateHeight( 129, 129 );
         
 
 	    this.container.addEventListener( 'mousemove',  function(e) {_this.onMouseMove(e)} , false );
@@ -375,6 +374,7 @@ V3D.Base.prototype = {
     	if(!this.treeLists[layer]) this.treeLists[layer]=[];
     	var r = Math.floor(Math.random()*4);
     	if(v>=36) r+=4;
+
     	this.treeLists[layer].push([x,y,z,r]);
     },
     populateTree:function(){
@@ -464,8 +464,6 @@ V3D.Base.prototype = {
     //------------------------------------ TERRAIN MAP
 
 
-
-
 	updateTerrain : function(island){
 
 		this.center.x = this.mapSize[0]*0.5;
@@ -503,6 +501,8 @@ V3D.Base.prototype = {
 	        }
 	    }
 
+	   
+
 	    // update start map texture
         n = this.miniTerrain.length, texture;
         while(n--){
@@ -513,49 +513,117 @@ V3D.Base.prototype = {
         	this.miniTerrain[n].material.map = texture;
 
         	this.terrainTxt[n] = texture;
+        } 
+
+        if( this.isWithHeight ) this.applyHeight();
+	},
+
+	//------------------------------------------HEIGHT
+
+	generateHeight : function () {
+		var w = this.mapSize[0];
+		var h = this.mapSize[1];
+
+		var size = w * h;
+		var data = new ARRAY_TYPE( size );
+		var perlin = new ImprovedNoise(), quality = 1, z = Math.random() * 100;
+
+		for ( var j = 0; j < 4; j ++ ) {
+			//if ( j == 0 ) for ( var i = 0; i < size; i ++ ) data[ i ] = 0;
+			for ( var i = 0; i < size; i ++ ) {
+				//var x = i % w, y = ( i / w ) | 0;
+				var x = i % w, y = ~~ ( i / w );
+				data[ i ] += Math.round(Math.abs( perlin.noise( x / quality, y / quality, z ) * quality * 0.2 ))*0.5;
+				//data[ i ] += (Math.abs( perlin.noise( x / quality, y / quality, z ) * quality * 0.2 ))
+			}
+			quality *= 5;
+		}
+
+		var n = data.length;
+		var pos, x, y, l, d;
+		while(n--){
+			pos = this.findPosition(n);
+			x = pos[0];
+			y = pos[1];
+			l = 0; d = 0;
+			if(y==16 || y == 32 || y == 48 || y == 64|| y == 80 || y == 96 || y == 112  ) d = 1;
+			if(x==16 || x == 32 || x == 48 || x == 64|| x == 80 || x == 96 || x == 112  ) l = 1;
+
+			if(l)data[n]=data[n-1];
+			if(d)data[n]=data[n-128];
+			if(l && d) data[n]=data[n-129];
+			
+		}
+
+		return data;
+	},
+	resetHeight : function () {
+		var i = this.heightData.length;
+		while(i--){
+			this.heightData[i] = 0;
+		}
+		this.applyHeight();
+		this.isWithHeight = false;
+		/*var w = this.mapSize[0];
+		var h = this.mapSize[1];
+		var layer, pos;
+		var i = w * h;
+		while(i--){
+			pos = this.findPosition(i);
+			layer = this.findLayer(pos[0], pos[1]);
+			this.moveFaces(this.miniTerrain[layer], i, 0);
+		}*/
+
+	},
+
+	applyHeight : function () {
+		var i = this.heightData.length;
+		var pos, layer, h, v;
+		while(i--){
+			pos = this.findPosition(i);
+			layer = this.findLayer(pos[0], pos[1]);
+			v = this.findVertices(layer, pos);
+			this.moveFaces(this.miniTerrain[layer], v, this.heightData[i]);
+			//this.miniTerrain[layer].geometry.vertices[ v ].y = this.heightData[i];
+		}
+
+		var n = this.miniTerrain.length;
+        while(n--){ 
+        	this.miniTerrain[n].geometry.computeFaceNormals();
+        	this.miniTerrain[n].geometry.computeVertexNormals();
+        	this.miniTerrain[n].geometry.verticesNeedUpdate = true;
         }
 	},
-	generateHeight : function ( width, height ) {
+	makePlanar:function(ar, y){	
+		var layer, v, x, z;
+		var i = ar.length;
+    	while(i--){
+    		x = ar[i][0];
+    		z = ar[i][1];
+    		layer = this.findLayer(x, z);
+    		v = this.findVertices(layer, [x, z] );
+    		this.moveFaces(this.miniTerrain[layer], v, y);
+    		this.tempHeightLayers[layer] = 1;
+    	}
+    	// rebuild layers
+    	i = this.tempHeightLayers.length;
+    	while(i--){
+    		if(this.tempHeightLayers[i] === 1){
+    			this.miniTerrain[i].geometry.computeFaceNormals();
+    			this.miniTerrain[i].geometry.computeVertexNormals();
+    			this.miniTerrain[i].geometry.verticesNeedUpdate = true;
+    		}
+    	}
+    	this.tempHeightLayers = [];
+	},
+	moveFaces : function(obj, n, h){
+		var face1 = obj.geometry.faces[n*2];
+		var face2 = obj.geometry.faces[(n*2)+1];
+		var pv  = obj.geometry.vertices;
 
-				var size = width * height, data = new Uint8Array( size ),
-				perlin = new ImprovedNoise(), quality = 1, z = 0;//Math.random() * 100;
-
-				for ( var j = 0; j < 4; j ++ ) {
-
-					for ( var i = 0; i < size; i ++ ) {
-
-						var x = i % width, y = ~~ ( i / width );
-						data[ i ] += Math.abs( perlin.noise( x / quality, y / quality, z ) * quality * 1.75 );
-
-					}
-
-					quality *= 5;
-
-				}
-
-				return data;
-
-			},
-	/*generateHeight : function ( width, height, z, xo, yo) {
-		//var size = , 
-		var data = new Uint8Array( width * height );
-		var perlin = new ImprovedNoise();
-		var quality = 1, n = 0;
-		var freq = 1///120;
-		//for ( var j = 0; j <4; j ++ ) {
-		//	for ( var i = 0; i < size; i ++ ) {
-		for ( var j = xo; j < width+xo; j ++ ) {
-		 	for ( var i = yo; i < height+yo; i ++ ) {
-				//ar x = i % width, y = ~~ ( i / width );
-				data[ n ] =  ( Math.abs(noise( (j / freq), (i / freq)), 100 ) );//*
-				//data[ i ] += Math.abs( perlin.noise( (x*xo) / quality, (y*yo) / quality, z ) * quality * 1.75 );
-				n++
-			}
-			//quality *= 5;
-		}
-		console.log(data.length, data[10])
-		return data;
-	},*/
+		pv[face1.a].y = pv[face1.b].y = pv[face1.c].y = h;
+		pv[face2.a].y = pv[face2.b].y = pv[face2.c].y = h;
+	},
 
 	//------------------------------------------LAYER 8X8
 
@@ -573,6 +641,21 @@ V3D.Base.prototype = {
 		return [x,y];
 	},
 
+	findId : function(x, y){
+		var id = x+(y*this.mapSize[1]);
+		return id;
+	},
+
+	findVertices : function(layer, pos){
+		var v = 0;
+		var cy = Math.floor(layer/8);
+        var cx = Math.floor(layer-(cy*8));
+        var py = pos[1]-(16*cy);
+        var px = pos[0]-(16*cx);
+        v = px + (py*16);
+		return v;
+	},
+
 
 	//------------------------------------------RAY
 
@@ -586,11 +669,13 @@ V3D.Base.prototype = {
 			var intersects = this.raycaster.intersectObjects( this.land.children );
 			if ( intersects.length > 0 ) {
 				this.pos.x = Math.round(intersects[0].point.x);
+				if( this.isWithHeight )this.pos.y = intersects[0].point.y;
+				else this.pos.y = 0;
 				this.pos.z = Math.round(intersects[0].point.z);
 				
 
 				if(this.currentTool){
-					this.tool.position.set(this.pos.x, 0, this.pos.z);
+					this.tool.position.set(this.pos.x, this.pos.y, this.pos.z);
 					if(this.mouse.click || this.mouse.drag) mapClick();
 
 					this.mouse.click=false;
@@ -650,6 +735,9 @@ V3D.Base.prototype = {
 			var size = this.currentTool.size;
 			var sizey = this.currentTool.sy;
 
+			var py = 0;
+			if( this.isWithHeight ) py = this.heightData[this.findId(x,y)];//this.pos.y;//this.heightData[ n ];
+
 			var tar 
 			if(size == 1 ) tar = [ [x, y] ];
 			else if(size == 3) tar = [ [x, y], [x-1, y], [x+1, y],  [x, y-1], [x-1, y-1], [x+1, y-1],   [x, y+1], [x-1, y+1], [x+1, y+1] ];
@@ -660,6 +748,7 @@ V3D.Base.prototype = {
 			];
 
 			this.removeTreePack(tar);
+			if( this.isWithHeight ) this.makePlanar(tar, py);
 
 			
 			/*var b = new THREE.Mesh(new THREE.BoxGeometry(size,sizey,size), new THREE.MeshBasicMaterial({color:this.currentTool.color, transparent:true, opacity:0.5}) );
@@ -674,15 +763,15 @@ V3D.Base.prototype = {
 			
 
 
-			if(v<4 && v!==0)this.addBaseBuilding(x, 0, y, v);
+			if(v<4 && v!==0)this.addBaseBuilding(x, py, y, v);
 			if(v==8 || v==9){
 			    var mii = new THREE.Mesh( this.buildingGeo[v], this.centralMaterial );
-			    mii.position.set(x, 0, y);
+			    mii.position.set(x, py, y);
 			    this.scene.add(mii);
 			}
 			if(v==11|| v==4 || v==5 || v==7){
 				var miii = new THREE.Mesh( this.buildingGeo[v], this.serviceMaterial );
-			    miii.position.set(x, 0, y);
+			    miii.position.set(x, py, y);
 			    this.scene.add(miii);
 			}
 
@@ -877,6 +966,20 @@ V3D.Base.prototype = {
 	    } else {
 	        px = e.clientX;
 	        py = e.clientY;
+	        this.mouse.button = e.which;
+	        /*switch (e.which) {
+		        case 1:
+		            console.log('Left Mouse button pressed.');
+		            break;
+		        case 2:
+		            console.log('Middle Mouse button pressed.');
+		            break;
+		        case 3:
+		            console.log('Right Mouse button pressed.');
+		            break;
+		        default:
+		            console.log('You have a strange Mouse!');
+		    }*/
 	    }
 	    this.mouse.ox = px;
 	    this.mouse.oy = py;
@@ -897,13 +1000,14 @@ V3D.Base.prototype = {
 	},
 	onMouseUp : function (e) {
 		e.preventDefault();
+		this.mouse.button = 0;
 	    this.mouse.down = false;
 	    this.mouse.drag = false;
 	    document.body.style.cursor = 'auto';
-	    
 	},
 	onMouseMove : function (e) {
 	    e.preventDefault();
+
 	    var px, py;
 	    if(e.touches){
 	        px = e.clientX || e.touches[ 0 ].pageX;
@@ -911,6 +1015,7 @@ V3D.Base.prototype = {
 	    } else {
 	        px = e.clientX;
 	        py = e.clientY;
+	        
 	    }
 	    
 	    if (this.mouse.down && this.mouse.move) {      
@@ -959,11 +1064,15 @@ V3D.Base.prototype = {
 
 	// -----------------------
 
-
 	paintMap : function( mapSize, island, isStart) {
 		if(!tilesData) return;
 
-		if(isStart) this.clearAllTrees();
+		if(mapSize) this.mapSize = mapSize;
+
+		if(isStart){ 
+			this.clearAllTrees();
+			if(this.isWithHeight){  this.heightData = this.generateHeight(); }
+		}
 		else{ this.tempBuildingLayers = []; this.tempHouseLayers = []; }
 		
 		// create mini canvas if not existe
@@ -976,11 +1085,10 @@ V3D.Base.prototype = {
         	}
 		}
 
-		if(mapSize) this.mapSize = mapSize;
-		
 		var force = false;
 		var y = this.mapSize[1];
-		var x, v, px, py, n = tilesData.length, cy, cx, layer, ar;
+		var x, v, px, py, n = tilesData.length, cy, cx, layer, ar, ty = 0;
+
 		while(y--){
 			x = this.mapSize[0];
 			while(x--){
@@ -993,13 +1101,23 @@ V3D.Base.prototype = {
 				n--;
 				v = tilesData[n];
 
-				if(isStart){ if(v > 20 && v < 44){ this.addTree( x, 0, y, v, layer ); v=0;}; }
+				if(isStart){ 
+					//if(v > 1 && v < 21){ // water
+					if(v > 1 && v < 5){ // water
+						if( this.isWithHeight ) this.heightData[ n ] = 0; 
+					}
+					if(v > 20 && v < 44){// tree
+						if( this.isWithHeight ) ty = this.heightData[ n ];
+						this.addTree( x, ty, y, v, layer ); v=0;
+				    } 
+				}
 				//if(isStart){if(v > 20 && v < 44){ v=0;};}
 				px = v % 32 * 16;
                 py = Math.floor(v / 32) * 16;
 
 
                 if(isStart){ // full draw for new map
+                	
                 	this.miniCtx[layer].drawImage(this.imageSrc,px, py, 16, 16, ((x-(cx*16))*16),((y-(cy*16))*16), 16, 16);
                 }
                 else{ // draw only need update
@@ -1033,7 +1151,6 @@ V3D.Base.prototype = {
 			                				this.buildingLists[layer][i][3] = v;
 			                				this.tempBuildingLayers[layer] = 1;
 			                			}
-		                				
 		                			}
 		                		}
 		                	}
@@ -1064,10 +1181,8 @@ V3D.Base.prototype = {
 
 		    i = this.tempBuildingLayers.length;
 		    while(i--) if(this.tempBuildingLayers[i] === 1){ this.rebuildBuildingLayer(i); }
-
-		   
-    	
 		}
+
 	},
 
 /*this.residences = [244, 265, 274, 283, 292, 301, 310, 319, 328, 337, 346, 355, 364, 373, 382, 391, 400, 409, 418 ];
@@ -1088,6 +1203,8 @@ this.industrials = [616, 625, 634, 643, 652, 661, 670, 679, 688];*/
 			frame = c[1];
 			pos.x =  Math.round((c[2]-8)/16);
 			pos.z =  Math.round((c[3]-8)/16);
+			pos.y = 0;
+			if( this.isWithHeight ) pos.y = this.heightData[this.findId(pos.x,pos.z)];
 			//log( frame)
 			if(this.spriteMeshs[i] == null) this.addSprite( i, c[0], pos );
 			//this.spriteMeshs[i].position.copy(pos);
@@ -1145,10 +1262,12 @@ this.industrials = [616, 625, 634, 643, 652, 661, 670, 679, 688];*/
 	},
 	addPowerMesh : function(i, ar){
 		//var m = new THREE.Mesh(new THREE.BoxGeometry(0.5,0.5,0.5), this.powerMaterial );
+		var py = 0;
+		if( this.isWithHeight ) py = this.heightData[this.findId(ar[0],ar[1])];
 
 		var m = new THREE.Sprite( this.powerMaterial );
 		//m.scale.set( 2, 2, 1 );
-		m.position.set(ar[0], 1, ar[1]);
+		m.position.set(ar[0], py+1, ar[1]);
 		this.scene.add(m);
 		this.powerMeshs[i] = m;
 	},

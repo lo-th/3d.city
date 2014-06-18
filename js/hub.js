@@ -56,10 +56,12 @@ HUB.Base.prototype = {
 
     initStartHub : function(){
     	this.addButton('New Map');
+        this.addButton('Height Map');
     	this.addButton('Play Game');
 
         this.buttons[0].addEventListener('click',  function ( e ) { e.preventDefault(); newMap(); }, false);
-        this.buttons[1].addEventListener('click',  function ( e ) { e.preventDefault(); playMap(); }, false);
+        this.buttons[1].addEventListener('click',  function ( e ) { e.preventDefault(); newHeightMap(); }, false);
+        this.buttons[2].addEventListener('click',  function ( e ) { e.preventDefault(); playMap(); }, false);
     },
 
     //--------------------------------------game hub

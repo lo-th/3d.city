@@ -22,7 +22,7 @@ body {  padding:0; margin: 0px; background:#6666e6; font:12px sans-serif; width:
 </head>
 <body>
 <div id="container"></div>
-<div id="debug">pre alpha 0.65</div>
+<div id="debug">pre alpha 0.7</div>
 <div id="log">loth 2014</div>
 <div id="hub"></div>
 <script>
@@ -72,8 +72,6 @@ function loop() {
         powerup = false;
     }
     view3d.renderer.render( view3d.scene, view3d.camera );
-
-
 }
 
 //=======================================
@@ -92,7 +90,13 @@ function start() {
 }
 
 function newMap() {
+    if(view3d.isWithHeight){ view3d.resetHeight();}
 	cityWorker.postMessage({tell:"NEWMAP"});
+}
+
+function newHeightMap() {
+    view3d.isWithHeight = true;
+    cityWorker.postMessage({tell:"NEWMAP"});
 }
 
 function playMap() {
