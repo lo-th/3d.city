@@ -83,10 +83,8 @@ V3D.Base = function(){
 	this.buildingTexture = null;
 
 	// material
-	this.worldMaterial = null;
-    this.centralMaterial = null;
-    this.serviceMaterial = null;
-    this.buildingMaterial = null;
+	this.townMaterial = null;
+	this.buildingMaterial = null;
 
 	// geometry
 	this.buildingGeo = null;
@@ -118,12 +116,13 @@ V3D.Base = function(){
 	this.buildingStaticMeshs = [];
 	this.buildingStaticLists = [];
 
-	this.H = [249, 250, 251, 252, 253, 254, 256, 257, 258, 259, 260];
+	this.H = [249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260];
 	this.R = [244, 265, 274, 283, 292, 301, 310, 319, 328, 337, 346, 355, 364, 373, 382, 391, 400, 409, 418];
 	this.C = [427, 436, 445, 454, 463, 475, 481, 490, 499, 508, 517, 526, 535, 544, 553, 562, 571, 580, 589, 598, 607];
 	this.I = [616, 625, 634, 643, 652, 661, 670, 679, 688];
 
 	// start by loading 3d mesh 
+	this.loadTextures();
     this.loadSea3d();
 }
 
@@ -155,6 +154,12 @@ V3D.Base.prototype = {
     	this.renderer.sortObjects = false;
     	//this.renderer.setSize( this.vsize.x, this.vsize.y, true );
     	this.renderer.setSize( this.vsize.x, this.vsize.y );
+
+    	this.townMaterial.map.anisotropy = this.renderer.getMaxAnisotropy();
+    	this.buildingMaterial.map.anisotropy = this.renderer.getMaxAnisotropy();
+    	this.townMaterial.map.needsUpdate = true;
+    	this.buildingMaterial.map.needsUpdate = true;
+
     	//this.renderer.autoClear = this.isWithBackground;
     	var _this = this;
     	this.container.appendChild( _this.renderer.domElement );
@@ -206,10 +211,25 @@ V3D.Base.prototype = {
 		}else clearInterval(t.timer);
 	},
 
+	loadTextures : function (){
+		var townTexture =  THREE.ImageUtils.loadTexture( 'img/town.jpg' );
+		var buildingTexture =  THREE.ImageUtils.loadTexture( 'img/building.jpg' );
 
+		townTexture.magFilter = THREE.NearestFilter;
+        townTexture.minFilter = THREE.LinearMipMapLinearFilter;
+        townTexture.repeat.set( 1, -1 );
+		townTexture.wrapS = townTexture.wrapT = THREE.RepeatWrapping;
+        
+		buildingTexture.magFilter = THREE.NearestFilter;
+        buildingTexture.minFilter = THREE.LinearMipMapLinearFilter;
+        buildingTexture.repeat.set( 1, -1 );
+		buildingTexture.wrapS = buildingTexture.wrapT = THREE.RepeatWrapping;
+
+	    this.townMaterial = new THREE.MeshBasicMaterial( { map: townTexture } );
+	    this.buildingMaterial = new THREE.MeshBasicMaterial( { map: buildingTexture } );
+	},
 
 	//----------------------------------- SEA3D IMPORT
-
 
     loadSea3d : function (){
     	var _this = this;
@@ -220,56 +240,24 @@ V3D.Base.prototype = {
 	        var i = loader.meshes.length;
 	        while(i--){
 	            m = loader.meshes[i];
-	            if(m.material.map){
-		            map = m.material.map;
-		            m.material = new THREE.MeshBasicMaterial({ map:map });
-		        } else {
-		        	m.material = new THREE.MeshBasicMaterial({ color:0xffffff });
-		        }
-	            //m.scale.set(s,s,-s);
 	            _this.meshs[m.name] = m;
 	        }
 
-	        _this.worldTexture = _this.meshs['train'].material.map;
-	        _this.worldTexture.magFilter = THREE.NearestFilter;
-        	_this.worldTexture.minFilter = THREE.LinearMipMapLinearFilter;
-        	_this.worldTexture.needsUpdate = true;
-	        _this.worldMaterial = new THREE.MeshBasicMaterial( {map:_this.worldTexture} );
-
-	        _this.buildingTexture = _this.meshs['r_00'].material.map;
-	        _this.buildingTexture.magFilter = THREE.NearestFilter;
-        	_this.buildingTexture.minFilter = THREE.LinearMipMapLinearFilter;
-        	_this.buildingTexture.needsUpdate = true;
-        	_this.buildingMaterial = new THREE.MeshBasicMaterial( {map:_this.buildingTexture} );
-
-        	_this.centralTexture = _this.meshs['nuclear'].material.map;
-        	_this.centralTexture.magFilter = THREE.NearestFilter;
-        	_this.centralTexture.minFilter = THREE.LinearMipMapLinearFilter;
-        	_this.centralTexture.needsUpdate = true;
-        	_this.centralMaterial = new THREE.MeshBasicMaterial( {map:_this.centralTexture} );
-
-        	_this.serviceTexture = _this.meshs['police'].material.map;
-        	_this.serviceTexture.magFilter = THREE.NearestFilter;
-        	_this.serviceTexture.minFilter = THREE.LinearMipMapLinearFilter;
-        	_this.serviceTexture.needsUpdate = true;
-        	_this.serviceMaterial = new THREE.MeshBasicMaterial( {map:_this.serviceTexture} );
-
-
-	        _this.defineBuildingGeo();
-	        _this.defineSpriteGeo();
-	        _this.defineTreeGeo();
+	        _this.defineGeometry();
 	        _this.init();
 	    }
 	    loader.parser = THREE.SEA3D.DEFAULT;
 	    loader.load( 'img/world.sea' );
 	},
 
-
-
 	//----------------------------------- 3D GEOMETRY
 
-	defineBuildingGeo : function(){
-		var i, m = new THREE.Matrix4().makeScale(1, 1, -1);
+	defineGeometry : function(){
+		var i;
+		var m = new THREE.Matrix4().makeScale(1, 1, -1);
+		var m2 = new THREE.Matrix4();
+
+		// BUILDING
 
 		this.buildingGeo = [];
 		this.buildingGeo[0] = null;
@@ -316,7 +304,7 @@ V3D.Base.prototype = {
 			this.commercialGeo[i].applyMatrix(m);
 		}
 
-		i = 11;
+		i = 12;
 		while(i--){
 			if(i<10) this.houseGeo[i] = this.meshs['rh_0'+i].geometry;
 			else this.houseGeo[i] = this.meshs['rh_'+i].geometry;
@@ -327,21 +315,19 @@ V3D.Base.prototype = {
 		while(i--) {
 			if(this.buildingGeo[i] !== null) this.buildingGeo[i].applyMatrix(m);
 		}
-	
-	},
 
+		// SPRITE
 
-	defineSpriteGeo : function(){
 		this.spriteGeo = [];
 		this.spriteGeo[0] = this.meshs['train'].geometry;
-		var i = this.spriteGeo.length;
-		var m = new THREE.Matrix4();
-		while(i--) {
-			this.spriteGeo[i].applyMatrix( m.makeScale(1, 1, -1) );
-		}
-	},
 
-	defineTreeGeo : function(){
+		i = this.spriteGeo.length;
+		while(i--) {
+			this.spriteGeo[i].applyMatrix( m );
+		}
+
+		// THREE
+
 		this.treeGeo = [];
 		this.treeGeo[0] = this.meshs['tree0'].geometry;
 		this.treeGeo[1] = this.meshs['tree0'].geometry.clone();
@@ -353,14 +339,10 @@ V3D.Base.prototype = {
 		this.treeGeo[6] = this.meshs['tree2'].geometry;
 		this.treeGeo[7] = this.meshs['tree2'].geometry.clone();
 
-		//this.worldMaterial = this.meshs['tree0'].material;
-
-		var i = this.treeGeo.length;
-		// reverse geometry
-		var m = new THREE.Matrix4();
-		var m2 = new THREE.Matrix4();
+		i = this.treeGeo.length;
+		
 		while(i--) {
-			this.treeGeo[i].applyMatrix( m.makeScale(1, 1, -1) );
+			this.treeGeo[i].applyMatrix( m );
 			this.treeGeo[i].applyMatrix( m2.makeRotationY( (Math.random()*360)*this.ToRad ) );
 		}
 	},
@@ -393,7 +375,7 @@ V3D.Base.prototype = {
 	    			g.merge( this.treeGeo[ar[3]], m );
 	    			//else g.merge( this.treeGeo[4+rand], m );
 	    		}
-	    	    this.treeMeshs[l] = new THREE.Mesh( g, this.worldMaterial );
+	    	    this.treeMeshs[l] = new THREE.Mesh( g, this.townMaterial );
 	    	    this.scene.add(this.treeMeshs[l]);
 	    	    this.tempTreeLayers[l] = 0;
 	    	}
@@ -454,7 +436,7 @@ V3D.Base.prototype = {
 	    	//g.merge( this.treeGeo[0], m );
 	    	g.merge( this.treeGeo[ar[3]], m );
 	    }
-	    this.treeMeshs[l] = new THREE.Mesh( g, this.worldMaterial);
+	    this.treeMeshs[l] = new THREE.Mesh( g, this.townMaterial);
 	    this.scene.add(this.treeMeshs[l]);
 	    this.tempTreeLayers[l] = 0;
     },
@@ -763,12 +745,12 @@ V3D.Base.prototype = {
 
 			if(v<4 && v!==0)this.addBaseBuilding(x, py, y, v);
 			if(v==8 || v==9){
-			    var mii = new THREE.Mesh( this.buildingGeo[v], this.centralMaterial );
+			    var mii = new THREE.Mesh( this.buildingGeo[v], this.townMaterial );
 			    mii.position.set(x, py, y);
 			    this.scene.add(mii);
 			}
 			if(v==11|| v==4 || v==5 || v==7){
-				var miii = new THREE.Mesh( this.buildingGeo[v], this.serviceMaterial );
+				var miii = new THREE.Mesh( this.buildingGeo[v], this.townMaterial );
 			    miii.position.set(x, py, y);
 			    this.scene.add(miii);
 			}
@@ -1223,7 +1205,7 @@ this.industrials = [616, 625, 634, 643, 652, 661, 670, 679, 688];*/
 	addSprite : function(i, v, p){
 		var m;
 		if(v==1){// train
-			m = new THREE.Mesh(this.spriteGeo[0], this.worldMaterial );
+			m = new THREE.Mesh(this.spriteGeo[0], this.townMaterial );
 			m.position.set(p.x, 0, p.z);
 		    this.scene.add(m);
 		    this.spriteMeshs[i] = m;

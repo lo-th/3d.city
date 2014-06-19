@@ -10,19 +10,17 @@ body {  padding:0; margin: 0px; background:#6666e6; font:12px sans-serif; width:
 #debug{ position:absolute; padding:10px; right:0; bottom:0; text-align:right; width:20%; pointer-events:none; display:block; }
 #log{ position:absolute; padding:10px; left:0; bottom:0; width:30%; pointer-events:none; display:block;}
 #hub{ position:absolute; top:0; left:0; height:100%; width:100%; pointer-events:none; display:block; text-align:center;}
-/*#hub{ position:absolute; top:0; left:0; height:0; width:0; pointer-events:none; }*/
 </style>
 <script src="js/three.min.js"></script>
 <script src="js/loaders/sea3d.min.js"></script>
 <script src="js/ImprovedNoise.js"></script>
-<script src="js/noise.js"></script>
 <script src="js/view3d.js"></script>
 <script src="js/hub.js"></script>
 
 </head>
 <body>
 <div id="container"></div>
-<div id="debug">pre alpha 0.7</div>
+<div id="debug">pre alpha 0.75</div>
 <div id="log">loth 2014</div>
 <div id="hub"></div>
 <script>
@@ -30,7 +28,7 @@ var d = document.getElementById('debug');
 var l = document.getElementById('log');
 var timestep = 1000/30;
 
-var tilesData = null;//new ARRAY_TYPE(128*128);
+var tilesData = null;
 var spriteData = null;
 var gameData = null;
 var powerData = null;
