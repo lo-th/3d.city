@@ -666,6 +666,7 @@ V3D.Base.prototype = {
 				if(this.currentTool){
 					this.tool.position.set(this.pos.x, this.pos.y, this.pos.z);
 					if(this.mouse.click || this.mouse.drag) mapClick();
+					//if(this.mouse.click || this.currentTool.drag) mapClick();
 
 					this.mouse.click=false;
 				}
@@ -1049,13 +1050,13 @@ V3D.Base.prototype = {
 		    	this.ease.x = (px - this.mouse.ox)/1000;
 		    	this.ease.z = (py - this. mouse.oy)/1000;
 		    }
-	    } else {
+	    } 
+
+	    if(this.currentTool !== null){
 			this.rayVector.x = ( px / this.vsize.x ) * 2 - 1;
 		    this.rayVector.y = - ( py / this.vsize.y ) * 2 + 1;
 			this.rayTest();
 		}
-	    //if(!self.focus())self.focus();
-	    //this.render();
 	},
 	onMouseWheel : function (e) { 
 		e.preventDefault();   
@@ -1066,7 +1067,6 @@ V3D.Base.prototype = {
 	    if(this.cam.distance<2)this.cam.distance = 2;
 	    if(this.cam.distance>150)this.cam.distance = 150;
 	    this.moveCamera();
-	    //this.render(); 
 	},
 
 
