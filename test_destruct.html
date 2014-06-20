@@ -36,6 +36,7 @@ var timer;
 var finalColor;
 var ncolor = 1;
 var reflectionCube;
+var isDestroy = false;
 window.onload = init;
 
 function init(){
@@ -107,10 +108,13 @@ function newObject() {
 	obj.material.combine = THREE.MixOperation;
 	obj.material.envMap = reflectionCube;
 
+	isDestroy = false;
+
 	
 }
 
 function destroy() {
+	if(!isDestroy){
 	obj.material.side = THREE.DoubleSide;
 	finalColor = new THREE.Color();
 	finalColor.setHex(0xcc7f66);
@@ -124,6 +128,8 @@ function destroy() {
 	if(timer)clearInterval(timer);
 	timer = setInterval(destroyCycle, timestep);
 
+	isDestroy = true;
+    }
 
 
 	/*obj.material.reflectivity =1;
@@ -199,8 +205,8 @@ function initParticles() {
 
                 radius: asteroidRadius * 1.2,
 
-                position: new THREE.Vector3(0, asteroidRadius, 0),
-                positionSpread: new THREE.Vector3( emitterPositionSpread, emitterPositionSpread, emitterPositionSpread ),
+                position: new THREE.Vector3(0, 0, 0),
+                positionSpread: new THREE.Vector3( 1.5, 1, 1.5 ),
 
                 acceleration: new THREE.Vector3(0, 1, 0),
                 accelerationSpread: new THREE.Vector3( 0, 0, 0 ),
@@ -238,7 +244,7 @@ function initParticles() {
                 opacityEnd: 1,
                 opacityEndSpread: 0,
 
-                particleCount: 100,
+                particleCount: 30,
 
                 // Angle tests
                 // angleStart: Math.PI * 0.5,
@@ -259,7 +265,7 @@ function initParticles() {
                 acceleration: new THREE.Vector3( 0, 0.3, 0 ),
                 velocitySpread: new THREE.Vector3( 1, 0, 0 ),
                 sizeStart:0.3,
-                particleCount: 100
+                particleCount: 50
             });
 
            // 
