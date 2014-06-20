@@ -33,7 +33,7 @@ V3D.Base = function(){
 
     this.cam = { horizontal:90, vertical:45, distance:120 };
     this.vsize = { x:window.innerWidth, y:window.innerHeight, z:window.innerWidth/window.innerHeight};
-    this.mouse = { ox:0, oy:0, h:0, v:0, mx:0, my:0, dx:0, dy:0, down:false, over:false, drag:false, click:false , move:true, button:0 };
+    this.mouse = { ox:0, oy:0, h:0, v:0, mx:0, my:0, dx:0, dy:0, down:false, over:false, drag:false, click:false , move:true, dragView:false ,button:0 };
     this.pos =  {x:-1, y:0, z:-1};
 
     this.select = '';
@@ -67,7 +67,8 @@ V3D.Base = function(){
 		{id:14, tool:'stadium',     geo:11,   name:'',  build:1, size:4, sy:2,    price:5000,  color:'indigo'     ,drag:0  },
 		{id:15, tool:'airport',     geo:12,   name:'',  build:1, size:6, sy:0.5,  price:10000, color:'violet'     ,drag:0  },
 		
-		{id:16, tool:'query',       geo:0,    name:'?', build:0, size:1, sy:0,    price:0,     color:'cyan'       ,drag:0  }
+		{id:16, tool:'query',       geo:0,    name:'?', build:0, size:1, sy:0,    price:0,     color:'cyan'       ,drag:0  },
+		{id:17, tool:'none',        geo:0,    name:'',  build:0, size:0, sy:0,    price:0,     color:'none'       ,drag:0  }
 	];
 
 	this.currentTool = null;
@@ -146,6 +147,9 @@ V3D.Base.prototype = {
         this.center = new THREE.Vector3();
         this.moveCamera();
 
+        this.ease = new THREE.Vector3();
+        this.easeRot = new THREE.Vector3();
+
         this.powerMaterial = new THREE.SpriteMaterial({map:this.powerTexture(), transparent:true})
 
 
@@ -173,7 +177,9 @@ V3D.Base.prototype = {
 
         
         window.addEventListener( 'resize', function(e) { _this.resize() }, false );
-        
+
+        // disable context menu
+        document.addEventListener("contextmenu", function(e){ e.preventDefault(); }, false);
 
 	    this.container.addEventListener( 'mousemove',  function(e) {_this.onMouseMove(e)} , false );
 	    this.container.addEventListener( 'mousedown',  function(e) {_this.onMouseDown(e)}, false );
@@ -525,8 +531,8 @@ V3D.Base.prototype = {
 			for ( var i = 0; i < size; i ++ ) {
 				//var x = i % w, y = ( i / w ) | 0;
 				var x = i % w, y = ~~ ( i / w );
-				data[ i ] += Math.round(Math.abs( perlin.noise( x / quality, y / quality, z ) * quality * 0.2 ))*0.5;
-				//data[ i ] += (Math.abs( perlin.noise( x / quality, y / quality, z ) * quality * 0.2 ))
+				//data[ i ] += Math.round(Math.abs( perlin.noise( x / quality, y / quality, z ) * quality * 0.2 ))*0.5;
+				data[ i ] += (Math.abs( perlin.noise( x / quality, y / quality, z ) * quality * 0.2 ))
 			}
 			quality *= 5;
 		}
@@ -648,10 +654,13 @@ V3D.Base.prototype = {
 		if ( this.land.children.length > 0 ) {
 			var intersects = this.raycaster.intersectObjects( this.land.children );
 			if ( intersects.length > 0 ) {
+
 				this.pos.x = Math.round(intersects[0].point.x);
-				if( this.isWithHeight )this.pos.y = intersects[0].point.y;
-				else this.pos.y = 0;
 				this.pos.z = Math.round(intersects[0].point.z);
+
+				if( this.isWithHeight )this.pos.y = Math.round(intersects[0].point.y);
+				else this.pos.y = 0;
+				
 				
 
 				if(this.currentTool){
@@ -675,23 +684,41 @@ V3D.Base.prototype = {
 	selectTool : function(id){
 		this.pos.x = -1;
 		this.pos.z = -1;
-		//this.rebuildTree()
+		// remove old tool
 		if(this.tool !== null) this.removeTool();
-		//this.currentTool = this.toolSet[id];//id;
-		//var ntool = this.toolSet[id];
-		//var name = ntool.tool;
-		if(id){
+
+		if( id === 0 ){
+			this.currentTool = null;
+        	this.mouse.dragView = false;
+        	this.mouse.move = true;
+		} else if ( id === 17 ){
+			this.currentTool = null;
+        	this.mouse.move = false;
+        	this.mouse.dragView = true;
+		} else {
 			this.currentTool = this.toolSet[id];
 			this.mouse.move = false;
-			this.tool = this.customTool();//ntool.size, ntool.color);
+			this.tool = this.customTool();
 	        this.scene.add(this.tool);
+		}
+
+		/*if(id){
+			if( id === 17 ){
+				this.currentTool = null;
+	        	this.mouse.dragView = true;
+	        } else {
+				this.currentTool = this.toolSet[id];
+				this.mouse.move = false;
+				this.tool = this.customTool();
+		        this.scene.add(this.tool);
+		    }
         } else {
         	this.currentTool = null;
         	this.mouse.move = true;
-        }
+        }*/
         sendTool(this.toolSet[id].tool);
 	},
-	customTool : function(size, color){
+	customTool : function(){
 		var size = this.currentTool.size;
 		var color = this.currentTool.color;
 		
@@ -757,6 +784,10 @@ V3D.Base.prototype = {
 
 		} else {
 			this.removeTree(x,y);
+			if( this.isWithHeight ){
+				py = this.heightData[this.findId(x,y)];
+			    this.makePlanar( [[x,y]],  py );
+			}
 			if(this.currentTool.tool==='bulldozer'){
 				this.forceUpdate.x = x;
 		        this.forceUpdate.y = y;
@@ -912,7 +943,9 @@ V3D.Base.prototype = {
 	    this.tempBuildingLayers[l] = 0;
     },
 
-	//---------------------------------------------------
+
+
+	//--------------------------------------------------- NAVIGATION
 
 
 
@@ -927,16 +960,27 @@ V3D.Base.prototype = {
 	    p.y = (distance * Math.cos(phi)) + origine.y;
 	    return p;
 	},
+	unwrapDegrees : function (r){
+		r = r % 360;
+		if (r > 180) r -= 360;
+		if (r < -180) r += 360;
+		return r;
+	},
 	moveCamera : function () {
 	    this.camera.position.copy(this.Orbit(this.center, this.cam.horizontal, this.cam.vertical, this.cam.distance));
 	    this.camera.lookAt(this.center);
-	    //this.render();
 	},
-	/*onMouseClick : function (e) {
-		e.preventDefault();
-		mapClick();
-		
-	},*/
+	dragCenterposition : function(){
+		if ( this.ease.x == 0 && this.ease.z == 0 ) return;
+    	this.easeRot.y = this.cam.horizontal*this.ToRad;
+    	var rot = this.unwrapDegrees(Math.round(this.cam.horizontal));
+        this.easeRot.x = Math.sin(this.easeRot.y) * this.ease.x + Math.cos(this.easeRot.y) * this.ease.z;
+        this.easeRot.z = Math.cos(this.easeRot.y) * this.ease.x - Math.sin(this.easeRot.y) * this.ease.z;
+
+    	this.center.x += this.easeRot.x; 
+    	this.center.z -= this.easeRot.z; 
+        this.moveCamera();
+	},
 	onMouseDown : function (e) {   
 		e.preventDefault();
 	    var px, py;
@@ -946,21 +990,10 @@ V3D.Base.prototype = {
 	    } else {
 	        px = e.clientX;
 	        py = e.clientY;
+	        // 0: default  1: left  2: middle  3: right
 	        this.mouse.button = e.which;
-	        /*switch (e.which) {
-		        case 1:
-		            console.log('Left Mouse button pressed.');
-		            break;
-		        case 2:
-		            console.log('Middle Mouse button pressed.');
-		            break;
-		        case 3:
-		            console.log('Right Mouse button pressed.');
-		            break;
-		        default:
-		            console.log('You have a strange Mouse!');
-		    }*/
 	    }
+
 	    this.mouse.ox = px;
 	    this.mouse.oy = py;
 	    this.rayVector.x = ( px / this.vsize.x ) * 2 - 1;
@@ -969,20 +1002,19 @@ V3D.Base.prototype = {
 	    this.mouse.v = this.cam.vertical;
 	    this.mouse.down = true;
 	    
-	    if(this.currentTool){
+	    if(this.currentTool && this.mouse.button<2){// only for tool
 	    	this.mouse.click = true;
 	        if(this.currentTool.drag) this.mouse.drag = true;
 	    }
-	    
-	    //this.rayTest();
-	    //this.render();
-	    
+	   
 	},
 	onMouseUp : function (e) {
 		e.preventDefault();
 		this.mouse.button = 0;
 	    this.mouse.down = false;
 	    this.mouse.drag = false;
+	    this.ease.x = 0;
+	    this.ease.z = 0;
 	    document.body.style.cursor = 'auto';
 	},
 	onMouseMove : function (e) {
@@ -995,14 +1027,21 @@ V3D.Base.prototype = {
 	    } else {
 	        px = e.clientX;
 	        py = e.clientY;
-	        
 	    }
 	    
-	    if (this.mouse.down && this.mouse.move) {      
-	        document.body.style.cursor = 'move';
-	        this.cam.horizontal = ((px - this.mouse.ox) * 0.3) + this.mouse.h;
-	        this.cam.vertical = (-(py -this. mouse.oy) * 0.3) + this.mouse.v;
-	        this.moveCamera();
+	    if (this.mouse.down) {
+	        if(this.mouse.move || this.mouse.button===3){  
+	        	this.mouse.dragView = false;
+		        document.body.style.cursor = 'move';
+		        this.cam.horizontal = ((px - this.mouse.ox) * 0.3) + this.mouse.h;
+		        this.cam.vertical = (-(py -this. mouse.oy) * 0.3) + this.mouse.v;
+		        this.moveCamera();
+		    }
+		    if(this.mouse.dragView || this.mouse.button===2){
+		    	this.mouse.move = false;
+		    	this.ease.x = (px - this.mouse.ox)/1000;
+		    	this.ease.z = (py - this. mouse.oy)/1000;
+		    }
 	    } else {
 			this.rayVector.x = ( px / this.vsize.x ) * 2 - 1;
 		    this.rayVector.y = - ( py / this.vsize.y ) * 2 + 1;
@@ -1074,6 +1113,8 @@ V3D.Base.prototype = {
 			while(x--){
 
 				// find layer
+				//layer = this.findLayer(x, y);
+
 				cy = Math.floor(y/16);
                 cx = Math.floor(x/16);
 				layer = cx+(cy*8);

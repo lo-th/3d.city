@@ -76,9 +76,9 @@ HUB.Base.prototype = {
         this.toolSet.appendChild( this.toolInfo );
         this.toolInfo.innerHTML = "Selecte<br>Tool";
 
-        var bname = ['MOVE', 'residential','commercial','industrial','Police', 'park', 'Fire','road','bulldozer','rail','coal','wire','nuclear', 'Port','stadium','airport','query'];
+        var bname = ['MOVE', 'residential','commercial','industrial','Police', 'park', 'Fire','road','bulldozer','rail','coal','wire','nuclear', 'Port','stadium','airport','query', 'DRAG'];
         for(var i = 0; i<bname.length; i++){
-            if(i==0) this.addButton(bname[i], [180,40] );
+            if(i==0 || i==17) this.addButton(bname[i], [70,40] );
             else if(i<4)this.addButton(bname[i], [50,70], true, this.showToolInfo );
             else this.addButton(bname[i], [50,50], true, this.showToolInfo );
         }
@@ -118,6 +118,9 @@ HUB.Base.prototype = {
     	if(!tool){
             if(name == 'MOVE'){
                 b.style.cssText = 'position:absolute; right:0; top:0; margin:10px; pointer-events:auto; border:2px solid rgba(255,255,255,0);';
+                this.hub.appendChild( b );
+            } else if(name == 'DRAG'){
+                b.style.cssText = 'position:absolute; right:80px; top:0; margin:10px; pointer-events:auto; border:2px solid rgba(255,255,255,0);';
                 this.hub.appendChild( b );
             } else {
                 b.style.cssText = 'margin:10px; pointer-events:auto; border:2px solid rgba(255,255,255,0);';
