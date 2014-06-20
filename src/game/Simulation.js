@@ -72,6 +72,11 @@ Micro.Simulation.prototype = {
         if (s!== Micro.SPEED_PAUSED && s!== Micro.SPEED_SLOW && s!== Micro.SPEED_MED &&  s!== Micro.SPEED_FAST) throw new Error('Invalid speed!');
         this.speed = s;
     },
+    setDifficulty: function(s) {
+        if (s !== Micro.LEVEL_EASY && s !== Micro.LEVEL_MED && s !== Micro.LEVEL_HARD) throw new Error('Invalid level!');
+        this.gameLevel = s;
+        this.disasterManager.setDifficulty(this.gameLevel);
+    },
     isPaused : function() {
         return this.speed === Micro.SPEED_PAUSED;
     },

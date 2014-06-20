@@ -159,6 +159,7 @@ V3D.Base.prototype = {
     	//this.renderer.setSize( this.vsize.x, this.vsize.y, true );
     	this.renderer.setSize( this.vsize.x, this.vsize.y );
 
+
     	this.townMaterial.map.anisotropy = this.renderer.getMaxAnisotropy();
     	this.buildingMaterial.map.anisotropy = this.renderer.getMaxAnisotropy();
     	this.townMaterial.map.needsUpdate = true;
@@ -169,10 +170,13 @@ V3D.Base.prototype = {
     	this.container.appendChild( _this.renderer.domElement );
 
         if(this.isWithBackground ){
-        	var sky = this.gradTexture([[0.5,0.45, 0.2], ['#6666e6','lightskyblue','deepskyblue']]);
+        	//var sky = this.gradTexture([[0.5,0.45, 0.2], ['#6666e6','lightskyblue','deepskyblue']]);
+        	var sky =  this.gradTexture([[0.51,0.49, 0.3], ['#cc7f66','lightskyblue', 'deepskyblue']]);
             this.back = new THREE.Mesh( new THREE.IcosahedronGeometry(300,1), new THREE.MeshBasicMaterial( { map:sky, side:THREE.BackSide, depthWrite: false }  ));
             this.scene.add( this.back );
             this.renderer.autoClear = false;
+        } else {
+        	this.renderer.setClearColor( 0xcc7f66, 1 );
         }
 
         
@@ -284,10 +288,11 @@ V3D.Base.prototype = {
 		this.buildingGeo[11] = this.meshs['stadium'].geometry;
 		this.buildingGeo[12] = this.meshs['airport'].geometry;
 
+		// BASIC 
+
 		this.residentialGeo = [];
 		this.commercialGeo = [];
 		this.industrialGeo = [];
-
 		this.houseGeo = [];
 
 		i = 9;
@@ -353,6 +358,24 @@ V3D.Base.prototype = {
 			this.treeGeo[i].applyMatrix( m );
 			this.treeGeo[i].applyMatrix( m2.makeRotationY( (Math.random()*360)*this.ToRad ) );
 		}
+	},
+	getRandomObject : function(){
+		var n = this.randRange(0,6)//Math.floor(Math.random()*7);
+		var geo, mat, name;
+		switch(n){
+			case 0: geo = this.buildingGeo[this.randRange(4,12)]; mat = this.townMaterial; break;
+			case 1: geo = this.residentialGeo[this.randRange(0, this.residentialGeo.length-1)]; mat = this.buildingMaterial; break;
+			case 2: geo = this.commercialGeo[this.randRange(0, this.commercialGeo.length-1)]; mat = this.buildingMaterial; break;
+			case 3: geo = this.industrialGeo[this.randRange(0, this.industrialGeo.length-1)]; mat = this.buildingMaterial; break;
+			case 4: geo = this.houseGeo[this.randRange(0, this.houseGeo.length-1)]; mat = this.buildingMaterial; break;
+			case 5: geo = this.spriteGeo[this.randRange(0, this.spriteGeo.length-1)]; mat = this.townMaterial; break;
+			case 6: geo = this.treeGeo[this.randRange(0, this.treeGeo.length-1)]; mat = this.townMaterial; break;
+		}
+		log(geo.name);
+		return new THREE.Mesh(geo.clone(), mat.clone());
+	},
+	randRange : function (min, max) {
+		return Math.floor(Math.random() * (max - min + 1)) + min;
 	},
 	
 

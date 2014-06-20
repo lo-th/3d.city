@@ -128,19 +128,18 @@ CITY.Game.prototype = {
         if(!trans) timer = setInterval(update, timestep);
         else update();
     },
-    /*getTiles : function() {
-        if(this.needMapUpdate){
-            this.tilesData = this.map.tilesData;
-            var i = this.map.data.length;
-            this.tilesData = new M_ARRAY_TYPE(i);
-            while(i--){
-                this.tilesData[i] = this.map.data[i].getValue()
-            }
-            //this.needMapUpdate = false;
-        } else {
-            this.tilesData = null;
-        }
-    },*/
+    changeSpeed :function(n){
+        // 0:pause  1:slow  2:medium  3:fast
+        this.speed = n;
+        if(this.speed === 0) this.isPaused = true;
+        else this.isPaused = false;
+        this.simulation.setSpeed(this.speed);
+    },
+    changeDifficulty:function(n){
+        // 0: easy  1: medium  2: hard
+        this.difficulty = n;
+        this.simulation.setDifficulty ( this.difficulty );
+    },
     animatedTiles : function() {
         var animTiles = this.animationManager.getTiles(0, 0, this.mapSize[0] + 1, this.mapSize[1] + 1, this.isPaused);
         var i = animTiles.length;
