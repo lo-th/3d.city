@@ -326,6 +326,8 @@ V3D.Base.prototype = {
 
 		this.spriteGeo = [];
 		this.spriteGeo[0] = this.meshs['train'].geometry;
+		this.spriteGeo[1] = this.meshs['elico'].geometry;
+		this.spriteGeo[2] = this.meshs['plane'].geometry;
 
 		i = this.spriteGeo.length;
 		while(i--) {
@@ -453,8 +455,6 @@ V3D.Base.prototype = {
 
 
 	updateTerrain : function(island){
-
-		
 
 		this.center.x = this.mapSize[0]*0.5;
 		this.center.z = this.mapSize[1]*0.5;
@@ -699,6 +699,7 @@ V3D.Base.prototype = {
 		} else {
 			this.currentTool = this.toolSet[id];
 			this.mouse.move = false;
+			this.mouse.dragView = false;
 			this.tool = this.customTool();
 	        this.scene.add(this.tool);
 		}
@@ -777,7 +778,7 @@ V3D.Base.prototype = {
 			    mii.position.set(x, py, y);
 			    this.scene.add(mii);
 			}
-			if(v==11|| v==4 || v==5 || v==7){
+			if( v==4 || v==5 || v==7 || v==10 || v==11 || v==12 ){
 				var miii = new THREE.Mesh( this.buildingGeo[v], this.townMaterial );
 			    miii.position.set(x, py, y);
 			    this.scene.add(miii);
@@ -1233,6 +1234,14 @@ this.industrials = [616, 625, 634, 643, 652, 661, 670, 679, 688];*/
 			pos.z =  Math.round((c[3]-8)/16);
 			pos.y = 0;
 			if( this.isWithHeight ) pos.y = this.heightData[this.findId(pos.x,pos.z)];
+
+			if( c[0] == 2) pos.y += 5;
+			if( c[0] == 3){
+				if(frame==11)pos.y += 0;
+				else if(frame==10)pos.y += 1;
+				else if (frame==9)pos.y += 3;
+				else pos.y += 6;
+			}
 			//log( frame)
 			if(this.spriteMeshs[i] == null) this.addSprite( i, c[0], pos );
 			//this.spriteMeshs[i].position.copy(pos);
@@ -1247,14 +1256,42 @@ this.industrials = [616, 625, 634, 643, 652, 661, 670, 679, 688];*/
 			else if(f===2) r = 90*this.ToRad;
 			else if(f===3) r = 45*this.ToRad;
 			else if(f===4) r = -45*this.ToRad;
+		}else if(v===2 || v===3){// elico plane
+			if(f===1) r = 0;
+			else if(f===2) r = -45*this.ToRad;
+			else if(f===3) r = -90*this.ToRad;
+			else if(f===4) r = -135*this.ToRad;
+			else if(f===5) r = -180*this.ToRad;
+			else if(f===6) r = -225*this.ToRad;
+			else if(f===7) r = -270*this.ToRad;
+			else if(f===8) r = -315*this.ToRad;
+
+			else if(f===9) r = -90*this.ToRad;
+			else if(f===10) r = -90*this.ToRad;
+			else if(f===11) r = -90*this.ToRad;
 		}
 		return r;
 	},
 	addSprite : function(i, v, p){
 		var m;
-		if(v==1){// train
+		if(v===1){// train
 			m = new THREE.Mesh(this.spriteGeo[0], this.townMaterial );
-			m.position.set(p.x, 0, p.z);
+			m.position.copy(p);
+		    this.scene.add(m);
+		    this.spriteMeshs[i] = m;
+		}else if(v===2){// elico
+			m = new THREE.Mesh(this.spriteGeo[1], this.townMaterial );
+			m.position.copy(p);
+		    this.scene.add(m);
+		    this.spriteMeshs[i] = m;
+		}else if(v===3){// plane
+			m = new THREE.Mesh(this.spriteGeo[2], this.townMaterial );
+			m.position.copy(p);
+		    this.scene.add(m);
+		    this.spriteMeshs[i] = m;
+		} else {
+			m = new THREE.Mesh(new THREE.BoxGeometry(1,1,1), this.townMaterial );
+			m.position.copy(p);
 		    this.scene.add(m);
 		    this.spriteMeshs[i] = m;
 		}
