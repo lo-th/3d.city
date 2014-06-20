@@ -979,6 +979,12 @@ V3D.Base.prototype = {
 
     	this.center.x += this.easeRot.x; 
     	this.center.z -= this.easeRot.z; 
+
+    	if(this.center.x<0) this.center.x = 0;
+    	if(this.center.x>128) this.center.x = 128;
+    	if(this.center.z<0) this.center.z = 0;
+    	if(this.center.z>128) this.center.z = 128;
+    	
         this.moveCamera();
 	},
 	onMouseDown : function (e) {   
@@ -1032,12 +1038,13 @@ V3D.Base.prototype = {
 	    if (this.mouse.down) {
 	        if(this.mouse.move || this.mouse.button===3){  
 	        	this.mouse.dragView = false;
-		        document.body.style.cursor = 'move';
+		        document.body.style.cursor = 'crosshair';
 		        this.cam.horizontal = ((px - this.mouse.ox) * 0.3) + this.mouse.h;
 		        this.cam.vertical = (-(py -this. mouse.oy) * 0.3) + this.mouse.v;
 		        this.moveCamera();
 		    }
 		    if(this.mouse.dragView || this.mouse.button===2){
+		    	document.body.style.cursor = 'move';
 		    	this.mouse.move = false;
 		    	this.ease.x = (px - this.mouse.ox)/1000;
 		    	this.ease.z = (py - this. mouse.oy)/1000;
