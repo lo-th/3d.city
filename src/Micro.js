@@ -93,6 +93,7 @@ Micro.isCallable = function(f) {
 Micro.LEVEL_EASY = 0;
 Micro.LEVEL_MED = 1;
 Micro.LEVEL_HARD = 2;
+
 Micro.SPEED_PAUSED = 0;
 Micro.SPEED_SLOW = 1;
 Micro.SPEED_MED = 2;

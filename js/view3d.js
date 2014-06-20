@@ -12,6 +12,8 @@ V3D.Base = function(){
 
 	this.isWithBackground = true;
 	this.isWithHeight = false;
+
+	this.clock = null;
 	
 	this.ToRad = Math.PI / 180;
     this.camera = null; 
@@ -130,7 +132,7 @@ V3D.Base = function(){
 V3D.Base.prototype = {
     constructor: V3D.Base,
     init:function() {
-    	
+    	this.clock = new THREE.Clock();
 
     	this.scene = new THREE.Scene();
     	this.camera = new THREE.PerspectiveCamera( 50, this.vsize.z, 0.1, 1000 );
@@ -364,9 +366,9 @@ V3D.Base.prototype = {
 		var geo, mat, name;
 		switch(n){
 			case 0: geo = this.buildingGeo[this.randRange(4,12)]; mat = this.townMaterial; break;
-			case 1: geo = this.residentialGeo[this.randRange(0, this.residentialGeo.length-1)]; mat = this.buildingMaterial; break;
-			case 2: geo = this.commercialGeo[this.randRange(0, this.commercialGeo.length-1)]; mat = this.buildingMaterial; break;
-			case 3: geo = this.industrialGeo[this.randRange(0, this.industrialGeo.length-1)]; mat = this.buildingMaterial; break;
+			case 1: geo = this.residentialGeo[this.randRange(1, this.residentialGeo.length-1)]; mat = this.buildingMaterial; break;
+			case 2: geo = this.commercialGeo[this.randRange(1, this.commercialGeo.length-1)]; mat = this.buildingMaterial; break;
+			case 3: geo = this.industrialGeo[this.randRange(1, this.industrialGeo.length-1)]; mat = this.buildingMaterial; break;
 			case 4: geo = this.houseGeo[this.randRange(0, this.houseGeo.length-1)]; mat = this.buildingMaterial; break;
 			case 5: geo = this.spriteGeo[this.randRange(0, this.spriteGeo.length-1)]; mat = this.townMaterial; break;
 			case 6: geo = this.treeGeo[this.randRange(0, this.treeGeo.length-1)]; mat = this.townMaterial; break;

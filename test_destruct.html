@@ -15,7 +15,7 @@ body {  padding:0; margin: 0px; background:#6666e6; font:12px sans-serif; width:
 </style>
 <script src="js/three.min.js"></script>
 <script src="js/loaders/sea3d.min.js"></script>
-<script src="js/ImprovedNoise.js"></script>
+<script src="js/spe.min.js"></script>
 <script src="js/view3d.js"></script>
 <script src="js/hub.js"></script>
 
@@ -92,6 +92,13 @@ function newObject() {
 		obj.material.dispose();
 	    view3d.scene.remove(obj);
 	}
+	if(particleGroup){
+		 particleGroup.removeEmitter(emitter);
+        particleGroup.removeEmitter(atmosphereBurnEmitter);
+        emitter.reset();
+        atmosphereBurnEmitter.reset();
+        view3d.scene.remove( particleGroup.mesh );
+	}
 
 	obj = view3d.getRandomObject();
 	view3d.scene.add(obj);
@@ -108,6 +115,7 @@ function destroy() {
 	finalColor = new THREE.Color();
 	finalColor.setHex(0xcc7f66);
 	ncolor = 1;
+	initParticles();
 
 	/*obj.material.reflectivity = 0.1;
 	obj.material.combine = THREE.MixOperation;
@@ -172,10 +180,99 @@ function loop() {
     if(view3d.mouse.dragView || view3d.mouse.button===2){
         view3d.dragCenterposition();
     }*/
+    if(particleGroup)particleGroup.tick( view3d.clock.getDelta() );
     view3d.renderer.render( view3d.scene, view3d.camera );
 }
+var emitter, particleGroup, atmosphereBurnEmitter;
+var asteroid, asteroidRadius = 0.5, emitterPositionSpread = asteroidRadius * 2;
+function initParticles() {
+            particleGroup = new SPE.Group({
+                texture: THREE.ImageUtils.loadTexture('./img/smoke.png'),
+                maxAge: 2,
+                depthWrite: 0,
+                depthTest: 0,
+                transparent: 1
+            });
 
+            emitter = new SPE.Emitter({
+                type: 'cube',
 
+                radius: asteroidRadius * 1.2,
+
+                position: new THREE.Vector3(0, asteroidRadius, 0),
+                positionSpread: new THREE.Vector3( emitterPositionSpread, emitterPositionSpread, emitterPositionSpread ),
+
+                acceleration: new THREE.Vector3(0, 1, 0),
+                accelerationSpread: new THREE.Vector3( 0, 0, 0 ),
+
+                velocity: new THREE.Vector3(0, 0, 0),
+                velocitySpread: new THREE.Vector3(0, 0, 0),
+
+                // Color tests
+                colorStart: new THREE.Color( 'white' ),
+                colorStartSpread: new THREE.Vector3(0, 0, 0),
+
+                colorMiddle: new THREE.Color( 'yellow' ),
+                colorMiddleSpread: new THREE.Vector3(0, 0, 0),
+
+                colorEnd: new THREE.Color( 'red' ),
+                colorEndSpread: new THREE.Vector3(0, 0, 0),
+
+                // Size tests
+                sizeStart: asteroidRadius,
+                sizeStartSpread: 0,
+
+                sizeMiddle: 10,
+                sizeMiddleSpread: 0,
+
+                sizeEnd: 0,
+                sizeEndSpread: 0,
+
+                // Opacity tests
+                opacityStart: 0,
+                opacityStartSpread: 0,
+                
+                opacityMiddle: 0,
+                opacityMiddleSpread: 1,
+
+                opacityEnd: 1,
+                opacityEndSpread: 0,
+
+                particleCount: 100,
+
+                // Angle tests
+                // angleStart: Math.PI * 0.5,
+                // angleStartSpread: Math.PI * 2,
+
+                // angleMiddle: 0,
+                // angleMiddleSpread: Math.PI * 2,
+
+                // angleEnd: Math.PI * 1.5,
+                // angleEndSpread: Math.PI * 1.5
+            });
+    
+
+            atmosphereBurnEmitter = new SPE.Emitter({
+                type: 'sphere',
+                radius:2,
+                position: new THREE.Vector3(0, 0.5, 0 ),
+                acceleration: new THREE.Vector3( 0, 0.3, 0 ),
+                velocitySpread: new THREE.Vector3( 1, 0, 0 ),
+                sizeStart:0.3,
+                particleCount: 100
+            });
+
+           // 
+
+           particleGroup.addEmitter( emitter );
+           particleGroup.addEmitter( atmosphereBurnEmitter );
+
+           view3d.scene.add( particleGroup.mesh );
+
+            //document.querySelector('.numParticles').textContent = 'Total particles: ' + emitter.numParticles;
+        }
+
+        
 </script>
 </body>
 </html>
