@@ -362,8 +362,8 @@ V3D.Base.prototype = {
 		}
 	},
 	getRandomObject : function(){
-		var n = this.randRange(0,6)//Math.floor(Math.random()*7);
-		var geo, mat, name;
+		var n = this.randRange(0,6);
+		var geo, mat, r, n;
 		switch(n){
 			case 0: geo = this.buildingGeo[this.randRange(4,12)]; mat = this.townMaterial; break;
 			case 1: geo = this.residentialGeo[this.randRange(1, this.residentialGeo.length-1)]; mat = this.buildingMaterial; break;
@@ -371,10 +371,18 @@ V3D.Base.prototype = {
 			case 3: geo = this.industrialGeo[this.randRange(1, this.industrialGeo.length-1)]; mat = this.buildingMaterial; break;
 			case 4: geo = this.houseGeo[this.randRange(0, this.houseGeo.length-1)]; mat = this.buildingMaterial; break;
 			case 5: geo = this.spriteGeo[this.randRange(0, this.spriteGeo.length-1)]; mat = this.townMaterial; break;
-			case 6: geo = this.treeGeo[this.randRange(0, this.treeGeo.length-1)]; mat = this.townMaterial; break;
+			case 6: 
+			    r = this.randRange(0,2);
+			    n = 0;
+			    if(r==1) n= 4;
+			    if(r==2) n= 6;
+			    geo = this.treeGeo[n]; 
+			    mat = this.townMaterial; 
+			break;
 		}
-		log(geo.name);
-		return new THREE.Mesh(geo.clone(), mat.clone());
+		var mesh = new THREE.Mesh(geo.clone(), mat.clone());
+		mesh.name = geo.name;
+		return mesh;
 	},
 	randRange : function (min, max) {
 		return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -1371,7 +1379,7 @@ this.industrials = [616, 625, 634, 643, 652, 661, 670, 679, 688];*/
 	    c.width = c.height = 64;
 	    var grd = ctx.createLinearGradient(0,0,64,64);
 		grd.addColorStop(0.3,"yellow");
-		grd.addColorStop(1,"red")
+		grd.addColorStop(1,"red");
 		ctx.beginPath();
 		ctx.moveTo(44,0);
 		ctx.lineTo(10,34);

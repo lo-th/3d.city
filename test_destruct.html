@@ -10,8 +10,9 @@ body {  padding:0; margin: 0px; background:#6666e6; font:12px sans-serif; width:
 #debug{ position:absolute; padding:10px; right:0; bottom:0; text-align:right; width:20%; pointer-events:none; display:block; }
 #log{ position:absolute; padding:10px; left:0; bottom:0; width:30%; pointer-events:none; display:block;}
 #hub{ position:absolute; top:0; left:0; height:100%; width:100%; pointer-events:none; display:block; text-align:center;}
-#top{ position:absolute; top:0; left:0; height:50px; width:100%; pointer-events:none; display:block; text-align:center; font-size: 30px;}
-#bdestroy{ position:absolute; top:50px; left:0; height:50px; width:100%; pointer-events:none; display:block; text-align:center; font-size: 30px;}
+#top{ position:absolute; top:10px; left:10px; height:20px; width:100px; pointer-events:auto; cursor:pointer; display:block; text-align:center; font-size: 16px; background: #606060; padding: 10px;}
+#destroy{ position:absolute; top:60px; left:10px; height:20px; width:100px; pointer-events:auto; cursor:pointer;  display:block; text-align:center; font-size: 16px; background: #404040; padding: 10px;}
+#burn{ position:absolute; top:110px; left:10px; height:20px; width:100px; pointer-events:auto; cursor:pointer;  display:block; text-align:center; font-size: 16px; background: #cc4040; padding: 10px;}
 </style>
 <script src="js/three.min.js"></script>
 <script src="js/loaders/sea3d.min.js"></script>
@@ -25,27 +26,39 @@ body {  padding:0; margin: 0px; background:#6666e6; font:12px sans-serif; width:
 <div id="debug">pre alpha 0.76</div>
 <div id="log">loth 2014</div>
 <div id="hub"></div>
-<div id="top">Click here for new object</div>
-<div id="bdestroy">Destroy</div>
+<div id="top">New building</div>
+<div id="destroy">Destroy</div>
+<div id="burn">Burn</div>
 <script>
 var l = document.getElementById('log');
 var view3d;
-var obj;
+var obj = null;
 var timestep = 1000/60;
 var timer;
+var time;
+var maxDecal;
+var posDecal;
 var finalColor;
 var ncolor = 1;
 var reflectionCube;
 var isDestroy = false;
+var isBurn = false;
+var objInfo;
+
 window.onload = init;
 
 function init(){
     view3d = new V3D.Base();
-    document.addEventListener('click',  function ( e ) { 
+    /*document.addEventListener('click',  function ( e ) { 
     	e.preventDefault(); 
     	if(e.clientY<50) newObject(); 
     	if(e.clientY>50 && e.clientY<100) destroy();
-    }, false);
+    	if(e.clientY>50 && e.clientY<100) destroy();
+    }, false);*/
+
+    document.getElementById('top').addEventListener('click',  function ( e ) {e.preventDefault(); newObject(); }, false);
+    document.getElementById('destroy').addEventListener('click',  function ( e ) {e.preventDefault(); destroy(); }, false);
+    document.getElementById('burn').addEventListener('click',  function ( e ) {e.preventDefault(); burning(); }, false);
 }
 
 function log(txt){ l.innerHTML = txt || '';  }
@@ -59,31 +72,42 @@ function start() {
 	view3d.cam.vertical = 85;
     view3d.moveCamera();
 
-    var path = "img/";
-	var format = '.jpg';
-	var urls = [
-			path + 'ref' + format, path + 'ref' + format,
-			path + 'ref' + format, path + 'ref' + format,
-			path + 'ref' + format, path + 'ref' + format
-		];
 
-	reflectionCube = THREE.ImageUtils.loadTextureCube( urls );
-	//reflectionCube.format = THREE.RGBFormat;
+	var c = document.createElement("canvas");
+	var ctx = c.getContext("2d");
+	c.width = c.height = 64;
+	var grd = ctx.createLinearGradient(0,0,0,64);
+	grd.addColorStop(0,"red");//top
+	grd.addColorStop(0.5,"yellow");//top
+	grd.addColorStop(1,"#cc7f66");
+	ctx.rect(0, 0, 64, 64);
+    ctx.fillStyle = grd;
+	ctx.fill();
 
-	//refractionCube = new THREE.CubeTexture( reflectionCube.image)//, new THREE.CubeRefractionMapping() );
-	//refractionCube.format = THREE.RGBFormat;
+	var c2 = document.createElement("canvas");
+	ctx = c2.getContext("2d");
+	c2.width = c2.height = 64;
+	ctx.rect(0, 0, 64, 64);
+    ctx.fillStyle = "red";
+	ctx.fill();
 
-	obj = view3d.getRandomObject();
-	view3d.scene.add(obj);
+	var c3 = document.createElement("canvas");
+	ctx = c3.getContext("2d");
+	c3.width = c3.height = 64;
+	ctx.rect(0, 0, 64, 64);
+    ctx.fillStyle = "#cc7f66";
+	ctx.fill();
 
-	obj.material.reflectivity = 0;
-	obj.material.combine = THREE.MixOperation;
-	obj.material.envMap = reflectionCube;
+	//reflectionCube = new THREE.Texture([c,c,c3,c2,c,c]);
+	reflectionCube = new THREE.Texture([c3,c3,c3,c3,c3,c3]);
+	reflectionCube.needsUpdate = true;
 
-	var mesh = new THREE.Mesh( new THREE.PlaneGeometry( 60, 60 ), new THREE.MeshBasicMaterial( {color:0xcc7f66} ) );
+	var mesh = new THREE.Mesh( new THREE.PlaneGeometry( 30, 30 ), new THREE.MeshBasicMaterial( {color:0xcc7f66} ) );
 	mesh.geometry.applyMatrix(new THREE.Matrix4().makeRotationX( - Math.PI / 2 ));
 	view3d.scene.add( mesh );
 
+
+	newObject();
 }
 
 function newObject() {
@@ -107,44 +131,73 @@ function newObject() {
 	obj.material.reflectivity = 0;
 	obj.material.combine = THREE.MixOperation;
 	obj.material.envMap = reflectionCube;
+	obj.material.side = THREE.DoubleSide;
+
+	obj.geometry.computeBoundingBox();
+	var box = obj.geometry.boundingBox;
+	objInfo= [Number(box.max.y.toFixed(2)), Number(box.min.y.toFixed(2)),  Number((box.max.x + Math.abs(box.min.x)).toFixed(2)),  Number((box.max.z + Math.abs(box.min.z)).toFixed(2)), obj.geometry.vertices.length];
+
+	if(objInfo[2] == 4) posDecal = 0.5;
+	else if(objInfo[2] == 6) posDecal = 1.5;
+	else posDecal = 0; 
+
+	view3d.center = new THREE.Vector3(posDecal,0.5,posDecal);
+
+	view3d.moveCamera();
+
+
+	log("name:" + obj.name  + " ar: " + objInfo );
 
 	isDestroy = false;
-
-	
+	isBurn = false;
 }
 
+
+function burning() {
+	if(!isBurn && !isDestroy){
+		isBurn = true;
+
+		time = 5;
+		maxDecal = Math.abs((objInfo[0]/time)*15);
+	    //console.log(maxDecal)
+		
+		if(timer) clearInterval(timer);
+		timer = setInterval(destroyCycle, timestep);
+
+		initParticles();
+
+	}
+}
+
+
 function destroy() {
-	if(!isDestroy){
-	obj.material.side = THREE.DoubleSide;
-	finalColor = new THREE.Color();
-	finalColor.setHex(0xcc7f66);
-	ncolor = 1;
-	initParticles();
+	if(!isDestroy && !isBurn ){
 
-	/*obj.material.reflectivity = 0.1;
-	obj.material.combine = THREE.MixOperation;
-	obj.material.envMap = reflectionCube;*/
+		isDestroy = true;
 
-	if(timer)clearInterval(timer);
-	timer = setInterval(destroyCycle, timestep);
+		time = 1;
+		maxDecal = Math.abs((objInfo[0]/time)*15);
+	    console.log(maxDecal)
 
-	isDestroy = true;
+		if(timer)clearInterval(timer);
+		timer = setInterval(destroyCycle, timestep);
+
+		initParticles();
     }
-
-
-	/*obj.material.reflectivity =1;
-	obj.material.combine = THREE.MixOperation;
-	obj.material.envMap = reflectionCube;*/
-
-	//obj.material.color.lerp(finalColor, 0.1);
 }
 
 function destroyCycle() {
-	var vec = obj.geometry.vertices;
+	//var vec = obj.geometry.vertices;
+	
+	//var maxDecal = Math.abs((objInfo[0]*100)/time);
+
+	if(isBurn){
+
+	}
 
 	//var i = obj.geometry.faces.length; 
-	var i = obj.geometry.vertices.length;
-	log("destroy" + i)
+	var i = objInfo[4];//obj.geometry.vertices.length;
+
 	var v, r, f;
 
 	/*while(i--){
@@ -157,16 +210,17 @@ function destroyCycle() {
 
 	
 	while(i--){
-		r = randRange(10, 20);
+		r = randRange(1, maxDecal);
 		v = obj.geometry.vertices[i];
-		if (v.y >0.02 ) v.y-=r/1000;
+		if (v.y > 0.02 ) v.y-=r/1000;
+		else v.y = 0.02;
 	}
 
 	//var color = obj.material.color.getHex();
 	//if(color>0x000000)
 	//obj.material.color.lerp(finalColor, ncolor);//.setHex(color-0x010101);
-	//obj.material.color.lerp(finalColor, 0.01);
-	if(obj.material.reflectivity<1)obj.material.reflectivity+=0.005;
+	//obj.material.color.lerp("black", 0.01);
+	if(obj.material.reflectivity<1)obj.material.reflectivity+=0.005/time;
 
 	obj.geometry.computeFaceNormals();
     obj.geometry.computeVertexNormals();
@@ -182,101 +236,116 @@ function burn() {
 
 function loop() {
     requestAnimationFrame( loop, view3d.renderer.domElement );
-    /*
-    if(view3d.mouse.dragView || view3d.mouse.button===2){
-        view3d.dragCenterposition();
-    }*/
     if(particleGroup)particleGroup.tick( view3d.clock.getDelta() );
     view3d.renderer.render( view3d.scene, view3d.camera );
 }
+
+
+
 var emitter, particleGroup, atmosphereBurnEmitter;
-var asteroid, asteroidRadius = 0.5, emitterPositionSpread = asteroidRadius * 2;
+
 function initParticles() {
-            particleGroup = new SPE.Group({
-                texture: THREE.ImageUtils.loadTexture('./img/smoke.png'),
-                maxAge: 2,
-                depthWrite: 0,
-                depthTest: 0,
-                transparent: 1
-            });
 
-            emitter = new SPE.Emitter({
-                type: 'cube',
+	var size = objInfo[2];
+	var duration = time;
+	var nParticule = objInfo[4]/2;
 
-                radius: asteroidRadius * 1.2,
+	var colors = ['white','gray','black']
+	
+	if(isBurn){
+		colors = ['blue','yellow','red'];
+	}
 
-                position: new THREE.Vector3(0, 0, 0),
-                positionSpread: new THREE.Vector3( 1.5, 1, 1.5 ),
 
-                acceleration: new THREE.Vector3(0, 1, 0),
-                accelerationSpread: new THREE.Vector3( 0, 0, 0 ),
 
-                velocity: new THREE.Vector3(0, 0, 0),
-                velocitySpread: new THREE.Vector3(0, 0, 0),
+    particleGroup = new SPE.Group({
+        texture: THREE.ImageUtils.loadTexture('./img/smoke.png'),
+        maxAge: 2,
+        depthWrite: 0,
+        depthTest: 0,
+        transparent: 1
+    });
 
-                // Color tests
-                colorStart: new THREE.Color( 'white' ),
-                colorStartSpread: new THREE.Vector3(0, 0, 0),
+    emitter = new SPE.Emitter({
+        type: 'cube',
 
-                colorMiddle: new THREE.Color( 'yellow' ),
-                colorMiddleSpread: new THREE.Vector3(0, 0, 0),
+        radius: size,
 
-                colorEnd: new THREE.Color( 'red' ),
-                colorEndSpread: new THREE.Vector3(0, 0, 0),
+        position: new THREE.Vector3(posDecal, 0, posDecal),
+        positionSpread: new THREE.Vector3( size/2, 1, size/2 ),
 
-                // Size tests
-                sizeStart: asteroidRadius,
-                sizeStartSpread: 0,
+        acceleration: new THREE.Vector3(0, 1, 0),
+        accelerationSpread: new THREE.Vector3( 0, 0, 0 ),
 
-                sizeMiddle: 10,
-                sizeMiddleSpread: 0,
+        velocity: new THREE.Vector3(0, 0, 0),
+        velocitySpread: new THREE.Vector3(0, 0, 0),
 
-                sizeEnd: 0,
-                sizeEndSpread: 0,
+        // Color tests
+        colorStart: new THREE.Color( colors[0] ),
+        colorStartSpread: new THREE.Vector3(0, 0, 0),
 
-                // Opacity tests
-                opacityStart: 0,
-                opacityStartSpread: 0,
-                
-                opacityMiddle: 0,
-                opacityMiddleSpread: 1,
+        colorMiddle: new THREE.Color( colors[1] ),
+        colorMiddleSpread: new THREE.Vector3(0, 0, 0),
 
-                opacityEnd: 1,
-                opacityEndSpread: 0,
+        colorEnd: new THREE.Color( colors[2] ),
+        colorEndSpread: new THREE.Vector3(0, 0, 0),
 
-                particleCount: 30,
+        // Size tests
+        sizeStart: 0.5,
+        sizeStartSpread: 0,
 
-                // Angle tests
-                // angleStart: Math.PI * 0.5,
-                // angleStartSpread: Math.PI * 2,
+        sizeMiddle: 10,
+        sizeMiddleSpread: 0,
 
-                // angleMiddle: 0,
-                // angleMiddleSpread: Math.PI * 2,
+        sizeEnd: 0,
+        sizeEndSpread: 0,
 
-                // angleEnd: Math.PI * 1.5,
-                // angleEndSpread: Math.PI * 1.5
-            });
-    
+        // Opacity tests
+        opacityStart: 0,
+        opacityStartSpread: 0,
+        
+        opacityMiddle: 0,
+        opacityMiddleSpread: 1,
 
-            atmosphereBurnEmitter = new SPE.Emitter({
-                type: 'sphere',
-                radius:2,
-                position: new THREE.Vector3(0, 0.5, 0 ),
-                acceleration: new THREE.Vector3( 0, 0.3, 0 ),
-                velocitySpread: new THREE.Vector3( 1, 0, 0 ),
-                sizeStart:0.3,
-                particleCount: 50
-            });
+        opacityEnd: 1,
+        opacityEndSpread: 0,
 
-           // 
+        particleCount: nParticule,
 
-           particleGroup.addEmitter( emitter );
-           particleGroup.addEmitter( atmosphereBurnEmitter );
+        duration: duration
 
-           view3d.scene.add( particleGroup.mesh );
+        // Angle tests
+        // angleStart: Math.PI * 0.5,
+        // angleStartSpread: Math.PI * 2,
 
-            //document.querySelector('.numParticles').textContent = 'Total particles: ' + emitter.numParticles;
-        }
+        // angleMiddle: 0,
+        // angleMiddleSpread: Math.PI * 2,
+
+        // angleEnd: Math.PI * 1.5,
+        // angleEndSpread: Math.PI * 1.5
+    });
+
+
+    atmosphereBurnEmitter = new SPE.Emitter({
+        type: 'cube',
+        radius:size,
+        position: new THREE.Vector3(posDecal, 0.5, posDecal ),
+        positionSpread: new THREE.Vector3( size/2, 1, size/2 ),
+        acceleration: new THREE.Vector3( 0, 0.2, 0 ),
+        velocitySpread: new THREE.Vector3( 1, 0, 0 ),
+        sizeStart:0.1,
+        particleCount: nParticule,
+        duration: duration
+    });
+
+   // 
+
+   particleGroup.addEmitter( emitter );
+   particleGroup.addEmitter( atmosphereBurnEmitter );
+
+   view3d.scene.add( particleGroup.mesh );
+
+}
 
         
 </script>
