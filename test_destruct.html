@@ -158,7 +158,7 @@ function burning() {
 		isBurn = true;
 
 		time = 5;
-		maxDecal = Math.abs((objInfo[0]/time)*15);
+		maxDecal = Math.abs((objInfo[0]/time)*17);
 	    //console.log(maxDecal)
 		
 		if(timer) clearInterval(timer);
@@ -248,12 +248,17 @@ function initParticles() {
 
 	var size = objInfo[2];
 	var duration = time;
-	var nParticule = objInfo[4]/4;
+	var nParticule = size*10+(objInfo[4]/4);
+	var acc = 0.3;
 
-	var colors = ['white','gray','black']
+	var colors = ['white','gray','black'];
+	var pSize = [0.5, 5, 0];
 	
 	if(isBurn){
 		colors = ['blue','yellow','red'];
+		pSize = [0.5, 10, 0];
+		duration +=2;
+		acc = 1;
 	}
 
 
@@ -271,10 +276,10 @@ function initParticles() {
 
         radius: size,
 
-        position: new THREE.Vector3(posDecal, 0, posDecal),
-        positionSpread: new THREE.Vector3( size/2, 1, size/2 ),
+        position: new THREE.Vector3(posDecal, 0.2, posDecal),
+        positionSpread: new THREE.Vector3( size*0.8, 1, size*0.8 ),
 
-        acceleration: new THREE.Vector3(0, 1, 0),
+        acceleration: new THREE.Vector3(0, acc, 0),
         accelerationSpread: new THREE.Vector3( 0, 0, 0 ),
 
         velocity: new THREE.Vector3(0, 0, 0),
@@ -291,13 +296,13 @@ function initParticles() {
         colorEndSpread: new THREE.Vector3(0, 0, 0),
 
         // Size tests
-        sizeStart: 0.5,
+        sizeStart: pSize[0],
         sizeStartSpread: 0,
 
-        sizeMiddle: 10,
-        sizeMiddleSpread: 0,
+        sizeMiddle: pSize[1],
+        sizeMiddleSpread: 0.2,
 
-        sizeEnd: 0,
+        sizeEnd: pSize[2],
         sizeEndSpread: 0,
 
         // Opacity tests
@@ -329,13 +334,13 @@ function initParticles() {
     atmosphereBurnEmitter = new SPE.Emitter({
         type: 'cube',
         radius:size,
-        position: new THREE.Vector3(posDecal, 0.5, posDecal ),
-        positionSpread: new THREE.Vector3( size/2, 1, size/2 ),
-        acceleration: new THREE.Vector3( 0, 0.2, 0 ),
+        position: new THREE.Vector3(posDecal, 0.2, posDecal ),
+        positionSpread: new THREE.Vector3( size, 1, size ),
+        acceleration: new THREE.Vector3( 0, acc/5, 0 ),
         velocitySpread: new THREE.Vector3( 1, 0, 0 ),
         sizeStart:0.1,
         particleCount: nParticule,
-        duration: duration
+        duration: duration*1.5
     });
 
    // 
