@@ -245,11 +245,11 @@ function loop() {
 var emitter, particleGroup, atmosphereBurnEmitter;
 
 function initParticles() {
-
+	var height = objInfo[1];
 	var size = objInfo[2];
 	var duration = time;
-	var nParticule = size*10+(objInfo[4]/4);
-	var acc = 0.3;
+	var nParticule = height*10+(objInfo[4]/4);
+	var acc = 0.3 + height*0.5;
 
 	var colors = ['white','gray','black'];
 	var pSize = [0.5, 5, 0];
@@ -258,7 +258,7 @@ function initParticles() {
 		colors = ['blue','yellow','red'];
 		pSize = [0.5, 10, 0];
 		duration +=2;
-		acc = 1;
+		acc = 0.5+ height*0.5;
 	}
 
 
@@ -276,8 +276,8 @@ function initParticles() {
 
         radius: size,
 
-        position: new THREE.Vector3(posDecal, 0.2, posDecal),
-        positionSpread: new THREE.Vector3( size*0.8, 1, size*0.8 ),
+        position: new THREE.Vector3(posDecal, 0, posDecal),
+        positionSpread: new THREE.Vector3( size*0.8, height , size*0.8 ),
 
         acceleration: new THREE.Vector3(0, acc, 0),
         accelerationSpread: new THREE.Vector3( 0, 0, 0 ),
