@@ -248,8 +248,8 @@ function initParticles() {
 	var height = objInfo[1];
 	var size = objInfo[2];
 	var duration = time;
-	var nParticule = height*10+(objInfo[4]/4);
-	var acc = 0.3 + height*0.5;
+	var nParticule =Math.abs(( height*4)+( size*4)+(objInfo[4]/4));
+	var acc = 0.5 + height*0.5;
 
 	var colors = ['white','gray','black'];
 	var pSize = [0.5, 5, 0];
@@ -258,7 +258,7 @@ function initParticles() {
 		colors = ['blue','yellow','red'];
 		pSize = [0.5, 10, 0];
 		duration +=2;
-		acc = 0.5+ height*0.5;
+		acc = 1+ height*0.5;
 	}
 
 
