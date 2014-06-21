@@ -12,3 +12,5 @@ The goal is create full 3d city builder. All game simulation in a worker,<br>
 with massive use of [Three.js](https://github.com/mrdoob/three.js) and [Sea3d](https://github.com/sunag/sea3d).
 
 Work in progress
+
+[building destroy](http://lo-th.github.io/3d.city/test_destruct.html) 
