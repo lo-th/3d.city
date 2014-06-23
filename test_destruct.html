@@ -45,6 +45,9 @@ var isDestroy = false;
 var isBurn = false;
 var objInfo;
 
+var snd_destroy = new Audio("./sound/explosion-low.mp3");
+var snd_destroy2 = new Audio("./sound/explosion-high.mp3");
+
 window.onload = init;
 
 function init(){
@@ -166,6 +169,8 @@ function burning() {
 
 		initParticles();
 
+		snd_destroy.play();
+
 	}
 }
 
@@ -183,6 +188,8 @@ function destroy() {
 		timer = setInterval(destroyCycle, timestep);
 
 		initParticles();
+
+		snd_destroy2.play();
     }
 }
 
