@@ -10,6 +10,8 @@ var V3D = { REVISION: '0.2a' };
 V3D.Base = function(){
 	this.container = document.getElementById( 'container' );
 
+	this.snd_layzone = new Audio("./sound/layzone.mp3");
+
 	this.isWithBackground = true;
 	this.isWithHeight = false;
 
@@ -805,17 +807,22 @@ V3D.Base.prototype = {
 			
 
 
-			if(v<4 && v!==0)this.addBaseBuilding(x, py, y, v);
-			if(v==8 || v==9){
+			if(v<4 && v!==0){
+				this.addBaseBuilding(x, py, y, v);
+				this.snd_layzone.play();
+			}
+			if(v==8 || v==9 || v==4 || v==5 || v==7 || v==10 || v==11 || v==12){
 			    var mii = new THREE.Mesh( this.buildingGeo[v], this.townMaterial );
 			    mii.position.set(x, py, y);
 			    this.scene.add(mii);
+			    this.snd_layzone.play();
 			}
-			if( v==4 || v==5 || v==7 || v==10 || v==11 || v==12 ){
+			/*if( v==4 || v==5 || v==7 || v==10 || v==11 || v==12 ){
 				var miii = new THREE.Mesh( this.buildingGeo[v], this.townMaterial );
 			    miii.position.set(x, py, y);
 			    this.scene.add(miii);
-			}
+			    
+			}*/
 
 		} else {
 			this.removeTree(x,y);

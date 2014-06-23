@@ -3,7 +3,7 @@ var transMessage = self.webkitPostMessage || self.postMessage;
 
 var CITY = {};
 var timer;
-var timestep = 1000/30;
+//var timestep = 1000/30;
 var Game;
 var pcount = 0;
 var power;
@@ -14,15 +14,19 @@ var trans = false;// ( ab.byteLength === 0 );
 
 self.onmessage = function (e) {
 	var p = e.data.tell;
-	if( p == "INIT" ) Game = new CITY.Game(e.data.url);//init(e.data.url);   
+	if( p == "INIT" ) Game = new CITY.Game(e.data.url, e.data.timestep);
     if( p == "NEWMAP" ) Game.newMap(); 
     if( p == "PLAYMAP" ) Game.playMap();
     if( p == "TOOL" ) Game.tool(e.data.name);
     if( p == "MAPCLICK" ) Game.mapClick(e.data.x, e.data.y);
+
     if( p == "RUN" && trans) updateTrans(e.data);
+
+    if( p == "DIFFICULTY" ) Game.changeDifficulty(e.data.n);
+    if( p == "SPEED" ) Game.changeSpeed(e.data.n);
 };
 
-var updateTrans = function(data){
+/*var updateTrans = function(data){
     if (!Game.isPaused){
         Game.simulation.needPower = [];
         Game.simulation.simFrame();
@@ -43,7 +47,7 @@ var updateTrans = function(data){
     while(i--){tilesData[i] = Game.map.tilesData[i];}
 
     transMessage({ tell:"RUN", infos:Game.infos, tilesData:tilesData, anims:Game.animsData, sprites:Game.spritesData}, [tilesData.buffer]);
-};
+};*/
 
 var update = function(){
     power = null;
@@ -73,12 +77,13 @@ var update = function(){
     transMessage({ tell:"RUN", infos:Game.infos, tilesData:Game.map.tilesData, powerData:power, sprites:Game.spritesData});
 };
 
-CITY.Game = function(url) {
+CITY.Game = function(url, timestep) {
     importScripts(url);
+    this.timestep = timestep;
 
     this.mapSize = [128,128];
-    this.difficulty = 2;
-    this.speed = 2;
+    this.difficulty = 0;
+    this.speed = 1;
     this.mapGen = new Micro.generateMap();
 
     this.simulation = null;
@@ -112,7 +117,9 @@ CITY.Game.prototype = {
         transMessage({ tell:"NEWMAP", tilesData:this.map.tilesData, mapSize:this.mapSize, island:this.map.isIsland, trans:trans });
     },
     playMap : function(){
-        var money = 20000 / this.difficulty; 
+        var money = 20000;
+        if(this.difficulty == 1) money = 10000;
+        if(this.difficulty == 2) money = 5000;
         this.gameTools = new Micro.GameTools(this.map);
         this.animationManager = new Micro.AnimationManager(this.map);
         this.simulation = new Micro.Simulation( this.map, this.difficulty, this.speed, true);
@@ -125,20 +132,35 @@ CITY.Game.prototype = {
         this.processMessages(messageMgr.getMessages());
 
         // update simulation time
-        if(!trans) timer = setInterval(update, timestep);
-        else update();
+        //if(!trans) 
+        this.timer = setInterval(update, 1000/this.timestep);
+        //else update();
+    },
+    changeTimeStep :function(n){
+        clearInterval(this.timer);
+        this.timestep = n;
+        this.timer = setInterval(update, 1000/this.timestep);
     },
     changeSpeed :function(n){
         // 0:pause  1:slow  2:medium  3:fast
         this.speed = n;
         if(this.speed === 0) this.isPaused = true;
         else this.isPaused = false;
-        this.simulation.setSpeed(this.speed);
+
+        if(this.speed === 4){
+            this.changeTimeStep(60);
+            this.simulation.setSpeed(this.speed-1);
+        } else {
+            if(this.timestep===60) this.changeTimeStep(30);
+            this.simulation.setSpeed(this.speed);
+        }
+        
     },
     changeDifficulty:function(n){
         // 0: easy  1: medium  2: hard
         this.difficulty = n;
-        this.simulation.setDifficulty ( this.difficulty );
+        //console.log(this.difficulty)
+        if(this.simulation)this.simulation.setDifficulty ( this.difficulty );
     },
     animatedTiles : function() {
         var animTiles = this.animationManager.getTiles(0, 0, this.mapSize[0] + 1, this.mapSize[1] + 1, this.isPaused);
@@ -167,22 +189,22 @@ CITY.Game.prototype = {
                 case Messages.BUDGET_NEEDED: this.simNeededBudget = true; this.handleBudgetRequest(); break;
                // case Messages.QUERY_WINDOW_NEEDED: this.queryWindow.open(this.handleQueryClosed.bind(this)); break;
                 case Messages.DATE_UPDATED: this.infos[0] = [TXT.months[ m.data.month ], m.data.year].join(' '); break;
-                case Messages.EVAL_UPDATED: this.infos[1] = '| ' + TXT.cityClass[m.data.classification]; this.infos[2] = ' | score:' + m.data.score; this.infos[3] = '<br>population:' + m.data.population; break;
-                case Messages.FUNDS_CHANGED: this.infos[4] = '| money:'+m.data+'$'; break;
-                case Messages.VALVES_UPDATED: this.infos[5] = '<br>RCI: ' + m.data.residential; this.infos[6] = ' | ' + m.data.commercial; this.infos[7] = ' | ' + m.data.industrial; break;
+                case Messages.EVAL_UPDATED: this.infos[1] = TXT.cityClass[m.data.classification]; this.infos[2] = m.data.score; this.infos[3] = m.data.population; break;
+                case Messages.FUNDS_CHANGED: this.infos[4] = m.data; break;
+                case Messages.VALVES_UPDATED: this.infos[5] = m.data.residential; this.infos[6] = m.data.commercial; this.infos[7] = m.data.industrial; break;
                 default: 
                     if (!messageOutput && TXT.goodMessages[m.message] !== undefined) { 
-                        this.infos[8] = '<br>' + TXT.goodMessages[m.message]; 
+                        this.infos[8] = TXT.goodMessages[m.message]; 
                         break;
                     }
                     if (!messageOutput && TXT.badMessages[m.message] !== undefined) {
                         messageOutput = true;
-                        this.infos[8] = '<br>' + TXT.badMessages[m.message];
+                        this.infos[8] = TXT.badMessages[m.message];
                         break;
                     }
                     if (!messageOutput && TXT.neutralMessages[m.message] !== undefined) {
                         messageOutput = true;
-                        this.infos[8] = '<br>' + TXT.neutralMessages[m.message] ;
+                        this.infos[8] = TXT.neutralMessages[m.message] ;
                         break;
                     }
             }
