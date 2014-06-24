@@ -226,21 +226,34 @@ V3D.Base.prototype = {
 	},
 
 	loadTextures : function (){
-		var townTexture =  THREE.ImageUtils.loadTexture( 'img/town.jpg' );
-		var buildingTexture =  THREE.ImageUtils.loadTexture( 'img/building.jpg' );
+		this.townTexture =  THREE.ImageUtils.loadTexture( 'img/town.jpg' );
+		this.buildingTexture =  THREE.ImageUtils.loadTexture( 'img/building.jpg' );
 
-		townTexture.magFilter = THREE.NearestFilter;
-        townTexture.minFilter = THREE.LinearMipMapLinearFilter;
-        townTexture.repeat.set( 1, -1 );
-		townTexture.wrapS = townTexture.wrapT = THREE.RepeatWrapping;
+		this.townTexture.magFilter = THREE.NearestFilter;
+        this.townTexture.minFilter = THREE.LinearMipMapLinearFilter;
+        this.townTexture.repeat.set( 1, -1 );
+		this.townTexture.wrapS = this.townTexture.wrapT = THREE.RepeatWrapping;
         
-		buildingTexture.magFilter = THREE.NearestFilter;
-        buildingTexture.minFilter = THREE.LinearMipMapLinearFilter;
-        buildingTexture.repeat.set( 1, -1 );
-		buildingTexture.wrapS = buildingTexture.wrapT = THREE.RepeatWrapping;
+		this.buildingTexture.magFilter = THREE.NearestFilter;
+        this.buildingTexture.minFilter = THREE.LinearMipMapLinearFilter;
+        this.buildingTexture.repeat.set( 1, -1 );
+		this.buildingTexture.wrapS = this.buildingTexture.wrapT = THREE.RepeatWrapping;
 
-	    this.townMaterial = new THREE.MeshBasicMaterial( { map: townTexture } );
-	    this.buildingMaterial = new THREE.MeshBasicMaterial( { map: buildingTexture } );
+	    this.townMaterial = new THREE.MeshBasicMaterial( { map: this.townTexture } );
+	    this.buildingMaterial = new THREE.MeshBasicMaterial( { map: this.buildingTexture } );
+	},
+
+	textureSwitch : function(type){
+		switch(type){
+			case 'normal': 
+			    this.townMaterial.map = this.townTexture;
+			    this.buildingMaterial.map =  this.buildingTexture;
+			break;
+			case 'white':
+			    
+			break;
+		}
+
 	},
 
 	//----------------------------------- SEA3D IMPORT

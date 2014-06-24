@@ -24,6 +24,11 @@ self.onmessage = function (e) {
 
     if( p == "DIFFICULTY" ) Game.changeDifficulty(e.data.n);
     if( p == "SPEED" ) Game.changeSpeed(e.data.n);
+
+    if( p == "BUDGET") Game.handleBudgetRequest();
+    if( p == "NEWBUDGET") Game.setBudget(e.data.budgetData);
+
+    if( p == "EVAL") Game.getEvaluation();
 };
 
 /*var updateTrans = function(data){
@@ -83,7 +88,7 @@ CITY.Game = function(url, timestep) {
 
     this.mapSize = [128,128];
     this.difficulty = 0;
-    this.speed = 1;
+    this.speed = 2;
     this.mapGen = new Micro.generateMap();
 
     this.simulation = null;
@@ -235,6 +240,12 @@ CITY.Game.prototype = {
             this.processMessages(messageMgr.getMessages());
         }
     },
+    setBudget : function(budgetData){
+        this.simulation.budget.cityTax = budgetData[0];
+        this.simulation.budget.roadPercent = budgetData[1]/100;
+        this.simulation.budget.firePercent = budgetData[2]/100;
+        this.simulation.budget.policePercent = budgetData[3]/100;
+    },
     handleBudgetRequest : function() {
         this.budgetShowing = true;
 
@@ -250,6 +261,8 @@ CITY.Game.prototype = {
             taxesCollected: this.simulation.budget.taxFund
         };
 
+        transMessage({ tell:"BUDGET", budgetData:budgetData});
+
         if (this.simNeededBudget) {
             this.simulation.budget.doBudget(this.simulation.messageManager);
             this.simNeededBudget = false;
@@ -257,9 +270,27 @@ CITY.Game.prototype = {
             this.simulation.budget.updateFundEffects();
         }
 
+
+
         
         //this.budgetWindow.open(this.handleBudgetClosed.bind(this), budgetData);
         // Let the input know we handled this request
         //this.inputStatus.budgetHandled();
+    },
+
+    getEvaluation : function(){
+        var evaluation = this.simulation.evaluation;
+        var problemes = "";
+        for (var i = 0; i < 4; i++) {
+            var problemNo = evaluation.getProblemNumber(i);
+            var text = '';
+            if (problemNo !== -1) text =TXT.problems[problemNo];
+            problemes += text+"<br>";
+        }
+
+        var evalData = [ evaluation.cityYes, problemes];
+
+        transMessage({ tell:"EVAL", evalData:evalData});
+
     }
 };

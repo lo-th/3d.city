@@ -281,7 +281,7 @@ Micro.Simulation.prototype = {
         var cityMonth = Math.floor(this.cityTime % 48) >> 2;
 
         if (cityYear >= megalinium) {
-            this.setYear(this.startingYear);//startingYear);
+            this.setYear(this.startingYear);
             return;
         }
 

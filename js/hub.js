@@ -16,15 +16,16 @@ HUB.Base = function(){
 	this.timer = null;
 	this.bg = 1;
 
-	this.buttons = [];
-
     this.R=null;
     this.C=null;
     this.I=null;
 
     this.colors = ['#ffffff', '#338099'];//#377BA7
 
-    this.radius = "-moz-border-radius: 60px; -webkit-border-radius: 60px; border-radius: 60px;";
+    this.radius = "-moz-border-radius: 20px; -webkit-border-radius: 20px; border-radius: 20px;";
+
+    this.budgetWindow = null;
+    this.evaluationWindow  = null;
 }
 
 HUB.Base.prototype = {
@@ -69,16 +70,17 @@ HUB.Base.prototype = {
     initStartHub : function(){
         this.full = document.createElement('div'); 
         this.full.style.cssText ='position:absolute; top:30px; left:50%; margin-left:-154px; width:316px; pointer-events:none;';
+        this.full.id = 'fullStart';
+
         this.hub.appendChild( this.full );
-        this.addButton('Play Game', [300,50, 40]);
-    	this.addButton('New Map');
-        this.addButton('Height Map');
+        var b1 = this.addButton(this.full, 'Play Game', [300,50, 40]);
+    	var b2 = this.addButton(this.full, 'New Map');
+        var b3 = this.addButton(this.full, 'Height Map');
 
-        this.buttons[0].addEventListener('click',  function ( e ) { e.preventDefault(); playMap(); }, false);
-        this.buttons[1].addEventListener('click',  function ( e ) { e.preventDefault(); newMap(); }, false);
-        this.buttons[2].addEventListener('click',  function ( e ) { e.preventDefault(); newHeightMap(); }, false);
+        b1.addEventListener('click',  function ( e ) { e.preventDefault(); playMap(); }, false);
+        b2.addEventListener('click',  function ( e ) { e.preventDefault(); newMap(); }, false);
+        b3.addEventListener('click',  function ( e ) { e.preventDefault(); newHeightMap(); }, false);
         
-
         this.addSelector("Difficulty", ['LOW', 'MEDIUM', 'HARD'], setDifficulty, 0);
     },
 
@@ -86,8 +88,8 @@ HUB.Base.prototype = {
 
     initGameHub : function(){
         this.removeSelector("Difficulty");
-        this.removeButtons();
-        this.hub.removeChild( this.full );
+        this.clearElement('fullStart');
+
         this.toolSet = document.createElement('div');
         this.toolSet.style.cssText ='position:absolute; top:60px; right:12px; width:200px; height:500px; pointer-events:none; display:block;';
         this.hub.appendChild( this.toolSet );
@@ -97,24 +99,28 @@ HUB.Base.prototype = {
         this.toolInfo.innerHTML = "Selecte<br>Tool";
 
         var bname = ['MOVE', 'residential','commercial','industrial','Police', 'park', 'Fire','road','bulldozer','rail','coal','wire','nuclear', 'Port','stadium','airport','query', 'DRAG'];
+        var b;
         for(var i = 0; i<bname.length; i++){
-            if(i==0 || i==17) this.addButton(bname[i], [60, 16, 14] );
-            else if(i<4)this.addButton(bname[i], [50,70, 14], true, this.showToolInfo );
-            else this.addButton(bname[i], [50,50, 14], true, this.showToolInfo );
-        }
-        for(var i = 0; i<this.buttons.length; i++){
-            this.buttons[i].name = i;
-            this.buttons[i].addEventListener('click',  function(e){ e.preventDefault(); selectTool(this.name); }, false);
+            if(i==0 || i == 17) b = this.addButton(this.hub, bname[i], [60, 16, 14] );
+            else if(i<4) b = this.addButton(this.toolSet, bname[i], [50,70, 14], true, this.showToolInfo );
+            else b = this.addButton(this.toolSet, bname[i], [50,50, 14], true, this.showToolInfo );
+
+            b.name = i;
+            b.addEventListener('click',  function(e){ e.preventDefault(); selectTool(this.name); }, false);
         }
 
-        /*this.infoSet = document.createElement('div');
-        this.infoSet.style.cssText ='position:absolute; top:12px; left:12px; width:180px; height:500px; pointer-events:none; display:block;';
-        this.infoMsg = document.createElement('div');
-        this.infoMsg.style.cssText ='margin-left:10px; margin-right:10px; margin-top:10px; width:160px; height:40px; pointer-events:none; font-size:14px; ';
-        this.infoSet.appendChild( this.infoMsg );
-        this.hub.appendChild( this.infoSet );*/
+        this.addSelector("Speed", ['PAUSE', '1', '2', '3', '4'], setSpeed, 2);
 
-        this.addSelector("Speed", ['PAUSE', '1', '2', '3', '4'], setSpeed, 1);
+        var b1 = this.addButton(this.hub, 'BUDGET', [70,16,14], false);
+        b1.addEventListener('click',  function ( e ) { e.preventDefault(); getBudjet(); }, false);
+
+        var b2 = this.addButton(this.hub, 'EVAL', [70,16,14], false);
+        b2.addEventListener('click',  function ( e ) { e.preventDefault(); getEval(); }, false);
+
+        //this.addButton('Disasters', [70,16,14], false);//20
+        //this.buttons[18].addEventListener('click',  function ( e ) { e.preventDefault(); getBudjet(); }, false);
+
+
 
         this.initCITYinfo();
         
@@ -123,9 +129,6 @@ HUB.Base.prototype = {
     //-----------------------------------CITY INFO
 
     initCITYinfo : function(){
-        /*var cont = document.createElement('div');
-        cont.id = 'INFO';
-        cont.style.cssText = 'font-size:30px; position:absolute; width:100%; height:70px; top:20px;';*/
 
         this.date = document.createElement('div');
         this.date.style.cssText = 'font-size:16px; position:absolute; width:100px; height:70px; top:20px; left:20px; text-align:left;';
@@ -141,11 +144,6 @@ HUB.Base.prototype = {
 
         this.msg = document.createElement('div');
         this.msg.style.cssText = 'font-size:14px; position:absolute; width:400px; height:70px; top:50px; left:20px; text-align:left;';
-
-
-
-
-
 
         this.hub.appendChild( this.date );
         this.hub.appendChild( this.money );
@@ -164,8 +162,213 @@ HUB.Base.prototype = {
 
         this.msg.innerHTML = infos[8];
 
-
         this.updateRCI( infos[5], infos[6], infos[7] );
+    },
+
+    //-----------------------------------QUERY
+
+    //-----------------------------------ALL WINDOW
+
+    testOpen : function(){
+        var t = "";
+        if(this.budgetWindow !== null && this.budgetWindow.className == "open"){
+            this.closeBudget();
+            t='budget';
+        }
+        if(this.evaluationWindow !== null && this.evaluationWindow.className == "open"){
+            this.closeEval();
+            t='evaluation';
+        }
+
+        return t;
+
+    },
+
+    //-----------------------------------BUDGET WINDOW
+
+    openEval : function(data){
+        _this = this;
+
+        var test = this.testOpen();
+        if(test == 'evaluation') return;
+
+        if(this.evaluationWindow == null){
+            this.evaluationWindow = document.createElement('div');
+            this.evaluationWindow.style.cssText =this.radius+ 'position:absolute; top:100px; left:140px; width:200px; height:300px; pointer-events:none; display:block; background:#eeeeee; ';
+            this.hub.appendChild( this.evaluationWindow );
+
+            this.evaltOpinion = document.createElement('div');
+            this.evaltOpinion.style.cssText ='position:absolute; top:10px; left:10px; width:180px; height:100px; pointer-events:none; color:black; ';
+            this.evaluationWindow.appendChild( this.evaltOpinion );
+
+            this.evaltYes = document.createElement('div');
+            this.evaltYes.style.cssText ='position:absolute; top:46px; left:26px; width:60px; height:20px; pointer-events:none; color:green; font-size:16px; ';
+            this.evaluationWindow.appendChild( this.evaltYes );
+
+            this.evaltNo = document.createElement('div');
+            this.evaltNo.style.cssText ='position:absolute; top:46px; right:26px; width:60px; height:20px; pointer-events:none; color:red;  font-size:16px; ';
+            this.evaluationWindow.appendChild( this.evaltNo );
+
+            this.evaltProb = document.createElement('div');
+            this.evaltProb.style.cssText ='position:absolute; top:90px; left:10px; width:180px; height:60px; pointer-events:none; color:black;  font-size:16px; ';
+            this.evaluationWindow.appendChild( this.evaltProb );
+
+            this.evaltOpinion.innerHTML = "<b>Public opinion</b><br>Is the mayor doing a good job ?<br> <br> <br>What are the worst problems ?<br>"
+
+        } else {
+            this.evaluationWindow.style.display = 'block';
+        }
+
+        this.evaltYes.innerHTML = 'YES:' + data[0] + '%';
+        this.evaltNo.innerHTML = 'NO:' +(100-data[0] )+ '%';
+
+        this.evaltProb.innerHTML = data[1];
+
+        this.evaluationWindow.className = "open";
+    },
+
+    closeEval :function(){
+        this.evaluationWindow.style.display = 'none';
+        this.evaluationWindow.className = "close";
+    },
+
+    //-----------------------------------BUDGET WINDOW
+
+    openBudget : function(data){
+        _this = this;
+
+        var test = this.testOpen();
+        if(test == 'budget') return;
+
+        /*if(this.budgetWindow !== null && this.budgetWindow.className == "open"){
+            this.closeBudget(); 
+            return;
+        }*/
+
+        this.dataKeys = ['roadFund', 'roadRate', 'fireFund', 'fireRate','policeFund', 'policeRate', 'taxRate', 'totalFunds', 'taxesCollected'];
+
+        var i = this.dataKeys.length;
+
+        var elem;
+        while(i--){
+            this[this.dataKeys[i]] = data[this.dataKeys[i]];
+        }
+
+        var previousFunds = data.totalFunds;
+        var taxesCollected = data.taxesCollected;
+        var cashFlow = taxesCollected - this.roadFund - this.fireFund - this.policeFund;
+        var currentFunds = previousFunds + cashFlow;
+
+        if(this.budgetWindow == null){
+            this.budgetWindow = document.createElement('div');
+            this.budgetWindow.style.cssText =this.radius+ 'position:absolute; top:100px; left:140px; width:200px; height:300px; pointer-events:none; display:block; background:#eeeeee; ';
+            this.hub.appendChild( this.budgetWindow );
+
+            this.addSlider(this.budgetWindow, 10, 'Taxe', this.taxRate, null, 'green', 20);
+            this.addSlider(this.budgetWindow, 70, 'Roads', this.roadRate, this.roadFund, 'red', 100);
+            this.addSlider(this.budgetWindow, 110, 'Fire', this.fireRate, this.fireFund, 'red', 100);
+            this.addSlider(this.budgetWindow, 150, 'Police', this.policeRate, this.policeFund, 'red', 100);
+
+            this.budgetResult = document.createElement('div');
+            this.budgetResult.style.cssText ='position:absolute; top:200px; left:10px; width:180px; height:300px; pointer-events:none; color:black; ';
+            
+            this.budgetWindow.appendChild( this.budgetResult );
+
+            var bg1 = this.addButton(this.budgetWindow, 'CLOSE', [70,16,14], false);
+            var bg2 = this.addButton(this.budgetWindow, 'APPLY', [70,16,14], false);
+
+            bg1.addEventListener('click',  function(e){ e.preventDefault(); _this.closeBudget(); }, false);
+            bg2.addEventListener('click',  function(e){ e.preventDefault(); _this.applyBudget(); }, false);
+
+        } else {
+            this.budgetWindow.style.display = 'block';
+            this.setBudgetValue();
+        }
+
+        this.budgetResult.innerHTML = "Annual receipts:" + cashFlow+"$"+"<br>Taxe collected:" + taxesCollected+"$";
+
+        this.budgetWindow.className = "open";
+
+    },
+
+    applyBudget :function(){
+        this.budgetWindow.style.display = 'none';
+        this.budgetWindow.className = "close";
+
+        setBudjet([this.taxRate, this.roadRate, this.fireRate, this.policeRate ]);
+    },
+
+    closeBudget :function(){
+        this.budgetWindow.style.display = 'none';
+        this.budgetWindow.className = "close";
+    },
+
+    setBudgetValue:function(){
+        this.setSliderValue('Taxe', this.taxRate, 20, null);
+        this.setSliderValue('Roads', this.roadRate, 100, this.roadFund);
+        this.setSliderValue('Fire', this.fireRate, 100, this.fireFund);
+        this.setSliderValue('Police', this.policeRate, 100, this.policeFund);
+    },
+
+    //-----------------------------------SLIDER
+
+    addSlider : function(target, py, name, value, v2, color, max){
+        var _this = this;
+        var txt = document.createElement( 'div' );
+        var bg = document.createElement( 'div' );
+        var sel = document.createElement( 'div' );
+        txt.style.cssText ='position:absolute; left:10px; top:-20px; pointer-events:none; width:180px; height:20px; font-size:12px; color:black; ';
+        bg.style.cssText =this.radius+'position:absolute; left:10px; top:'+(py+20)+'px; padding:0; cursor:w-resize; pointer-events:auto; width:180px; height:20px; background-color:#cccccc; ';
+        sel.style.cssText =this.radius+'position:absolute; pointer-events:none; margin:5px; width:100px; height:10px; background-color:'+color+';';
+        target.appendChild( bg );
+        bg.appendChild( sel );
+        bg.appendChild( txt );
+        bg.name = name;
+        bg.id = name;
+
+        if(v2!==null){
+            txt.innerHTML = name+" "+value+'% of '+v2+"$ = " + Math.floor(v2 * (value / 100))+"$";
+        } else {
+            txt.innerHTML = name+" "+value+'%';
+        }
+
+        sel.style.width = 170*(value/max)+'px';
+        bg.className = "up";
+
+        bg.addEventListener( 'mouseout', function(e){ e.preventDefault();this.className = "up"; this.style.backgroundColor = '#cccccc'; }, false );
+        bg.addEventListener( 'mouseover', function(e){ e.preventDefault(); this.style.backgroundColor = '#dedede'; }, false );
+        bg.addEventListener( 'mouseup', function(e){ e.preventDefault(); this.className = "up"; }, false );
+        bg.addEventListener( 'mousedown', function(e){ e.preventDefault(); this.className = "down"; _this.dragSlider(this, e.clientX, max); }, false );
+        bg.addEventListener( 'mousemove', function(e){ e.preventDefault(); _this.dragSlider(this, e.clientX, max); } , false );
+    },
+
+    setSliderValue:function(name, value, max, v2){
+        var slide = document.getElementById(name);
+        var children = slide.childNodes;
+        children[0].style.width = 170*(value/max)+'px';
+        if(v2!==null){
+            children[1].innerHTML = name+" "+value+'% of '+v2+"$ = " + Math.floor(v2 * (value / 100))+"$";
+        } else {
+            children[1].innerHTML = name+" "+value+'%';
+        }
+    },
+
+    dragSlider : function(t, x, max){
+        if(t.className == "down"){
+            var children = t.childNodes;
+            var rect = t.getBoundingClientRect();
+            var value = Math.round(((x-rect.left)/170)*max);
+            if(value<0) value = 0;
+            if(value>max) value = max;
+            children[0].style.width = 170*(value/max)+'px';
+
+            switch(t.name){
+                case 'Taxe': children[1].innerHTML = t.name+" "+value+'%'; this.taxRate = value; break;
+                case 'Roads': children[1].innerHTML = t.name+" "+value+'% of '+this.roadFund+"$ = " + Math.floor(this.roadFund * (value / 100))+"$"; this.roadRate = value; break;
+                case 'Fire': children[1].innerHTML = t.name+" "+value+'% of '+this.fireFund+"$ = " + Math.floor(this.fireFund * (value / 100))+"$"; this.fireRate = value; break;
+                case 'Police': children[1].innerHTML = t.name+" "+value+'% of '+this.policeFund+"$ = " + Math.floor(this.policeFund * (value / 100))+"$"; this.policeRate = value; break;
+            }
+        }
     },
 
 
@@ -283,18 +486,13 @@ HUB.Base.prototype = {
 
     //------------------------------------------
 
-    /*showInfo : function(){
-        if(this.infoMsg)this.infoMsg.innerHTML = gameData.join("\n");
-    },*/
-
     showToolInfo : function(id, t){
         var name = view3d.toolSet[id].tool;
         name = name.charAt(0).toUpperCase() + name.substring(1).toLowerCase();
-
         t.toolInfo.innerHTML = name+'<br>'+view3d.toolSet[id].price+"$";
     },
 
-    addButton : function(name, size, tool, extra){
+    addButton : function(target, name, size, tool, extra){
         _this = this;
         if(!size) size = [134, 30, 22];
     	//var b = this.createLabel(name, size, true);
@@ -302,33 +500,32 @@ HUB.Base.prototype = {
         var defStyle = 'font-size:'+size[2]+'px; border:4px solid '+this.colors[1]+'; background:'+this.colors[1]+'; width:'+size[0]+'px; height:'+size[1]+'px; margin:4px; padding:4px; pointer-events:auto;  cursor:pointer; display:inline-block; font-weight:bold;' + this.radius;
         b.textContent = name;
     	if(!tool){
-            if(name == 'MOVE'){
-                b.style.cssText = defStyle+'position:absolute; left:270px; bottom:20px; ';
-                this.hub.appendChild( b );
-            } else if(name == 'DRAG'){
-                b.style.cssText = defStyle+'position:absolute; left:358px; bottom:20px;';
-                this.hub.appendChild( b );
-            } else {
-                b.style.cssText =defStyle+ 'margin-top:20px;';
-                this.full.appendChild( b );
-            }
+            if(name == 'MOVE') b.style.cssText = defStyle+'position:absolute; left:270px; bottom:20px; ';
+            else if(name == 'DRAG') b.style.cssText = defStyle+'position:absolute; left:358px; bottom:20px;';
+            else if(name == 'BUDGET') b.style.cssText = defStyle+'position:absolute; left:20px; top:100px;';
+            else if(name == 'EVAL') b.style.cssText = defStyle+'position:absolute; left:20px; top:140px;';
+            else if(name == 'CLOSE') b.style.cssText = defStyle+'position:absolute; left:10px; bottom:10px; ';
+            else if(name == 'APPLY') b.style.cssText = defStyle+'position:absolute; rigth:10px; bottom:10px; ';
+            else b.style.cssText =defStyle+ 'margin-top:20px;';
         } else {
             b.style.cssText = defStyle+'margin:2px; padding:0px; overflow:hidden;';
-            this.toolSet.appendChild( b );
         }
 
         var _this = this;
     	b.addEventListener( 'mouseover', function ( e ) { e.preventDefault(); this.style.border = '4px solid '+_this.colors[0];  this.style.backgroundColor = _this.colors[0]; this.style.color = _this.colors[1];if(extra) extra(this.name, _this) }, false );
 	    b.addEventListener( 'mouseout', function ( e ) { e.preventDefault(); this.style.border = '4px solid '+_this.colors[1]; this.style.backgroundColor = _this.colors[1]; this.style.color = _this.colors[0];  }, false );
-	    //if(fun!==null) b.addEventListener('click', fun || function(e){}, false);
 
-    	this.buttons.push(b);
+        target.appendChild( b );
+
+        return b;
     },
-    removeButtons : function(){
-        var i = this.buttons.length;
-        while(i--){
-            this.full.removeChild( this.buttons[i] );
-        }
-        this.buttons = [];
+
+    clearElement : function(id){
+        var el = document.getElementById(id);
+        var children = el.childNodes;
+        var i = children.length;
+        while(i--) el.removeChild( children[i] );
+
+        this.hub.removeChild( el );
     }
 }
