@@ -16,6 +16,9 @@ V3D.Base = function(){
 	this.isWithHeight = false;
 
 	this.clock = null;
+
+	//this.tileSize = 32;
+	this.mu = 1
 	
 	this.ToRad = Math.PI / 180;
     this.camera = null; 
@@ -169,6 +172,9 @@ V3D.Base.prototype = {
     	this.townMaterial.map.needsUpdate = true;
     	this.buildingMaterial.map.needsUpdate = true;
 
+    	//this.townMaterial.transparent=true;
+    	//this.buildingMaterial.transparent=true;
+
     	//this.renderer.autoClear = this.isWithBackground;
     	var _this = this;
     	this.container.appendChild( _this.renderer.domElement );
@@ -228,6 +234,9 @@ V3D.Base.prototype = {
 	loadTextures : function (){
 		this.townTexture =  THREE.ImageUtils.loadTexture( 'img/town.jpg' );
 		this.buildingTexture =  THREE.ImageUtils.loadTexture( 'img/building.jpg' );
+
+		//this.townTexture =  THREE.ImageUtils.loadTexture( 'img/town-compressor.png' );
+		//this.buildingTexture =  THREE.ImageUtils.loadTexture( 'img/building-compressor.png' );
 
 		this.townTexture.magFilter = THREE.NearestFilter;
         this.townTexture.minFilter = THREE.LinearMipMapLinearFilter;
@@ -359,7 +368,7 @@ V3D.Base.prototype = {
 		// THREE
 
 		this.treeGeo = [];
-		this.treeGeo[0] = this.meshs['tree0'].geometry;
+		/*this.treeGeo[0] = this.meshs['tree0'].geometry;
 		this.treeGeo[1] = this.meshs['tree0'].geometry.clone();
 		this.treeGeo[2] = this.meshs['tree0'].geometry.clone();
 		this.treeGeo[3] = this.meshs['tree0'].geometry.clone();
@@ -367,13 +376,23 @@ V3D.Base.prototype = {
 		this.treeGeo[4] = this.meshs['tree1'].geometry;
 		this.treeGeo[5] = this.meshs['tree1'].geometry.clone();
 		this.treeGeo[6] = this.meshs['tree2'].geometry;
-		this.treeGeo[7] = this.meshs['tree2'].geometry.clone();
+		this.treeGeo[7] = this.meshs['tree2'].geometry.clone();*/
+
+		this.treeGeo[0] = this.meshs['tt3'].geometry;
+		this.treeGeo[1] = this.meshs['tt3'].geometry.clone();
+		this.treeGeo[2] = this.meshs['tt4'].geometry;
+		this.treeGeo[3] = this.meshs['tt4'].geometry.clone();
+
+		this.treeGeo[4] = this.meshs['tt0'].geometry;
+		this.treeGeo[5] = this.meshs['tt1'].geometry;
+		this.treeGeo[6] = this.meshs['tt2'].geometry;
+		this.treeGeo[7] = this.meshs['tt5'].geometry;
 
 		i = this.treeGeo.length;
 		
 		while(i--) {
 			this.treeGeo[i].applyMatrix( m );
-			this.treeGeo[i].applyMatrix( m2.makeRotationY( (Math.random()*360)*this.ToRad ) );
+			//this.treeGeo[i].applyMatrix( m2.makeRotationY( (Math.random()*360)*this.ToRad ) );
 		}
 	},
 	getRandomObject : function(){
@@ -519,7 +538,7 @@ V3D.Base.prototype = {
 		// background update
 		if(this.isWithBackground ){
 		    if(island>0) this.back.material.map = this.gradTexture([[0.51,0.49, 0.3], ['#6666e6','lightskyblue', 'deepskyblue']]);
-		    else this.back.material.map = this.gradTexture([[0.51,0.49, 0.3], ['#cc7f66','lightskyblue', 'deepskyblue']]);		    
+		    else this.back.material.map = this.gradTexture([[0.51,0.49, 0.3], ['#E2946D','lightskyblue', 'deepskyblue']]);		// cc7f66   
 		    this.back.position.copy(this.center);
 		} else {
 			if(island>0) this.renderer.setClearColor( 0x6666e6, 1 );
@@ -557,6 +576,7 @@ V3D.Base.prototype = {
         	texture.minFilter = THREE.LinearMipMapLinearFilter;
         	texture.needsUpdate = true;
         	this.miniTerrain[n].material.map = texture;
+        	this.miniTerrain[n].material.transparent = true;
 
         	this.terrainTxt[n] = texture;
         } 
@@ -1159,7 +1179,7 @@ V3D.Base.prototype = {
 		if( this.miniCanvas.length === 0 ){
 			for(var i=0; i<this.nlayers; i++){
 				this.miniCanvas[i] = document.createElement('canvas');
-				this.miniCanvas[i].width = this.miniCanvas[i].height = 256;
+				this.miniCanvas[i].width = this.miniCanvas[i].height = 256*this.mu;
         		this.miniCtx[i] = this.miniCanvas[i].getContext("2d");
         		this.txtNeedUpdate[i] = 0;		
         	}
@@ -1168,6 +1188,7 @@ V3D.Base.prototype = {
 		var force = false;
 		var y = this.mapSize[1];
 		var x, v, px, py, n = tilesData.length, cy, cx, layer, ar, ty = 0;
+		//var gx, gy, mx, my, gg = this.tileSize*2;
 
 		while(y--){
 			x = this.mapSize[0];
@@ -1199,14 +1220,17 @@ V3D.Base.prototype = {
 
 
                 if(isStart){ // full draw for new map
-                	
-                	this.miniCtx[layer].drawImage(this.imageSrc,px, py, 16, 16, ((x-(cx*16))*16),((y-(cy*16))*16), 16, 16);
-                }
+
+                	//this.miniCtx[layer].drawImage(this.imageSrc,px*this.mu, py*this.mu, 16*this.mu, 16*this.mu, ((x-(cx*16))*16)*this.mu,((y-(cy*16))*16)*this.mu, 16*this.mu, 16*this.mu);
+                	if(v==1)this.miniCtx[layer].clearRect(((x-(cx*16))*16)*this.mu,((y-(cy*16))*16)*this.mu, 16*this.mu, 16*this.mu);
+                	else this.miniCtx[layer].drawImage(this.imageSrc,px*this.mu, py*this.mu, 16*this.mu, 16*this.mu, ((x-(cx*16))*16)*this.mu,((y-(cy*16))*16)*this.mu, 16*this.mu, 16*this.mu);
+                 }
                 else{ // draw only need update
                 	if(x===this.forceUpdate.x && y===this.forceUpdate.y){ force=true; this.forceUpdate.x=-1; this.forceUpdate.y=-1 }
                 	if((v>43 && v<240) || force){ // road . rail . wire
                 		if(force){force = false;  if(v > 20 && v < 44){px = 0; py=0;}};// bulldozer
-                		this.miniCtx[layer].drawImage(this.imageSrc,px, py, 16, 16, ((x-(cx*16))*16),((y-(cy*16))*16), 16, 16);
+                		//this.miniCtx[layer].drawImage(this.imageSrc,px, py, 16, 16, ((x-(cx*16))*16),((y-(cy*16))*16), 16, 16);
+                		this.miniCtx[layer].drawImage(this.imageSrc,px*this.mu, py*this.mu, 16*this.mu, 16*this.mu, ((x-(cx*16))*16)*this.mu,((y-(cy*16))*16)*this.mu, 16*this.mu, 16*this.mu);
                 		this.txtNeedUpdate[layer] = 1;
                 	}
                 	else if(v>240 || v==0){

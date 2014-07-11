@@ -5,6 +5,26 @@
 
 var HUB = { REVISION: '0.1a' };
 
+
+HUB.round = [
+'<svg height="66" width="66">',
+'<circle cx="33" cy="33" r="27" stroke="none" stroke-width="0" fill="black" fill-opacity="0.1"/>',
+'</svg>'
+].join("\n");
+
+HUB.roundSelected = [
+'<svg height="66" width="66">',
+'<circle cx="33" cy="33" r="27" stroke="white" stroke-width="1" fill="black" fill-opacity="0"/>',
+'</svg>'
+].join("\n");
+
+HUB.roundSelect = [
+'<svg height="66" width="66">',
+'<circle cx="33" cy="33" r="30" stroke="white" stroke-width="6" fill="black" fill-opacity="0.3"/>',
+'</svg>'
+].join("\n");
+
+
 HUB.Base = function(){
 	this.hub = document.getElementById('hub');
 	this.full = null;
@@ -26,6 +46,11 @@ HUB.Base = function(){
 
     this.budgetWindow = null;
     this.evaluationWindow  = null;
+
+    this.selector = null;
+    this.select = null;
+
+    this.currentToolName = 0;
 }
 
 HUB.Base.prototype = {
@@ -54,6 +79,7 @@ HUB.Base.prototype = {
     fadding:function(t){
     	t.bg -= 0.1;
     	t.full.style.background = 'rgba(102,102,230,'+t.bg+')';
+       // background-image:linear-gradient(60deg, white, black);
     	if(t.bg<=0){
     		clearInterval(t.timer);
     		t.full.removeChild(t.title);
@@ -91,23 +117,38 @@ HUB.Base.prototype = {
         this.clearElement('fullStart');
 
         this.toolSet = document.createElement('div');
-        this.toolSet.style.cssText ='position:absolute; top:60px; right:12px; width:200px; height:500px; pointer-events:none; display:block;';
+        this.toolSet.style.cssText ='position:absolute; margin:0px; padding:0px; top:60px; right:12px; width:198px; height:456px; pointer-events:none;';
         this.hub.appendChild( this.toolSet );
         this.toolInfo = document.createElement('div');
-        this.toolInfo.style.cssText ='margin-left:10px; margin-right:10px; margin-top:10px; width:160px; height:40px; pointer-events:none; font-size:14px;';
-        this.toolSet.appendChild( this.toolInfo );
+        this.toolInfo.style.cssText ='position:absolute; top:15px; right:12px; width:198px; height:50px; pointer-events:none; font-size:16px;';
+        this.hub.appendChild( this.toolInfo );
         this.toolInfo.innerHTML = "Selecte<br>Tool";
 
         var bname = ['MOVE', 'residential','commercial','industrial','Police', 'park', 'Fire','road','bulldozer','rail','coal','wire','nuclear', 'Port','stadium','airport','query', 'DRAG'];
         var b;
         for(var i = 0; i<bname.length; i++){
-            if(i==0 || i == 17) b = this.addButton(this.hub, bname[i], [60, 16, 14] );
-            else if(i<4) b = this.addButton(this.toolSet, bname[i], [50,70, 14], true, this.showToolInfo );
-            else b = this.addButton(this.toolSet, bname[i], [50,50, 14], true, this.showToolInfo );
+            if(i==0 || i == 17){ b = this.addButton(this.hub, bname[i], [60, 16, 14] ); b.addEventListener('click',  function(e){ e.preventDefault(); selectTool(this.name); }, false); }
+            else if(i<4) b = this.addSVGButton(this.toolSet);//this.addButton(this.toolSet, bname[i], [50,70, 14], true, this.showToolInfo );
+            else b = this.addSVGButton(this.toolSet);//this.addButton(this.toolSet, bname[i], [50,50, 14], true, this.showToolInfo );
 
             b.name = i;
-            b.addEventListener('click',  function(e){ e.preventDefault(); selectTool(this.name); }, false);
+            //b.addEventListener('click',  function(e){ e.preventDefault(); selectTool(this.name); }, false);
         }
+
+        var testic = document.getElementById("interface"); //document.createElement('div');
+        testic.style.cssText = "position:absolute; top:60px; right:12px; width:198px; height:396px; pointer-events:none;";
+       // testic.innerHTML = HUB.police; //HUB.round;
+        this.hub.appendChild( testic );
+
+        this.selector = document.createElement('div');
+        this.selector .style.cssText = "position:absolute; top:0px; left:0px; pointer-events:none; display:none;"
+        this.selector.innerHTML = HUB.roundSelected;
+        this.toolSet.appendChild( this.selector );
+
+        this.select = document.createElement('div');
+        this.select .style.cssText = "position:absolute; top:0px; left:0px; pointer-events:none; display:none;"
+        this.select.innerHTML = HUB.roundSelect;
+        this.toolSet.appendChild( this.select );
 
         this.addSelector("Speed", ['PAUSE', '1', '2', '3', '4'], setSpeed, 2);
 
@@ -486,10 +527,55 @@ HUB.Base.prototype = {
 
     //------------------------------------------
 
+    showToolSelect : function(id){
+        if(id.name !==  this.currentToolName){
+            this.currentToolName = id.name; ///view3d.toolSet[id.name].tool;
+            var px = (id.getBoundingClientRect().left - _this.toolSet.getBoundingClientRect().left );
+            var py= (id.getBoundingClientRect().top - _this.toolSet.getBoundingClientRect().top );
+            this.select.style.left =    px+ 'px'; 
+            this.select.style.top = py+ 'px';
+            this.select.style.display = 'block';
+        } else {
+            this.select.style.display = 'none';
+            this.currentToolName = 0;
+        }
+
+        selectTool(this.currentToolName);
+    },
+
     showToolInfo : function(id, t){
-        var name = view3d.toolSet[id].tool;
+        var name = view3d.toolSet[id.name].tool;
         name = name.charAt(0).toUpperCase() + name.substring(1).toLowerCase();
-        t.toolInfo.innerHTML = name+'<br>'+view3d.toolSet[id].price+"$";
+        t.toolInfo.innerHTML = name+'<br>'+view3d.toolSet[id.name].price+"$";
+    },
+
+    addSVGButton : function(target){
+        var _this = this;
+        var b = document.createElement( 'div' );
+        b.style.cssText =" margin:0px; padding:0px; width:66px; height:66px; pointer-events:auto; cursor:pointer; display:inline-block; line-height:0px; vertical-align: top;";
+        b.innerHTML = HUB.round;
+
+        //b.addEventListener( 'mouseover', function ( e ) { e.preventDefault(); this.style.border = '4px solid '+_this.colors[0];  this.style.backgroundColor = _this.colors[0]; this.style.color = _this.colors[1]; _this.showToolInfo(this.name, _this) }, false );
+        //b.addEventListener( 'mouseout', function ( e ) { e.preventDefault(); this.style.border = '4px solid '+_this.colors[1]; this.style.backgroundColor = _this.colors[1]; this.style.color = _this.colors[0];  }, false );
+
+        //b.addEventListener( 'mouseover', function ( e ) { e.preventDefault(); this.innerHTML = HUB.roundSelected;  _this.showToolInfo(this.name, _this) }, false );
+        //b.addEventListener( 'mouseout', function ( e ) { e.preventDefault(); this.innerHTML = HUB.round;   }, false );
+
+        b.addEventListener( 'mouseover', function ( e ) { e.preventDefault();
+            var px = (this.getBoundingClientRect().left - _this.toolSet.getBoundingClientRect().left );
+            var py= (this.getBoundingClientRect().top - _this.toolSet.getBoundingClientRect().top )
+         _this.selector.style.left =    px+ 'px'; 
+         _this.selector.style.top = py+ 'px';
+         _this.selector.style.display = 'block';
+         
+          _this.showToolInfo(this, _this) }, false );
+        b.addEventListener( 'mouseout', function ( e ) { e.preventDefault();   _this.selector.style.display = 'none';}, false );
+
+        b.addEventListener('click',  function(e){ e.preventDefault();  _this.showToolSelect(this); }, false);
+       
+        target.appendChild( b );
+
+        return b;
     },
 
     addButton : function(target, name, size, tool, extra){
@@ -512,7 +598,7 @@ HUB.Base.prototype = {
         }
 
         var _this = this;
-    	b.addEventListener( 'mouseover', function ( e ) { e.preventDefault(); this.style.border = '4px solid '+_this.colors[0];  this.style.backgroundColor = _this.colors[0]; this.style.color = _this.colors[1];if(extra) extra(this.name, _this) }, false );
+    	b.addEventListener( 'mouseover', function ( e ) { e.preventDefault(); this.style.border = '4px solid '+_this.colors[0];  this.style.backgroundColor = _this.colors[0]; this.style.color = _this.colors[1];if(extra) extra(this.name  , _this) }, false );
 	    b.addEventListener( 'mouseout', function ( e ) { e.preventDefault(); this.style.border = '4px solid '+_this.colors[1]; this.style.backgroundColor = _this.colors[1]; this.style.color = _this.colors[0];  }, false );
 
         target.appendChild( b );

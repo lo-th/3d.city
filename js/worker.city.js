@@ -159,7 +159,6 @@ CITY.Game.prototype = {
             if(this.timestep===60) this.changeTimeStep(30);
             this.simulation.setSpeed(this.speed);
         }
-        
     },
     changeDifficulty:function(n){
         // 0: easy  1: medium  2: hard
@@ -291,6 +290,17 @@ CITY.Game.prototype = {
         var evalData = [ evaluation.cityYes, problemes];
 
         transMessage({ tell:"EVAL", evalData:evalData});
+
+    },
+
+
+    //______________________________________
+
+
+    saveGame : function(){
+
+    },
+    loadGame : function(){
 
     }
 };

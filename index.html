@@ -15,15 +15,18 @@ body {  padding:0; margin: 0px; background:#6666e6; font:12px sans-serif; width:
 <script src="js/three.min.js"></script>
 <script src="js/loaders/sea3d.min.js"></script>
 <script src="js/ImprovedNoise.js"></script>
+
 <script src="js/view3d.js"></script>
+<script src="js/destructor.js"></script>
 <script src="js/hub.js"></script>
 
 </head>
 <body>
 <div id="container"></div>
-<div id="debug">pre alpha 0.8</div>
+<div id="debug">pre alpha 0.9</div>
 <div id="log">loth 2014</div>
 <div id="hub"></div>
+<object id="interface" width="198" height="396" type="image/svg+xml" data="img/interface.svg"></object>
 <script>
 var d = document.getElementById('debug');
 var l = document.getElementById('log');
@@ -88,7 +91,9 @@ if(!ARRAY_TYPE) { ARRAY_TYPE = (typeof Float32Array !== 'undefined') ? Float32Ar
 function start() {
 	im = new Image();
     im.onload = initCity;
-    im.src = 'img/tiles.png';
+    //im.src = 'img/tiles.png';
+    im.src = 'img/tiles32.png';
+    view3d.mu = 2;
 }
 
 function newMap() {
