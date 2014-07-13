@@ -161,16 +161,17 @@ V3D.Base.prototype = {
 
 
          //this.renderer = new THREE.WebGLRenderer({ canvas:this.canvas, antialias:false });
-    	this.renderer = new THREE.WebGLRenderer({ precision: "mediump", antialias:false });
+    	//this.renderer = new THREE.WebGLRenderer({ precision: "mediump", antialias:false });
+    	this.renderer = new THREE.WebGLRenderer({ antialias:false });
     	this.renderer.sortObjects = false;
     	//this.renderer.setSize( this.vsize.x, this.vsize.y, true );
     	this.renderer.setSize( this.vsize.x, this.vsize.y );
 
 
-    	this.townMaterial.map.anisotropy = this.renderer.getMaxAnisotropy();
+    	/*this.townMaterial.map.anisotropy = this.renderer.getMaxAnisotropy();
     	this.buildingMaterial.map.anisotropy = this.renderer.getMaxAnisotropy();
     	this.townMaterial.map.needsUpdate = true;
-    	this.buildingMaterial.map.needsUpdate = true;
+    	this.buildingMaterial.map.needsUpdate = true;*/
 
     	//this.townMaterial.transparent=true;
     	//this.buildingMaterial.transparent=true;
@@ -238,15 +239,20 @@ V3D.Base.prototype = {
 		//this.townTexture =  THREE.ImageUtils.loadTexture( 'img/town-compressor.png' );
 		//this.buildingTexture =  THREE.ImageUtils.loadTexture( 'img/building-compressor.png' );
 
-		this.townTexture.magFilter = THREE.NearestFilter;
-        this.townTexture.minFilter = THREE.LinearMipMapLinearFilter;
+		
         this.townTexture.repeat.set( 1, -1 );
 		this.townTexture.wrapS = this.townTexture.wrapT = THREE.RepeatWrapping;
+		this.townTexture.magFilter = THREE.NearestFilter;
+        this.townTexture.minFilter = THREE.LinearMipMapLinearFilter;
         
-		this.buildingTexture.magFilter = THREE.NearestFilter;
-        this.buildingTexture.minFilter = THREE.LinearMipMapLinearFilter;
+		
         this.buildingTexture.repeat.set( 1, -1 );
 		this.buildingTexture.wrapS = this.buildingTexture.wrapT = THREE.RepeatWrapping;
+		this.buildingTexture.magFilter = THREE.NearestFilter;
+        this.buildingTexture.minFilter = THREE.LinearMipMapLinearFilter;
+
+        this.buildingTexture.needsUpdate = true;
+        this.townTexture.needsUpdate = true;
 
 	    this.townMaterial = new THREE.MeshBasicMaterial( { map: this.townTexture } );
 	    this.buildingMaterial = new THREE.MeshBasicMaterial( { map: this.buildingTexture } );
