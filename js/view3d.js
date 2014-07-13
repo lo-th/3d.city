@@ -582,7 +582,7 @@ V3D.Base.prototype = {
         	texture.minFilter = THREE.LinearMipMapLinearFilter;
         	texture.needsUpdate = true;
         	this.miniTerrain[n].material.map = texture;
-        	this.miniTerrain[n].material.transparent = true;
+        	//this.miniTerrain[n].material.transparent = true;
 
         	this.terrainTxt[n] = texture;
         } 
@@ -1217,7 +1217,8 @@ V3D.Base.prototype = {
 					}
 					if(v > 20 && v < 44){// tree
 						if( this.isWithHeight ) ty = this.heightData[ n ];
-						this.addTree( x, ty, y, v, layer ); v=0;
+						this.addTree( x, ty, y, v, layer ); 
+						v=0;
 				    } 
 				}
 				//if(isStart){if(v > 20 && v < 44){ v=0;};}
@@ -1228,8 +1229,9 @@ V3D.Base.prototype = {
                 if(isStart){ // full draw for new map
 
                 	//this.miniCtx[layer].drawImage(this.imageSrc,px*this.mu, py*this.mu, 16*this.mu, 16*this.mu, ((x-(cx*16))*16)*this.mu,((y-(cy*16))*16)*this.mu, 16*this.mu, 16*this.mu);
-                	if(v==1)this.miniCtx[layer].clearRect(((x-(cx*16))*16)*this.mu,((y-(cy*16))*16)*this.mu, 16*this.mu, 16*this.mu);
-                	else this.miniCtx[layer].drawImage(this.imageSrc,px*this.mu, py*this.mu, 16*this.mu, 16*this.mu, ((x-(cx*16))*16)*this.mu,((y-(cy*16))*16)*this.mu, 16*this.mu, 16*this.mu);
+                	//if(v==1)this.miniCtx[layer].clearRect(((x-(cx*16))*16)*this.mu,((y-(cy*16))*16)*this.mu, 16*this.mu, 16*this.mu);
+                	//else 
+                		this.miniCtx[layer].drawImage(this.imageSrc,px*this.mu, py*this.mu, 16*this.mu, 16*this.mu, ((x-(cx*16))*16)*this.mu,((y-(cy*16))*16)*this.mu, 16*this.mu, 16*this.mu);
                  }
                 else{ // draw only need update
                 	if(x===this.forceUpdate.x && y===this.forceUpdate.y){ force=true; this.forceUpdate.x=-1; this.forceUpdate.y=-1 }
