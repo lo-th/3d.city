@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>SEA3D File Format - WebGL</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<meta property="og:image" content="http://sunag.github.io/sea3d/tags/Mascot.jpg"/>
+		<meta property="og:title" content="SEA3D File Format - WebGL (ThreeJS)"/>
+		<meta property="og:url" content="http://sea3d.poonya.com/webgl/"/>
+		<meta property="og:site_name" content="SEA3D File Format"/>
+		<meta property="og:type" content="website"/>
+		<meta property="og:description" content="A file format for games"/>
+		<meta name="language" content="en-us" />
+		<link rel="shortcut icon" href="http://sunag.github.io/sea3d/tags/ico.png" type="image/x-icon" />
+		<style>
+			body {
+				font-family: Monospace;
+				background-color: #000;
+				color: #fff;
+				margin: 0px;
+				overflow: hidden;
+			}
+			#info {
+				color: #fff;
+				position: absolute;
+				top: 10px;
+				width: 100%;
+				text-align: center;
+				z-index: 100;
+				display:block;
+			}
+			#loading {
+			  position: fixed;
+			  top: 50%;
+			  left: 50%;
+			}
+			#info a, .button { color: #999; font-weight: bold; text-decoration: underline; cursor: pointer }
+		</style>
+	</head>
+
+	<body>
+		<div id="info">
+		<a href="https://code.google.com/p/sea3d/" style="color:#0099FF" target="_blank">SEA3D File Format</a> • <a href="http://github.com/mrdoob/three.js" style="color:#f00" target="_blank">Three.JS</a> - Hello World.	
+		</div>
+
+		<div id="loading">
+			<img src="loader.gif" alt="Loading SEA3D File.">
+		</div>
+		
+		<script src="js/three.min.js"></script>	
+		<script src="js/loaders/sea3d/SEA3D.js"></script>
+		<script src="js/loaders/sea3d/SEA3DLoader.js"></script>
+		<script src="js/loaders/sea3d/SEA3DDeflate.js"></script>
+		<script src="js/loaders/sea3d/SEA3DLZMA.js"></script>
+		<script src="js/TrackballControls.js"></script>	
+		
+		<script>											
+			var container, camera, scene, clock, renderer, loader;
+			
+			init();
+			animate();
+
+			function init() {
+				
+				container = document.createElement( 'div' );
+				document.body.appendChild( container );
+				
+				//
+				// three.js
+				//
+				
+				clock = new THREE.Clock();
+				
+				camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 100000 );
+				camera.position.z = 100;
+				camera.position.y = camera.position.x = 100;				
+				
+				controls = new THREE.TrackballControls(camera, document/*container*/);
+				controls.rotateSpeed = 2.0;
+				controls.zoomSpeed = 1.2;
+				controls.panSpeed = 0.8;
+				controls.noZoom = false;
+				controls.noPan = false;
+				controls.staticMoving = true;
+				controls.dynamicDampingFactor = 0.1;
+
+				scene = new THREE.Scene();				
+
+				//	Environment Light
+				
+				var ambient = new THREE.AmbientLight( 0x666666 );
+				scene.add( ambient );												
+				
+				//	Renderer
+				
+				renderer = new THREE.WebGLRenderer();				
+				//renderer.shadowMapEnabled = true;
+				//renderer.shadowMapSoft = true;
+				
+				renderer.setClearColor( 0x333333, 1 );
+				
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				container.appendChild( renderer.domElement );
+				
+				window.addEventListener( 'resize', onWindowResize, false );
+				
+				//
+				// SEA3D
+				//
+				
+				var time = new Date().getTime();
+				
+				// inverseX
+				var sea3dStandard = true;
+				
+				if (sea3dStandard)
+					camera.scale.set(-1, 1, 1);
+				
+				//loader = new THREE.SEA3D(); // SEA3D Standard = "false" is default
+				loader = new THREE.SEA3D(sea3dStandard);
+				
+				loader.onComplete = function( e ) {
+					var m;
+					//var mat = new THREE.MeshBasicMaterial( {} )
+					// get camera from 3ds Max if exist
+					if (loader.cameras) {
+						var cam = loader.cameras[0];
+						
+						camera.position = cam.position;
+						camera.rotation = cam.rotation;
+					}
+
+					var i = loader.meshes.length;
+					 while(i--){
+			            m = loader.meshes[i];
+			            if(i==1){
+			            	scene.add(m)
+			             m.material = m;}
+			            //_this.meshs[m.name] = m;
+			        }
+
+					
+					// reset time for keyframe animation
+					SEA3D.AnimationHandler.setTime( 0 );
+					
+					// loading element and total load time
+					document.getElementById('loading').style.visibility = 'hidden';
+					
+					console.log( new Date().getTime() - time );
+				}
+												
+				//loader.container = scene;
+				//loader.parser = THREE.SEA3D.DEFAULT;
+				//loader.parser = THREE.SEA3D.BUFFER;
+				loader.parser = THREE.SEA3D.AUTO;
+				loader.load( 'img/world2.sea' );
+			}
+			
+			function onWindowResize() {
+				windowHalfX = window.innerWidth / 2;
+				windowHalfY = window.innerHeight / 2;
+
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( window.innerWidth, window.innerHeight );
+			}
+			
+			function animate() {	
+				delta = clock.getDelta();
+				
+				controls.update();
+				
+				SEA3D.AnimationHandler.update( delta );
+				THREE.AnimationHandler.update( delta );	
+				
+				THREE.Sound3D.update( camera );						
+				
+				renderer.render( scene, camera );
+
+				requestAnimationFrame( animate );
+			}
+		</script>
+	</body>
+</html>

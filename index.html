@@ -11,9 +11,16 @@ body {  padding:0; margin: 0px; background:#6666e6; font:12px sans-serif; width:
 #debug{ position:absolute; padding:5px; right:0; bottom:0; text-align:right; width:20%; pointer-events:none; display:block; }
 #log{ position:absolute; padding:5px; left:0; bottom:0; width:30%; pointer-events:none; display:block;}
 #hub{ position:absolute; top:0; left:0; height:100%; width:100%; pointer-events:none; display:block; text-align:center;}
+#glCanvas{ position:absolute; top:0px; left:0px;} 
+#miniGlCanvas{ position:absolute; bottom:60px; left:15px; pointer-events:none;} 
 </style>
 <script src="js/three.min.js"></script>
-<script src="js/loaders/sea3d.min.js"></script>
+<!--<script src="js/loaders/sea3d.min.js"></script>-->
+<script src="js/loaders/sea3d/SEA3D.js"></script>
+<script src="js/loaders/sea3d/SEA3DLoader.js"></script>
+<script src="js/loaders/sea3d/SEA3DDeflate.js"></script>
+<script src="js/loaders/sea3d/SEA3DLZMA.js"></script>
+
 <script src="js/ImprovedNoise.js"></script>
 
 <script src="js/view3d.js"></script>
@@ -23,13 +30,18 @@ body {  padding:0; margin: 0px; background:#6666e6; font:12px sans-serif; width:
 </head>
 <body>
 <div id="container"></div>
-<div id="debug">pre alpha 0.9</div>
+<!--<canvas id="glCanvas"></canvas>-->
+<div id="debug">pre alpha 0.91</div>
 <div id="log">loth 2014</div>
+<canvas id="miniGlCanvas"></canvas>
 <div id="hub"></div>
+
 <object id="interface" width="198" height="396" type="image/svg+xml" data="img/interface.svg"></object>
 <script>
 var d = document.getElementById('debug');
 var l = document.getElementById('log');
+var glCanvas = document.getElementById("glCanvas");
+var miniGlCanvas = document.getElementById("miniGlCanvas");
 var simulation_timestep = 30;
 
 var tilesData = null;
@@ -53,6 +65,7 @@ window.onload = init;
 
 function init(){
     view3d = new V3D.Base();
+    //view3d.initMiniRender();
     hub = new HUB.Base();
 }
 
@@ -76,7 +89,9 @@ function loop() {
     if(view3d.mouse.dragView || view3d.mouse.button===2){
         view3d.dragCenterposition();
     }
-    view3d.renderer.render( view3d.scene, view3d.camera );
+    
+    view3d.render();
+    //renderer.render( view3d.scene, view3d.camera );
 }
 
 //=======================================
