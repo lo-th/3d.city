@@ -1088,46 +1088,17 @@ V3D.Base.prototype = {
 		if(a==1 && b==2) if(l+7<64) list.push(l+7);
 		if(a==2 && b==1) if(l-7>-1) list.push(l-7);
 
-		console.log(list);
+		//console.log(list);
 		return list;
-
-
-		/*
-		var corner = [0,7,56,63];
-		var top = [1,2,3,4,5,6];
-		var left = [8,16,24,32,40,48];
-		var right = [15,23,31,39,47,55];
-		var bottom = [57,58,59,60,61,62];
-
-		var i;
-
-		i = corner.length;
-		while(i--){
-			if(l==corner[i]){
-				if(l==0) list = [0,1,8,9];
-				if(l==7) list = [6,7,14,15];
-				if(l==56) list = [56,57,48,49];
-				if(l==63) list = [63,62,55,54];
-				return list;
-			}
-		}
-
-		if(l<64)list.push(l+1);
-		if(l>-1)list.push(l-1);*/
-
-
-
 	},
 
 	testDestruct:function(x,y){
 		var i, j, ar, ar2, l;
-		//var l = this.findLayer(x,y);
-
 		var list = this.testLayer(x,y);
 
 		for(var h= 0; h<list.length; h++){
 			l = list[h];
-
+			// IF TOWN
 			if(this.townLists[l]){
 				i = this.townLists[l].length;
 				while(i--){
@@ -1136,32 +1107,38 @@ V3D.Base.prototype = {
 					j = ar2.length;
 					while(j--){
 						if(x == ar2[j][0] && y == ar2[j][1]){
+							this.showDestruct(ar);
+							destroy(ar2[0][0], ar2[0][1]);
 							this.townLists[l].splice(i, 1);
 							this.rebuildTownLayer(l);
-							this.showDestruct(ar);
 							return;
 						}
 					}
 				}
 			}
+			// IF BUILDING
 			if(this.buildingLists[l]){
 				i = this.buildingLists[l].length;
 				while(i--){
 					ar = this.buildingLists[l][i];
-					//ar2 = ar[5];
 					ar2 = ar[4];
 					j = ar2.length;
 					while(j--){
 						if(x == ar2[j][0] && y == ar2[j][1]){
+							this.showDestruct(ar);
+							destroy(ar2[0][0], ar2[0][1]);
+							// IF HOUSE
+							if(ar[5]===1){ this.removeBaseHouse(ar[0],ar[1],ar[2]); }
+
 							this.buildingLists[l].splice(i, 1);
 							this.rebuildBuildingLayer(l);
-							//this.tempBuildingLayers[l] = 1;
-							this.showDestruct(ar);
+
 							return;
 						}
 					}
 				}
 			}
+			
 
 	    }
 
@@ -1752,6 +1729,8 @@ this.industrials = [616, 625, 634, 643, 652, 661, 670, 679, 688];*/
 		this.scene.add(m);
 		this.powerMeshs[i] = m;
 	},
+	/*removePowerMeshPos : function(x,y){
+	}*/
 	removePowerMesh : function(i){
 		this.scene.remove(this.powerMeshs[i]);
 		this.powerMeshs[i] = null;

@@ -20,6 +20,8 @@ self.onmessage = function (e) {
     if( p == "TOOL" ) Game.tool(e.data.name);
     if( p == "MAPCLICK" ) Game.mapClick(e.data.x, e.data.y);
 
+    if( p == "DESTROY" ) Game.destroy(e.data.x, e.data.y);
+
     if( p == "RUN" && trans) updateTrans(e.data);
 
     if( p == "DIFFICULTY" ) Game.changeDifficulty(e.data.n);
@@ -220,6 +222,17 @@ CITY.Game.prototype = {
         if(this.currentTool!==null) this.currentTool.clear();
         if(name !== "none") this.currentTool = this.gameTools[name];
         else this.currentTool = null;
+    },
+    destroy : function(x,y){
+        this.mapClick(x,y);
+        this.map.powerData[this.findId(x,y)] = 1;
+       // this.simulation.powerManager.setTilePower(x,y);
+      //  var messageMgr = new Micro.MessageManager();
+       // this.gameTools["bulldozer"].doTool(x, y, messageMgr, this.simulation.blockMaps );
+    },
+    findId : function(x, y){
+        var id = x+(y*this.mapSize[1]);
+        return id;
     },
     mapClick : function(x,y){
         if(this.currentTool!==null){
