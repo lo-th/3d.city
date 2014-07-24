@@ -46,11 +46,15 @@ HUB.Base = function(){
 
     this.budgetWindow = null;
     this.evaluationWindow  = null;
+    this.disasterWindow = null;
 
     this.selector = null;
     this.select = null;
 
     this.currentToolName = 0;
+
+    this.disasterTypes = ['None', 'Monster', 'Fire', 'Flood', 'Crash', 'Meltdown', 'Tornado'];
+    this.disasterButtons = [];
 }
 
 HUB.Base.prototype = {
@@ -152,14 +156,14 @@ HUB.Base.prototype = {
 
         this.addSelector("Speed", ['PAUSE', '1', '2', '3', '4'], setSpeed, 2);
 
-        var b1 = this.addButton(this.hub, 'BUDGET', [70,16,14], false);
+        var b1 = this.addButton(this.hub, 'BUDGET', [70,16,14], false, 'position:absolute; left:20px; top:100px;');
         b1.addEventListener('click',  function ( e ) { e.preventDefault(); getBudjet(); }, false);
 
-        var b2 = this.addButton(this.hub, 'EVAL', [70,16,14], false);
+        var b2 = this.addButton(this.hub, 'EVAL', [70,16,14], false, 'position:absolute; left:20px; top:140px;');
         b2.addEventListener('click',  function ( e ) { e.preventDefault(); getEval(); }, false);
 
-        //this.addButton('Disasters', [70,16,14], false);//20
-        //this.buttons[18].addEventListener('click',  function ( e ) { e.preventDefault(); getBudjet(); }, false);
+        var b3 = this.addButton(this.hub, 'DISASTER', [70,16,14], false, 'position:absolute; left:20px; top:180px;');
+        b3.addEventListener('click',  function ( e ) { e.preventDefault(); getDisaster(); }, false);
 
 
 
@@ -214,11 +218,15 @@ HUB.Base.prototype = {
         var t = "";
         if(this.budgetWindow !== null && this.budgetWindow.className == "open"){
             this.closeBudget();
-            t='budget';
+            t = 'budget';
         }
         if(this.evaluationWindow !== null && this.evaluationWindow.className == "open"){
             this.closeEval();
-            t='evaluation';
+            t = 'evaluation';
+        }
+        if(this.disasterWindow !== null && this.disasterWindow.className == "open"){
+            this.closeDisaster();
+            t = 'disaster';
         }
 
         return t;
@@ -349,6 +357,37 @@ HUB.Base.prototype = {
         this.setSliderValue('Roads', this.roadRate, 100, this.roadFund);
         this.setSliderValue('Fire', this.fireRate, 100, this.fireFund);
         this.setSliderValue('Police', this.policeRate, 100, this.policeFund);
+    },
+
+    //-----------------------------------DISASTER WINDOW
+
+    openDisaster : function(){
+        _this = this;
+
+        var test = this.testOpen();
+        if(test == 'disaster') return;
+
+        if(this.disasterWindow == null){
+            this.disasterWindow = document.createElement('div');
+            this.disasterWindow.style.cssText =this.radius+ 'position:absolute; top:100px; left:140px; width:140px; height:300px; pointer-events:none; display:block; background:#eeeeee; ';
+            this.hub.appendChild( this.disasterWindow );
+
+            for(var i=0; i<this.disasterTypes.length; i++){
+                this.disasterButtons[i] = this.addButton(this.disasterWindow, this.disasterTypes[i].toUpperCase(), [100,16,14], false,'position:absolute; left:10px; top:'+(10+(i*40))+'px;');
+                this.disasterButtons[i].name = this.disasterTypes[i];
+                this.disasterButtons[i].addEventListener('click',  function(e){ e.preventDefault(); setDisaster(this.name); }, false);
+            }
+        } else {
+            this.disasterWindow.style.display = 'block';
+            //this.setBudgetValue();
+        }
+
+        this.disasterWindow.className = "open";
+
+    },
+    closeDisaster : function(){
+        this.disasterWindow.style.display = 'none';
+        this.disasterWindow.className = "close";
     },
 
     //-----------------------------------SLIDER
@@ -578,7 +617,37 @@ HUB.Base.prototype = {
         return b;
     },
 
-    addButton : function(target, name, size, tool, extra){
+    addButton : function(target, name, size, tool, style){
+        _this = this;
+        if(!size) size = [134, 30, 22];
+        //var b = this.createLabel(name, size, true);
+        var b = document.createElement( 'div' );
+        var defStyle = 'font-size:'+size[2]+'px; border:4px solid '+this.colors[1]+'; background:'+this.colors[1]+'; width:'+size[0]+'px; height:'+size[1]+'px; margin:4px; padding:4px; pointer-events:auto;  cursor:pointer; display:inline-block; font-weight:bold;' + this.radius;
+        b.textContent = name;
+        if(!tool){
+            if(name == 'MOVE') b.style.cssText = defStyle+'position:absolute; left:270px; bottom:20px; ';
+            else if(name == 'DRAG') b.style.cssText = defStyle+'position:absolute; left:358px; bottom:20px;';
+           // else if(name == 'BUDGET') b.style.cssText = defStyle+'position:absolute; left:20px; top:100px;';
+          //  else if(name == 'EVAL') b.style.cssText = defStyle+'position:absolute; left:20px; top:140px;';
+           // else if(name == 'DISASTER') b.style.cssText = defStyle+'position:absolute; left:20px; top:180px;';
+            else if(name == 'CLOSE') b.style.cssText = defStyle+'position:absolute; left:10px; bottom:10px;';
+            else if(name == 'APPLY') b.style.cssText = defStyle+'position:absolute; rigth:10px; bottom:10px;';
+            else b.style.cssText =defStyle+ 'margin-top:20px;';
+            if(style) b.style.cssText = defStyle+ style;
+        } else {
+            b.style.cssText = defStyle+'margin:2px; padding:0px; overflow:hidden;';
+        }
+
+        var _this = this;
+        b.addEventListener( 'mouseover', function ( e ) { e.preventDefault(); this.style.border = '4px solid '+_this.colors[0];  this.style.backgroundColor = _this.colors[0]; this.style.color = _this.colors[1]; }, false );
+        b.addEventListener( 'mouseout', function ( e ) { e.preventDefault(); this.style.border = '4px solid '+_this.colors[1]; this.style.backgroundColor = _this.colors[1]; this.style.color = _this.colors[0];  }, false );
+
+        target.appendChild( b );
+
+        return b;
+    },
+
+    /*addButton : function(target, name, size, tool, extra, style){
         _this = this;
         if(!size) size = [134, 30, 22];
     	//var b = this.createLabel(name, size, true);
@@ -590,9 +659,11 @@ HUB.Base.prototype = {
             else if(name == 'DRAG') b.style.cssText = defStyle+'position:absolute; left:358px; bottom:20px;';
             else if(name == 'BUDGET') b.style.cssText = defStyle+'position:absolute; left:20px; top:100px;';
             else if(name == 'EVAL') b.style.cssText = defStyle+'position:absolute; left:20px; top:140px;';
-            else if(name == 'CLOSE') b.style.cssText = defStyle+'position:absolute; left:10px; bottom:10px; ';
-            else if(name == 'APPLY') b.style.cssText = defStyle+'position:absolute; rigth:10px; bottom:10px; ';
+            else if(name == 'DISASTER') b.style.cssText = defStyle+'position:absolute; left:20px; top:180px;';
+            else if(name == 'CLOSE') b.style.cssText = defStyle+'position:absolute; left:10px; bottom:10px;';
+            else if(name == 'APPLY') b.style.cssText = defStyle+'position:absolute; rigth:10px; bottom:10px;';
             else b.style.cssText =defStyle+ 'margin-top:20px;';
+            if(style) b.style.cssText = defStyle+ style;
         } else {
             b.style.cssText = defStyle+'margin:2px; padding:0px; overflow:hidden;';
         }
@@ -604,7 +675,7 @@ HUB.Base.prototype = {
         target.appendChild( b );
 
         return b;
-    },
+    },*/
 
     clearElement : function(id){
         var el = document.getElementById(id);

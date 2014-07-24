@@ -28,6 +28,8 @@ self.onmessage = function (e) {
     if( p == "BUDGET") Game.handleBudgetRequest();
     if( p == "NEWBUDGET") Game.setBudget(e.data.budgetData);
 
+    if( p == "DISASTER") Game.setDisaster(e.data.disaster);
+
     if( p == "EVAL") Game.getEvaluation();
 };
 
@@ -238,6 +240,19 @@ CITY.Game.prototype = {
             }
             this.processMessages(messageMgr.getMessages());
         }
+    },
+    setDisaster : function(disaster){
+        if (disaster === Micro.DISASTER_NONE) return;
+        var m = new Micro.MessageManager();
+        switch (disaster) {
+            case Micro.DISASTER_MONSTER: this.simulation.spriteManager.makeMonster(m); break;
+            case Micro.DISASTER_FIRE: this.simulation.disasterManager.makeFire(m); break;
+            case Micro.DISASTER_FLOOD: this.simulation.disasterManager.makeFlood(m); break;
+            case Micro.DISASTER_CRASH: this.simulation.disasterManager.makeCrash(m); break;
+            case Micro.DISASTER_MELTDOWN: this.simulation.disasterManager.makeMeltdown(m); break;
+            case Micro.DISASTER_TORNADO: this.simulation.spriteManager.makeTornado(m); break;
+        }
+        this.processMessages(m.getMessages());
     },
     setBudget : function(budgetData){
         this.simulation.budget.cityTax = budgetData[0];

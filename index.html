@@ -27,11 +27,15 @@ body {  padding:0; margin: 0px; background:#6666e6; font:12px sans-serif; width:
 <script src="js/destructor.js"></script>
 <script src="js/hub.js"></script>
 
+<script src="js/rStats/rStats.js"></script>
+<script src="js/rStats/rStats.extras.js"></script>
+<script src="js/stats.js"></script>
+
 </head>
 <body>
 <div id="container"></div>
 <!--<canvas id="glCanvas"></canvas>-->
-<div id="debug">pre alpha 0.91</div>
+<div id="debug">pre alpha 0.92</div>
 <div id="log">loth 2014</div>
 <canvas id="miniGlCanvas"></canvas>
 <div id="hub"></div>
@@ -43,6 +47,7 @@ var l = document.getElementById('log');
 var glCanvas = document.getElementById("glCanvas");
 var miniGlCanvas = document.getElementById("miniGlCanvas");
 var simulation_timestep = 30;
+var stats = null;
 
 var tilesData = null;
 var spriteData = null;
@@ -65,6 +70,7 @@ window.onload = init;
 
 function init(){
     view3d = new V3D.Base();
+    
     //view3d.initMiniRender();
     hub = new HUB.Base();
 }
@@ -75,6 +81,8 @@ function init(){
 
 function loop() {
     requestAnimationFrame( loop, view3d.renderer.domElement );
+    //stats.start();
+    //stats.rS( 'texture' ).start();
     if(newup){ 
         view3d.paintMap(); 
         view3d.moveSprite();
@@ -86,12 +94,16 @@ function loop() {
         view3d.showPower();
         powerup = false;
     }
+    //stats.rS( 'texture' ).end();
+    //stats.rS( 'setup' ).start();
     if(view3d.mouse.dragView || view3d.mouse.button===2){
         view3d.dragCenterposition();
     }
-    
+    //stats.rS( 'setup' ).end();
+    //stats.rS( 'render' ).start();
     view3d.render();
-    //renderer.render( view3d.scene, view3d.camera );
+    //stats.rS( 'render' ).end();
+    //stats.end();
 }
 
 //=======================================
@@ -155,6 +167,15 @@ function getEval(){
     cityWorker.postMessage({ tell:"EVAL" });
 }
 
+function getDisaster(){
+    hub.openDisaster();
+}
+
+function setDisaster(disaster){
+    console.log(disaster);
+    cityWorker.postMessage({ tell:"DISASTER", disaster:disaster });
+}
+
 
 
 function mapClick() {
@@ -163,7 +184,9 @@ function mapClick() {
 }
 
 function initCity() {
+    //stats = new V3D.stats(view3d.renderer);
     loop();
+
     view3d.imageSrc = im;
 
     cityWorker = new Worker('js/worker.city.js');

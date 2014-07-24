@@ -14,6 +14,7 @@ V3D.Base = function(){
 
 	this.isWithBackground = true;
 	this.isWithHeight = false;
+	this.isColorTest = false;
 
 	this.deepthTest = false;
 
@@ -132,6 +133,10 @@ V3D.Base = function(){
 	this.buildingLists = [];
 	this.tempBuildingLayers = [];
 
+	this.townMeshs = [];
+	this.townLists = [];
+	this.temptownLayers = [];
+
 	this.houseMeshs = [];
 	this.houseLists = [];
 	this.tempHouseLayers = [];
@@ -146,9 +151,18 @@ V3D.Base = function(){
 
 	this.tilesUpdateList = [];
 
+	this.tempDestruct=[];
+
+	this.currentLayer = 0;
+	this.miniTree = null;
+	this.minibuilding = null;
+	this.miniTreeUpdate = 0;
+
 	// start by loading 3d mesh 
 	this.loadTextures();
     this.loadSea3d();
+
+
 }
 
 V3D.Base.prototype = {
@@ -183,10 +197,11 @@ V3D.Base.prototype = {
     	//this.renderer = new THREE.WebGLRenderer({ canvas:glCanvas, precision: "mediump", antialias:false });
     	//this.renderer = new THREE.WebGLRenderer({ antialias:false });
     	this.renderer.sortObjects = false;
-    	this.renderer.sortElements = false;
+    	//this.renderer.sortElements = false;
+    	this.renderer.autoClear = false;
     	//this.renderer.setSize( this.vsize.x, this.vsize.y, true );
     	this.renderer.setSize( this.vsize.x, this.vsize.y );
-    	//this.renderer.autoClear = false;
+    	
 
 
     	//this.renderer.autoClear = this.isWithBackground;
@@ -233,21 +248,20 @@ V3D.Base.prototype = {
     //----------------------------------- RENDER
 
     render: function(){
-
+    	this.renderer.clear();
     	this.renderer.render( this.scene, this.camera );
-    	if(this.deepthTest)this.miniRenderer.render( this.miniScene, this.topCamera );
-
+    	if(this.deepthTest) this.miniRender();//miniRenderer.render( this.miniScene, this.topCamera );
     },
 
     //----------------------------------- MINI DEEP RENDER
 
     initMiniRender: function(){
-    	this.deepthTest = true;
+    	
     	this.miniScene = new THREE.Scene();
 
-    	var w = 10;
+    	var w = 5;
     	this.topCamera = new THREE.OrthographicCamera( -w , w , w , -w , 0.1, 200 );
-    	this.topCameraDistance = 30;
+    	this.topCameraDistance = 10;
     	this.miniScene.add( this.topCamera );
 
     	this.miniRenderer = new THREE.WebGLRenderer({ canvas:miniGlCanvas, precision: "lowp", antialias: false});
@@ -256,11 +270,50 @@ V3D.Base.prototype = {
     	this.miniRenderer.sortObjects = false;
 	    this.miniRenderer.sortElements = false;
 
+	    this.deepthTest = true;
+    },
+    miniClear:function(){
+    	var i = this.miniScene.children.length;
+    	var m;
+    	while(i--){
+    		m = this.miniScene.children[ i ];
+    		if (m.geometry) {
+	    		m.geometry.dispose();
+	    		this.miniScene.remove(m);
+	    	}
+    		
+    	}
+    },
+    miniClearMesh:function(m){
+	    m.geometry.dispose();
+	    this.miniScene.remove(m);
+	    m = null;
+    },
+    miniCheck: function(){
+    	var l = this.findLayer(this.center.x, this.center.z);
+    	var m;
+
+    	if(l!==this.currentLayer){
+    		this.currentLayer = l;
+    		if(this.miniTree !== null) this.miniClearMesh(this.miniTree);
+    		this.miniTree = new THREE.Mesh( this.treeMeshs[l].geometry.clone(), this.townHeigth);
+			this.miniScene.add(this.miniTree);
+    	} else {
+    		if(this.miniTreeUpdate==1){
+    			if(this.miniTree !== null) this.miniClearMesh(this.miniTree);
+    			this.miniTree = new THREE.Mesh( this.treeMeshs[l].geometry.clone(), this.townHeigth);
+    			this.miniScene.add(this.miniTree);
+    			this.miniTreeUpdate = 0;
+    		}
+    	}
     },
 
     miniRender: function(){
 
-    	if(this.deepthTest)this.miniRenderer.render( this.miniScene, this.topCamera );
+    	if(this.deepthTest){
+    		this.miniCheck();
+    		this.miniRenderer.render( this.miniScene, this.topCamera );
+    	}
 
     	//console.log(this.townMaterial.vertexColors)
     	/*this.townMaterial.vertexColors = THREE.VertexColors;
@@ -477,7 +530,7 @@ V3D.Base.prototype = {
 
 		this.spriteGeo = [];
 		this.spriteGeo[0] = this.meshs['train'].geometry;
-		this.spriteGeo[1] = this.meshs['elico'].geometry;
+		this.spriteGeo[1] = this.meshs['elico'].geometry.clone();
 		this.spriteGeo[2] = this.meshs['plane'].geometry;
 
 		i = this.spriteGeo.length;
@@ -489,15 +542,15 @@ V3D.Base.prototype = {
 
 		this.treeGeo = [];
 
-		this.treeGeo[0] = this.meshs['tt3'].geometry;
-		this.treeGeo[1] = this.meshs['tt3'].geometry.clone();
-		this.treeGeo[2] = this.meshs['tt4'].geometry;
-		this.treeGeo[3] = this.meshs['tt4'].geometry.clone();
+		this.treeGeo[0] = this.meshs['ttt3'].geometry;
+		this.treeGeo[1] = this.meshs['ttt3'].geometry.clone();
+		this.treeGeo[2] = this.meshs['ttt4'].geometry;
+		this.treeGeo[3] = this.meshs['ttt4'].geometry.clone();
 
-		this.treeGeo[4] = this.meshs['tt0'].geometry;
-		this.treeGeo[5] = this.meshs['tt1'].geometry;
-		this.treeGeo[6] = this.meshs['tt2'].geometry;
-		this.treeGeo[7] = this.meshs['tt5'].geometry;
+		this.treeGeo[4] = this.meshs['ttt0'].geometry;
+		this.treeGeo[5] = this.meshs['ttt1'].geometry;
+		this.treeGeo[6] = this.meshs['ttt2'].geometry;
+		this.treeGeo[7] = this.meshs['ttt5'].geometry;
 
 		i = this.treeGeo.length;
 		
@@ -506,6 +559,7 @@ V3D.Base.prototype = {
 			//this.treeGeo[i].applyMatrix( m2.makeRotationY( (Math.random()*360)*this.ToRad ) );
 		}
 	},
+
 	getRandomObject : function(){
 		var n = this.randRange(0,6);
 		var geo, mat, r, n;
@@ -540,10 +594,7 @@ V3D.Base.prototype = {
     addTree : function(x,y,z,v,layer){
     	// v  21 to 43
     	if(!this.treeLists[layer]) this.treeLists[layer]=[];
-    	//var r = Math.floor(Math.random()*4);
-    	//if(v>=36) r+=4;
 
-    	//this.treeLists[layer].push([x,y,z,r]);
     	this.treeLists[layer].push([x,y,z,v]);
     },
     populateTree:function(){
@@ -560,17 +611,18 @@ V3D.Base.prototype = {
 	    			ar = this.treeLists[l][i];
 	    			m.makeTranslation(ar[0],ar[1],ar[2]);
 	    			g.merge( this.treeGeo[ar[3]], m );
+
 	    			//else g.merge( this.treeGeo[4+rand], m );
 	    		}
+	    		g.computeBoundingSphere();
 	    	    this.treeMeshs[l] = new THREE.Mesh( g, this.townMaterial );
 	    	    this.scene.add(this.treeMeshs[l]);
 	    	    this.tempTreeLayers[l] = 0;
 
-	    	    if(this.deepthTest){
-			    	//this.treeDeepMeshs[l] = new THREE.Mesh( g.clone(), this.townHeigth);
+	    	    /*if(this.deepthTest){
 			    	this.treeDeepMeshs[l] = new THREE.Mesh( g.clone(), this.townHeigth);
 			    	this.miniScene.add(this.treeDeepMeshs[l]);
-			    }
+			    }*/
 	    	}
     	}
     },
@@ -579,11 +631,12 @@ V3D.Base.prototype = {
     	while(l--){
     		if(this.treeMeshs[l]){
     			this.scene.remove(this.treeMeshs[l]);
-    		    this.treeMeshs[l].geometry.dispose();
+    			this.treeMeshs[l].geometry.dispose();
     		}
     	}
     	this.treeMeshs = [];
     	this.treeLists = [];
+    	this.tempTreeLayers = [];
     },
     removeTreePack : function(ar){
     	//this.tempTreeLayers = [];
@@ -620,10 +673,10 @@ V3D.Base.prototype = {
     	this.scene.remove(this.treeMeshs[l]);
     	this.treeMeshs[l].geometry.dispose();
 
-    	if(this.deepthTest){
+    	/*if(this.deepthTest){
     		this.miniScene.remove(this.treeDeepMeshs[l]);
     		this.treeDeepMeshs[l].geometry.dispose();
-    	}
+    	}*/
 
     	var m = new THREE.Matrix4(), ar;
     	var g = new THREE.Geometry();
@@ -634,13 +687,15 @@ V3D.Base.prototype = {
 	    	//g.merge( this.treeGeo[0], m );
 	    	g.merge( this.treeGeo[ar[3]], m );
 	    }
+	    g.computeBoundingSphere();
 	    this.treeMeshs[l] = new THREE.Mesh( g, this.townMaterial);
 	    this.scene.add(this.treeMeshs[l]);
-	    if(this.deepthTest){
+	    /*if(this.deepthTest){
 	    	this.treeDeepMeshs[l] = new THREE.Mesh( g.clone(), this.townHeigth);
 	    	this.miniScene.add(this.treeDeepMeshs[l]);
-	    }
+	    }*/
 	    this.tempTreeLayers[l] = 0;
+	    if(l == this.currentLayer)this.miniTreeUpdate = 1;
     },
 
 
@@ -674,18 +729,23 @@ V3D.Base.prototype = {
 
 		// create terrain if not existe
         if(this.miniTerrain.length === 0){
-        	var matrix = new THREE.Matrix4();
+        	//var matrix = new THREE.Matrix4();
         	//var pyGeometry = this.meshs['plane'].geometry;
+        	/*var geo = new THREE.PlaneGeometry( 16, 16, 16, 16 );
+	        geo.applyMatrix(new THREE.Matrix4().makeRotationX( - Math.PI * 0.5 ));
+	        geo.computeBoundingSphere();*/
 
-        	var n = 0, texture, geo, mat;
+        	var n = 0;//, texture, mat;
+        	var colorsX = [ 0x000000, 0x220000, 0x440000, 0x660000, 0x880000, 0xaa0000, 0xcc0000, 0xff0000 ];
+        	var colorsY = [ 0x000000, 0x002200, 0x004400, 0x006600, 0x008800, 0x00aa00, 0x00cc00, 0x00ff00 ];
         	for(var i=0; i<8; i++){
         		for(var j=0; j<8; j++){
-
-				    geo = new THREE.PlaneGeometry( 16, 16, 16, 16 );
-	        		geo.applyMatrix(new THREE.Matrix4().makeRotationX( - Math.PI / 2 ));
-
-	        		this.miniTerrain[n] = new THREE.Mesh(geo, new THREE.MeshBasicMaterial() );
-
+        			var geo = new THREE.PlaneGeometry( 16, 16, 16, 16 );
+        			geo.applyMatrix(new THREE.Matrix4().makeRotationX( - Math.PI * 0.5 ));
+        			geo.computeBoundingSphere();
+	        		//this.miniTerrain[n] = new THREE.Mesh(geo.clone(), new THREE.MeshBasicMaterial({color:colorsX[i]+colorsY[j]}) );
+	        		if(this.isColorTest) this.miniTerrain[n] = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({color:colorsX[i]+colorsY[j]}) );
+	        		else this.miniTerrain[n] = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({color:0xffffff}) );
 	        		this.miniTerrain[n].position.set((8+j*16)-0.5,0,(8+i*16)-0.5);
 	        		this.land.add( this.miniTerrain[n] );
 	        		n++;
@@ -693,10 +753,9 @@ V3D.Base.prototype = {
 	        }
 	    }
 
-	   
-
 	    // update start map texture
-        n = this.miniTerrain.length, texture;
+        n = this.miniTerrain.length;
+        var texture;
         while(n--){
         	texture = new THREE.Texture( this.miniCanvas[n] );
         	texture.magFilter = THREE.NearestFilter;
@@ -813,6 +872,14 @@ V3D.Base.prototype = {
 		var cy = Math.floor(z/16);
         var cx = Math.floor(x/16);
 		return cx+(cy*8);
+	},
+
+	findLayerPos:function(x,y,layer){
+		var cy = Math.floor(layer/8);
+        var cx = Math.floor(layer-(cy*8));
+		var py = y-(16*cy);
+        var px = x-(16*cx);
+        return [px,py];
 	},
 
 	findPosition : function(id){
@@ -942,18 +1009,18 @@ V3D.Base.prototype = {
 			var py = 0;
 			if( this.isWithHeight ) py = this.heightData[this.findId(x,y)];//this.pos.y;//this.heightData[ n ];
 
-			var tar; 
-			if(size == 1 ) tar = [ [x, y] ];
-			else if(size == 3) tar = [ [x, y], [x-1, y], [x+1, y],  [x, y-1], [x-1, y-1], [x+1, y-1],   [x, y+1], [x-1, y+1], [x+1, y+1] ];
-			else if(size == 4) tar = [ [x, y], [x-1, y], [x+1, y],  [x, y-1], [x-1, y-1], [x+1, y-1],   [x, y+1], [x-1, y+1], [x+1, y+1],       [x+2, y-1],  [x+2, y] , [x+2, y+1] , [x+2, y+2], [x-1, y+2], [x, y+2], [x+1, y+2]   ];
-			else if(size == 6) tar = [ [x, y], [x-1, y], [x+1, y],  [x, y-1], [x-1, y-1], [x+1, y-1],   [x, y+1], [x-1, y+1], [x+1, y+1],       [x+2, y-1],  [x+2, y] , [x+2, y+1] , [x+2, y+2],   [x-1, y+2], [x, y+2], [x+1, y+2], 
+			var zone; 
+			if(size == 1 ) zone = [ [x, y] ];
+			else if(size == 3) zone = [ [x, y], [x-1, y], [x+1, y],  [x, y-1], [x-1, y-1], [x+1, y-1],   [x, y+1], [x-1, y+1], [x+1, y+1] ];
+			else if(size == 4) zone = [ [x, y], [x-1, y], [x+1, y],  [x, y-1], [x-1, y-1], [x+1, y-1],   [x, y+1], [x-1, y+1], [x+1, y+1],       [x+2, y-1],  [x+2, y] , [x+2, y+1] , [x+2, y+2], [x-1, y+2], [x, y+2], [x+1, y+2]   ];
+			else if(size == 6) zone = [ [x, y], [x-1, y], [x+1, y],  [x, y-1], [x-1, y-1], [x+1, y-1],   [x, y+1], [x-1, y+1], [x+1, y+1],       [x+2, y-1],  [x+2, y] , [x+2, y+1] , [x+2, y+2],   [x-1, y+2], [x, y+2], [x+1, y+2], 
 				[x+3, y-1], [x+4, y-1],   [x+3, y], [x+4, y], [x+3, y+1], [x+4, y+1], [x+3, y+2], [x+4, y+2], [x+3, y+3], [x+4, y+3], [x+3, y+4], [x+4, y+4], 
 				[x-1, y+3], [x-1, y+4], [x, y+3], [x, y+4],  [x+1, y+3], [x+1, y+4], [x+2, y+3], [x+2, y+4]
 			];
 
-			this.removeTreePack(tar);
-			this.cleanGround(tar);
-			if( this.isWithHeight ) this.makePlanar(tar, py);
+			this.removeTreePack(zone);
+			this.cleanGround(zone);
+			if( this.isWithHeight ) this.makePlanar(zone, py);
 
 			
 			/*var b = new THREE.Mesh(new THREE.BoxGeometry(size,sizey,size), new THREE.MeshBasicMaterial({color:this.currentTool.color, transparent:true, opacity:0.5}) );
@@ -965,25 +1032,16 @@ V3D.Base.prototype = {
 
 			var v = this.currentTool.geo;
 
-			
-
-
+			// standard building
 			if(v<4 && v!==0){
-				this.addBaseBuilding(x, py, y, v);
+				this.addBaseBuilding(x, py, y, v, zone);
 				this.snd_layzone.play();
 			}
+			// town building
 			if(v==8 || v==9 || v==4 || v==5 || v==7 || v==10 || v==11 || v==12){
-			    var mii = new THREE.Mesh( this.buildingGeo[v], this.townMaterial );
-			    mii.position.set(x, py, y);
-			    this.scene.add(mii);
+				this.addBaseTown(x,py,y,v, zone);
 			    this.snd_layzone.play();
 			}
-			/*if( v==4 || v==5 || v==7 || v==10 || v==11 || v==12 ){
-				var miii = new THREE.Mesh( this.buildingGeo[v], this.townMaterial );
-			    miii.position.set(x, py, y);
-			    this.scene.add(miii);
-			    
-			}*/
 
 		} else {
 			this.removeTree(x,y);
@@ -994,6 +1052,7 @@ V3D.Base.prototype = {
 			if(this.currentTool.tool=='bulldozer'){
 				this.forceUpdate.x = x;
 		        this.forceUpdate.y = y;
+		        this.testDestruct(x,y);
 		    }
 		}
 	},
@@ -1002,6 +1061,143 @@ V3D.Base.prototype = {
 		this.tool.geometry.dispose();
 		this.tool = null;
 		this.currentTool = null;
+	},
+
+	//--------------------------------------------------TEST DESTRUCT
+	testLayer:function(x,y){
+		var l = this.findLayer(x,y);
+		var list = [l];
+		var pos = this.findLayerPos(x,y,l);
+		var a = 0,b = 0;
+
+		if(pos[0]<4) a=1;
+		else if(pos[0]>13) a=2;
+
+		if(pos[1]<4) b=1;
+		else if(pos[1]>13) b=2;
+
+		if(b==1) if(l-8>-1) list.push(l-8);
+		if(b==2) if(l+8<64) list.push(l+8);
+
+		if(a==1) if(l-1>-1) list.push(l-1);
+		if(a==2) if(l+1<64) list.push(l+1);
+
+		if(a==1 && b==1) if(l-9>-1) list.push(l-9);
+		if(a==2 && b==2) if(l+9<64) list.push(l+9);
+
+		if(a==1 && b==2) if(l+7<64) list.push(l+7);
+		if(a==2 && b==1) if(l-7>-1) list.push(l-7);
+
+		console.log(list);
+		return list;
+
+
+		/*
+		var corner = [0,7,56,63];
+		var top = [1,2,3,4,5,6];
+		var left = [8,16,24,32,40,48];
+		var right = [15,23,31,39,47,55];
+		var bottom = [57,58,59,60,61,62];
+
+		var i;
+
+		i = corner.length;
+		while(i--){
+			if(l==corner[i]){
+				if(l==0) list = [0,1,8,9];
+				if(l==7) list = [6,7,14,15];
+				if(l==56) list = [56,57,48,49];
+				if(l==63) list = [63,62,55,54];
+				return list;
+			}
+		}
+
+		if(l<64)list.push(l+1);
+		if(l>-1)list.push(l-1);*/
+
+
+
+	},
+
+	testDestruct:function(x,y){
+		var i, j, ar, ar2, l;
+		//var l = this.findLayer(x,y);
+
+		var list = this.testLayer(x,y);
+
+		for(var h= 0; h<list.length; h++){
+			l = list[h];
+
+			if(this.townLists[l]){
+				i = this.townLists[l].length;
+				while(i--){
+					ar = this.townLists[l][i];
+					ar2 = ar[4];
+					j = ar2.length;
+					while(j--){
+						if(x == ar2[j][0] && y == ar2[j][1]){
+							this.townLists[l].splice(i, 1);
+							this.rebuildTownLayer(l);
+							this.showDestruct(ar);
+							return;
+						}
+					}
+				}
+			}
+			if(this.buildingLists[l]){
+				i = this.buildingLists[l].length;
+				while(i--){
+					ar = this.buildingLists[l][i];
+					//ar2 = ar[5];
+					ar2 = ar[4];
+					j = ar2.length;
+					while(j--){
+						if(x == ar2[j][0] && y == ar2[j][1]){
+							this.buildingLists[l].splice(i, 1);
+							this.rebuildBuildingLayer(l);
+							//this.tempBuildingLayers[l] = 1;
+							this.showDestruct(ar);
+							return;
+						}
+					}
+				}
+			}
+
+	    }
+
+
+	},
+
+	showDestruct:function(ar){
+		this.tempDestruct = ar[4];
+
+	},
+
+	//--------------------------------------------------TOWN BUILDING
+
+	addBaseTown : function(x,y,z,v,zone){
+		var layer = this.findLayer(x,z);
+		if(!this.townLists[layer]) this.townLists[layer]=[];
+    	this.townLists[layer].push([x,y,z,v,zone]);
+
+    	this.rebuildTownLayer(layer);
+	},
+	rebuildTownLayer : function(l){
+		if(this.townMeshs[l] !== undefined ){
+    	    this.scene.remove(this.townMeshs[l]);
+        	this.townMeshs[l].geometry.dispose();
+        }
+        var m = new THREE.Matrix4(), ar, k;
+    	var g = new THREE.Geometry();
+    	var i = this.townLists[l].length;
+    	while(i--){
+	    	ar = this.townLists[l][i];
+	    	m.makeTranslation(ar[0],ar[1],ar[2]);
+	    	g.merge(this.buildingGeo[ar[3]], m);
+	    }
+	    this.townMeshs[l] = new THREE.Mesh( g, this.townMaterial);
+	    this.scene.add(this.townMeshs[l]);
+	    this.temptownLayers[l] = 0;
 	},
 
 	//--------------------------------------------------HOUSE CREATE/UPDATE/DELETE
@@ -1062,27 +1258,16 @@ V3D.Base.prototype = {
 
 	//--------------------------------------------------BUILDING CREATE/UPDATE
 
-	addBaseBuilding : function(x,y,z,v){
+	addBaseBuilding : function(x,y,z,v,zone){
 		var layer = this.findLayer(x,z);
 		var c = 244;
-		if(v==2) c= 427;
-		if(v==3) c=616;
-
-		//var hh = 0;
-		// if residential add house list
-		//if(c==244){
-		   // hh = 1;
-		   // addBaseHouse(x,y,z,0);
-		//}
+		if(v==2) c = 427;
+		if(v==3) c = 616;
 
     	if(!this.buildingLists[layer]) this.buildingLists[layer]=[];
-    	this.buildingLists[layer].push([x,y,z,c, 0]);
-    	//this.tempBuildingLayers[layer] = 1;
+    	//this.buildingLists[layer].push([x,y,z,c, 0, zone]);
+    	this.buildingLists[layer].push([x,y,z,c, zone, 0 ]);
 
-    	
-    	 
-
-    	//this.populateBaseBuilding(layer);
     	this.rebuildBuildingLayer(layer);
     },
 
@@ -1129,8 +1314,11 @@ V3D.Base.prototype = {
 	    			//if(ar[3]==244){ this.buildingLists[l][i][4] = 1; this.addBaseHouse(ar[0],ar[1],ar[2]); }
 	    			//else { if(ar[4]==1){ this.buildingLists[l][i][4] = 0;  this.removeBaseHouse(ar[0],ar[1],ar[2]);} }
 
-	    			if(k===0 && ar[4]===0){ this.buildingLists[l][i][4] = 1; this.addBaseHouse(ar[0],ar[1],ar[2]); }
-	    			else if(k>0 && ar[4]===1){ this.buildingLists[l][i][4] = 0;  this.removeBaseHouse(ar[0],ar[1],ar[2]); } 
+	    			//if(k===0 && ar[4]===0){ this.buildingLists[l][i][4] = 1; this.addBaseHouse(ar[0],ar[1],ar[2]); }
+	    			//else if(k>0 && ar[4]===1){ this.buildingLists[l][i][4] = 0;  this.removeBaseHouse(ar[0],ar[1],ar[2]); } 
+	    			if(k===0 && ar[5]===0){ this.buildingLists[l][i][5] = 1; this.addBaseHouse(ar[0],ar[1],ar[2]); }
+	    			else if(k>0 && ar[5]===1){ this.buildingLists[l][i][5] = 0;  this.removeBaseHouse(ar[0],ar[1],ar[2]); } 
+
 
 	    		}
 	    	}
@@ -1271,7 +1459,7 @@ V3D.Base.prototype = {
 	    if(e.wheelDelta){delta=e.wheelDelta*-1;}
 	    else if(e.detail){delta=e.detail*20;}
 	    this.cam.distance+=(delta/80);
-	    if(this.cam.distance<2)this.cam.distance = 2;
+	    if(this.cam.distance<1)this.cam.distance = 1;
 	    if(this.cam.distance>150)this.cam.distance = 150;
 	    this.moveCamera();
 	},
@@ -1375,9 +1563,8 @@ V3D.Base.prototype = {
                 	//this.miniCtx[layer].drawImage(this.imageSrc,px*this.mu, py*this.mu, 16*this.mu, 16*this.mu, ((x-(cx*16))*16)*this.mu,((y-(cy*16))*16)*this.mu, 16*this.mu, 16*this.mu);
                 	//if(v==1)this.miniCtx[layer].clearRect(((x-(cx*16))*16)*this.mu,((y-(cy*16))*16)*this.mu, 16*this.mu, 16*this.mu);
                 	//else 
-                		this.miniCtx[layer].drawImage(this.imageSrc,px*this.mu, py*this.mu, 16*this.mu, 16*this.mu, ((x-(cx*16))*16)*this.mu,((y-(cy*16))*16)*this.mu, 16*this.mu, 16*this.mu);
-                 }
-                else{ // draw only need update
+                	this.miniCtx[layer].drawImage(this.imageSrc,px*this.mu, py*this.mu, 16*this.mu, 16*this.mu, ((x-(cx*16))*16)*this.mu,((y-(cy*16))*16)*this.mu, 16*this.mu, 16*this.mu);
+                } else { // draw only need update
                 	if(x===this.forceUpdate.x && y===this.forceUpdate.y){ force=true; this.forceUpdate.x=-1; this.forceUpdate.y=-1 }
                 	if((v>43 && v<240) || force){ // road . rail . wire
                 		if(force){force = false;  if(v > 20 && v < 44){px = 0; py=0;}};// bulldozer
