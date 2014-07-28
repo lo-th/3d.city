@@ -3,24 +3,23 @@
 //                   HUB INTERFACE                      //
 //------------------------------------------------------//
 
-var HUB = { REVISION: '0.1a' };
-
+var HUB = { REVISION: '1' };
 
 HUB.round = [
 '<svg height="66" width="66">',
-'<circle cx="33" cy="33" r="27" stroke="none" stroke-width="0" fill="black" fill-opacity="0.1"/>',
+'<circle cx="33" cy="33" r="27" stroke="rgb(80,80,80)" stroke-width="1" stroke-opacity="0.25" fill="rgb(80,80,80)" fill-opacity="0.25"/>',
 '</svg>'
 ].join("\n");
 
 HUB.roundSelected = [
 '<svg height="66" width="66">',
-'<circle cx="33" cy="33" r="27" stroke="white" stroke-width="1" fill="black" fill-opacity="0"/>',
+'<circle cx="33" cy="33" r="27" stroke="rgb(120,120,120)" stroke-width="1" stroke-opacity="0.5" fill="rgb(120,120,120)" fill-opacity="0.5"/>',
 '</svg>'
 ].join("\n");
 
 HUB.roundSelect = [
 '<svg height="66" width="66">',
-'<circle cx="33" cy="33" r="30" stroke="white" stroke-width="6" fill="black" fill-opacity="0.3"/>',
+'<circle cx="33" cy="33" r="30" stroke="rgb(255,255,255)" stroke-width="4" stroke-opacity="1" fill="rgb(120,120,120)" fill-opacity="0.5"/>',
 '</svg>'
 ].join("\n");
 
@@ -32,7 +31,7 @@ HUB.Base = function(){
 
     this.isIntro = true;
 
-	this.intro();
+	
 	this.timer = null;
 	this.bg = 1;
 
@@ -40,13 +39,28 @@ HUB.Base = function(){
     this.C=null;
     this.I=null;
 
-    this.colors = ['#ffffff', '#338099'];//#377BA7
+    this.rrr= null;
 
-    this.radius = "-moz-border-radius: 20px; -webkit-border-radius: 20px; border-radius: 20px;";
+    //this.colors = ['#ffffff', '#338099'];
+    this.colors = ['rgba(255,255,255,1)', 'rgba(80,80,80,0.25)', 'rgba(120,120,120,0.5)', 'rgba(80,80,80,0.1)', 'rgba(200,200,200,0.5)'];
+
+    //this.radius = "-moz-border-radius: 20px; -webkit-border-radius: 20px; border-radius: 20px;";
+    this.radius = "-moz-border-radius: 16px; -webkit-border-radius: 16px; border-radius: 16px;";
+    this.radiusL = "-moz-border-top-left-radius: 16px; -webkit-border-top-left-radius: 16px; border-top-left-radius: 16px;";
+    this.radiusL += "-moz-border-bottom-left-radius: 16px; -webkit-border-bottom-left-radius: 16px; border-bottom-left-radius: 16px;";
+    this.radiusR = "-moz-border-top-right-radius: 16px; -webkit-border-top-right-radius: 16px; border-top-right-radius: 16px;";
+    this.radiusR += "-moz-border-bottom-right-radius: 16px; -webkit-border-bottom-right-radius: 16px; border-bottom-right-radius: 16px;";
+
+    this.radiusB = "-moz-border-bottom-left-radius: 16px; -webkit-border-bottom-left-radius: 16px; border-bottom-left-radius: 16px;";
+    this.radiusB += "-moz-border-bottom-right-radius: 16px; -webkit-border-bottom-right-radius: 16px; border-bottom-right-radius: 16px;";
+
+    this.windowsStyle = ' top:40px; left:10px; border:1px solid '+this.colors[1]+'; background:'+this.colors[3]+';';
+
 
     this.budgetWindow = null;
     this.evaluationWindow  = null;
     this.disasterWindow = null;
+    this.exitWindow = null;
 
     this.selector = null;
     this.select = null;
@@ -55,6 +69,10 @@ HUB.Base = function(){
 
     this.disasterTypes = ['None', 'Monster', 'Fire', 'Flood', 'Crash', 'Meltdown', 'Tornado'];
     this.disasterButtons = [];
+
+    
+
+    this.intro();
 }
 
 HUB.Base.prototype = {
@@ -63,12 +81,12 @@ HUB.Base.prototype = {
     },
     intro:function(){
     	this.full = document.createElement('div'); 
-    	this.full.style.cssText ='position:absolute; background:rgba(102,102,230,1); top:0px; left:0px; width:100%; height:100%; pointer-events:none; display:block;';
+    	this.full.style.cssText ='position:absolute; background:#6666e6; top:0px; left:0px; width:100%; height:100%; pointer-events:none; display:block;';
         this.title = document.createElement('div');
         this.title.innerHTML = "3D.CITY";
     	this.title.style.cssText = 'position:absolute; font-size:40px; top:50%; left:50%; margin-top:-40px; margin-left:-100px; width:200px; height:80px; pointer-events:none;';
         this.subtitle = document.createElement('div');
-        this.subtitle.style.cssText = 'position:absolute; top:50%; left:50%; margin-top:20px; margin-left:-100px; width:200px; height:80px; pointer-events:none;';
+        this.subtitle.style.cssText = 'position:absolute; font-size:14px; top:50%; left:50%; margin-top:20px; margin-left:-100px; width:200px; height:80px; pointer-events:none;';
         this.subtitle.innerHTML = "Generating world...";
 
     	this.full.appendChild( this.title );
@@ -99,25 +117,27 @@ HUB.Base.prototype = {
 
     initStartHub : function(){
         this.full = document.createElement('div'); 
-        this.full.style.cssText ='position:absolute; top:30px; left:50%; margin-left:-154px; width:316px; pointer-events:none;';
+        //this.full.style.cssText ='position:absolute; top:30px; left:50%; margin-left:-154px; width:316px; pointer-events:none;';
+        this.full.style.cssText ='position:absolute; top:0px; left:50%; margin-left:-150px; width:300px; pointer-events:none;';
         this.full.id = 'fullStart';
 
         this.hub.appendChild( this.full );
-        var b1 = this.addButton(this.full, 'Play Game', [300,50, 40]);
-    	var b2 = this.addButton(this.full, 'New Map');
-        var b3 = this.addButton(this.full, 'Height Map');
+        var b1 = this.addButton(this.full, 'Play Game', [276,48,40], 'position:absolute; top:20px; left:0px;');
+    	var b2 = this.addButton(this.full, 'New Map',  [120, 26, 22], 'position:absolute; top:104px; left:0px;');
+        var b3 = this.addButton(this.full, 'Height Map',  [120, 26, 22], 'position:absolute; top:104px; right:0px;');
 
         b1.addEventListener('click',  function ( e ) { e.preventDefault(); playMap(); }, false);
         b2.addEventListener('click',  function ( e ) { e.preventDefault(); newMap(); }, false);
         b3.addEventListener('click',  function ( e ) { e.preventDefault(); newHeightMap(); }, false);
         
-        this.addSelector("Difficulty", ['LOW', 'MEDIUM', 'HARD'], setDifficulty, 0);
+        this.addSelector("LEVEL", ['LOW', 'MEDIUM', 'HARD'], setDifficulty, 0);
     },
 
     //--------------------------------------game hub
 
     initGameHub : function(){
-        this.removeSelector("Difficulty");
+        _this = this;
+        this.removeSelector("LEVEL");
         this.clearElement('fullStart');
 
         this.toolSet = document.createElement('div');
@@ -128,47 +148,75 @@ HUB.Base.prototype = {
         this.hub.appendChild( this.toolInfo );
         this.toolInfo.innerHTML = "Selecte<br>Tool";
 
-        var bname = ['MOVE', 'residential','commercial','industrial','Police', 'park', 'Fire','road','bulldozer','rail','coal','wire','nuclear', 'Port','stadium','airport','query', 'DRAG'];
         var b;
-        for(var i = 0; i<bname.length; i++){
-            if(i==0 || i == 17){ b = this.addButton(this.hub, bname[i], [60, 16, 14] ); b.addEventListener('click',  function(e){ e.preventDefault(); selectTool(this.name); }, false); }
-            else if(i<4) b = this.addSVGButton(this.toolSet);//this.addButton(this.toolSet, bname[i], [50,70, 14], true, this.showToolInfo );
-            else b = this.addSVGButton(this.toolSet);//this.addButton(this.toolSet, bname[i], [50,50, 14], true, this.showToolInfo );
-
-            b.name = i;
-            //b.addEventListener('click',  function(e){ e.preventDefault(); selectTool(this.name); }, false);
+        for(var i = 0; i<18; i++){
+            b = this.addSVGButton(this.toolSet);
+            b.name = i+1;
         }
 
-        var testic = document.getElementById("interface"); //document.createElement('div');
-        testic.style.cssText = "position:absolute; top:60px; right:12px; width:198px; height:396px; pointer-events:none;";
-       // testic.innerHTML = HUB.police; //HUB.round;
-        this.hub.appendChild( testic );
+        var testic = document.getElementById("interface");
+        testic.style.display = 'block';
+
+        var basemenu = document.getElementById("basemenu");
+        basemenu.style.display = 'block';
 
         this.selector = document.createElement('div');
-        this.selector .style.cssText = "position:absolute; top:0px; left:0px; pointer-events:none; display:none;"
+        this.selector.style.cssText = "position:absolute; top:0px; left:0px; pointer-events:none; display:none;"
         this.selector.innerHTML = HUB.roundSelected;
         this.toolSet.appendChild( this.selector );
 
         this.select = document.createElement('div');
-        this.select .style.cssText = "position:absolute; top:0px; left:0px; pointer-events:none; display:none;"
+        this.select.style.cssText = "position:absolute; top:0px; left:0px; pointer-events:none; display:none;"
         this.select.innerHTML = HUB.roundSelect;
         this.toolSet.appendChild( this.select );
 
-        this.addSelector("Speed", ['PAUSE', '1', '2', '3', '4'], setSpeed, 2);
+        this.addSelector("Speed", ['II', '>', '>>', '>>>', '>>>'], setSpeed, 2, [30,30,30,30,30]);
 
-        var b1 = this.addButton(this.hub, 'BUDGET', [70,16,14], false, 'position:absolute; left:20px; top:100px;');
+        var b1 = this.addButton(this.hub, 'BUDGET', [70,16,14], 'position:absolute; left:10px; top:-4px;', true);
         b1.addEventListener('click',  function ( e ) { e.preventDefault(); getBudjet(); }, false);
 
-        var b2 = this.addButton(this.hub, 'EVAL', [70,16,14], false, 'position:absolute; left:20px; top:140px;');
+        var b2 = this.addButton(this.hub, 'EVAL', [70,16,14], 'position:absolute; left:110px; top:-4px;', true);
         b2.addEventListener('click',  function ( e ) { e.preventDefault(); getEval(); }, false);
 
-        var b3 = this.addButton(this.hub, 'DISASTER', [70,16,14], false, 'position:absolute; left:20px; top:180px;');
-        b3.addEventListener('click',  function ( e ) { e.preventDefault(); getDisaster(); }, false);
+        var b3 = this.addButton(this.hub, 'DISASTER', [70,16,14], 'position:absolute; left:210px; top:-4px;', true);
+        b3.addEventListener('click',  function ( e ) { e.preventDefault();  _this.openDisaster(); }, false);
+
+        var b4 = this.addButton(this.hub, 'EXIT', [70,16,14], 'position:absolute; left:310px; top:-4px;', true);
+        b4.addEventListener('click',  function ( e ) { e.preventDefault();  _this.openExit();  }, false);
 
 
+        this.H = [];
+        
+
+        this.roo = document.createElement('div');
+        this.roo.style.cssText = "position:absolute; bottom:11px; left:10px; width:60px; height:60px; pointer-events:none; transform:rotate(45deg); ";
+        this.roo.style.cssText += "-moz-border-radius: 30px; -webkit-border-radius: 30px; border-radius: 30px; overflow:hidden; ";
+        this.hub.appendChild( this.roo );
+
+        var dd;
+        for(i = 0; i<4; i++){
+            dd = document.createElement('div');
+            if(i==0)dd.style.cssText = "position:absolute; top:0px; left:0px; width:30px; height:30px; pointer-events:auto; cursor:pointer; background:#ffffff;";
+            if(i==1)dd.style.cssText = "position:absolute; top:0px; right:0px; width:30px; height:30px; pointer-events:auto; cursor:pointer;";
+            if(i==2)dd.style.cssText = "position:absolute; bottom:0px; right:0px; width:30px; height:30px; pointer-events:auto; cursor:pointer;";
+            if(i==3)dd.style.cssText = "position:absolute; bottom:0px; left:0px; width:30px; height:30px; pointer-events:auto; cursor:pointer;";
+            dd.name = i;
+            this.roo.appendChild( dd );
+            dd.addEventListener('click',  function ( e ) { 
+                e.preventDefault();
+                _this.hideoldSel();
+                _this.H[this.name].style.background = '#ffffff';
+                setTimeColors(this.name);
+                 }, false);
+            this.H[i]=dd;
+        }
 
         this.initCITYinfo();
-        
+    },
+    hideoldSel : function(){
+        for(i = 0; i<4; i++){
+            this.H[i].style.background = 'none';
+        }
     },
 
     //-----------------------------------CITY INFO
@@ -176,19 +224,19 @@ HUB.Base.prototype = {
     initCITYinfo : function(){
 
         this.date = document.createElement('div');
-        this.date.style.cssText = 'font-size:16px; position:absolute; width:100px; height:70px; top:20px; left:20px; text-align:left;';
+        this.date.style.cssText = 'font-size:14px; position:absolute; width:70px; height:20px; bottom:14px; left:70px; text-align:right; font-weight:bold;';
 
         this.money = document.createElement('div');
-        this.money.style.cssText = 'font-size:16px; position:absolute; width:100px; height:70px; top:20px; left:140px; text-align:left;';
+        this.money.style.cssText = 'font-size:14px; position:absolute; width:70px; height:20px; bottom:14px; left:310px; text-align:right; font-weight:bold;';
 
         this.population = document.createElement('div');
-        this.population.style.cssText = 'font-size:16px; position:absolute; width:100px; height:70px; top:20px; left:260px; text-align:left;';
+        this.population.style.cssText = 'font-size:14px; position:absolute; width:70px; height:20px; bottom:14px; left:190px; text-align:right; font-weight:bold;';
 
         this.score = document.createElement('div');
-        this.score.style.cssText = 'font-size:16px; position:absolute; width:100px; height:70px; top:20px; left:360px; text-align:left;';
+        this.score.style.cssText = 'font-size:14px; position:absolute; width:70px; height:20px; bottom:14px; left:430px; text-align:right; font-weight:bold;';
 
         this.msg = document.createElement('div');
-        this.msg.style.cssText = 'font-size:14px; position:absolute; width:400px; height:70px; top:50px; left:20px; text-align:left;';
+        this.msg.style.cssText = 'font-size:12px; position:absolute; width:420px; height:20px; bottom:45px; left:80px; text-align:left; color:'+this.colors[4]+';';
 
         this.hub.appendChild( this.date );
         this.hub.appendChild( this.money );
@@ -201,9 +249,9 @@ HUB.Base.prototype = {
 
     updateCITYinfo : function(infos){
         this.date.innerHTML = infos[0];
-        this.money.innerHTML = infos[4]+' $';
-        this.population.innerHTML = infos[3]+' people';
-        this.score.innerHTML =  'score:' + infos[2];
+        this.money.innerHTML = infos[4];
+        this.population.innerHTML = infos[3];
+        this.score.innerHTML =  infos[2];
 
         this.msg.innerHTML = infos[8];
 
@@ -228,6 +276,10 @@ HUB.Base.prototype = {
             this.closeDisaster();
             t = 'disaster';
         }
+        if(this.exitWindow !== null && this.exitWindow.className == "open"){
+            this.closeExit();
+            t = 'exit';
+        }
 
         return t;
 
@@ -243,11 +295,11 @@ HUB.Base.prototype = {
 
         if(this.evaluationWindow == null){
             this.evaluationWindow = document.createElement('div');
-            this.evaluationWindow.style.cssText =this.radius+ 'position:absolute; top:100px; left:140px; width:200px; height:300px; pointer-events:none; display:block; background:#eeeeee; ';
+            this.evaluationWindow.style.cssText =this.radius+ 'position:absolute; width:200px; height:300px; pointer-events:none; display:block;'+ this.windowsStyle;
             this.hub.appendChild( this.evaluationWindow );
 
             this.evaltOpinion = document.createElement('div');
-            this.evaltOpinion.style.cssText ='position:absolute; top:10px; left:10px; width:180px; height:100px; pointer-events:none; color:black; ';
+            this.evaltOpinion.style.cssText ='position:absolute; top:10px; left:10px; width:180px; height:100px; pointer-events:none; color:'+this.colors[0]+';';
             this.evaluationWindow.appendChild( this.evaltOpinion );
 
             this.evaltYes = document.createElement('div');
@@ -259,7 +311,7 @@ HUB.Base.prototype = {
             this.evaluationWindow.appendChild( this.evaltNo );
 
             this.evaltProb = document.createElement('div');
-            this.evaltProb.style.cssText ='position:absolute; top:90px; left:10px; width:180px; height:60px; pointer-events:none; color:black;  font-size:16px; ';
+            this.evaltProb.style.cssText ='position:absolute; top:90px; left:10px; width:180px; height:60px; pointer-events:none; color:'+this.colors[0]+'; font-size:16px; ';
             this.evaluationWindow.appendChild( this.evaltProb );
 
             this.evaltOpinion.innerHTML = "<b>Public opinion</b><br>Is the mayor doing a good job ?<br> <br> <br>What are the worst problems ?<br>"
@@ -280,6 +332,58 @@ HUB.Base.prototype = {
         this.evaluationWindow.style.display = 'none';
         this.evaluationWindow.className = "close";
     },
+
+    //-----------------------------------EXIT WINDOW
+
+    openExit : function(data){
+        _this = this;
+
+        var test = this.testOpen();
+        if(test == 'exit') return;
+
+        if(this.exitWindow == null){
+            this.exitWindow = document.createElement('div');
+            this.exitWindow.style.cssText =this.radius+ 'position:absolute; width:140px; height:180px; pointer-events:none; display:block;'+ this.windowsStyle;;
+            this.hub.appendChild( this.exitWindow );
+
+            var bg1 = this.addButton(this.exitWindow, 'X', [16,16,14], 'position:absolute; left:50px; top:10px;');
+            var bg2 = this.addButton(this.exitWindow, 'NEW MAP', [96,16,14], 'position:absolute; left:10px; top:50px;');
+            var bg3 = this.addButton(this.exitWindow, 'SAVE', [96,16,14], 'position:absolute; left:10px; top:90px;');
+            var bg4 = this.addButton(this.exitWindow, 'LOAD', [96,16,14], 'position:absolute; left:10px; top:130px;');
+
+            bg1.addEventListener('click',  function(e){ e.preventDefault(); _this.closeExit(); }, false);
+            bg2.addEventListener('click',  function(e){ e.preventDefault(); newGameMap(); }, false);
+            bg3.addEventListener('click',  function(e){ e.preventDefault(); saveGame(); }, false);
+           // bg4.addEventListener('click',  function(e){ e.preventDefault(); loadGame(); }, false);
+
+            var x = document.createElement("INPUT");
+            x.setAttribute("id", "fileToLoad");
+            x.setAttribute("type", "file");
+            x.style.cssText = "pointer-events:auto; opacity:0; position:absolute; left:10px; top:130px; width:120px; height:40px; overflow:hidden;";
+           // x.addEventListener( 'mouseover', function ( e ) { e.preventDefault(); bg4.style.border = '4px solid '+_this.colors[0];  bg4.style.backgroundColor = _this.colors[0]; bg4.style.color = _this.colors[1]; }, false );
+           // x.addEventListener( 'mouseout', function ( e ) { e.preventDefault(); bg4.style.border = '4px solid '+_this.colors[1]; bg4.style.backgroundColor = _this.colors[1]; bg4.style.color = _this.colors[0];  }, false );
+
+            x.addEventListener( 'mouseover', function ( e ) { e.preventDefault();  bg4.style.backgroundColor = _this.colors[2]; }, false );
+            x.addEventListener( 'mouseout', function ( e ) { e.preventDefault();  bg4.style.backgroundColor = _this.colors[1];  }, false );
+
+            x.addEventListener('change', loadGame, false);
+
+
+            //"fileToLoad"
+            this.exitWindow.appendChild( x );
+
+        } else {
+            this.exitWindow.style.display = 'block';
+            //this.setBudgetValue();
+        }
+
+        this.exitWindow.className = "open";
+    },
+    closeExit :function(){
+        this.exitWindow.style.display = 'none';
+        this.exitWindow.className = "close";
+    },
+
 
     //-----------------------------------BUDGET WINDOW
 
@@ -310,7 +414,7 @@ HUB.Base.prototype = {
 
         if(this.budgetWindow == null){
             this.budgetWindow = document.createElement('div');
-            this.budgetWindow.style.cssText =this.radius+ 'position:absolute; top:100px; left:140px; width:200px; height:300px; pointer-events:none; display:block; background:#eeeeee; ';
+            this.budgetWindow.style.cssText =this.radius+ 'position:absolute; width:200px; height:300px; pointer-events:none; display:block;'+ this.windowsStyle;;
             this.hub.appendChild( this.budgetWindow );
 
             this.addSlider(this.budgetWindow, 10, 'Taxe', this.taxRate, null, 'green', 20);
@@ -319,12 +423,12 @@ HUB.Base.prototype = {
             this.addSlider(this.budgetWindow, 150, 'Police', this.policeRate, this.policeFund, 'red', 100);
 
             this.budgetResult = document.createElement('div');
-            this.budgetResult.style.cssText ='position:absolute; top:200px; left:10px; width:180px; height:300px; pointer-events:none; color:black; ';
+            this.budgetResult.style.cssText ='position:absolute; top:200px; left:10px; width:180px; height:300px; pointer-events:none; color:'+this.colors[0]+';';
             
             this.budgetWindow.appendChild( this.budgetResult );
 
-            var bg1 = this.addButton(this.budgetWindow, 'CLOSE', [70,16,14], false);
-            var bg2 = this.addButton(this.budgetWindow, 'APPLY', [70,16,14], false);
+            var bg1 = this.addButton(this.budgetWindow, 'CLOSE', [70,16,14], 'position:absolute; left:10px; bottom:10px;');
+            var bg2 = this.addButton(this.budgetWindow, 'APPLY', [70,16,14], 'position:absolute; rigth:10px; bottom:10px;');
 
             bg1.addEventListener('click',  function(e){ e.preventDefault(); _this.closeBudget(); }, false);
             bg2.addEventListener('click',  function(e){ e.preventDefault(); _this.applyBudget(); }, false);
@@ -363,17 +467,15 @@ HUB.Base.prototype = {
 
     openDisaster : function(){
         _this = this;
-
         var test = this.testOpen();
         if(test == 'disaster') return;
-
         if(this.disasterWindow == null){
             this.disasterWindow = document.createElement('div');
-            this.disasterWindow.style.cssText =this.radius+ 'position:absolute; top:100px; left:140px; width:140px; height:300px; pointer-events:none; display:block; background:#eeeeee; ';
+            this.disasterWindow.style.cssText =this.radius+ 'position:absolute; width:140px; height:300px; pointer-events:none; display:block;'+ this.windowsStyle;;
             this.hub.appendChild( this.disasterWindow );
 
             for(var i=0; i<this.disasterTypes.length; i++){
-                this.disasterButtons[i] = this.addButton(this.disasterWindow, this.disasterTypes[i].toUpperCase(), [100,16,14], false,'position:absolute; left:10px; top:'+(10+(i*40))+'px;');
+                this.disasterButtons[i] = this.addButton(this.disasterWindow, this.disasterTypes[i].toUpperCase(), [96,16,14],'position:absolute; left:10px; top:'+(10+(i*40))+'px;');
                 this.disasterButtons[i].name = this.disasterTypes[i];
                 this.disasterButtons[i].addEventListener('click',  function(e){ e.preventDefault(); setDisaster(this.name); }, false);
             }
@@ -397,8 +499,8 @@ HUB.Base.prototype = {
         var txt = document.createElement( 'div' );
         var bg = document.createElement( 'div' );
         var sel = document.createElement( 'div' );
-        txt.style.cssText ='position:absolute; left:10px; top:-20px; pointer-events:none; width:180px; height:20px; font-size:12px; color:black; ';
-        bg.style.cssText =this.radius+'position:absolute; left:10px; top:'+(py+20)+'px; padding:0; cursor:w-resize; pointer-events:auto; width:180px; height:20px; background-color:#cccccc; ';
+        txt.style.cssText ='position:absolute; left:10px; top:-20px; pointer-events:none; width:180px; height:20px; font-size:12px; color:'+this.colors[0]+';';
+        bg.style.cssText =this.radius+'position:absolute; left:10px; top:'+(py+20)+'px; padding:0; cursor:w-resize; pointer-events:auto; width:180px; height:20px; background-color:'+ _this.colors[1]+';';
         sel.style.cssText =this.radius+'position:absolute; pointer-events:none; margin:5px; width:100px; height:10px; background-color:'+color+';';
         target.appendChild( bg );
         bg.appendChild( sel );
@@ -415,8 +517,8 @@ HUB.Base.prototype = {
         sel.style.width = 170*(value/max)+'px';
         bg.className = "up";
 
-        bg.addEventListener( 'mouseout', function(e){ e.preventDefault();this.className = "up"; this.style.backgroundColor = '#cccccc'; }, false );
-        bg.addEventListener( 'mouseover', function(e){ e.preventDefault(); this.style.backgroundColor = '#dedede'; }, false );
+        bg.addEventListener( 'mouseout', function(e){ e.preventDefault();this.className = "up"; this.style.backgroundColor = _this.colors[1]; }, false );
+        bg.addEventListener( 'mouseover', function(e){ e.preventDefault(); this.style.backgroundColor = _this.colors[2]; }, false );
         bg.addEventListener( 'mouseup', function(e){ e.preventDefault(); this.className = "up"; }, false );
         bg.addEventListener( 'mousedown', function(e){ e.preventDefault(); this.className = "down"; _this.dragSlider(this, e.clientX, max); }, false );
         bg.addEventListener( 'mousemove', function(e){ e.preventDefault(); _this.dragSlider(this, e.clientX, max); } , false );
@@ -478,8 +580,6 @@ HUB.Base.prototype = {
         this.I.style.cssText = 'position:absolute; width:10px; height:20px; bottom:42px; left:50px; background:#ffff30;';
         cont.appendChild( this.I );
 
-
-
         cont.appendChild( txt );
         this.hub.appendChild( cont );
     },
@@ -501,36 +601,48 @@ HUB.Base.prototype = {
 
     //---------------------------------- SELECTOR 
 
-    addSelector : function( type, names, fun, current){
+    addSelector : function( type, names, fun, current, size){
         _this = this;
         var cont = document.createElement('div');
         //cont.style.cssText = 'position:absolute; width:300px; height:50px; font-size:16px; top:0; left:webkit-clac(50% -150px);';
-        cont.style.cssText = 'font-size:20px; margin-top:20px;';
-        if(type=='Speed') cont.style.cssText = 'font-size:20px; position:absolute; bottom:20px; left:10px; ';
+        cont.style.cssText = 'font-size:16px; margin-top:10px; color:'+this.colors[0]+';';
+        if(type=='Speed') cont.style.cssText = 'font-size:20px; position:absolute; bottom:3px; left:540px; ';
         else cont.innerHTML = type+"<br>";
         cont.id = type;
         var t = [];
         for(var i=0; i!==names.length; i++){
             t[i] = document.createElement( 'div' );
-            t[i].style.cssText = 'font-size:14px; border:4px solid '+this.colors[1]+'; background:'+this.colors[1]+'; width:70px; height:16px; margin:4px; padding:4px; pointer-events:auto;  cursor:pointer; display:inline-block; font-weight:bold;' + this.radius;
-            if(type=='Speed'){ if(i>0) t[i].style.width = '16px'; else t[i].style.width = '60px'; }
+           // t[i].style.cssText = 'font-size:14px; border:4px solid '+this.colors[1]+'; background:'+this.colors[1]+';'
+           // t[i].style.cssText +=' width:70px; height:16px; margin:4px; padding:4px; pointer-events:auto;  cursor:pointer; display:inline-block; font-weight:bold;' + this.radius;
+            t[i].style.cssText = 'font-size:14px; border:1px solid '+this.colors[1]+'; background:'+this.colors[1]+'; color:'+this.colors[0]+';';
+            t[i].style.cssText +=' width:70px; height:16px; margin:2px; padding:7px; pointer-events:auto;  cursor:pointer; display:inline-block; ';
+
+            if(i==0) t[i].style.cssText += this.radiusL;
+            if(i==names.length-1)t[i].style.cssText += this.radiusR;
+           // if(type=='Speed'){ if(i>0) t[i].style.width = '16px'; else t[i].style.width = '60px'; }
+            if(size){if(size[i]){t[i].style.width = size[i] + 'px'; t[i].style.height = size[i] + 'px'; t[i].style.padding ='0px'; } else t[i].style.width = '60px';}
+            else t[i].style.width = '60px';
             t[i].className = "none";
-            t[i].textContent = names[i];
+            if(type!=='Speed')t[i].textContent = names[i];
             if(i==current){
-                t[i].style.border = '4px solid '+this.colors[0];
-                t[i].style.backgroundColor = this.colors[0];
-                t[i].style.color = this.colors[1];
+                //t[i].style.border = '4px solid '+this.colors[0];
+                t[i].style.backgroundColor = this.colors[2];
+                //t[i].style.color = this.colors[1];
                 t[i].className = "select";
             }
             t[i].name = i;
             t[i].id = type+i;
             cont.appendChild( t[i] );
-            t[i].addEventListener( 'mouseover', function ( e ) { e.preventDefault(); this.style.border = '4px solid '+_this.colors[0];  }, false );
-            t[i].addEventListener( 'mouseout', function ( e ) { e.preventDefault();  if(this.className == 'none')this.style.border = '4px solid '+_this.colors[1];  }, false );
+            //t[i].addEventListener( 'mouseover', function ( e ) { e.preventDefault(); this.style.border = '4px solid '+_this.colors[0];  }, false );
+            //t[i].addEventListener( 'mouseout', function ( e ) { e.preventDefault();  if(this.className == 'none')this.style.border = '4px solid '+_this.colors[1];  }, false );
+
+            t[i].addEventListener( 'mouseover', function ( e ) { e.preventDefault(); this.style.border = '1px solid '+_this.colors[2];  }, false );
+            t[i].addEventListener( 'mouseout', function ( e ) { e.preventDefault();  this.style.border = '1px solid '+_this.colors[1];  }, false );
+
             t[i].addEventListener( 'click', function ( e ) { e.preventDefault(); fun( this.name ); _this.setActiveSelector(this.name, type); }, false );
         }
         //this.hub.appendChild( cont );
-        if(type=='Difficulty')this.full.appendChild( cont );
+        if(type=='LEVEL'){this.full.appendChild( cont ); cont.style.position = 'absolute'; cont.style.top = '160px';cont.style.width = '300px';}
         else this.hub.appendChild( cont );
     },
 
@@ -539,16 +651,16 @@ HUB.Base.prototype = {
         while(h--){
             if(document.getElementById(type+h)){
                 def = document.getElementById(type+h);
-                def.style.color = this.colors[0];
-                def.style.border = '4px solid '+_this.colors[1]; 
+                //def.style.color = this.colors[0];
+               // def.style.border = '4px solid '+_this.colors[1]; 
                 def.style.backgroundColor = this.colors[1];
                 def.className = "none";
             }
         }
         var select = document.getElementById(type+n);
-        select.style.border = '4px solid '+_this.colors[0]; 
-        select.style.backgroundColor = this.colors[0];
-        select.style.color = this.colors[1];
+        //select.style.border = '4px solid '+_this.colors[0]; 
+        select.style.backgroundColor = this.colors[2];
+        //select.style.color = this.colors[1];
         select.className = "select";
     },
 
@@ -564,28 +676,30 @@ HUB.Base.prototype = {
         this.full.removeChild(target);
     },
 
-    //------------------------------------------
+    //------------------------------------------ TOOLS MENU
 
     showToolSelect : function(id){
         if(id.name !==  this.currentToolName){
-            this.currentToolName = id.name; ///view3d.toolSet[id.name].tool;
+            this.currentToolName = id.name;
             var px = (id.getBoundingClientRect().left - _this.toolSet.getBoundingClientRect().left );
             var py= (id.getBoundingClientRect().top - _this.toolSet.getBoundingClientRect().top );
-            this.select.style.left =    px+ 'px'; 
-            this.select.style.top = py+ 'px';
+            this.select.style.left = px + 'px'; 
+            this.select.style.top = py + 'px';
             this.select.style.display = 'block';
         } else {
             this.select.style.display = 'none';
             this.currentToolName = 0;
         }
-
         selectTool(this.currentToolName);
     },
 
     showToolInfo : function(id, t){
         var name = view3d.toolSet[id.name].tool;
         name = name.charAt(0).toUpperCase() + name.substring(1).toLowerCase();
-        t.toolInfo.innerHTML = name+'<br>'+view3d.toolSet[id.name].price+"$";
+        if(id.name===16) t.toolInfo.innerHTML = 'Drag view';
+        else if(id.name===178) t.toolInfo.innerHTML = 'Get info';
+        else if(id.name===18) t.toolInfo.innerHTML = 'Rotate view';
+        else t.toolInfo.innerHTML = name+'<br>'+view3d.toolSet[id.name].price+"$";
     },
 
     addSVGButton : function(target){
@@ -593,96 +707,57 @@ HUB.Base.prototype = {
         var b = document.createElement( 'div' );
         b.style.cssText =" margin:0px; padding:0px; width:66px; height:66px; pointer-events:auto; cursor:pointer; display:inline-block; line-height:0px; vertical-align: top;";
         b.innerHTML = HUB.round;
-
-        //b.addEventListener( 'mouseover', function ( e ) { e.preventDefault(); this.style.border = '4px solid '+_this.colors[0];  this.style.backgroundColor = _this.colors[0]; this.style.color = _this.colors[1]; _this.showToolInfo(this.name, _this) }, false );
-        //b.addEventListener( 'mouseout', function ( e ) { e.preventDefault(); this.style.border = '4px solid '+_this.colors[1]; this.style.backgroundColor = _this.colors[1]; this.style.color = _this.colors[0];  }, false );
-
-        //b.addEventListener( 'mouseover', function ( e ) { e.preventDefault(); this.innerHTML = HUB.roundSelected;  _this.showToolInfo(this.name, _this) }, false );
-        //b.addEventListener( 'mouseout', function ( e ) { e.preventDefault(); this.innerHTML = HUB.round;   }, false );
-
-        b.addEventListener( 'mouseover', function ( e ) { e.preventDefault();
+        b.addEventListener( 'mouseover', function ( e ) { 
+            e.preventDefault();
             var px = (this.getBoundingClientRect().left - _this.toolSet.getBoundingClientRect().left );
             var py= (this.getBoundingClientRect().top - _this.toolSet.getBoundingClientRect().top )
-         _this.selector.style.left =    px+ 'px'; 
-         _this.selector.style.top = py+ 'px';
-         _this.selector.style.display = 'block';
-         
-          _this.showToolInfo(this, _this) }, false );
-        b.addEventListener( 'mouseout', function ( e ) { e.preventDefault();   _this.selector.style.display = 'none';}, false );
-
+            _this.selector.style.left = px+ 'px'; 
+            _this.selector.style.top = py + 'px';
+            _this.selector.style.display = 'block';
+            _this.showToolInfo(this, _this);
+        }, false );
+        b.addEventListener( 'mouseout', function ( e ) { e.preventDefault(); _this.selector.style.display = 'none';}, false );
         b.addEventListener('click',  function(e){ e.preventDefault();  _this.showToolSelect(this); }, false);
-       
         target.appendChild( b );
-
         return b;
     },
 
-    addButton : function(target, name, size, tool, style){
-        _this = this;
-        if(!size) size = [134, 30, 22];
+    //------------------------------------------ DEF BUTTON
+
+    addButton : function(target, name, size, style, top){
+        var _this = this;
+        if(!size) size = [128, 30, 22];
         //var b = this.createLabel(name, size, true);
         var b = document.createElement( 'div' );
-        var defStyle = 'font-size:'+size[2]+'px; border:4px solid '+this.colors[1]+'; background:'+this.colors[1]+'; width:'+size[0]+'px; height:'+size[1]+'px; margin:4px; padding:4px; pointer-events:auto;  cursor:pointer; display:inline-block; font-weight:bold;' + this.radius;
-        b.textContent = name;
-        if(!tool){
-            if(name == 'MOVE') b.style.cssText = defStyle+'position:absolute; left:270px; bottom:20px; ';
-            else if(name == 'DRAG') b.style.cssText = defStyle+'position:absolute; left:358px; bottom:20px;';
-           // else if(name == 'BUDGET') b.style.cssText = defStyle+'position:absolute; left:20px; top:100px;';
-          //  else if(name == 'EVAL') b.style.cssText = defStyle+'position:absolute; left:20px; top:140px;';
-           // else if(name == 'DISASTER') b.style.cssText = defStyle+'position:absolute; left:20px; top:180px;';
-            else if(name == 'CLOSE') b.style.cssText = defStyle+'position:absolute; left:10px; bottom:10px;';
-            else if(name == 'APPLY') b.style.cssText = defStyle+'position:absolute; rigth:10px; bottom:10px;';
-            else b.style.cssText =defStyle+ 'margin-top:20px;';
-            if(style) b.style.cssText = defStyle+ style;
-        } else {
-            b.style.cssText = defStyle+'margin:2px; padding:0px; overflow:hidden;';
-        }
 
-        var _this = this;
-        b.addEventListener( 'mouseover', function ( e ) { e.preventDefault(); this.style.border = '4px solid '+_this.colors[0];  this.style.backgroundColor = _this.colors[0]; this.style.color = _this.colors[1]; }, false );
-        b.addEventListener( 'mouseout', function ( e ) { e.preventDefault(); this.style.border = '4px solid '+_this.colors[1]; this.style.backgroundColor = _this.colors[1]; this.style.color = _this.colors[0];  }, false );
+        //var defStyle = 'font-size:'+size[2]+'px; border:4px solid '+this.colors[1]+'; background:'+this.colors[1]+'; width:'+size[0]+'px; height:'+size[1]+'px;'
+        //defStyle += 'margin:4px; padding:4px; pointer-events:auto;  cursor:pointer; display:inline-block; font-weight:bold;' + this.radius;
+
+        var defStyle = 'font-size:'+size[2]+'px;  border:1px solid '+this.colors[1]+'; background:'+this.colors[1]+'; width:'+size[0]+'px; height:'+size[1]+'px; color:'+this.colors[0]+';';
+        if(top)defStyle += 'margin:4px; padding:7px; pointer-events:auto;  cursor:pointer; display:inline-block; ' + this.radiusB;
+        else defStyle += 'margin:4px; padding:7px; pointer-events:auto;  cursor:pointer; display:inline-block; ' + this.radius;
+
+        b.textContent = name;
+        if(style) b.style.cssText = defStyle+ style;
+        else b.style.cssText = defStyle+ 'margin-top:20px;';
+        
+       // b.addEventListener( 'mouseover', function ( e ) { e.preventDefault(); this.style.border = '4px solid '+_this.colors[0];  this.style.backgroundColor = _this.colors[0]; this.style.color = _this.colors[1]; }, false );
+       // b.addEventListener( 'mouseout', function ( e ) { e.preventDefault(); this.style.border = '4px solid '+_this.colors[1]; this.style.backgroundColor = _this.colors[1]; this.style.color = _this.colors[0];  }, false );
+
+        b.addEventListener( 'mouseover', function ( e ) { e.preventDefault();  this.style.backgroundColor = _this.colors[2]; }, false );
+        b.addEventListener( 'mouseout', function ( e ) { e.preventDefault(); this.style.backgroundColor = _this.colors[1]; }, false );
+
 
         target.appendChild( b );
 
         return b;
     },
-
-    /*addButton : function(target, name, size, tool, extra, style){
-        _this = this;
-        if(!size) size = [134, 30, 22];
-    	//var b = this.createLabel(name, size, true);
-        var b = document.createElement( 'div' );
-        var defStyle = 'font-size:'+size[2]+'px; border:4px solid '+this.colors[1]+'; background:'+this.colors[1]+'; width:'+size[0]+'px; height:'+size[1]+'px; margin:4px; padding:4px; pointer-events:auto;  cursor:pointer; display:inline-block; font-weight:bold;' + this.radius;
-        b.textContent = name;
-    	if(!tool){
-            if(name == 'MOVE') b.style.cssText = defStyle+'position:absolute; left:270px; bottom:20px; ';
-            else if(name == 'DRAG') b.style.cssText = defStyle+'position:absolute; left:358px; bottom:20px;';
-            else if(name == 'BUDGET') b.style.cssText = defStyle+'position:absolute; left:20px; top:100px;';
-            else if(name == 'EVAL') b.style.cssText = defStyle+'position:absolute; left:20px; top:140px;';
-            else if(name == 'DISASTER') b.style.cssText = defStyle+'position:absolute; left:20px; top:180px;';
-            else if(name == 'CLOSE') b.style.cssText = defStyle+'position:absolute; left:10px; bottom:10px;';
-            else if(name == 'APPLY') b.style.cssText = defStyle+'position:absolute; rigth:10px; bottom:10px;';
-            else b.style.cssText =defStyle+ 'margin-top:20px;';
-            if(style) b.style.cssText = defStyle+ style;
-        } else {
-            b.style.cssText = defStyle+'margin:2px; padding:0px; overflow:hidden;';
-        }
-
-        var _this = this;
-    	b.addEventListener( 'mouseover', function ( e ) { e.preventDefault(); this.style.border = '4px solid '+_this.colors[0];  this.style.backgroundColor = _this.colors[0]; this.style.color = _this.colors[1];if(extra) extra(this.name  , _this) }, false );
-	    b.addEventListener( 'mouseout', function ( e ) { e.preventDefault(); this.style.border = '4px solid '+_this.colors[1]; this.style.backgroundColor = _this.colors[1]; this.style.color = _this.colors[0];  }, false );
-
-        target.appendChild( b );
-
-        return b;
-    },*/
 
     clearElement : function(id){
         var el = document.getElementById(id);
         var children = el.childNodes;
         var i = children.length;
         while(i--) el.removeChild( children[i] );
-
         this.hub.removeChild( el );
     }
 }

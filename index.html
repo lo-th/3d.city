@@ -6,13 +6,14 @@
 <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 <style>
 html { width:100%; height:100%; }
-body {  padding:0; margin: 0px; background:#6666e6; font:12px sans-serif; width:100%; height:100%; color:#fff; overflow: hidden;}
+body {  padding:0; margin: 0px; background:#6666e6; font:11px sans-serif; width:100%; height:100%; color:#ffffff; overflow: hidden;}
 *{-o-user-select:none; -ms-user-select:none; -khtml-user-select:none; -webkit-user-select:none; -moz-user-select: none;}
 #debug{ position:absolute; padding:5px; right:0; bottom:0; text-align:right; width:20%; pointer-events:none; display:block; }
-#log{ position:absolute; padding:5px; left:0; bottom:0; width:30%; pointer-events:none; display:block;}
 #hub{ position:absolute; top:0; left:0; height:100%; width:100%; pointer-events:none; display:block; text-align:center;}
 #glCanvas{ position:absolute; top:0px; left:0px;} 
-#miniGlCanvas{ position:absolute; bottom:60px; left:15px; pointer-events:none;} 
+#miniGlCanvas{ position:absolute; bottom:60px; left:15px; pointer-events:none;}
+#interface{ position:absolute;  top:60px; right:12px; width:198px; height:396px; pointer-events:none; display:none;}
+#basemenu{ position:absolute; bottom:1px; left:0px; pointer-events:none; display:none;}
 </style>
 <script src="js/three.min.js"></script>
 <!--<script src="js/loaders/sea3d.min.js"></script>-->
@@ -30,20 +31,23 @@ body {  padding:0; margin: 0px; background:#6666e6; font:12px sans-serif; width:
 <script src="js/rStats/rStats.js"></script>
 <script src="js/rStats/rStats.extras.js"></script>
 <script src="js/stats.js"></script>
+<script src="js/saveLoad.js"></script>
 
 </head>
 <body>
 <div id="container"></div>
 <!--<canvas id="glCanvas"></canvas>-->
-<div id="debug">pre alpha 0.93</div>
-<div id="log">loth 2014</div>
+<div id="debug">loth 2014 - v 0.1</div>
+<!--<div id="log"></div>-->
 <canvas id="miniGlCanvas"></canvas>
+
 <div id="hub"></div>
 
 <object id="interface" width="198" height="396" type="image/svg+xml" data="img/interface.svg"></object>
+<object class="basemenu" id="basemenu" width="800" height="80" type="image/svg+xml" data="img/basemenu.svg"></object>
 <script>
 var d = document.getElementById('debug');
-var l = document.getElementById('log');
+//var l = document.getElementById('log');
 var glCanvas = document.getElementById("glCanvas");
 var miniGlCanvas = document.getElementById("miniGlCanvas");
 var simulation_timestep = 30;
@@ -64,15 +68,13 @@ var cityWorker, view3d, hub, im;
 
 
 function debug(txt){ d.innerHTML += "<br>"+txt; }
-function log(txt){ l.innerHTML = txt || '';  }
+//function log(txt){ l.innerHTML = txt || '';  }
 
 window.onload = init;
 
 function init(){
-    view3d = new V3D.Base();
-    
-    //view3d.initMiniRender();
     hub = new HUB.Base();
+    view3d = new V3D.Base();
 }
 
 //=======================================
@@ -107,6 +109,26 @@ function loop() {
 }
 
 //=======================================
+//  SAVE LOAD
+//=======================================
+
+function saveGame(){
+    console.log("save game");
+    saveTextAsFile('test', 'game is saved');
+}
+
+function loadGame(){
+    console.log("load game");
+    loadFileAsText();
+    //saveTextAsFile('test', 'game is saved');
+}
+
+function newGameMap(){
+    console.log("new map");
+    //saveTextAsFile('test', 'game is saved');
+}
+
+//=======================================
 //  CITY INIT
 //=======================================
 
@@ -114,7 +136,7 @@ var ARRAY_TYPE;
 if(!ARRAY_TYPE) { ARRAY_TYPE = (typeof Float32Array !== 'undefined') ? Float32Array : Array; }
 
 
-
+/*
 function start() {
 	im = new Image();
     im.onload = initCity;
@@ -122,6 +144,11 @@ function start() {
     im.src = 'img/tiles32.png';
     view3d.mu = 2;
 }
+*/
+function setTimeColors(id) {
+    view3d.setTimeColors(id);
+}
+
 
 function newMap() {
     if(view3d.isWithHeight){ view3d.resetHeight();}
@@ -167,9 +194,9 @@ function getEval(){
     cityWorker.postMessage({ tell:"EVAL" });
 }
 
-function getDisaster(){
+/*function getDisaster(){
     hub.openDisaster();
-}
+}*/
 
 function setDisaster(disaster){
     console.log(disaster);
@@ -189,9 +216,10 @@ function mapClick() {
 
 function initCity() {
     //stats = new V3D.stats(view3d.renderer);
+    hub.subtitle.innerHTML = "Generating world...";
     loop();
 
-    view3d.imageSrc = im;
+    //view3d.imageSrc = im;
 
     cityWorker = new Worker('js/worker.city.js');
     cityWorker.postMessage = cityWorker.webkitPostMessage || cityWorker.postMessage;

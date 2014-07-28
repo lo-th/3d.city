@@ -10,7 +10,19 @@ var V3D = { REVISION: '0.2a' };
 V3D.Base = function(){
 	this.container = document.getElementById( 'container' );
 
+
+	this.dayTime = 0;
+
+	this.tcolor = {r:10, g: 15, b: 80, a: 0.9};
+
 	this.snd_layzone = new Audio("./sound/layzone.mp3");
+
+	this.imgSrc = ['img/tiles32.png','img/town.jpg','img/building.jpg','img/w_building.png','img/w_town.png'];
+	this.rootModel = 'img/world2.sea';
+	this.imgs = [];
+	this.num=0;
+
+	this.fullRedraw = false;
 
 	this.isWithBackground = true;
 	this.isWithHeight = false;
@@ -21,7 +33,7 @@ V3D.Base = function(){
 	this.clock = null;
 
 	//this.tileSize = 32;
-	this.mu = 1
+	this.mu = 2;
 	
 	this.ToRad = Math.PI / 180;
     this.camera = null;
@@ -60,7 +72,7 @@ V3D.Base = function(){
     this.terrain = null;
 
     this.tool = null;
-	this.toolSet = [
+	/*this.toolSet = [
         {id:0,  tool:'none',        geo:0,    name:'',  build:0, size:0, sy:0,    price:0,     color:'none'       ,drag:0  },
 		{id:1,  tool:'residential', geo:1,    name:'R', build:1, size:3, sy:0.2,  price:100,   color:'lime'       ,drag:0  },
 		{id:2,  tool:'commercial',  geo:2,    name:'C', build:1, size:3, sy:0.2,  price:100,   color:'blue'       ,drag:0  },
@@ -84,6 +96,32 @@ V3D.Base = function(){
 		
 		{id:16, tool:'query',       geo:0,    name:'?', build:0, size:1, sy:0,    price:0,     color:'cyan'       ,drag:0  },
 		{id:17, tool:'none',        geo:0,    name:'',  build:0, size:0, sy:0,    price:0,     color:'none'       ,drag:0  }
+	];*/
+	this.toolSet = [
+        {id:0,  tool:'none',        geo:0,    name:'',  build:0, size:0, sy:0,    price:0,     color:'none'       ,drag:0  },
+		{id:1,  tool:'residential', geo:1,    name:'R', build:1, size:3, sy:0.2,  price:100,   color:'lime'       ,drag:0  },
+		{id:2,  tool:'commercial',  geo:2,    name:'C', build:1, size:3, sy:0.2,  price:100,   color:'blue'       ,drag:0  },
+		{id:3,  tool:'industrial',  geo:3,    name:'I', build:1, size:3, sy:0.2,  price:100,   color:'yellow'     ,drag:0  },
+
+		{id:4,  tool:'police',      geo:4,    name:'',  build:1, size:3, sy:1.2,  price:500,   color:'blue'       ,drag:0  },
+		{id:5,  tool:'park',        geo:5,    name:'',  build:1, size:1, sy:0.02, price:10,    color:'darkgreen'  ,drag:0  },
+		{id:6,  tool:'fire',        geo:7,    name:'',  build:1, size:3, sy:1.2,  price:500,   color:'red'        ,drag:0  },
+
+		{id:7,  tool:'road',        geo:0,    name:'',  build:0, size:1, sy:0.1,  price:10,    color:'black'      ,drag:1  },
+		{id:8,  tool:'bulldozer',   geo:0,    name:'',  build:0, size:1, sy:0,    price:1,     color:'deeppink'   ,drag:1  },
+		{id:9,  tool:'rail',        geo:0,    name:'',  build:0, size:1, sy:0.15, price:20,    color:'brown'      ,drag:1  },
+
+		{id:10, tool:'coal',        geo:8,    name:'',  build:1, size:4, sy:2,    price:3000,  color:'gray'       ,drag:0  },
+		{id:11, tool:'wire',        geo:0,    name:'',  build:0, size:1, sy:0.05, price:5 ,    color:'khaki'      ,drag:1  },	
+		{id:12, tool:'nuclear',     geo:9,    name:'',  build:1, size:4, sy:2,    price:5000,  color:'orange'  ,drag:0  },
+
+		{id:13, tool:'port',        geo:10,   name:'',  build:1, size:4, sy:0.5,  price:3000,  color:'dodgerblue' ,drag:0  },
+		{id:14, tool:'stadium',     geo:11,   name:'',  build:1, size:4, sy:2,    price:5000,  color:'yellowgreen',drag:0  },
+		{id:15, tool:'airport',     geo:12,   name:'',  build:1, size:6, sy:0.5,  price:10000, color:'lightblue'  ,drag:0  },
+		
+		{id:16, tool:'none',        geo:0,    name:'',  build:0, size:0, sy:0,    price:0,     color:'none'       ,drag:0  },
+		{id:17, tool:'query',       geo:0,    name:'?', build:0, size:1, sy:0,    price:0,     color:'cyan'       ,drag:0  },
+		{id:18, tool:'none',        geo:0,    name:'',  build:0, size:0, sy:0,    price:0,     color:'none'       ,drag:0  }
 	];
 
 	this.currentTool = null;
@@ -97,10 +135,17 @@ V3D.Base = function(){
 	this.centralTexture = null;
 	this.serviceTexture = null;
 	this.buildingTexture = null;
+	this.skyTexture = null;
 
 	// material
 	this.townMaterial = null;
 	this.buildingMaterial = null;
+
+	this.townCanvas = null;
+	this.buildingCanvas = null;
+	this.groundCanvas = null;
+	this.skyCanvas = null;
+	this.skyCanvasBasic = null;
 
 	this.townHeigth = null;
 	this.buildingHeigth = null;
@@ -125,6 +170,7 @@ V3D.Base = function(){
 
 
 	this.treeDeepMeshs = [];
+	this.treeValue = [];
 
 	this.powerMeshs = [];
 	this.powerMaterial = null;
@@ -159,8 +205,9 @@ V3D.Base = function(){
 	this.miniTreeUpdate = 0;
 
 	// start by loading 3d mesh 
-	this.loadTextures();
-    this.loadSea3d();
+	//this.loadTextures();
+	this.loadImages();
+    //this.loadSea3d();
 
 
 }
@@ -211,8 +258,11 @@ V3D.Base.prototype = {
 
         if(this.isWithBackground ){
         	//var sky = this.gradTexture([[0.5,0.45, 0.2], ['#6666e6','lightskyblue','deepskyblue']]);
-        	var sky =  this.gradTexture([[0.51,0.49, 0.3], ['#cc7f66','lightskyblue', 'deepskyblue']]);
-            this.back = new THREE.Mesh( new THREE.IcosahedronGeometry(300,1), new THREE.MeshBasicMaterial( { map:sky, side:THREE.BackSide, depthWrite: false }  ));
+        	this.skyCanvasBasic = this.gradTexture([[0.51,0.49, 0.3], ['#cc7f66','lightskyblue', 'deepskyblue']]);
+        	this.skyCanvas = this.gradTexture([[0.51,0.49, 0.3], ['#cc7f66','lightskyblue', 'deepskyblue']]);
+        	this.skyTexture = new THREE.Texture(this.skyCanvas);
+		    this.skyTexture.needsUpdate = true;
+            this.back = new THREE.Mesh( new THREE.IcosahedronGeometry(300,1), new THREE.MeshBasicMaterial( { map:this.skyTexture, side:THREE.BackSide, depthWrite: false }  ));
             this.scene.add( this.back );
             this.renderer.autoClear = false;
         } else {
@@ -242,7 +292,8 @@ V3D.Base.prototype = {
 	    }
 	    //this.render();
 	    
-	    start();
+	    //start();
+	    initCity();
     },
 
     //----------------------------------- RENDER
@@ -376,19 +427,57 @@ V3D.Base.prototype = {
 		}else clearInterval(t.timer);
 	},
 
-	loadTextures : function (){
-		this.townTexture =  THREE.ImageUtils.loadTexture( 'img/town.jpg' );
-		this.buildingTexture =  THREE.ImageUtils.loadTexture( 'img/building.jpg' );
+	//----------------------------------- LOAD IMAGES
+
+	loadImages:function(){
+    	var _this = this;
+    	var n = this.num;
+    	this.imgs[n] = new Image();
+    	this.imgs[n].onload = function(){ 
+    		_this.num++; 
+    		if(_this.num === _this.imgSrc.length) _this.changeTextures();
+    		else _this.loadImages();
+    	};
+        this.imgs[n].src = this.imgSrc[n];
+        hub.subtitle.innerHTML = "Loading textures ...";
+    },
+
+	changeTextures : function (){
+		this.groundCanvas = document.createElement("canvas");
+		this.townCanvas = document.createElement("canvas");
+		this.buildingCanvas = document.createElement("canvas");
+		
+
+		this.groundCanvas.width = this.groundCanvas.height = this.imgs[0].width;
+		this.townCanvas.width = this.townCanvas.height = this.imgs[1].width;
+		this.buildingCanvas.width = this.buildingCanvas.height = this.imgs[2].width;
+
+		this.tint(this.groundCanvas, this.imgs[0]);
+		this.tint(this.townCanvas, this.imgs[1], this.imgs[4]);
+		this.tint(this.buildingCanvas, this.imgs[2], this.imgs[3]);
+		
+		//this.imageSrc = this.imgs[0];//this.groundCanvas;
+		this.imageSrc = this.groundCanvas;
+		this.createTextures();
+	},
+
+	createTextures : function (){
+		this.townTexture = new THREE.Texture(this.townCanvas);
+		this.buildingTexture = new THREE.Texture(this.buildingCanvas);
+
+		//this.townTexture = new THREE.Texture( this.imgs[1] );//new THREE.Texture(this.townCanvas);
+		//this.buildingTexture = new THREE.Texture( this.imgs[2] );//new THREE.Texture(this.buildingCanvas);
+
+		//this.townTexture =  THREE.ImageUtils.loadTexture( 'img/town.jpg' );
+		//this.buildingTexture =  THREE.ImageUtils.loadTexture( 'img/building.jpg' );
 
 		//this.townTexture =  THREE.ImageUtils.loadTexture( 'img/town-compressor.png' );
 		//this.buildingTexture =  THREE.ImageUtils.loadTexture( 'img/building-compressor.png' );
-
 		
         this.townTexture.repeat.set( 1, -1 );
 		this.townTexture.wrapS = this.townTexture.wrapT = THREE.RepeatWrapping;
 		this.townTexture.magFilter = THREE.NearestFilter;
         this.townTexture.minFilter = THREE.LinearMipMapLinearFilter;
-        
 		
         this.buildingTexture.repeat.set( 1, -1 );
 		this.buildingTexture.wrapS = this.buildingTexture.wrapT = THREE.RepeatWrapping;
@@ -399,10 +488,7 @@ V3D.Base.prototype = {
         this.townTexture.needsUpdate = true;
 
         // materials
-
-	    //this.townMap = new THREE.MeshBasicMaterial( { map: this.townTexture } );
-	   // this.buildingMap = new THREE.MeshBasicMaterial( { map: this.buildingTexture } );
-//
+        
 	    this.townHeigth = new THREE.MeshBasicMaterial( { vertexColors: THREE.VertexColors } );
 	    this.buildingHeigth = new THREE.MeshBasicMaterial( { vertexColors: THREE.VertexColors } );
 
@@ -423,6 +509,7 @@ V3D.Base.prototype = {
     	//this.townMaterial.transparent=true;
     	//this.buildingMaterial.transparent=true;
 
+    	this.loadSea3d();
 	},
 
 	textureSwitch : function(type){
@@ -436,6 +523,28 @@ V3D.Base.prototype = {
 			break;
 		}
 
+	},
+
+	setTimeColors : function(id){
+
+		this.dayTime = id;
+		if(this.dayTime==1)this.tcolor = {r:100, g: 15, b: 80, a: 0.3};
+		if(this.dayTime==2)this.tcolor = {r:10, g: 15, b: 80, a: 0.8};
+		if(this.dayTime==3)this.tcolor = {r:10, g: 15, b: 80, a: 0.6};
+
+		this.tint(this.skyCanvas);
+		this.tint(this.groundCanvas, this.imgs[0]);
+		this.tint(this.townCanvas, this.imgs[1], this.imgs[4]);
+		this.tint(this.buildingCanvas, this.imgs[2], this.imgs[3]);
+		
+		//this.imageSrc = this.groundCanvas;
+		//this.townTexture = new THREE.Texture(this.townCanvas);
+		//this.buildingTexture = new THREE.Texture(this.buildingCanvas);
+		this.skyTexture.needsUpdate = true;
+		this.buildingTexture.needsUpdate = true;
+        this.townTexture.needsUpdate = true;
+
+        this.fullRedraw = true;
 	},
 
 	//----------------------------------- SEA3D IMPORT
@@ -456,7 +565,8 @@ V3D.Base.prototype = {
 	        _this.init();
 	    }
 	    loader.parser = THREE.SEA3D.DEFAULT;
-	    loader.load( 'img/world2.sea' );
+	    loader.load( this.rootModel );
+	    hub.subtitle.innerHTML = "Loading 3d model ...";
 	},
 
 	//----------------------------------- 3D GEOMETRY
@@ -719,8 +829,24 @@ V3D.Base.prototype = {
 
 		// background update
 		if(this.isWithBackground ){
-		    if(island>0) this.back.material.map = this.gradTexture([[0.51,0.49, 0.3], ['#6666e6','lightskyblue', 'deepskyblue']]);
-		    else this.back.material.map = this.gradTexture([[0.51,0.49, 0.3], ['#E2946D','lightskyblue', 'deepskyblue']]);		// cc7f66   
+		    if(island>0){
+		    	this.skyCanvasBasic = this.gradTexture([[0.51,0.49, 0.3], ['#6666e6','lightskyblue', 'deepskyblue']]);
+		    	this.skyCanvas = this.gradTexture([[0.51,0.49, 0.3], ['#6666e6','lightskyblue', 'deepskyblue']]);
+		    	//this.skyTexture = new THREE.Texture(this.skyCanvas);
+		    	//this.skyTexture.needsUpdate = true;
+		    	//this.back.material.map = this.skyTexture;//this.gradTexture([[0.51,0.49, 0.3], ['#6666e6','lightskyblue', 'deepskyblue']]);
+		    }
+		    else{
+		    	this.skyCanvasBasic =  this.gradTexture([[0.51,0.49, 0.3], ['#E2946D','lightskyblue', 'deepskyblue']]);
+		    	this.skyCanvas = this.gradTexture([[0.51,0.49, 0.3], ['#E2946D','lightskyblue', 'deepskyblue']]);
+
+		     //this.back.material.map = this.gradTexture([[0.51,0.49, 0.3], ['#E2946D','lightskyblue', 'deepskyblue']]);		// cc7f66 
+		    }
+		    this.skyTexture = new THREE.Texture(this.skyCanvas);
+		    this.skyTexture.needsUpdate = true;
+		    this.back.material.map = this.skyTexture;//this.gradTexture([[0.51,0.49, 0.3], ['#6666e6','lightskyblue', 'deepskyblue']]);
+
+
 		    this.back.position.copy(this.center);
 		} else {
 			if(island>0) this.renderer.setClearColor( 0x6666e6, 1 );
@@ -950,11 +1076,11 @@ V3D.Base.prototype = {
 		// remove old tool
 		if(this.tool !== null) this.removeTool();
 
-		if( id === 0 ){
+		if( id === 0 || id === 18){
 			this.currentTool = null;
         	this.mouse.dragView = false;
         	this.mouse.move = true;
-		} else if ( id === 17 ){
+		} else if ( id === 16 ){
 			this.currentTool = null;
         	this.mouse.move = false;
         	this.mouse.dragView = true;
@@ -1443,22 +1569,7 @@ V3D.Base.prototype = {
 
 
 
-	// -----------------------
 
-
-	gradTexture : function(color) {
-	    var c = document.createElement("canvas");
-	    var ct = c.getContext("2d");
-	    c.width = 16; c.height = 256;
-	    var gradient = ct.createLinearGradient(0,0,0,256);
-	    var i = color[0].length;
-	    while(i--){ gradient.addColorStop(color[0][i],color[1][i]); }
-	    ct.fillStyle = gradient;
-	    ct.fillRect(0,0,16,256);
-	    var texture = new THREE.Texture(c);
-	    texture.needsUpdate = true;
-	    return texture;
-	},
 
 	// -----------------------
 
@@ -1481,6 +1592,7 @@ V3D.Base.prototype = {
 		if(mapSize) this.mapSize = mapSize;
 
 		if(isStart){ 
+			this.treeValue = [];
 			this.clearAllTrees();
 			if(this.isWithHeight){  this.heightData = this.generateHeight(); }
 		}
@@ -1515,7 +1627,7 @@ V3D.Base.prototype = {
 				n--;
 				v = tilesData[n];
 
-				if(isStart){ 
+				if(isStart){// || this.fullRedraw){ 
 					if(v > 1 && v < 21){ // water
 					//if(v > 1 && v < 5){ // water
 						if( this.isWithHeight ) this.heightData[ n ] = 0; 
@@ -1523,19 +1635,25 @@ V3D.Base.prototype = {
 					if(v > 20 && v < 44){// tree
 						if( this.isWithHeight ) ty = this.heightData[ n ];
 						r = Math.floor(Math.random()*4);
+						//if(v==43 || v==42|| v==41) r = 4;
+						//if( v==40 || v==39|| v==38 || v==37 || v==36) r = 5;
+
+						
 						if(v>=36) r+=4;
 						
-						this.addTree( x, ty, y, r, layer ); 
+						if(isStart)this.addTree( x, ty, y, r, layer ); 
 						v=21+r;
+						this.treeValue[n] = v;
 						//v=0;
 				    } 
 				}
+				if(this.fullRedraw){ if(v > 20 && v < 44) v = this.treeValue[n];}
 				//if(isStart){if(v > 20 && v < 44){ v=0;};}
 				px = v % 32 * 16;
                 py = Math.floor(v / 32) * 16;
 
 
-                if(isStart){ // full draw for new map
+                if(isStart || this.fullRedraw){ // full draw for new map
 
                 	//this.miniCtx[layer].drawImage(this.imageSrc,px*this.mu, py*this.mu, 16*this.mu, 16*this.mu, ((x-(cx*16))*16)*this.mu,((y-(cy*16))*16)*this.mu, 16*this.mu, 16*this.mu);
                 	//if(v==1)this.miniCtx[layer].clearRect(((x-(cx*16))*16)*this.mu,((y-(cy*16))*16)*this.mu, 16*this.mu, 16*this.mu);
@@ -1596,13 +1714,16 @@ V3D.Base.prototype = {
 			this.populateTree();
 		} else {
 			i = this.nlayers;
-		    while(i--) if(this.txtNeedUpdate[i]){ this.terrainTxt[i].needsUpdate = true; this.txtNeedUpdate[i] = 0;}
+		    while(i--) if(this.txtNeedUpdate[i] || this.fullRedraw){ this.terrainTxt[i].needsUpdate = true; this.txtNeedUpdate[i] = 0;}
 
 		     i = this.tempHouseLayers.length;
 		    while(i--) if(this.tempHouseLayers[i] === 1){ this.rebuildHouseLayer(i); }
 
 		    i = this.tempBuildingLayers.length;
 		    while(i--) if(this.tempBuildingLayers[i] === 1){ this.rebuildBuildingLayer(i); }
+		}
+		if(this.fullRedraw){
+			this.fullRedraw = false;
 		}
 
 	},
@@ -1758,6 +1879,84 @@ this.industrials = [616, 625, 634, 643, 652, 661, 670, 679, 688];*/
 	    var texture = new THREE.Texture(c);
 	    texture.needsUpdate = true;
 	    return texture;
+	},
+
+
+	// -----------------------
+
+
+	gradTexture : function(color) {
+	    var c = document.createElement("canvas");
+	    var ctx = c.getContext("2d");
+	    c.width = 16; c.height = 256;
+	    var gradient = ctx.createLinearGradient(0,0,0,256);
+	    var i = color[0].length;
+	    while(i--){ gradient.addColorStop(color[0][i],color[1][i]); }
+	    ctx.fillStyle = gradient;
+	    ctx.fillRect(0,0,16,256);
+	    //this.tint(c);
+	    //var texture = new THREE.Texture(c);
+	    //texture.needsUpdate = true;
+	    return c;
+	},
+
+
+	tint : function(canvas, image, supImage) {
+		var data, i, n;
+		var pixels = canvas.width*canvas.height;
+	    var ctx = canvas.getContext('2d');
+	    
+	    // draw windows
+	    var topData = null;
+	    var newImg = null;
+	    if(supImage && this.dayTime!==0 && this.dayTime!==1){
+	    	ctx.clearRect ( 0 , 0 , canvas.width, canvas.height );
+	        ctx.drawImage(supImage, 0, 0);
+	        topData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+	        data = topData.data;
+	        i = pixels;
+	        while(i--){
+	        	n = i<<2;
+	        	if(data[n+3] !== 0){
+	        		if(data[n+0]==0 && data[n+1]==0 && data[n+2]==0){// black
+	        		    data[n+3]=60;
+	        		}
+	        		if(data[n+1]==0){
+	        		//if(data[n+0]==255 && data[n+1]==0 && data[n+2]==0){// red
+	        			if(this.dayTime==3) data[n+1]=255;
+	        			if(this.dayTime==2) {data[n+0]=0; data[n+3]=60;}
+	        		}
+
+	        	}
+	        }
+	        ctx.putImageData(topData, 0, 0);
+	        newImg = document.createElement('img');
+	        newImg.src = canvas.toDataURL("image/png");
+	    }
+
+	    if(image){
+	    	ctx.clearRect ( 0 , 0 , canvas.width, canvas.height );
+	        ctx.drawImage(image, 0, 0);
+	    } else {
+	    	ctx.drawImage(this.skyCanvasBasic, 0, 0);
+	    }
+
+	    if(this.dayTime!==0){
+		    var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+		    data = imageData.data;
+		    i = pixels;
+		    var c = this.tcolor;
+		    while(i--){
+		    	n = i<<2;//i*4;
+		    	data[n+0] = data[n+0] * (1-c.a) + (c.r*c.a);
+			    data[n+1] = data[n+1] * (1-c.a) + (c.g*c.a);
+			    data[n+2] = data[n+2] * (1-c.a) + (c.b*c.a);
+		    }
+		    ctx.putImageData(imageData, 0, 0);
+		    if(newImg){
+		    	ctx.drawImage(newImg, 0, 0);
+		    }
+		}
 	}
 
 
