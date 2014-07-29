@@ -9,6 +9,8 @@ var V3D = { REVISION: '0.2a' };
 
 V3D.Base = function(){
 	this.container = document.getElementById( 'container' );
+	this.seaBuffer = false;
+	this.isBuffer = true;
 
 
 	this.dayTime = 0;
@@ -360,51 +362,10 @@ V3D.Base.prototype = {
     },
 
     miniRender: function(){
-
     	if(this.deepthTest){
     		this.miniCheck();
     		this.miniRenderer.render( this.miniScene, this.topCamera );
     	}
-
-    	//console.log(this.townMaterial.vertexColors)
-    	/*this.townMaterial.vertexColors = THREE.VertexColors;
-	    this.townMaterial.map = null;
-
-	    this.buildingMaterial.vertexColors = THREE.VertexColors;
-	   this.buildingMaterial.map = null;
-
-	  this.townMaterial.needsUpdate = true;
-	  this.buildingMaterial.needsUpdate = true;*/
-
-	    
-    	/*this.townMaterial = this.townHeigth;
-	    this.buildingMaterial = this.buildingHeigth;
-	    this.townMaterial.needsUpdate = true;
-	    this.buildingMaterial.needsUpdate = true;*/
-	  // this.townMaterial.vertexColors = true;
-	  // this.renderer.render( this.scene, this.topCamera );//,this.depthTarget);
-	   
-	   //miniGlCanvas.getContext("2d").drawImage(this.renderer.domElement,10,10);
-	   //if( this.townMaterial &&  this.buildingMaterial){
-
-	   //this.townMaterial.vertexColors = THREE.NoColors;
-	  //if( this.townTexture) this.townMaterial.map = this.townTexture;
-
-	  // this.buildingMaterial.vertexColors = THREE.NoColors
-	//  if( this.buildingTexture)this.buildingMaterial.map = this.buildingTexture;
-
-	//  this.townMaterial.needsUpdate = true;
-	//  this.buildingMaterial.needsUpdate = true;
-	//}
-
-
-	 //   miniGlCanvas.getContext("2d").drawImage(this.depthTarget,10,10);
-
-	  //  this.miniRenderer.render( this.miniScene, this.topCamera );
-	   // this.townMaterial.vertexColors = false;
-    	//this.miniRenderer.render( this.scene, this.topCamera );
-    	//this.townMaterial = this.townMap;
-	    //this.buildingMaterial = this.buildingMap;
     },
 
     
@@ -446,7 +407,6 @@ V3D.Base.prototype = {
 		this.groundCanvas = document.createElement("canvas");
 		this.townCanvas = document.createElement("canvas");
 		this.buildingCanvas = document.createElement("canvas");
-		
 
 		this.groundCanvas.width = this.groundCanvas.height = this.imgs[0].width;
 		this.townCanvas.width = this.townCanvas.height = this.imgs[1].width;
@@ -456,7 +416,6 @@ V3D.Base.prototype = {
 		this.tint(this.townCanvas, this.imgs[1], this.imgs[4]);
 		this.tint(this.buildingCanvas, this.imgs[2], this.imgs[3]);
 		
-		//this.imageSrc = this.imgs[0];//this.groundCanvas;
 		this.imageSrc = this.groundCanvas;
 		this.createTextures();
 	},
@@ -464,15 +423,6 @@ V3D.Base.prototype = {
 	createTextures : function (){
 		this.townTexture = new THREE.Texture(this.townCanvas);
 		this.buildingTexture = new THREE.Texture(this.buildingCanvas);
-
-		//this.townTexture = new THREE.Texture( this.imgs[1] );//new THREE.Texture(this.townCanvas);
-		//this.buildingTexture = new THREE.Texture( this.imgs[2] );//new THREE.Texture(this.buildingCanvas);
-
-		//this.townTexture =  THREE.ImageUtils.loadTexture( 'img/town.jpg' );
-		//this.buildingTexture =  THREE.ImageUtils.loadTexture( 'img/building.jpg' );
-
-		//this.townTexture =  THREE.ImageUtils.loadTexture( 'img/town-compressor.png' );
-		//this.buildingTexture =  THREE.ImageUtils.loadTexture( 'img/building-compressor.png' );
 		
         this.townTexture.repeat.set( 1, -1 );
 		this.townTexture.wrapS = this.townTexture.wrapT = THREE.RepeatWrapping;
@@ -537,12 +487,9 @@ V3D.Base.prototype = {
 		this.tint(this.townCanvas, this.imgs[1], this.imgs[4]);
 		this.tint(this.buildingCanvas, this.imgs[2], this.imgs[3]);
 		
-		//this.imageSrc = this.groundCanvas;
-		//this.townTexture = new THREE.Texture(this.townCanvas);
-		//this.buildingTexture = new THREE.Texture(this.buildingCanvas);
-		this.skyTexture.needsUpdate = true;
 		this.buildingTexture.needsUpdate = true;
         this.townTexture.needsUpdate = true;
+        this.skyTexture.needsUpdate = true;
 
         this.fullRedraw = true;
 	},
@@ -560,11 +507,10 @@ V3D.Base.prototype = {
 	            m = loader.meshes[i];
 	            _this.meshs[m.name] = m;
 	        }
-
 	        _this.defineGeometry();
 	        _this.init();
 	    }
-	    loader.parser = THREE.SEA3D.DEFAULT;
+	    if(!this.seaBuffer) loader.parser = THREE.SEA3D.DEFAULT;
 	    loader.load( this.rootModel );
 	    hub.subtitle.innerHTML = "Loading 3d model ...";
 	},
@@ -704,18 +650,22 @@ V3D.Base.prototype = {
     addTree : function(x,y,z,v,layer){
     	// v  21 to 43
     	if(!this.treeLists[layer]) this.treeLists[layer]=[];
-
     	this.treeLists[layer].push([x,y,z,v]);
     },
     populateTree:function(){
     	//this.treeMeshs = [];
     	//this.tempTreeLayers = [];
-    	var m = new THREE.Matrix4(), ar;
+    	var m = new THREE.Matrix4(), ar, g2;
     	var l = this.nlayers;
     	while(l--){
-    		var g = new THREE.Geometry();
+    		//var g = new THREE.Geometry();
+    		
     		if(this.treeLists[l]){
 	    		var i = this.treeLists[l].length;
+	    		var g = new THREE.Geometry();
+	    		//if(this.seaBuffer) g = new THREE.TypedGeometry(i*500); 
+	    		//else g = new THREE.Geometry();
+
 	    		while(i--){
 	    			//rand = Math.floor(Math.random()*4);
 	    			ar = this.treeLists[l][i];
@@ -724,8 +674,21 @@ V3D.Base.prototype = {
 
 	    			//else g.merge( this.treeGeo[4+rand], m );
 	    		}
-	    		g.computeBoundingSphere();
-	    	    this.treeMeshs[l] = new THREE.Mesh( g, this.townMaterial );
+
+	    		if(this.isBuffer){
+	    			g2 = new THREE.BufferGeometry();
+	    			g2.fromGeometry(g);
+	    			g2.computeBoundingSphere();
+	    			g.dispose();
+	    			this.treeMeshs[l] = new THREE.Mesh( g2, this.townMaterial );
+	    		} else {
+	    			g.computeBoundingSphere();
+	    			this.treeMeshs[l] = new THREE.Mesh( g, this.townMaterial );
+	    		}
+	    		//g.computeBoundingSphere();
+	    		//var g2 = new THREE.BufferGeometry();
+	    		//g2.fromGeometry(g);
+	    	    
 	    	    this.scene.add(this.treeMeshs[l]);
 	    	    this.tempTreeLayers[l] = 0;
 
@@ -788,17 +751,29 @@ V3D.Base.prototype = {
     		this.treeDeepMeshs[l].geometry.dispose();
     	}*/
 
-    	var m = new THREE.Matrix4(), ar;
-    	var g = new THREE.Geometry();
+    	var m = new THREE.Matrix4(), ar, g2;
     	var i = this.treeLists[l].length;
+    	var g = new THREE.Geometry();
+    	//var g = new THREE.TypedGeometry(i*200); 
     	while(i--){
 	    	ar = this.treeLists[l][i];
 	    	m.makeTranslation(ar[0],ar[1],ar[2]);
 	    	//g.merge( this.treeGeo[0], m );
 	    	g.merge( this.treeGeo[ar[3]], m );
 	    }
-	    g.computeBoundingSphere();
-	    this.treeMeshs[l] = new THREE.Mesh( g, this.townMaterial);
+
+	    if(this.isBuffer){
+			g2 = new THREE.BufferGeometry();
+			g2.fromGeometry(g);
+			g2.computeBoundingSphere();
+			g.dispose();
+			this.treeMeshs[l] = new THREE.Mesh( g2, this.townMaterial );
+		} else {
+			g.computeBoundingSphere();
+			this.treeMeshs[l] = new THREE.Mesh( g, this.townMaterial );
+		}
+	   // g.computeBoundingSphere();
+	    //this.treeMeshs[l] = new THREE.Mesh( g, this.townMaterial);
 	    this.scene.add(this.treeMeshs[l]);
 	    /*if(this.deepthTest){
 	    	this.treeDeepMeshs[l] = new THREE.Mesh( g.clone(), this.townHeigth);
@@ -1290,7 +1265,7 @@ V3D.Base.prototype = {
     	    this.scene.remove(this.townMeshs[l]);
         	this.townMeshs[l].geometry.dispose();
         }
-        var m = new THREE.Matrix4(), ar, k;
+        var m = new THREE.Matrix4(), ar, k, g2;
     	var g = new THREE.Geometry();
     	var i = this.townLists[l].length;
     	while(i--){
@@ -1298,7 +1273,20 @@ V3D.Base.prototype = {
 	    	m.makeTranslation(ar[0],ar[1],ar[2]);
 	    	g.merge(this.buildingGeo[ar[3]], m);
 	    }
-	    this.townMeshs[l] = new THREE.Mesh( g, this.townMaterial);
+
+	    if(this.isBuffer){
+			g2 = new THREE.BufferGeometry();
+			g2.fromGeometry(g);
+			g2.computeBoundingSphere();
+			g.dispose();
+			this.townMeshs[l] = new THREE.Mesh( g2, this.townMaterial );
+		} else {
+			g.computeBoundingSphere();
+			this.townMeshs[l] = new THREE.Mesh( g, this.townMaterial );
+		}
+
+
+	    //this.townMeshs[l] = new THREE.Mesh( g, this.townMaterial);
 	    this.scene.add(this.townMeshs[l]);
 	    this.temptownLayers[l] = 0;
 	},
@@ -1341,7 +1329,7 @@ V3D.Base.prototype = {
 	        }
 	    }
 
-    	var m = new THREE.Matrix4(), ar, k;
+    	var m = new THREE.Matrix4(), ar, k, g2;
     	var g = new THREE.Geometry();
     	var i = this.houseLists[l].length;
     	if(i!==0){
@@ -1352,7 +1340,19 @@ V3D.Base.prototype = {
 		    	while(k--){ if(ar[3]===this.H[k]) g.merge( this.houseGeo[k], m );}
 		    	//while(k--){ if(ar[3]===this.H[k]) g.merge( this.houseGeo[0], m );}
 		    }
-		    this.houseMeshs[l] = new THREE.Mesh( g, this.buildingMaterial);
+
+		    if(this.isBuffer){
+				g2 = new THREE.BufferGeometry();
+				g2.fromGeometry(g);
+				g2.computeBoundingSphere();
+				g.dispose();
+				this.houseMeshs[l] = new THREE.Mesh( g2, this.buildingMaterial );
+			} else {
+				g.computeBoundingSphere();
+				this.houseMeshs[l] = new THREE.Mesh( g, this.buildingMaterial );
+			}
+
+		    //this.houseMeshs[l] = new THREE.Mesh( g, this.buildingMaterial);
 		    this.scene.add(this.houseMeshs[l]);
 		    this.tempHouseLayers[l] = 0;
 		}
@@ -1403,7 +1403,7 @@ V3D.Base.prototype = {
         	this.buildingMeshs[l].geometry.dispose();
         }
 
-    	var m = new THREE.Matrix4(), ar, k;
+    	var m = new THREE.Matrix4(), ar, k, g2;
     	var g = new THREE.Geometry();
     	var i = this.buildingLists[l].length;
     	while(i--){
@@ -1421,8 +1421,6 @@ V3D.Base.prototype = {
 	    			//else if(k>0 && ar[4]===1){ this.buildingLists[l][i][4] = 0;  this.removeBaseHouse(ar[0],ar[1],ar[2]); } 
 	    			if(k===0 && ar[5]===0){ this.buildingLists[l][i][5] = 1; this.addBaseHouse(ar[0],ar[1],ar[2]); }
 	    			else if(k>0 && ar[5]===1){ this.buildingLists[l][i][5] = 0;  this.removeBaseHouse(ar[0],ar[1],ar[2]); } 
-
-
 	    		}
 	    	}
 
@@ -1432,7 +1430,19 @@ V3D.Base.prototype = {
 	    	k = this.I.length;
 	    	while(k--){ if(ar[3]===this.I[k]) g.merge( this.industrialGeo[k], m );}
 	    }
-	    this.buildingMeshs[l] = new THREE.Mesh( g, this.buildingMaterial);
+
+	    if(this.isBuffer){
+			g2 = new THREE.BufferGeometry();
+			g2.fromGeometry(g);
+			g2.computeBoundingSphere();
+			g.dispose();
+			this.buildingMeshs[l] = new THREE.Mesh( g2, this.buildingMaterial );
+		} else {
+			g.computeBoundingSphere();
+			this.buildingMeshs[l] = new THREE.Mesh( g, this.buildingMaterial );
+		}
+
+	    //this.buildingMeshs[l] = new THREE.Mesh( g, this.buildingMaterial);
 	    this.scene.add(this.buildingMeshs[l]);
 	    this.tempBuildingLayers[l] = 0;
     },
