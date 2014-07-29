@@ -6,11 +6,14 @@
 Start with the exelent port of Micropolis by [graememcc](https://github.com/graememcc/micropolisJS) <br>
 I remove all thirdparty library and optimize, compact the code.
 
-you can try [2d version](http://lo-th.github.io/3d.city/index_2d.html) (some options not complete)
-
 The goal is create full 3d city builder. All game simulation in a worker,<br>
 with massive use of [Three.js](https://github.com/mrdoob/three.js) and [Sea3d](https://github.com/sunag/sea3d).
 
 Work in progress
 
-[building destroy](http://lo-th.github.io/3d.city/test_destruct.html) 
+[building destroy](http://lo-th.github.io/3d.city/test_destruct.html)
+
+[helicopter test](http://lo-th.github.io/3d.city/test_helicopter.html)
+
+<img src="http://lo-th.github.io/3d.city/img/preview01.jpg"/>
+<img src="http://lo-th.github.io/3d.city/img/preview02.jpg"/>
