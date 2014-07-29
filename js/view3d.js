@@ -7,8 +7,9 @@
 
 var V3D = { REVISION: '0.2a' };
 
-V3D.Base = function(){
+V3D.Base = function(isMobile){
 	this.container = document.getElementById( 'container' );
+	this.isMobile = isMobile || false;
 	this.seaBuffer = false;
 	this.isBuffer = true;
 
@@ -213,6 +214,8 @@ V3D.Base = function(){
 V3D.Base.prototype = {
     constructor: V3D.Base,
     init:function() {
+    	this.pix = 1;
+    	if(this.isMobile) this.pix = 0.5;
     	this.clock = new THREE.Clock();
 
     	this.scene = new THREE.Scene();
@@ -238,7 +241,7 @@ V3D.Base.prototype = {
 
 
          //this.renderer = new THREE.WebGLRenderer({ canvas:this.canvas, antialias:false });
-    	this.renderer = new THREE.WebGLRenderer({ precision: "mediump", antialias:false });
+    	this.renderer = new THREE.WebGLRenderer({ precision: "mediump", devicePixelRatio:this.pix, antialias:false });
     	//this.renderer = new THREE.WebGLRenderer({ antialias:false });
     	//this.renderer = new THREE.WebGLRenderer({ canvas:glCanvas, precision: "mediump", antialias:false });
     	//this.renderer = new THREE.WebGLRenderer({ antialias:false });

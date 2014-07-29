@@ -58,7 +58,7 @@ var spriteData = null;
 var gameData = null;
 var powerData = null;
 
-
+var isMobile = false;
 
 var trans = false;
 var newup = false;
@@ -71,10 +71,16 @@ function debug(txt){ d.innerHTML += "<br>"+txt; }
 //function log(txt){ l.innerHTML = txt || '';  }
 
 window.onload = init;
+ 
+function testMobile() {
+    if (navigator.userAgent.match(/Android/i) || navigator.userAgent.match(/webOS/i) || navigator.userAgent.match(/iPhone/i) || navigator.userAgent.match(/iPad/i) || navigator.userAgent.match(/iPod/i) || navigator.userAgent.match(/BlackBerry/i) || navigator.userAgent.match(/Windows Phone/i)) return true;
+    else return false;        
+}
 
 function init(){
+    isMobile = testMobile();
     hub = new HUB.Base();
-    view3d = new V3D.Base();
+    view3d = new V3D.Base(isMobile);
 }
 
 //=======================================
