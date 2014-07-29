@@ -206,12 +206,8 @@ V3D.Base = function(){
 	this.minibuilding = null;
 	this.miniTreeUpdate = 0;
 
-	// start by loading 3d mesh 
-	//this.loadTextures();
+	// start by loading texture
 	this.loadImages();
-    //this.loadSea3d();
-
-
 }
 
 V3D.Base.prototype = {
@@ -243,11 +239,12 @@ V3D.Base.prototype = {
 
          //this.renderer = new THREE.WebGLRenderer({ canvas:this.canvas, antialias:false });
     	this.renderer = new THREE.WebGLRenderer({ precision: "mediump", antialias:false });
+    	//this.renderer = new THREE.WebGLRenderer({ antialias:false });
     	//this.renderer = new THREE.WebGLRenderer({ canvas:glCanvas, precision: "mediump", antialias:false });
     	//this.renderer = new THREE.WebGLRenderer({ antialias:false });
     	this.renderer.sortObjects = false;
-    	//this.renderer.sortElements = false;
-    	this.renderer.autoClear = false;
+    	this.renderer.sortElements = false;
+    	//this.renderer.autoClear = false;
     	//this.renderer.setSize( this.vsize.x, this.vsize.y, true );
     	this.renderer.setSize( this.vsize.x, this.vsize.y );
     	
@@ -294,14 +291,14 @@ V3D.Base.prototype = {
 	    }
 	    //this.render();
 	    
-	    //start();
-	    initCity();
+	    start();
+	    //initCity();
     },
 
     //----------------------------------- RENDER
 
     render: function(){
-    	this.renderer.clear();
+    	//this.renderer.clear();
     	this.renderer.render( this.scene, this.camera );
     	if(this.deepthTest) this.miniRender();//miniRenderer.render( this.miniScene, this.topCamera );
     },
@@ -396,11 +393,13 @@ V3D.Base.prototype = {
     	this.imgs[n] = new Image();
     	this.imgs[n].onload = function(){ 
     		_this.num++; 
+    		if(_this.num===1) if(hub!==null)hub.subtitle.innerHTML = "Loading textures ...";
+    		
     		if(_this.num === _this.imgSrc.length) _this.changeTextures();
     		else _this.loadImages();
     	};
         this.imgs[n].src = this.imgSrc[n];
-        hub.subtitle.innerHTML = "Loading textures ...";
+        
     },
 
 	changeTextures : function (){
@@ -508,11 +507,10 @@ V3D.Base.prototype = {
 	            _this.meshs[m.name] = m;
 	        }
 	        _this.defineGeometry();
-	        _this.init();
 	    }
 	    if(!this.seaBuffer) loader.parser = THREE.SEA3D.DEFAULT;
 	    loader.load( this.rootModel );
-	    hub.subtitle.innerHTML = "Loading 3d model ...";
+	    if(hub!==null)hub.subtitle.innerHTML = "Loading 3d model ...";
 	},
 
 	//----------------------------------- 3D GEOMETRY
@@ -614,6 +612,9 @@ V3D.Base.prototype = {
 			this.treeGeo[i].applyMatrix( m );
 			//this.treeGeo[i].applyMatrix( m2.makeRotationY( (Math.random()*360)*this.ToRad ) );
 		}
+
+		// finish loading start render
+		this.init();
 	},
 
 	getRandomObject : function(){

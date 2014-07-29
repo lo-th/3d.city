@@ -38,6 +38,7 @@ body {  padding:0; margin: 0px; background:#6666e6; font:12px sans-serif; width:
 var l = document.getElementById('log');
 var view3d;
 var helico;
+var hub = null;
 
 window.onload = init;
 
@@ -61,7 +62,7 @@ function start() {
 }
 
 function loop() {
-	requestAnimationFrame( loop, view3d.renderer.domElement );
+	requestAnimationFrame( loop );
     //view3d.renderer.render( view3d.scene, view3d.camera );
     if(helico) helico.fly();
     view3d.render();

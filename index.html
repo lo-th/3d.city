@@ -15,7 +15,7 @@ body {  padding:0; margin: 0px; background:#6666e6; font:11px sans-serif; width:
 #interface{ position:absolute;  top:60px; right:12px; width:198px; height:396px; pointer-events:none; display:none;}
 #basemenu{ position:absolute; bottom:1px; left:0px; pointer-events:none; display:none;}
 </style>
-<script src="js/three.min.js"></script>
+<script src="js/three.min.69.js"></script>
 <!--<script src="js/loaders/sea3d.min.js"></script>-->
 <script src="js/loaders/sea3d/SEA3D.js"></script>
 <script src="js/loaders/sea3d/SEA3DLoader.js"></script>
@@ -82,15 +82,14 @@ function init(){
 //=======================================
 
 function loop() {
-    requestAnimationFrame( loop, view3d.renderer.domElement );
+    requestAnimationFrame( loop );
+    //requestAnimationFrame( loop, view3d.renderer.domElement );
     //stats.start();
     //stats.rS( 'texture' ).start();
     if(newup){ 
         view3d.paintMap(); 
         view3d.moveSprite();
-        
-        //hub.showInfo();
-        newup=false; 
+        newup=false;
     }
     if(powerup){
         view3d.showPower();
@@ -136,15 +135,11 @@ var ARRAY_TYPE;
 if(!ARRAY_TYPE) { ARRAY_TYPE = (typeof Float32Array !== 'undefined') ? Float32Array : Array; }
 
 
-/*
+
 function start() {
-	im = new Image();
-    im.onload = initCity;
-    //im.src = 'img/tiles.png';
-    im.src = 'img/tiles32.png';
-    view3d.mu = 2;
+    initCity();
 }
-*/
+
 function setTimeColors(id) {
     view3d.setTimeColors(id);
 }
@@ -243,7 +238,6 @@ function initCity() {
             powerData = e.data.powerData;
             spriteData = e.data.sprites;
 
-            
 
             hub.updateCITYinfo(e.data.infos);
 
