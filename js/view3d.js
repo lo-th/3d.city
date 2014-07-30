@@ -220,14 +220,13 @@ V3D.Base.prototype = {
 
     	this.scene = new THREE.Scene();
 
-    	this.camera = new THREE.PerspectiveCamera( 50, this.vsize.z, 0.1, 1000 );
+    	this.camera = new THREE.PerspectiveCamera( 55, this.vsize.z, 0.1, 1000 );
     	this.scene.add( this.camera );
 
     	this.rayVector = new THREE.Vector3( 0, 0, 1 );
     	this.projector = new THREE.Projector();
     	this.raycaster = new THREE.Raycaster();
     	
-      
         this.land = new THREE.Object3D();
         this.scene.add( this.land );
 
@@ -260,8 +259,8 @@ V3D.Base.prototype = {
 
         if(this.isWithBackground ){
         	//var sky = this.gradTexture([[0.5,0.45, 0.2], ['#6666e6','lightskyblue','deepskyblue']]);
-        	this.skyCanvasBasic = this.gradTexture([[0.51,0.49, 0.3], ['#cc7f66','lightskyblue', 'deepskyblue']]);
-        	this.skyCanvas = this.gradTexture([[0.51,0.49, 0.3], ['#cc7f66','lightskyblue', 'deepskyblue']]);
+        	this.skyCanvasBasic = this.gradTexture([[0.51,0.49, 0.3], ['#cc7f66','#A7DCFA', 'deepskyblue']]);
+        	this.skyCanvas = this.gradTexture([[0.51,0.49, 0.3], ['#cc7f66','#A7DCFA', 'deepskyblue']]);
         	this.skyTexture = new THREE.Texture(this.skyCanvas);
 		    this.skyTexture.needsUpdate = true;
             this.back = new THREE.Mesh( new THREE.IcosahedronGeometry(300,1), new THREE.MeshBasicMaterial( { map:this.skyTexture, side:THREE.BackSide, depthWrite: false }  ));
@@ -680,6 +679,8 @@ V3D.Base.prototype = {
 	    		}
 
 	    		if(this.isBuffer){
+	    			g.computeVertexNormals();
+                    g.computeTangents();
 	    			g2 = new THREE.BufferGeometry();
 	    			g2.fromGeometry(g);
 	    			g2.computeBoundingSphere();
@@ -767,6 +768,8 @@ V3D.Base.prototype = {
 	    }
 
 	    if(this.isBuffer){
+	    	g.computeVertexNormals();
+            g.computeTangents();
 			g2 = new THREE.BufferGeometry();
 			g2.fromGeometry(g);
 			g2.computeBoundingSphere();
@@ -809,15 +812,15 @@ V3D.Base.prototype = {
 		// background update
 		if(this.isWithBackground ){
 		    if(island>0){
-		    	this.skyCanvasBasic = this.gradTexture([[0.51,0.49, 0.3], ['#6666e6','lightskyblue', 'deepskyblue']]);
-		    	this.skyCanvas = this.gradTexture([[0.51,0.49, 0.3], ['#6666e6','lightskyblue', 'deepskyblue']]);
+		    	this.skyCanvasBasic = this.gradTexture([[0.51,0.49, 0.3], ['#6666e6','#BFDDFF', '#4A65FF']]);
+		    	this.skyCanvas = this.gradTexture([[0.51,0.49, 0.3], ['#6666e6','#BFDDFF', '#4A65FF']]);
 		    	//this.skyTexture = new THREE.Texture(this.skyCanvas);
 		    	//this.skyTexture.needsUpdate = true;
 		    	//this.back.material.map = this.skyTexture;//this.gradTexture([[0.51,0.49, 0.3], ['#6666e6','lightskyblue', 'deepskyblue']]);
 		    }
 		    else{
-		    	this.skyCanvasBasic =  this.gradTexture([[0.51,0.49, 0.3], ['#E2946D','lightskyblue', 'deepskyblue']]);
-		    	this.skyCanvas = this.gradTexture([[0.51,0.49, 0.3], ['#E2946D','lightskyblue', 'deepskyblue']]);
+		    	this.skyCanvasBasic =  this.gradTexture([[0.51,0.49, 0.3], ['#E2946D','#BFDDFF', '#4A65FF']]);
+		    	this.skyCanvas = this.gradTexture([[0.51,0.49, 0.3], ['#E2946D','#BFDDFF', '#4A65FF']]);
 
 		     //this.back.material.map = this.gradTexture([[0.51,0.49, 0.3], ['#E2946D','lightskyblue', 'deepskyblue']]);		// cc7f66 
 		    }
@@ -1279,6 +1282,8 @@ V3D.Base.prototype = {
 	    }
 
 	    if(this.isBuffer){
+	    	g.computeVertexNormals();
+            g.computeTangents();
 			g2 = new THREE.BufferGeometry();
 			g2.fromGeometry(g);
 			g2.computeBoundingSphere();
@@ -1346,6 +1351,8 @@ V3D.Base.prototype = {
 		    }
 
 		    if(this.isBuffer){
+		    	g.computeVertexNormals();
+                g.computeTangents();
 				g2 = new THREE.BufferGeometry();
 				g2.fromGeometry(g);
 				g2.computeBoundingSphere();
@@ -1436,6 +1443,8 @@ V3D.Base.prototype = {
 	    }
 
 	    if(this.isBuffer){
+	    	g.computeVertexNormals();
+            g.computeTangents();
 			g2 = new THREE.BufferGeometry();
 			g2.fromGeometry(g);
 			g2.computeBoundingSphere();

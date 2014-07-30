@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 <style>
 html { width:100%; height:100%; }
-body {  padding:0; margin: 0px; background:#6666e6; font:11px sans-serif; width:100%; height:100%; color:#ffffff; overflow: hidden;}
+body {  padding:0; margin: 0px; background:#6666e6; font:11px sans-serif; width:100%; height:100%; color:#DCDCDC; overflow: hidden; }
 *{-o-user-select:none; -ms-user-select:none; -khtml-user-select:none; -webkit-user-select:none; -moz-user-select: none;}
 #debug{ position:absolute; padding:5px; right:0; bottom:0; text-align:right; width:20%; pointer-events:none; display:block; }
 #hub{ position:absolute; top:0; left:0; height:100%; width:100%; pointer-events:none; display:block; text-align:center;}
@@ -73,7 +73,8 @@ function debug(txt){ d.innerHTML += "<br>"+txt; }
 window.onload = init;
  
 function testMobile() {
-    if (navigator.userAgent.match(/Android/i) || navigator.userAgent.match(/webOS/i) || navigator.userAgent.match(/iPhone/i) || navigator.userAgent.match(/iPad/i) || navigator.userAgent.match(/iPod/i) || navigator.userAgent.match(/BlackBerry/i) || navigator.userAgent.match(/Windows Phone/i)) return true;
+    if (navigator.userAgent.match(/Android/i) || navigator.userAgent.match(/webOS/i) || navigator.userAgent.match(/iPhone/i) || navigator.userAgent.match(/iPad/i) 
+        || navigator.userAgent.match(/iPod/i) || navigator.userAgent.match(/BlackBerry/i) || navigator.userAgent.match(/Windows Phone/i)) return true;
     else return false;        
 }
 
@@ -119,7 +120,8 @@ function loop() {
 
 function saveGame(){
     console.log("save game");
-    saveTextAsFile('test', 'game is saved');
+    cityWorker.postMessage({tell:"SAVEGAME"});
+    //saveTextAsFile('test', 'game is saved');
 }
 
 function loadGame(){
@@ -130,6 +132,7 @@ function loadGame(){
 
 function newGameMap(){
     console.log("new map");
+
     //saveTextAsFile('test', 'game is saved');
 }
 
@@ -257,6 +260,9 @@ function initCity() {
         }
         if( phase == "EVAL"){
             hub.openEval(e.data.evalData);
+        }
+        if( phase == "SAVEGAME"){
+            saveTextAsFile('test', e.data.saveData);
         }
     }
 }

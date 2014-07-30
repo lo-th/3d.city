@@ -22,7 +22,7 @@ self.onmessage = function (e) {
 
     if( p == "DESTROY" ) Game.destroy(e.data.x, e.data.y);
 
-    if( p == "RUN" && trans) updateTrans(e.data);
+    //if( p == "RUN" && trans) updateTrans(e.data);
 
     if( p == "DIFFICULTY" ) Game.changeDifficulty(e.data.n);
     if( p == "SPEED" ) Game.changeSpeed(e.data.n);
@@ -33,6 +33,8 @@ self.onmessage = function (e) {
     if( p == "DISASTER") Game.setDisaster(e.data.disaster);
 
     if( p == "EVAL") Game.getEvaluation();
+
+    if( p == "SAVEGAME") Game.saveGame();
 };
 
 /*var updateTrans = function(data){
@@ -93,6 +95,7 @@ CITY.Game = function(url, timestep) {
     this.mapSize = [128,128];
     this.difficulty = 0;
     this.speed = 2;
+    this.oldSpeed = 0;
     this.mapGen = new Micro.generateMap();
 
     this.simulation = null;
@@ -167,8 +170,7 @@ CITY.Game.prototype = {
     changeDifficulty:function(n){
         // 0: easy  1: medium  2: hard
         this.difficulty = n;
-        //console.log(this.difficulty)
-        if(this.simulation)this.simulation.setDifficulty ( this.difficulty );
+        if(this.simulation) this.simulation.setDifficulty ( this.difficulty );
     },
     animatedTiles : function() {
         var animTiles = this.animationManager.getTiles(0, 0, this.mapSize[0] + 1, this.mapSize[1] + 1, this.isPaused);
@@ -322,12 +324,22 @@ CITY.Game.prototype = {
     },
 
 
-    //______________________________________
+    //______________________________________ SAVE
 
 
     saveGame : function(){
+        this.oldSpeed = this.speed;
+        this.changeSpeed(0);
 
+        var saveData = "Yoooooo";
+        
+        transMessage({ tell:"SAVEGAME", saveData:saveData});
+
+        this.changeSpeed(this.oldSpeed);
     },
+
+    //______________________________________ LOAD
+
     loadGame : function(){
 
     }

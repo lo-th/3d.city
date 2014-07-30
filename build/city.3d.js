@@ -93,6 +93,7 @@ Micro.isCallable = function(f) {
 Micro.LEVEL_EASY = 0;
 Micro.LEVEL_MED = 1;
 Micro.LEVEL_HARD = 2;
+
 Micro.SPEED_PAUSED = 0;
 Micro.SPEED_SLOW = 1;
 Micro.SPEED_MED = 2;
@@ -1553,6 +1554,7 @@ Micro.GameMap = function(width, height, defaultValue){
     this.Position = new Micro.PositionMaker(width, height);
     this.width = width;
     this.height = height;
+    this.fsize = this.width*this.height;
     /*Object.defineProperties(this,
       {width: new Micro.makeConstantDescriptor(width),
        height: new Micro.makeConstantDescriptor(height)});*/
@@ -1560,12 +1562,12 @@ Micro.GameMap = function(width, height, defaultValue){
     this.defaultValue = 0;//new Micro.Tile().getValue();//defaultValue;
 
 
-    this.data = new Array(this.width*this.height);//[];
+    this.data = new Array(this.fsize);//[];
 
-    this.tilesData = new M_ARRAY_TYPE(this.width*this.height);
-    this.powerData = new M_ARRAY_TYPE(this.width*this.height);
+    this.tilesData = new M_ARRAY_TYPE(this.fsize);
+    this.powerData = new M_ARRAY_TYPE(this.fsize);
 
-    var i = this.width*this.height;
+    var i = this.fsize;
     while(i--){this.tilesData[i] = 0;}
     /*console.log(this.data.length)*/
 
@@ -6673,7 +6675,7 @@ Micro.Simulation.prototype = {
         var cityMonth = Math.floor(this.cityTime % 48) >> 2;
 
         if (cityYear >= megalinium) {
-            this.setYear(this.startingYear);//startingYear);
+            this.setYear(this.startingYear);
             return;
         }
 

@@ -7,19 +7,19 @@ var HUB = { REVISION: '1' };
 
 HUB.round = [
 '<svg height="66" width="66">',
-'<circle cx="33" cy="33" r="27" stroke="rgb(80,80,80)" stroke-width="1" stroke-opacity="0.25" fill="rgb(80,80,80)" fill-opacity="0.25"/>',
+'<circle cx="33" cy="33" r="27" stroke="rgb(0,0,0)" stroke-width="1" stroke-opacity="0.3" fill="rgb(0,0,0)" fill-opacity="0.3"/>',
 '</svg>'
 ].join("\n");
 
 HUB.roundSelected = [
 '<svg height="66" width="66">',
-'<circle cx="33" cy="33" r="27" stroke="rgb(120,120,120)" stroke-width="1" stroke-opacity="0.5" fill="rgb(120,120,120)" fill-opacity="0.5"/>',
+'<circle cx="33" cy="33" r="27" stroke="rgb(0,0,0)" stroke-width="1" stroke-opacity="0.5" fill="rgb(0,0,0)" fill-opacity="0.5"/>',
 '</svg>'
 ].join("\n");
 
 HUB.roundSelect = [
 '<svg height="66" width="66">',
-'<circle cx="33" cy="33" r="30" stroke="rgb(255,255,255)" stroke-width="4" stroke-opacity="1" fill="rgb(120,120,120)" fill-opacity="0.5"/>',
+'<circle cx="33" cy="33" r="30" stroke="rgb(0,0,0)" stroke-width="4" stroke-opacity="1" fill="rgb(0,0,0)" fill-opacity="0.5"/>',
 '</svg>'
 ].join("\n");
 
@@ -42,7 +42,7 @@ HUB.Base = function(){
     this.rrr= null;
 
     //this.colors = ['#ffffff', '#338099'];
-    this.colors = ['rgba(255,255,255,1)', 'rgba(80,80,80,0.25)', 'rgba(120,120,120,0.5)', 'rgba(80,80,80,0.1)', 'rgba(200,200,200,0.5)'];
+    this.colors = ['rgba(220,220,220,1)', 'rgba(0,0,0,0.2)', 'rgba(0,0,0,0.6)', 'rgba(0,0,0,0.3)', 'rgba(0,0,0,0.6)'];
 
     //this.radius = "-moz-border-radius: 20px; -webkit-border-radius: 20px; border-radius: 20px;";
     this.radius = "-moz-border-radius: 16px; -webkit-border-radius: 16px; border-radius: 16px;";
@@ -86,7 +86,7 @@ HUB.Base.prototype = {
         this.title.innerHTML = "3D.CITY";
     	this.title.style.cssText = 'position:absolute; font-size:40px; top:50%; left:50%; margin-top:-40px; margin-left:-100px; width:200px; height:80px; pointer-events:none;';
         this.subtitle = document.createElement('div');
-        this.subtitle.style.cssText = 'position:absolute; font-size:14px; top:50%; left:50%; margin-top:20px; margin-left:-100px; width:200px; height:80px; pointer-events:none;';
+        this.subtitle.style.cssText = 'position:absolute; font-size:14px; top:50%; left:50%; margin-top:10px; margin-left:-100px; width:200px; height:80px; pointer-events:none;';
         this.subtitle.innerHTML = "Generating world...";
 
     	this.full.appendChild( this.title );
@@ -157,8 +157,7 @@ HUB.Base.prototype = {
         var testic = document.getElementById("interface");
         testic.style.display = 'block';
 
-        var basemenu = document.getElementById("basemenu");
-        basemenu.style.display = 'block';
+
 
         this.selector = document.createElement('div');
         this.selector.style.cssText = "position:absolute; top:0px; left:0px; pointer-events:none; display:none;"
@@ -172,16 +171,16 @@ HUB.Base.prototype = {
 
         this.addSelector("Speed", ['II', '>', '>>', '>>>', '>>>'], setSpeed, 2, [30,30,30,30,30]);
 
-        var b1 = this.addButton(this.hub, 'BUDGET', [70,16,14], 'position:absolute; left:10px; top:-4px;', true);
+        var b1 = this.addButton(this.hub, 'Budget', [75,16,14], 'position:absolute; left:10px; top:-7px; font-weight:bold;', true);
         b1.addEventListener('click',  function ( e ) { e.preventDefault(); getBudjet(); }, false);
 
-        var b2 = this.addButton(this.hub, 'EVAL', [70,16,14], 'position:absolute; left:110px; top:-4px;', true);
+        var b2 = this.addButton(this.hub, 'Eval', [75,16,14], 'position:absolute; left:110px; top:-7px; font-weight:bold;', true);
         b2.addEventListener('click',  function ( e ) { e.preventDefault(); getEval(); }, false);
 
-        var b3 = this.addButton(this.hub, 'DISASTER', [70,16,14], 'position:absolute; left:210px; top:-4px;', true);
+        var b3 = this.addButton(this.hub, 'Disaster', [75,16,14], 'position:absolute; left:210px; top:-7px; font-weight:bold;', true);
         b3.addEventListener('click',  function ( e ) { e.preventDefault();  _this.openDisaster(); }, false);
 
-        var b4 = this.addButton(this.hub, 'EXIT', [70,16,14], 'position:absolute; left:310px; top:-4px;', true);
+        var b4 = this.addButton(this.hub, 'Exit', [75,16,14], 'position:absolute; left:310px; top:-7px; font-weight:bold;', true);
         b4.addEventListener('click',  function ( e ) { e.preventDefault();  _this.openExit();  }, false);
 
 
@@ -211,6 +210,10 @@ HUB.Base.prototype = {
             this.H[i]=dd;
         }
 
+        this.basemenu = document.getElementById("basemenu");
+        this.basemenu.style.display = 'block';
+        this.hub.appendChild( this.basemenu );
+
         this.initCITYinfo();
     },
     hideoldSel : function(){
@@ -224,19 +227,19 @@ HUB.Base.prototype = {
     initCITYinfo : function(){
 
         this.date = document.createElement('div');
-        this.date.style.cssText = 'font-size:14px; position:absolute; width:70px; height:20px; bottom:14px; left:70px; text-align:right; font-weight:bold;';
+        this.date.style.cssText = 'font-size:14px; position:absolute; width:70px; height:20px; bottom:15px; left:70px; text-align:right; font-weight:bold;';
 
         this.money = document.createElement('div');
-        this.money.style.cssText = 'font-size:14px; position:absolute; width:70px; height:20px; bottom:14px; left:310px; text-align:right; font-weight:bold;';
+        this.money.style.cssText = 'font-size:14px; position:absolute; width:70px; height:20px; bottom:15px; left:310px; text-align:right; font-weight:bold;';
 
         this.population = document.createElement('div');
-        this.population.style.cssText = 'font-size:14px; position:absolute; width:70px; height:20px; bottom:14px; left:190px; text-align:right; font-weight:bold;';
+        this.population.style.cssText = 'font-size:14px; position:absolute; width:70px; height:20px; bottom:15px; left:190px; text-align:right; font-weight:bold;';
 
         this.score = document.createElement('div');
-        this.score.style.cssText = 'font-size:14px; position:absolute; width:70px; height:20px; bottom:14px; left:430px; text-align:right; font-weight:bold;';
+        this.score.style.cssText = 'font-size:14px; position:absolute; width:70px; height:20px; bottom:15px; left:430px; text-align:right; font-weight:bold;';
 
         this.msg = document.createElement('div');
-        this.msg.style.cssText = 'font-size:12px; position:absolute; width:420px; height:20px; bottom:45px; left:80px; text-align:left; color:'+this.colors[4]+';';
+        this.msg.style.cssText = 'font-size:14px; letter-spacing:0.02em; position:absolute; width:420px; height:20px; bottom:44px; left:76px; text-align:left; color:'+this.colors[4]+'; font-weight:bold;';
 
         this.hub.appendChild( this.date );
         this.hub.appendChild( this.money );
@@ -303,11 +306,11 @@ HUB.Base.prototype = {
             this.evaluationWindow.appendChild( this.evaltOpinion );
 
             this.evaltYes = document.createElement('div');
-            this.evaltYes.style.cssText ='position:absolute; top:46px; left:26px; width:60px; height:20px; pointer-events:none; color:green; font-size:16px; ';
+            this.evaltYes.style.cssText ='position:absolute; top:46px; left:26px; width:60px; height:20px; pointer-events:none; color:#33FF33; font-size:16px; ';
             this.evaluationWindow.appendChild( this.evaltYes );
 
             this.evaltNo = document.createElement('div');
-            this.evaltNo.style.cssText ='position:absolute; top:46px; right:26px; width:60px; height:20px; pointer-events:none; color:red;  font-size:16px; ';
+            this.evaltNo.style.cssText ='position:absolute; top:46px; right:26px; width:60px; height:20px; pointer-events:none; color:#FF3300;  font-size:16px; ';
             this.evaluationWindow.appendChild( this.evaltNo );
 
             this.evaltProb = document.createElement('div');
@@ -499,7 +502,7 @@ HUB.Base.prototype = {
         var txt = document.createElement( 'div' );
         var bg = document.createElement( 'div' );
         var sel = document.createElement( 'div' );
-        txt.style.cssText ='position:absolute; left:10px; top:-20px; pointer-events:none; width:180px; height:20px; font-size:12px; color:'+this.colors[0]+';';
+        txt.style.cssText ='position:absolute; left:10px; top:-18px; pointer-events:none; width:180px; height:20px; font-size:12px; color:'+this.colors[0]+';';
         bg.style.cssText =this.radius+'position:absolute; left:10px; top:'+(py+20)+'px; padding:0; cursor:w-resize; pointer-events:auto; width:180px; height:20px; background-color:'+ _this.colors[1]+';';
         sel.style.cssText =this.radius+'position:absolute; pointer-events:none; margin:5px; width:100px; height:10px; background-color:'+color+';';
         target.appendChild( bg );
