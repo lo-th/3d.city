@@ -680,7 +680,7 @@ V3D.Base.prototype = {
 
 	    		if(this.isBuffer){
 	    			g.computeVertexNormals();
-                    g.computeTangents();
+                    //g.computeTangents();
 	    			g2 = new THREE.BufferGeometry();
 	    			g2.fromGeometry(g);
 	    			g2.computeBoundingSphere();
@@ -769,7 +769,7 @@ V3D.Base.prototype = {
 
 	    if(this.isBuffer){
 	    	g.computeVertexNormals();
-            g.computeTangents();
+            //g.computeTangents();
 			g2 = new THREE.BufferGeometry();
 			g2.fromGeometry(g);
 			g2.computeBoundingSphere();
@@ -1283,7 +1283,7 @@ V3D.Base.prototype = {
 
 	    if(this.isBuffer){
 	    	g.computeVertexNormals();
-            g.computeTangents();
+            //g.computeTangents();
 			g2 = new THREE.BufferGeometry();
 			g2.fromGeometry(g);
 			g2.computeBoundingSphere();
@@ -1352,7 +1352,7 @@ V3D.Base.prototype = {
 
 		    if(this.isBuffer){
 		    	g.computeVertexNormals();
-                g.computeTangents();
+                //g.computeTangents();
 				g2 = new THREE.BufferGeometry();
 				g2.fromGeometry(g);
 				g2.computeBoundingSphere();
@@ -1444,7 +1444,7 @@ V3D.Base.prototype = {
 
 	    if(this.isBuffer){
 	    	g.computeVertexNormals();
-            g.computeTangents();
+            //g.computeTangents();
 			g2 = new THREE.BufferGeometry();
 			g2.fromGeometry(g);
 			g2.computeBoundingSphere();

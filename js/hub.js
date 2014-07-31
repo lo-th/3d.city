@@ -80,14 +80,19 @@ HUB.Base.prototype = {
     init:function() {
     },
     intro:function(){
+
     	this.full = document.createElement('div'); 
-    	this.full.style.cssText ='position:absolute; background:#6666e6; top:0px; left:0px; width:100%; height:100%; pointer-events:none; display:block;';
+    	this.full.style.cssText ='position:absolute; top:0px; left:0px; width:100%; height:100%; pointer-events:none; display:block;' + this.degrade();
         this.title = document.createElement('div');
         this.title.innerHTML = "3D.CITY";
-    	this.title.style.cssText = 'position:absolute; font-size:40px; top:50%; left:50%; margin-top:-40px; margin-left:-100px; width:200px; height:80px; pointer-events:none;';
+    	this.title.style.cssText = 'position:absolute; font-size:44px; top:50%; left:50%; margin-top:-30px; margin-left:-100px; width:200px; height:60px; pointer-events:none;';
         this.subtitle = document.createElement('div');
-        this.subtitle.style.cssText = 'position:absolute; font-size:14px; top:50%; left:50%; margin-top:10px; margin-left:-100px; width:200px; height:80px; pointer-events:none;';
+        this.subtitle.style.cssText = 'position:absolute; font-size:14px; top:50%; left:50%; margin-top:14px; margin-left:-100px; width:200px; height:80px; pointer-events:none;font-weight:bold;';
         this.subtitle.innerHTML = "Generating world...";
+
+        this.logo = document.getElementById('logo'); 
+        this.logo.style.display = 'block';
+        this.full.appendChild( this.logo );
 
     	this.full.appendChild( this.title );
         this.full.appendChild( this.subtitle );
@@ -111,6 +116,21 @@ HUB.Base.prototype = {
             t.isIntro = false;
     		//t.full = null;
     	}
+    },
+    degrade : function(){
+        var a = -160;
+        var p = [0, 30, 100]
+        var c0 = '#BFDDFF';
+        var c1 = '#3C89CD';
+        var c2 = '#214F77';
+        var deg = [
+            'background:-webkit-gradient(linear, top, bottom, color-stop('+p[0]+'%,'+c0+'),  color-stop('+p[1]+'%,'+c1+'), color-stop('+p[2]+'%,'+c2+'));',
+            'background:-moz-linear-gradient('+a+'deg, '+c0+' '+p[0]+'%, '+c1+' '+p[1]+'%, '+c2+' '+p[2]+'%);',
+            'background:-webkit-linear-gradient('+a+'deg, '+c0+' '+p[0]+'%, '+c1+' '+p[1]+'%, '+c2+' '+p[2]+'%);',
+            'background:-o-linear-gradient('+a+'deg, '+c0+' '+p[0]+'%, '+c1+' '+p[1]+'%, '+c2+' '+p[2]+'%);',
+            'background:linear-gradient('+a+'deg, '+c0+' '+p[0]+'%, '+c1+' '+p[1]+'%, '+c2+' '+p[2]+'%);'
+        ].join("\n");
+        return deg;
     },
 
     //--------------------------------------start hub
