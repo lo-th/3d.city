@@ -197,11 +197,12 @@ HUB.Base.prototype = {
         var b2 = this.addButton(this.hub, 'Eval', [75,16,14], 'position:absolute; left:110px; top:-7px; font-weight:bold;', true);
         b2.addEventListener('click',  function ( e ) { e.preventDefault(); getEval(); }, false);
 
-        var b3 = this.addButton(this.hub, 'Disaster', [75,16,14], 'position:absolute; left:210px; top:-7px; font-weight:bold;', true);
+        /*var b3 = this.addButton(this.hub, 'Disaster', [75,16,14], 'position:absolute; left:210px; top:-7px; font-weight:bold;', true);
         b3.addEventListener('click',  function ( e ) { e.preventDefault();  _this.openDisaster(); }, false);
 
         var b4 = this.addButton(this.hub, 'Exit', [75,16,14], 'position:absolute; left:310px; top:-7px; font-weight:bold;', true);
         b4.addEventListener('click',  function ( e ) { e.preventDefault();  _this.openExit();  }, false);
+        */
 
 
         this.H = [];
