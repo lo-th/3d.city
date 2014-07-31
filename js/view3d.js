@@ -11,7 +11,7 @@ V3D.Base = function(isMobile){
 	this.container = document.getElementById( 'container' );
 	this.isMobile = isMobile || false;
 	this.seaBuffer = false;
-	this.isBuffer = true;
+	this.isBuffer = false;
 	this.isWithTree = true;
 
 	if(this.isMobile)this.isWithTree = false;
