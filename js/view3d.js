@@ -688,11 +688,11 @@ V3D.Base.prototype = {
                     //g.computeTangents();
 	    			g2 = new THREE.BufferGeometry();
 	    			g2.fromGeometry(g);
-	    			g2.computeBoundingSphere();
+	    			//g2.computeBoundingSphere();
 	    			g.dispose();
 	    			this.treeMeshs[l] = new THREE.Mesh( g2, this.townMaterial );
 	    		} else {
-	    			g.computeBoundingSphere();
+	    			//g.computeBoundingSphere();
 	    			this.treeMeshs[l] = new THREE.Mesh( g, this.townMaterial );
 	    		}
 	    		//g.computeBoundingSphere();
@@ -780,11 +780,11 @@ V3D.Base.prototype = {
             //g.computeTangents();
 			g2 = new THREE.BufferGeometry();
 			g2.fromGeometry(g);
-			g2.computeBoundingSphere();
+			//g2.computeBoundingSphere();
 			g.dispose();
 			this.treeMeshs[l] = new THREE.Mesh( g2, this.townMaterial );
 		} else {
-			g.computeBoundingSphere();
+			//g.computeBoundingSphere();
 			this.treeMeshs[l] = new THREE.Mesh( g, this.townMaterial );
 		}
 	   // g.computeBoundingSphere();
@@ -858,7 +858,7 @@ V3D.Base.prototype = {
         		for(var j=0; j<8; j++){
         			var geo = new THREE.PlaneGeometry( 16, 16, 16, 16 );
         			geo.applyMatrix(new THREE.Matrix4().makeRotationX( - Math.PI * 0.5 ));
-        			geo.computeBoundingSphere();
+        			//geo.computeBoundingSphere();
 	        		//this.miniTerrain[n] = new THREE.Mesh(geo.clone(), new THREE.MeshBasicMaterial({color:colorsX[i]+colorsY[j]}) );
 	        		if(this.isColorTest) this.miniTerrain[n] = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({color:colorsX[i]+colorsY[j]}) );
 	        		else this.miniTerrain[n] = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({color:0xffffff}) );
@@ -1294,11 +1294,11 @@ V3D.Base.prototype = {
             //g.computeTangents();
 			g2 = new THREE.BufferGeometry();
 			g2.fromGeometry(g);
-			g2.computeBoundingSphere();
+			//g2.computeBoundingSphere();
 			g.dispose();
 			this.townMeshs[l] = new THREE.Mesh( g2, this.townMaterial );
 		} else {
-			g.computeBoundingSphere();
+			//g.computeBoundingSphere();
 			this.townMeshs[l] = new THREE.Mesh( g, this.townMaterial );
 		}
 
@@ -1363,11 +1363,11 @@ V3D.Base.prototype = {
                 //g.computeTangents();
 				g2 = new THREE.BufferGeometry();
 				g2.fromGeometry(g);
-				g2.computeBoundingSphere();
+				//g2.computeBoundingSphere();
 				g.dispose();
 				this.houseMeshs[l] = new THREE.Mesh( g2, this.buildingMaterial );
 			} else {
-				g.computeBoundingSphere();
+				//g.computeBoundingSphere();
 				this.houseMeshs[l] = new THREE.Mesh( g, this.buildingMaterial );
 			}
 
@@ -1455,11 +1455,11 @@ V3D.Base.prototype = {
             //g.computeTangents();
 			g2 = new THREE.BufferGeometry();
 			g2.fromGeometry(g);
-			g2.computeBoundingSphere();
+			//g2.computeBoundingSphere();
 			g.dispose();
 			this.buildingMeshs[l] = new THREE.Mesh( g2, this.buildingMaterial );
 		} else {
-			g.computeBoundingSphere();
+			//g.computeBoundingSphere();
 			this.buildingMeshs[l] = new THREE.Mesh( g, this.buildingMaterial );
 		}
 
