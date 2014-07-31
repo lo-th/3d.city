@@ -12,6 +12,9 @@ V3D.Base = function(isMobile){
 	this.isMobile = isMobile || false;
 	this.seaBuffer = false;
 	this.isBuffer = true;
+	this.isWithTree = true;
+
+	if(this.isMobile)this.isWithTree = false;
 
 
 	this.dayTime = 0;
@@ -215,7 +218,7 @@ V3D.Base.prototype = {
     constructor: V3D.Base,
     init:function() {
     	this.pix = 1;
-    	if(this.isMobile) this.pix = 0.5;
+    	//if(this.isMobile) this.pix = 0.5;
     	this.clock = new THREE.Clock();
 
     	this.scene = new THREE.Scene();
@@ -651,11 +654,13 @@ V3D.Base.prototype = {
 
 
     addTree : function(x,y,z,v,layer){
+    	if(!this.isWithTree) return;
     	// v  21 to 43
     	if(!this.treeLists[layer]) this.treeLists[layer]=[];
     	this.treeLists[layer].push([x,y,z,v]);
     },
     populateTree:function(){
+    	if(!this.isWithTree) return;
     	//this.treeMeshs = [];
     	//this.tempTreeLayers = [];
     	var m = new THREE.Matrix4(), ar, g2;
@@ -705,6 +710,7 @@ V3D.Base.prototype = {
     	}
     },
     clearAllTrees : function(){
+    	if(!this.isWithTree) return;
     	var l = this.nlayers;
     	while(l--){
     		if(this.treeMeshs[l]){
@@ -717,6 +723,7 @@ V3D.Base.prototype = {
     	this.tempTreeLayers = [];
     },
     removeTreePack : function(ar){
+    	if(!this.isWithTree) return;
     	//this.tempTreeLayers = [];
     	var i = ar.length;
     	while(i--){
@@ -748,6 +755,7 @@ V3D.Base.prototype = {
 		}
     },
     rebuildTreeLayer : function(l){
+    	if(!this.isWithTree) return;
     	this.scene.remove(this.treeMeshs[l]);
     	this.treeMeshs[l].geometry.dispose();
 
@@ -1665,7 +1673,8 @@ V3D.Base.prototype = {
 						if(v>=36) r+=4;
 						
 						if(isStart)this.addTree( x, ty, y, r, layer ); 
-						v=21+r;
+						if(this.isWithTree)v=21+r;
+						else v=21+8+r;
 						this.treeValue[n] = v;
 						//v=0;
 				    } 
