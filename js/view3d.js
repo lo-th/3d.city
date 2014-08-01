@@ -7,7 +7,8 @@
 
 var V3D = { REVISION: '0.2a' };
 
-V3D.Base = function(isMobile){
+V3D.Base = function(isMobile, pix){
+	this.pix = pix || 1;
 	this.container = document.getElementById( 'container' );
 	this.isMobile = isMobile || false;
 	this.seaBuffer = false;
@@ -217,7 +218,7 @@ V3D.Base = function(isMobile){
 V3D.Base.prototype = {
     constructor: V3D.Base,
     init:function() {
-    	this.pix = 1;
+    	
     	//if(this.isMobile) this.pix = 0.5;
     	this.clock = new THREE.Clock();
 
