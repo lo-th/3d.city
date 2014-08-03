@@ -174,11 +174,6 @@ HUB.Base.prototype = {
             b.name = i+1;
         }
 
-        var testic = document.getElementById("interface");
-        testic.style.display = 'block';
-
-
-
         this.selector = document.createElement('div');
         this.selector.style.cssText = "position:absolute; top:0px; left:0px; pointer-events:none; display:none;"
         this.selector.innerHTML = HUB.roundSelected;
@@ -188,6 +183,11 @@ HUB.Base.prototype = {
         this.select.style.cssText = "position:absolute; top:0px; left:0px; pointer-events:none; display:none;"
         this.select.innerHTML = HUB.roundSelect;
         this.toolSet.appendChild( this.select );
+
+        var img = document.createElement("img");
+        img.src = "img/interface.png";
+        this.toolSet.appendChild(img);
+        img.style.cssText ='position:absolute; margin:0px; padding:0px; top:0px; right:0px; width:198px; height:396px; pointer-events:none;';
 
         this.addSelector("Speed", ['II', '>', '>>', '>>>', '>>>'], setSpeed, 2, [30,30,30,30,30]);
 
@@ -231,9 +231,10 @@ HUB.Base.prototype = {
             this.H[i]=dd;
         }
 
-        this.basemenu = document.getElementById("basemenu");
-        this.basemenu.style.display = 'block';
-        this.hub.appendChild( this.basemenu );
+        var img2 = document.createElement("img");
+        img2.src = "img/basemenu.png";
+        this.hub.appendChild(img2);
+        img2.style.cssText ='position:absolute; margin:0px; padding:0px; bottom:1px; left:0px; width:800px; height:80px; pointer-events:none;';
 
         this.initCITYinfo();
     },
