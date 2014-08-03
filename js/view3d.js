@@ -505,11 +505,14 @@ V3D.Base.prototype = {
     	var _this = this;
 	    var s = 1;
 	    var loader = new THREE.SEA3D( true );
+	    var basicMap = new THREE.MeshBasicMaterial( {color:0xff0000} )
 	    loader.onComplete = function( e ) {
 	        var m, map;
 	        var i = loader.meshes.length;
 	        while(i--){
 	            m = loader.meshes[i];
+	            //m.material.dispose();
+	            m.material = basicMap;
 	            _this.meshs[m.name] = m;
 	        }
 	        _this.defineGeometry();

@@ -8,7 +8,7 @@
 <style>
 *{ padding:0; margin: 0; -o-user-select:none; -ms-user-select:none; -khtml-user-select:none; -webkit-user-select:none; -moz-user-select: none;}
 html { width:100%; height:100%; }
-body {  background:#3C89CD; font:11px sans-serif; width:100%; height:100%; color:#DCDCDC; overflow: hidden; }
+body {  background:#3C89CD; font:12px sans-serif; width:100%; height:100%; color:#DCDCDC; overflow: hidden; }
 #container{ min-width:480px; min-height:480px; width:100%; height:100%; overflow:hidden; text-align:center; }
 #container canvas{position:absolute;top:0;left:0;width:100%;height:100%}
 #debug{ position:absolute; padding:5px; right:0; bottom:0; text-align:right; width:20%; pointer-events:none; display:block; }
@@ -29,17 +29,15 @@ body {  background:#3C89CD; font:11px sans-serif; width:100%; height:100%; color
 <script src="js/destructor.js"></script>
 <script src="js/hub.js"></script>
 
-<!--<script src="js/rStats/rStats.js"></script>
+<script src="js/rStats/rStats.js"></script>
 <script src="js/rStats/rStats.extras.js"></script>
-<script src="js/stats.js"></script>-->
+<script src="js/stats.js"></script>
 <script src="js/saveLoad.js"></script>
 
 </head>
 <body>
 <div id="container"></div>
-<!--<canvas id="glCanvas"></canvas>-->
 <div id="debug">loth 2014 - v 0.1</div>
-<!--<div id="log"></div>-->
 <canvas id="miniGlCanvas"></canvas>
 
 <div id="hub"></div>
@@ -87,8 +85,8 @@ function init(){
 function loop() {
     requestAnimationFrame( loop );
     //requestAnimationFrame( loop, view3d.renderer.domElement );
-    //stats.start();
-    //stats.rS( 'texture' ).start();
+    stats.start();
+    stats.rS( 'texture' ).start();
     if(newup){ 
         view3d.paintMap(); 
         view3d.moveSprite();
@@ -98,17 +96,17 @@ function loop() {
         view3d.showPower();
         powerup = false;
     }
-    //stats.rS( 'texture' ).end();
-    //stats.rS( 'setup' ).start();
+    stats.rS( 'texture' ).end();
+    stats.rS( 'setup' ).start();
     if(view3d.mouse.dragView || view3d.mouse.button===2){
         view3d.dragCenterposition();
     }
-    //stats.rS( 'setup' ).end();
-    //stats.rS( 'render' ).start();
+    stats.rS( 'setup' ).end();
+    stats.rS( 'render' ).start();
     //view3d.render();
     view3d.renderer.render( view3d.scene, view3d.camera );
-    //stats.rS( 'render' ).end();
-    //stats.end();
+    stats.rS( 'render' ).end();
+    stats.end();
 }
 
 //=======================================
@@ -216,7 +214,7 @@ function mapClick() {
 }
 
 function initCity() {
-    //stats = new V3D.stats(view3d.renderer);
+    stats = new V3D.stats(view3d.renderer);
     hub.subtitle.innerHTML = "Generating world...";
     loop();
 
