@@ -15,6 +15,8 @@ V3D.Base = function(isMobile, pix){
 	this.isBuffer = false;
 	this.isWithTree = true;
 
+	this.key = [0,0,0,0,0,0,0];
+
 	if(this.isMobile)this.isWithTree = false;
 
 
@@ -295,7 +297,9 @@ V3D.Base.prototype = {
 	    }else if( body.attachEvent ){
 	        body.attachEvent("onmousewheel" ,  function(e) {_this.onMouseWheel(e)}); // ie
 	    }
-	    //this.render();
+
+	    // active key
+	    if(!this.isMobile)this.bindKeys();
 	    
 	    start();
 	    //initCity();
@@ -1993,7 +1997,58 @@ this.industrials = [616, 625, 634, 643, 652, 661, 670, 679, 688];*/
 		    	ctx.drawImage(newImg, 0, 0);
 		    }
 		}
-	}
+	},
+
+	// key
+
+	updateKey:function(){
+		var f = 0.3;
+		var d = false;
+
+		if(this.key[0] == 1 || this.key[1] == 1 ){ 
+			if(this.key[0] == 1)this.ease.z = -f; 
+			if(this.key[1] == 1)this.ease.z = f;
+			d = true;
+		}
+		else this.ease.z = 0;
+
+		if(this.key[2] == 1 || this.key[3] == 1 ){ 
+			if(this.key[2] == 1)this.ease.x = -f; 
+			if(this.key[3] == 1)this.ease.x = f;
+			d = true;
+		}
+		else this.ease.x = 0;
+		if(d)this.dragCenterposition();
+	},
+
+	bindKeys:function(){
+		var _this = this;
+		document.onkeydown = function(e) {
+		    e = e || window.event;
+			switch ( e.keyCode ) {
+			    case 38: case 87: case 90: _this.key[0] = 1; break; // up, W, Z
+				case 40: case 83:          _this.key[1] = 1; break; // down, S
+				case 37: case 65: case 81: _this.key[2] = 1; break; // left, A, Q
+				case 39: case 68:          _this.key[3] = 1; break; // right, D
+				//case 17: case 67:          _this.key[4] = 1; break; // ctrl, C
+				//case 69:                   _this.key[5] = 1; break; // E
+				//case 32:                   _this.key[6] = 1; break; // space
+			}
+		}
+		document.onkeyup = function(e) {
+		    e = e || window.event;
+			switch( e.keyCode ) {
+				case 38: case 87: case 90: _this.key[0] = 0; break; // up, W, Z
+				case 40: case 83:          _this.key[1] = 0; break; // down, S
+				case 37: case 65: case 81: _this.key[2] = 0; break; // left, A, Q
+				case 39: case 68:          _this.key[3] = 0; break; // right, D
+				//case 17: case 67:          _this.key[4] = 0; break; // ctrl, C
+				//case 69:                   _this.key[5] = 0; break; // E
+				//case 32:                   _this.key[6] = 0; break; // space
+			}
+		}
+	    self.focus();
+	},
 
 
 }

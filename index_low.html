@@ -91,6 +91,7 @@ function loop() {
     if(view3d.mouse.dragView || view3d.mouse.button===2){
         view3d.dragCenterposition();
     }
+    if(!isMobile)view3d.updateKey();
     view3d.renderer.render( view3d.scene, view3d.camera );
 }
 

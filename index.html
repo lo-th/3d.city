@@ -20,7 +20,6 @@ body {  background:#3C89CD; font:11px sans-serif; width:100%; height:100%; color
 <!--<script src="js/loaders/sea3d.min.js"></script>-->
 <script src="js/loaders/sea3d/SEA3D.js"></script>
 <script src="js/loaders/sea3d/SEA3DLoader.js"></script>
-<!--<script src="js/loaders/sea3d/SEA3DDeflate.js"></script>-->
 <script src="js/loaders/sea3d/SEA3DLZMA.js"></script>
 
 <script src="js/ImprovedNoise.js"></script>
@@ -28,18 +27,12 @@ body {  background:#3C89CD; font:11px sans-serif; width:100%; height:100%; color
 <script src="js/view3d.js"></script>
 <script src="js/destructor.js"></script>
 <script src="js/hub.js"></script>
-
-<!--<script src="js/rStats/rStats.js"></script>
-<script src="js/rStats/rStats.extras.js"></script>
-<script src="js/stats.js"></script>-->
 <script src="js/saveLoad.js"></script>
 
 </head>
 <body>
 <div id="container"></div>
-<!--<canvas id="glCanvas"></canvas>-->
 <div id="debug">loth 2014 - v 0.1</div>
-<!--<div id="log"></div>-->
 <canvas id="miniGlCanvas"></canvas>
 
 <div id="hub"></div>
@@ -86,9 +79,6 @@ function init(){
 
 function loop() {
     requestAnimationFrame( loop );
-    //requestAnimationFrame( loop, view3d.renderer.domElement );
-    //stats.start();
-    //stats.rS( 'texture' ).start();
     if(newup){ 
         view3d.paintMap(); 
         view3d.moveSprite();
@@ -98,17 +88,12 @@ function loop() {
         view3d.showPower();
         powerup = false;
     }
-    //stats.rS( 'texture' ).end();
-    //stats.rS( 'setup' ).start();
     if(view3d.mouse.dragView || view3d.mouse.button===2){
         view3d.dragCenterposition();
     }
-    //stats.rS( 'setup' ).end();
-    //stats.rS( 'render' ).start();
-    //view3d.render();
+    if(!isMobile)view3d.updateKey();
+
     view3d.renderer.render( view3d.scene, view3d.camera );
-    //stats.rS( 'render' ).end();
-    //stats.end();
 }
 
 //=======================================
@@ -195,10 +180,6 @@ function getEval(){
     cityWorker.postMessage({ tell:"EVAL" });
 }
 
-/*function getDisaster(){
-    hub.openDisaster();
-}*/
-
 function setDisaster(disaster){
     console.log(disaster);
     cityWorker.postMessage({ tell:"DISASTER", disaster:disaster });
@@ -208,19 +189,15 @@ function destroy(x,y) {
     cityWorker.postMessage({tell:"DESTROY", x:x, y:y});
 }
 
-
-
 function mapClick() {
     var p = view3d.pos;
     if(p.x>0 && p.z>0) cityWorker.postMessage({tell:"MAPCLICK", x:p.x, y:p.z });
 }
 
 function initCity() {
-    //stats = new V3D.stats(view3d.renderer);
     hub.subtitle.innerHTML = "Generating world...";
     loop();
 
-    //cityWorker = new Worker('js/worker.city.js');
     cityWorker.postMessage = cityWorker.webkitPostMessage || cityWorker.postMessage;
     cityWorker.postMessage({tell:"INIT", url:document.location.href.replace(/\/[^/]*$/,"/") + "build/city.3d.min.js", timestep:simulation_timestep });
 }
@@ -247,9 +224,7 @@ cityWorker.onmessage = function(e) {
         hub.updateCITYinfo(e.data.infos);
 
         newup = true;
-        if(powerData) powerup = true;
-
-        //if(trans) setTimeout( cityWorker.postMessage({tell:"RUN", tilesData:tilesData},[tilesData.buffer]), timestep); 
+        if(powerData) powerup = true; 
     }
     if( phase == "BUDGET"){
         hub.openBudget(e.data.budgetData);
