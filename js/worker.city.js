@@ -197,7 +197,7 @@ CITY.Game.prototype = {
             var m = messages[i];
             switch (m.message) {
                 case Messages.BUDGET_NEEDED: this.simNeededBudget = true; this.handleBudgetRequest(); break;
-               // case Messages.QUERY_WINDOW_NEEDED: this.queryWindow.open(this.handleQueryClosed.bind(this)); break;
+                case Messages.QUERY_WINDOW_NEEDED: transMessage({tell:"QUERY", queryTxt:this.currentTool.getInfo() }); break;
                 case Messages.DATE_UPDATED: this.infos[0] = [TXT.months[ m.data.month ], m.data.year].join(' '); break;
                 case Messages.EVAL_UPDATED: this.infos[1] = TXT.cityClass[m.data.classification]; this.infos[2] = m.data.score; this.infos[3] = m.data.population; break;
                 case Messages.FUNDS_CHANGED: this.infos[4] = m.data; break;
@@ -238,12 +238,14 @@ CITY.Game.prototype = {
     },
     mapClick : function(x,y){
         if(this.currentTool!==null){
+            //console.log(this.currentTool[0])
             var budget = this.simulation.budget;
             var evaluation = this.simulation.evaluation;
             var messageMgr = new Micro.MessageManager();
             this.currentTool.doTool(x, y, messageMgr, this.simulation.blockMaps );
             this.currentTool.modifyIfEnoughFunding(budget, messageMgr);
-            var tell = "";   
+            var tell = "";
+
             switch (this.currentTool.result) {
                 case this.currentTool.TOOLRESULT_NEEDS_BULLDOZE: tell = TXT.toolMessages.needsDoze; break;
                 case this.currentTool.TOOLRESULT_NO_MONEY: tell = TXT.toolMessages.noMoney; break; 
@@ -253,6 +255,7 @@ CITY.Game.prototype = {
                     transMessage({tell:"BUILD", x:x, y:y });  
                 break;
             }
+            
             this.processMessages(messageMgr.getMessages());
         }
     },

@@ -90,8 +90,9 @@ function loop() {
     }
     if(view3d.mouse.dragView || view3d.mouse.button===2){
         view3d.dragCenterposition();
+    }else{
+        if(!isMobile)view3d.updateKey();
     }
-    if(!isMobile)view3d.updateKey();
 
     view3d.renderer.render( view3d.scene, view3d.camera );
 }
@@ -214,12 +215,9 @@ cityWorker.onmessage = function(e) {
         view3d.build(e.data.x, e.data.y);
     }
     if( phase == "RUN"){
-
-        //gameData = e.data.infos;
         tilesData = e.data.tilesData;
         powerData = e.data.powerData;
         spriteData = e.data.sprites;
-
 
         hub.updateCITYinfo(e.data.infos);
 
@@ -229,6 +227,9 @@ cityWorker.onmessage = function(e) {
     if( phase == "BUDGET"){
         hub.openBudget(e.data.budgetData);
     }
+    if( phase == "QUERY"){
+        hub.openQuery(e.data.queryTxt);
+    }
     if( phase == "EVAL"){
         hub.openEval(e.data.evalData);
     }
@@ -237,6 +238,4 @@ cityWorker.onmessage = function(e) {
     }
 }
 
-</script>
-</body>
-</html>
+</script></body></html>

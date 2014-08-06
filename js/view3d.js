@@ -7,8 +7,9 @@
 
 var V3D = { REVISION: '0.2a' };
 
-V3D.Base = function(isMobile, pix){
+V3D.Base = function(isMobile, pix, isLow){
 	this.pix = pix || 1;
+	this.isLow = isLow || false;
 	this.container = document.getElementById( 'container' );
 	this.isMobile = isMobile || false;
 	this.seaBuffer = false;
@@ -17,7 +18,7 @@ V3D.Base = function(isMobile, pix){
 
 	this.key = [0,0,0,0,0,0,0];
 
-	if(this.isMobile)this.isWithTree = false;
+	if(this.isMobile || this.isLow) this.isWithTree = false;
 
 
 	this.dayTime = 0;

@@ -61,6 +61,7 @@ HUB.Base = function(){
     this.evaluationWindow  = null;
     this.disasterWindow = null;
     this.exitWindow = null;
+    this.queryWindow = null;
 
     this.selector = null;
     this.select = null;
@@ -305,9 +306,44 @@ HUB.Base.prototype = {
             this.closeExit();
             t = 'exit';
         }
+        if(this.queryWindow !== null && this.queryWindow.className == "open"){
+            this.closeQuery();
+            t = 'query';
+        }
 
         return t;
 
+    },
+
+    //-----------------------------------EXIT WINDOW
+
+    openQuery : function(data){
+        _this = this;
+
+        //var test = this.testOpen();
+        //if(test == 'query') return;
+
+        if(this.queryWindow == null){
+            this.queryWindow = document.createElement('div');
+            this.queryWindow.style.cssText =this.radius+ 'position:absolute; width:140px; height:180px; pointer-events:none; display:block;'+ this.windowsStyle;;
+            this.hub.appendChild( this.queryWindow );
+
+            var bg1 = this.addButton(this.queryWindow, 'X', [16,16,14], 'position:absolute; left:50px; top:10px;');
+            bg1.addEventListener('click',  function(e){ e.preventDefault(); _this.closeQuery(); }, false);
+
+            this.queryResult = document.createElement('div');
+            this.queryResult.style.cssText ='position:absolute; top:60px; left:10px; width:110px; height:100px; pointer-events:none; font-size:12px; text-align:center; color:'+this.colors[0]+';';
+            this.queryWindow.appendChild( this.queryResult );
+        } else {
+            this.queryWindow.style.display = 'block';
+        }
+
+        this.queryResult.innerHTML = data;
+        this.queryWindow.className = "open";
+    },
+    closeQuery :function(){
+        this.queryWindow.style.display = 'none';
+        this.queryWindow.className = "close";
     },
 
     //-----------------------------------BUDGET WINDOW

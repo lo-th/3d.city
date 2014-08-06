@@ -1562,8 +1562,7 @@ Micro.GameMap = function(width, height, defaultValue){
     this.defaultValue = 0;//new Micro.Tile().getValue();//defaultValue;
 
 
-    this.data = new Array(this.fsize);//[];
-
+    this.data = new Array(this.fsize);
     this.tilesData = new M_ARRAY_TYPE(this.fsize);
     this.powerData = new M_ARRAY_TYPE(this.fsize);
 
@@ -4237,6 +4236,7 @@ Micro.RoadTool.prototype.doTool = function(x, y, messageManager, blockMaps) {
 Micro.QueryTool = function (map) {
     Micro.BaseTool.call( this );
     this.init(0, map, false, false);
+    this.txt = "";
 }
 
 
@@ -4250,6 +4250,8 @@ Micro.QueryTool.prototype.classifyPopulationDensity = function(x, y, blockMaps) 
     //if (debug) document.getElementById("queryDensityRaw").innerHTML=density;
     density = density >> 6;
     density = density & 3;
+
+    this.txt+='Density: '+TXT.densityStrings[density]+'<br>';
     //document.getElementById("queryDensity").innerHTML=TXT.densityStrings[density];
 };
 
@@ -4262,7 +4264,8 @@ Micro.QueryTool.prototype.classifyLandValue = function(x, y, blockMaps) {
     else if (landValue >= 80) i = 2;
     else if (landValue >= 30) i = 1;
 
-    var text = TXT.landValueStrings[i];
+    //var text = TXT.landValueStrings[i];
+    this.txt+='Value: '+TXT.landValueStrings[i]+'<br>';
     //document.getElementById("queryLandValue").innerHTML=text;
 };
 
@@ -4273,6 +4276,8 @@ Micro.QueryTool.prototype.classifyCrime = function(x, y, blockMaps) {
 
     crime = crime >> 6;
     crime = crime & 3;
+
+    this.txt+='Crime: '+TXT.crimeStrings[crime]+'<br>';
     //document.getElementById("queryCrime").innerHTML=TXT.crimeStrings[crime];
 };
 
@@ -4281,6 +4286,8 @@ Micro.QueryTool.prototype.classifyPollution = function(x, y, blockMaps) {
     //if (debug) document.getElementById("queryPollutionRaw").innerHTML=pollution;
     pollution = pollution >> 6;
     pollution = pollution & 3;
+
+    this.txt+='Pollution: '+TXT.pollutionStrings[pollution]+'<br>';
     //document.getElementById("queryPollution").innerHTML=TXT.pollutionStrings[pollution];
 };
 
@@ -4289,6 +4296,8 @@ Micro.QueryTool.prototype.classifyRateOfGrowth = function(x, y, blockMaps) {
     //if (debug) document.getElementById("queryRateRaw").innerHTML=rate;
     rate = rate >> 6;
     rate = rate & 3;
+
+    this.txt+='Growth: '+TXT.rateStrings[rate];
     //document.getElementById("queryRate").innerHTML=TXT.rateStrings[rate];
 };
 
@@ -4323,8 +4332,14 @@ Micro.QueryTool.prototype.classifyZone = function(x, y) {
         break;
     }
 
+    this.txt='Zone: '+TXT.zoneTypes[index]+'<br>';
+
     //document.getElementById("queryZoneType").innerHTML=TXT.zoneTypes[index];
-  };
+};
+
+Micro.QueryTool.prototype.getInfo = function() {
+    return this.txt;
+};
 
 Micro.QueryTool.prototype.doTool = function(x, y, messageManager, blockMaps) {
     var text = 'Position (' + x + ', ' + y + ')';
