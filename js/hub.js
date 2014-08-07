@@ -478,7 +478,7 @@ HUB.Base.prototype = {
             this.budgetWindow.style.cssText =this.radius+ 'position:absolute; width:200px; height:300px; pointer-events:none; display:block;'+ this.windowsStyle;;
             this.hub.appendChild( this.budgetWindow );
 
-            this.addSlider(this.budgetWindow, 10, 'Taxe', this.taxRate, null, 'green', 20);
+            this.addSlider(this.budgetWindow, 10, 'Tax', this.taxRate, null, 'green', 20);
             this.addSlider(this.budgetWindow, 70, 'Roads', this.roadRate, this.roadFund, 'red', 100);
             this.addSlider(this.budgetWindow, 110, 'Fire', this.fireRate, this.fireFund, 'red', 100);
             this.addSlider(this.budgetWindow, 150, 'Police', this.policeRate, this.policeFund, 'red', 100);
@@ -499,7 +499,7 @@ HUB.Base.prototype = {
             this.setBudgetValue();
         }
 
-        this.budgetResult.innerHTML = "Annual receipts:" + cashFlow+"$"+"<br>Taxe collected:" + taxesCollected+"$";
+        this.budgetResult.innerHTML = "Annual receipts:" + cashFlow+"$"+"<br>Taxes collected:" + taxesCollected+"$";
 
         this.budgetWindow.className = "open";
 
