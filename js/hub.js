@@ -478,7 +478,7 @@ HUB.Base.prototype = {
             this.budgetWindow.style.cssText =this.radius+ 'position:absolute; width:200px; height:300px; pointer-events:none; display:block;'+ this.windowsStyle;;
             this.hub.appendChild( this.budgetWindow );
 
-            this.addSlider(this.budgetWindow, 10, 'Taxe', this.taxRate, null, 'green', 20);
+            this.addSlider(this.budgetWindow, 10, 'Tax', this.taxRate, null, 'green', 20);
             this.addSlider(this.budgetWindow, 70, 'Roads', this.roadRate, this.roadFund, 'red', 100);
             this.addSlider(this.budgetWindow, 110, 'Fire', this.fireRate, this.fireFund, 'red', 100);
             this.addSlider(this.budgetWindow, 150, 'Police', this.policeRate, this.policeFund, 'red', 100);
@@ -499,7 +499,7 @@ HUB.Base.prototype = {
             this.setBudgetValue();
         }
 
-        this.budgetResult.innerHTML = "Annual receipts:" + cashFlow+"$"+"<br>Taxe collected:" + taxesCollected+"$";
+        this.budgetResult.innerHTML = "Annual receipts:" + cashFlow+"$"+"<br>Taxes collected:" + taxesCollected+"$";
 
         this.budgetWindow.className = "open";
 
@@ -518,7 +518,7 @@ HUB.Base.prototype = {
     },
 
     setBudgetValue:function(){
-        this.setSliderValue('Taxe', this.taxRate, 20, null);
+        this.setSliderValue('Tax', this.taxRate, 20, null);
         this.setSliderValue('Roads', this.roadRate, 100, this.roadFund);
         this.setSliderValue('Fire', this.fireRate, 100, this.fireFund);
         this.setSliderValue('Police', this.policeRate, 100, this.policeFund);
@@ -606,7 +606,7 @@ HUB.Base.prototype = {
             children[0].style.width = 170*(value/max)+'px';
 
             switch(t.name){
-                case 'Taxe': children[1].innerHTML = t.name+" "+value+'%'; this.taxRate = value; break;
+                case 'Tax': children[1].innerHTML = t.name+" "+value+'%'; this.taxRate = value; break;
                 case 'Roads': children[1].innerHTML = t.name+" "+value+'% of '+this.roadFund+"$ = " + Math.floor(this.roadFund * (value / 100))+"$"; this.roadRate = value; break;
                 case 'Fire': children[1].innerHTML = t.name+" "+value+'% of '+this.fireFund+"$ = " + Math.floor(this.fireFund * (value / 100))+"$"; this.fireRate = value; break;
                 case 'Police': children[1].innerHTML = t.name+" "+value+'% of '+this.policeFund+"$ = " + Math.floor(this.policeFund * (value / 100))+"$"; this.policeRate = value; break;

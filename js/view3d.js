@@ -82,31 +82,6 @@ V3D.Base = function(isMobile, pix, isLow){
     this.terrain = null;
 
     this.tool = null;
-	/*this.toolSet = [
-        {id:0,  tool:'none',        geo:0,    name:'',  build:0, size:0, sy:0,    price:0,     color:'none'       ,drag:0  },
-		{id:1,  tool:'residential', geo:1,    name:'R', build:1, size:3, sy:0.2,  price:100,   color:'lime'       ,drag:0  },
-		{id:2,  tool:'commercial',  geo:2,    name:'C', build:1, size:3, sy:0.2,  price:100,   color:'blue'       ,drag:0  },
-		{id:3,  tool:'industrial',  geo:3,    name:'I', build:1, size:3, sy:0.2,  price:100,   color:'yellow'     ,drag:0  },
-
-		{id:4,  tool:'police',      geo:4,    name:'',  build:1, size:3, sy:1.2,  price:500,   color:'blue'       ,drag:0  },
-		{id:5,  tool:'park',        geo:5,    name:'',  build:1, size:1, sy:0.02, price:10,    color:'darkgreen'  ,drag:0  },
-		{id:6,  tool:'fire',        geo:7,    name:'',  build:1, size:3, sy:1.2,  price:500,   color:'red'        ,drag:0  },
-
-		{id:7,  tool:'road',        geo:0,    name:'',  build:0, size:1, sy:0.1,  price:10,    color:'black'      ,drag:1  },
-		{id:8,  tool:'bulldozer',   geo:0,    name:'',  build:0, size:1, sy:0,    price:1,     color:'deeppink'   ,drag:1  },
-		{id:9,  tool:'rail',        geo:0,    name:'',  build:0, size:1, sy:0.15, price:20,    color:'brown'      ,drag:1  },
-
-		{id:10, tool:'coal',        geo:8,    name:'',  build:1, size:4, sy:2,    price:3000,  color:'gray'       ,drag:0  },
-		{id:11, tool:'wire',        geo:0,    name:'',  build:0, size:1, sy:0.05, price:5 ,    color:'khaki'      ,drag:1  },	
-		{id:12, tool:'nuclear',     geo:9,    name:'',  build:1, size:4, sy:2,    price:5000,  color:'orange'  ,drag:0  },
-
-		{id:13, tool:'port',        geo:10,   name:'',  build:1, size:4, sy:0.5,  price:3000,  color:'dodgerblue' ,drag:0  },
-		{id:14, tool:'stadium',     geo:11,   name:'',  build:1, size:4, sy:2,    price:5000,  color:'yellowgreen',drag:0  },
-		{id:15, tool:'airport',     geo:12,   name:'',  build:1, size:6, sy:0.5,  price:10000, color:'lightblue'  ,drag:0  },
-		
-		{id:16, tool:'query',       geo:0,    name:'?', build:0, size:1, sy:0,    price:0,     color:'cyan'       ,drag:0  },
-		{id:17, tool:'none',        geo:0,    name:'',  build:0, size:0, sy:0,    price:0,     color:'none'       ,drag:0  }
-	];*/
 	this.toolSet = [
         {id:0,  tool:'none',        geo:0,    name:'',  build:0, size:0, sy:0,    price:0,     color:'none'       ,drag:0  },
 		{id:1,  tool:'residential', geo:1,    name:'R', build:1, size:3, sy:0.2,  price:100,   color:'lime'       ,drag:0  },
@@ -171,8 +146,7 @@ V3D.Base = function(isMobile, pix, isLow){
 	this.treeGeo = null;
 	this.houseGeo = null;
 
-	this.spriteLists = [];
-	this.spriteMeshs = [];
+	
 
 	this.treeMeshs = [];
 	this.treeLists = [];
@@ -213,6 +187,11 @@ V3D.Base = function(isMobile, pix, isLow){
 	this.miniTree = null;
 	this.minibuilding = null;
 	this.miniTreeUpdate = 0;
+
+	this.spriteLists = ['train', 'elico', 'plane', 'boat', 'monster', 'tornado', 'sparks'];
+	//this.spriteLists = [];
+	this.spriteMeshs = [];
+	this.spriteObjs = {};
 
 	// start by loading texture
 	this.loadImages();
@@ -1781,10 +1760,12 @@ this.industrials = [616, 625, 634, 643, 652, 661, 670, 679, 688];*/
 		var i = spriteData.length;
 		var pos = new THREE.Vector3();
 		var frame = 0;
+		var v=0;
 		//log(i)
 		while(i--){
 			var c = spriteData[i];
 			frame = c[1];
+			v = c[0];
 			pos.x =  Math.round((c[2]-8)/16);
 			pos.z =  Math.round((c[3]-8)/16);
 			pos.y = 0;
@@ -1797,11 +1778,18 @@ this.industrials = [616, 625, 634, 643, 652, 661, 670, 679, 688];*/
 				else if (frame==9)pos.y += 3;
 				else pos.y += 6;
 			}
-			//log( frame)
-			if(this.spriteMeshs[i] == null) this.addSprite( i, c[0], pos );
-			//this.spriteMeshs[i].position.copy(pos);
-			this.spriteMeshs[i].position.lerp(pos, 0.6);
-			this.spriteMeshs[i].rotation.y = this.rotationSprite(c[0], frame);
+
+			//if(this.spriteMeshs[i] == null) this.addSprite( i, c[0], pos );
+			//this.spriteMeshs[i].position.lerp(pos, 0.6);
+			//this.spriteMeshs[i].rotation.y = this.rotationSprite(c[0], frame);
+
+			/*if(this.spriteObjs[this.spriteLists[v]] == null) this.spriteObjs[this.spriteLists[v]] = this.addSprite( v, pos );
+			this.spriteObjs[this.spriteLists[v]].position.lerp(pos, 0.6);
+			this.spriteObjs[this.spriteLists[v]].rotation.y = this.rotationSprite(c[0], frame);*/
+
+			if(this.spriteObjs[this.spriteLists[v]] == null) this.spriteObjs[this.spriteLists[v]] = this.addSprite( v, pos );
+			this.spriteObjs[this.spriteLists[v]].position.lerp(pos, 0.6);
+			this.spriteObjs[this.spriteLists[v]].rotation.y = this.rotationSprite(c[0], frame);
 		}
 	},
 	rotationSprite : function(v, f){
@@ -1827,30 +1815,36 @@ this.industrials = [616, 625, 634, 643, 652, 661, 670, 679, 688];*/
 		}
 		return r;
 	},
-	addSprite : function(i, v, p){
+	addSprite : function(v, p){
 		var m;
 		if(v===1){// train
 			m = new THREE.Mesh(this.spriteGeo[0], this.townMaterial );
 			m.position.copy(p);
 		    this.scene.add(m);
-		    this.spriteMeshs[i] = m;
+		    //this.spriteMeshs[i] = m;
+		    //this.spriteObjs[this.spriteLists[v]] = m;
 		}else if(v===2){// elico
 			m = new THREE.Mesh(this.spriteGeo[1], this.townMaterial );
 			m.position.copy(p);
 		    this.scene.add(m);
-		    this.spriteMeshs[i] = m;
+		    //this.spriteMeshs[i] = m;
 		}else if(v===3){// plane
 			m = new THREE.Mesh(this.spriteGeo[2], this.townMaterial );
 			m.position.copy(p);
 		    this.scene.add(m);
-		    this.spriteMeshs[i] = m;
+		    //this.spriteMeshs[i] = m;
 		} else {
 			m = new THREE.Mesh(new THREE.BoxGeometry(1,1,1), this.townMaterial );
 			m.position.copy(p);
 		    this.scene.add(m);
-		    this.spriteMeshs[i] = m;
+		    //this.spriteMeshs[i] = m;
 		}
+		return m;
+
+		//this.spriteObjs[this.spriteLists[v]] = m;
 	},
+
+
 
 
 

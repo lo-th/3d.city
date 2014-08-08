@@ -2683,6 +2683,7 @@ Micro.crimeScan = function(census, blockMaps) {
                 value += populationDensityMap.worldGet(x, y);
                 value = Math.min(value, 300);
                 value -= policeStationMap.worldGet(x, y);
+                value -= policeStationEffectMap.worldGet(x, y)
                 value = Micro.clamp(value, 0, 250);
                 crimeRateMap.worldSet(x, y, value);
                 totalCrime += value;
