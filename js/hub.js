@@ -62,6 +62,7 @@ HUB.Base = function(){
     this.disasterWindow = null;
     this.exitWindow = null;
     this.queryWindow = null;
+    this.overlaysWindow = null;
 
     this.selector = null;
     this.select = null;
@@ -70,6 +71,10 @@ HUB.Base = function(){
 
     this.disasterTypes = ['None', 'Monster', 'Fire', 'Flood', 'Crash', 'Meltdown', 'Tornado'];
     this.disasterButtons = [];
+
+    this.overlaysTypes = ['None', 'Density', 'Growth', 'Land value', 'Crime Rate', 'Pollution', 'Traffic', 'Power Grid', 'Fire', 'Police'];
+    this.overlaysButtons =  [];
+
 
     
 
@@ -198,11 +203,15 @@ HUB.Base.prototype = {
         var b2 = this.addButton(this.hub, 'Eval', [75,16,14], 'position:absolute; left:110px; top:-7px; font-weight:bold;', true);
         b2.addEventListener('click',  function ( e ) { e.preventDefault(); getEval(); }, false);
 
-        /*var b3 = this.addButton(this.hub, 'Disaster', [75,16,14], 'position:absolute; left:210px; top:-7px; font-weight:bold;', true);
+        /*
+        var b3 = this.addButton(this.hub, 'Disaster', [75,16,14], 'position:absolute; left:210px; top:-7px; font-weight:bold;', true);
         b3.addEventListener('click',  function ( e ) { e.preventDefault();  _this.openDisaster(); }, false);
 
         var b4 = this.addButton(this.hub, 'Exit', [75,16,14], 'position:absolute; left:310px; top:-7px; font-weight:bold;', true);
         b4.addEventListener('click',  function ( e ) { e.preventDefault();  _this.openExit();  }, false);
+        
+        var b5 = this.addButton(this.hub, 'Overlays', [75,16,14], 'position:absolute; left:410px; top:-7px; font-weight:bold;', true);
+        b5.addEventListener('click',  function ( e ) { e.preventDefault();  _this.openOverlays();  }, false);
         */
 
 
@@ -310,12 +319,47 @@ HUB.Base.prototype = {
             this.closeQuery();
             t = 'query';
         }
+        if(this.overlaysWindow !== null && this.overlaysWindow.className == "open"){
+            this.closeOverlays();
+            t = 'overlays';
+        }
 
         return t;
 
     },
 
-    //-----------------------------------EXIT WINDOW
+    //-----------------------------------OVERLAYS WINDOW
+
+    openOverlays : function(data){
+        _this = this;
+
+        var test = this.testOpen();
+        if(test == 'overlays') return;
+
+        if(this.overlaysWindow == null){
+            this.overlaysWindow = document.createElement('div');
+            this.overlaysWindow.style.cssText = this.radius+ 'position:absolute; width:140px; height:420px; pointer-events:none; display:block;'+ this.windowsStyle;;
+            this.hub.appendChild( this.overlaysWindow );
+
+            //var bg1 = this.addButton(this.overlaysWindow, 'X', [16,16,14], 'position:absolute; left:50px; top:10px;');
+            //bg1.addEventListener('click',  function(e){ e.preventDefault(); _this.closeQuery(); }, false);
+
+            for(var i=0; i<this.overlaysTypes.length; i++){
+                this.overlaysButtons[i] = this.addButton(this.overlaysWindow, this.overlaysTypes[i].toUpperCase(), [96,16,14],'position:absolute; left:10px; top:'+(10+(i*40))+'px;');
+                this.overlaysButtons[i].name = this.overlaysTypes[i];
+                this.overlaysButtons[i].addEventListener('click',  function(e){ e.preventDefault(); setOverlays(this.name); }, false);
+            }
+        } else {
+            this.overlaysWindow.style.display = 'block';
+        }
+        this.overlaysWindow.className = "open";
+    },
+    closeOverlays :function(){
+        this.overlaysWindow.style.display = 'none';
+        this.overlaysWindow.className = "close";
+    },
+
+    //-----------------------------------QUERY WINDOW
 
     openQuery : function(data){
         _this = this;

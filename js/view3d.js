@@ -28,7 +28,7 @@ V3D.Base = function(isMobile, pix, isLow){
 	this.snd_layzone = new Audio("./sound/layzone.mp3");
 
 	this.imgSrc = ['img/tiles32.png','img/town.jpg','img/building.jpg','img/w_building.png','img/w_town.png'];
-	this.rootModel = 'img/world2.sea';
+	this.rootModel = 'img/world.sea';
 	this.imgs = [];
 	this.num=0;
 
@@ -184,9 +184,7 @@ V3D.Base = function(isMobile, pix, isLow){
 	this.tempDestruct=[];
 
 	this.currentLayer = 0;
-	this.miniTree = null;
-	this.minibuilding = null;
-	this.miniTreeUpdate = 0;
+	
 
 	this.spriteLists = ['train', 'elico', 'plane', 'boat', 'monster', 'tornado', 'sparks'];
 	//this.spriteLists = [];
@@ -227,13 +225,9 @@ V3D.Base.prototype = {
 
          //this.renderer = new THREE.WebGLRenderer({ canvas:this.canvas, antialias:false });
     	this.renderer = new THREE.WebGLRenderer({ precision: "mediump", devicePixelRatio:this.pix, antialias:false });
-    	//this.renderer = new THREE.WebGLRenderer({ antialias:false });
-    	//this.renderer = new THREE.WebGLRenderer({ canvas:glCanvas, precision: "mediump", antialias:false });
-    	//this.renderer = new THREE.WebGLRenderer({ antialias:false });
     	this.renderer.sortObjects = false;
     	this.renderer.sortElements = false;
     	//this.renderer.autoClear = false;
-    	//this.renderer.setSize( this.vsize.x, this.vsize.y, true );
     	this.renderer.setSize( this.vsize.x, this.vsize.y );
     	
 
@@ -296,6 +290,11 @@ V3D.Base.prototype = {
     //----------------------------------- MINI DEEP RENDER
 
     initMiniRender: function(){
+    	this.miniTree = null;
+		this.minibuilding = null;
+		this.miniTreeUpdate = 0;
+    	this.townHeigth = this.customShader();
+	    //this.buildingHeigth = this.customShader();
     	
     	this.miniScene = new THREE.Scene();
 
@@ -305,13 +304,42 @@ V3D.Base.prototype = {
     	this.miniScene.add( this.topCamera );
 
     	this.miniRenderer = new THREE.WebGLRenderer({ canvas:miniGlCanvas, precision: "lowp", antialias: false});
-    	//this.miniRenderer = new THREE.WebGLRenderer({ canvas:miniGlCanvas, precision: "mediump", antialias: false});
     	this.miniRenderer.setSize( this.miniSize.w, this.miniSize.h, true );
     	this.miniRenderer.sortObjects = false;
 	    this.miniRenderer.sortElements = false;
 
 	    this.deepthTest = true;
     },
+    customShader:function(){
+		var deepShader={
+		    attributes:{},
+		    uniforms:{ 
+		    	deep: {type: 'f', value: 0.1}
+		    },
+		    fs:[
+		        'precision lowp float;',
+		        'varying vec4 vc;',
+		        'void main(void) { gl_FragColor = vc; }'
+		    ].join("\n"),
+		    vs:[
+		        'uniform float deep;',
+		        'varying float dy;',
+		        'varying vec4 vc;',
+		        'void main(void) {',
+		            'gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);',
+		            'dy = position.y*deep;',
+		            'vc = vec4(dy,dy,dy, 1.0);',
+		        '}'
+		    ].join("\n")
+		};
+		var material = new THREE.ShaderMaterial({
+			uniforms: deepShader.uniforms,
+			attributes: deepShader.attributes,
+			vertexShader: deepShader.vs,
+			fragmentShader: deepShader.fs
+		});
+		return material;
+	},
     miniClear:function(){
     	var i = this.miniScene.children.length;
     	var m;
@@ -335,17 +363,32 @@ V3D.Base.prototype = {
 
     	if(l!==this.currentLayer){
     		this.currentLayer = l;
-    		if(this.miniTree !== null) this.miniClearMesh(this.miniTree);
+    		this.miniUpTree(l);
+    		this.miniUpBuilding(l);
+    		/*if(this.miniTree !== null) this.miniClearMesh(this.miniTree);
     		this.miniTree = new THREE.Mesh( this.treeMeshs[l].geometry.clone(), this.townHeigth);
-			this.miniScene.add(this.miniTree);
+			this.miniScene.add(this.miniTree);*/
     	} else {
     		if(this.miniTreeUpdate==1){
-    			if(this.miniTree !== null) this.miniClearMesh(this.miniTree);
+    			this.miniUpTree(l);
+    			/*if(this.miniTree !== null) this.miniClearMesh(this.miniTree);
     			this.miniTree = new THREE.Mesh( this.treeMeshs[l].geometry.clone(), this.townHeigth);
-    			this.miniScene.add(this.miniTree);
+    			this.miniScene.add(this.miniTree);*/
     			this.miniTreeUpdate = 0;
     		}
     	}
+    },
+    miniUpTree:function(l){
+    	if(this.miniTree !== null) this.miniClearMesh(this.miniTree);
+    	this.miniTree = new THREE.Mesh( this.treeMeshs[l].geometry.clone(), this.townHeigth);
+    	this.miniScene.add(this.miniTree);
+    },
+    miniUpBuilding:function(l){
+    	if(this.buildingMeshs[l]){
+	    	if(this.minibuilding !== null) this.miniClearMesh(this.minibuilding);
+	    	this.minibuilding = new THREE.Mesh( this.buildingMeshs[l].geometry.clone(), this.townHeigth);
+	    	this.miniScene.add(this.minibuilding);
+	    }
     },
 
     miniRender: function(){
@@ -428,8 +471,7 @@ V3D.Base.prototype = {
 
         // materials
         
-	    this.townHeigth = new THREE.MeshBasicMaterial( { vertexColors: THREE.VertexColors } );
-	    this.buildingHeigth = new THREE.MeshBasicMaterial( { vertexColors: THREE.VertexColors } );
+	   
 
 	    this.townMaterial = new THREE.MeshBasicMaterial( { map: this.townTexture } );//this.townMap;
 	    this.buildingMaterial = new THREE.MeshBasicMaterial( { map: this.buildingTexture } );//this.buildingMap;
@@ -1011,8 +1053,6 @@ V3D.Base.prototype = {
 
 	//------------------------------------------RAY
 
-
-
 	rayTest : function () {
 		this.projector.unprojectVector( this.rayVector, this.camera );
 		this.raycaster.set( this.camera.position, this.rayVector.sub( this.camera.position ).normalize() );
@@ -1043,10 +1083,7 @@ V3D.Base.prototype = {
 		}
 	},
 
-
-
 	//------------------------------------------TOOL
-
 
 	selectTool : function(id){
 		this.pos.x = -1;
@@ -1168,6 +1205,7 @@ V3D.Base.prototype = {
 	},
 
 	//--------------------------------------------------TEST DESTRUCT
+
 	testLayer:function(x,y){
 		var l = this.findLayer(x,y);
 		var list = [l];
@@ -1554,14 +1592,14 @@ V3D.Base.prototype = {
 	    }
 	    
 	    if (this.mouse.down) {
-	        if(this.mouse.move || this.mouse.button===3){  
+	        if(this.mouse.move || this.mouse.button===2){  
 	        	this.mouse.dragView = false;
 		        document.body.style.cursor = 'crosshair';
 		        this.cam.horizontal = ((px - this.mouse.ox) * 0.3) + this.mouse.h;
 		        this.cam.vertical = (-(py -this. mouse.oy) * 0.3) + this.mouse.v;
 		        this.moveCamera();
 		    }
-		    if(this.mouse.dragView || this.mouse.button===2){
+		    if(this.mouse.dragView || this.mouse.button===3){
 		    	document.body.style.cursor = 'move';
 		    	this.mouse.move = false;
 		    	this.ease.x = (px - this.mouse.ox)/1000;

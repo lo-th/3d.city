@@ -17,10 +17,10 @@ body {  background:#3C89CD; font:11px sans-serif; width:100%; height:100%; color
 #logo{ position:absolute; left:50%; top:50%;  margin-left:-150px; margin-top:-150px; width:300px; height:320px; pointer-events:none; display:none;}
 </style>
 <script src="js/three.min.js"></script>
-<!--<script src="js/loaders/sea3d.min.js"></script>-->
-<script src="js/loaders/sea3d/SEA3D.js"></script>
+<script src="js/loaders/sea3d.min.js"></script>-->
+<!--<script src="js/loaders/sea3d/SEA3D.js"></script>
 <script src="js/loaders/sea3d/SEA3DLoader.js"></script>
-<script src="js/loaders/sea3d/SEA3DLZMA.js"></script>
+<script src="js/loaders/sea3d/SEA3DLZMA.js"></script>-->
 
 <script src="js/ImprovedNoise.js"></script>
 
@@ -55,6 +55,7 @@ var newup = false;
 var powerup = false;
 var cityWorker = new Worker('js/worker.city.js');
 var view3d, hub, im;
+var isWithMiniMap = false;
 
 
 function debug(txt){ d.innerHTML += "<br>"+txt; }
@@ -71,6 +72,7 @@ function init(){
     isMobile = testMobile();
     hub = new HUB.Base();
     view3d = new V3D.Base(isMobile);
+    if(isWithMiniMap)view3d.initMiniRender();
 }
 
 //=======================================
@@ -88,13 +90,17 @@ function loop() {
         view3d.showPower();
         powerup = false;
     }
-    if(view3d.mouse.dragView || view3d.mouse.button===2){
+    if(view3d.mouse.dragView || view3d.mouse.button===3){
         view3d.dragCenterposition();
     }else{
         if(!isMobile)view3d.updateKey();
     }
 
     view3d.renderer.render( view3d.scene, view3d.camera );
+    if(isWithMiniMap){
+        view3d.miniCheck();
+        view3d.miniRenderer.render( view3d.miniScene, view3d.topCamera );
+    }
 }
 
 //=======================================
@@ -184,6 +190,10 @@ function getEval(){
 function setDisaster(disaster){
     console.log(disaster);
     cityWorker.postMessage({ tell:"DISASTER", disaster:disaster });
+}
+
+function setOverlays(type){
+    //cityWorker.postMessage({ tell:"OVERLAYS", type:type });
 }
 
 function destroy(x,y) {

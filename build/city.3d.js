@@ -2647,15 +2647,21 @@ Micro.pollutionTerrainLandValueScan = function(map, census, blockMaps) {
 
 Micro.smoothStationMap = function(map) {
     var tempMap = new Micro.BlockMap(map);
-    for (var x = 0; x < tempMap.width; x++) {
-        for (var y = 0; y < tempMap.height; y++) {
+    var lw = tempMap.width;
+    var lh = tempMap.height
+    for (var x = 0; x < lw; x++) {
+        for (var y = 0; y < lh; y++) {
             var edge = 0;
             if (x > 0) edge += tempMap.get(x - 1, y);
-            if (x < tempMap.width - 1) edge += tempMap.get(x + 1, y);
+            //if (x < lw - 1) edge += tempMap.get(x + 1, y);
+            if ((x+1) < lw ) edge += tempMap.get(x + 1, y);
             if (y > 0) edge += tempMap.get(x, y - 1);
-            if (y < tempMap.height - 1) edge += tempMap.get(x, y + 1);
-            edge = tempMap.get(x, y) + Math.floor(edge / 4);
-            map.set(x, y, Math.floor(edge / 2));
+            //if (y < lh - 1) edge += tempMap.get(x, y + 1);
+            if ((y+1) < lh ) edge += tempMap.get(x, y + 1);
+            //edge = tempMap.get(x, y) + Math.floor(edge / 4);
+            //map.set(x, y, Math.floor(edge / 2));
+            edge = tempMap.get(x, y) + Math.floor(edge * 0.25);
+            map.set(x, y, Math.floor(edge * 0.5));
         }
     }
 };
@@ -2682,8 +2688,9 @@ Micro.crimeScan = function(census, blockMaps) {
                 value = 128 - value;
                 value += populationDensityMap.worldGet(x, y);
                 value = Math.min(value, 300);
-                value -= policeStationMap.worldGet(x, y);
-                value -= policeStationEffectMap.worldGet(x, y)
+                //value -= policeStationMap.worldGet(x, y);
+                value -= policeStationMap.worldGet( Math.floor(x*0.25),  Math.floor(y*0.25) );
+                //value -= policeStationEffectMap.worldGet(x, y)
                 value = Micro.clamp(value, 0, 250);
                 crimeRateMap.worldSet(x, y, value);
                 totalCrime += value;
