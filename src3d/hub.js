@@ -162,7 +162,7 @@ HUB.Base.prototype = {
     //--------------------------------------game hub
 
     initGameHub : function(){
-        _this = this;
+        var _this = this;
         this.removeSelector("LEVEL");
         this.clearElement('fullStart');
 
@@ -249,7 +249,7 @@ HUB.Base.prototype = {
         this.initCITYinfo();
     },
     hideoldSel : function(){
-        for(i = 0; i<4; i++){
+        for(var i = 0; i<4; i++){
             this.H[i].style.background = 'none';
         }
     },
@@ -331,7 +331,7 @@ HUB.Base.prototype = {
     //-----------------------------------OVERLAYS WINDOW
 
     openOverlays : function(data){
-        _this = this;
+        var _this = this;
 
         var test = this.testOpen();
         if(test == 'overlays') return;
@@ -362,7 +362,7 @@ HUB.Base.prototype = {
     //-----------------------------------QUERY WINDOW
 
     openQuery : function(data){
-        _this = this;
+        var _this = this;
 
         //var test = this.testOpen();
         //if(test == 'query') return;
@@ -393,7 +393,7 @@ HUB.Base.prototype = {
     //-----------------------------------BUDGET WINDOW
 
     openEval : function(data){
-        _this = this;
+        var _this = this;
 
         var test = this.testOpen();
         if(test == 'evaluation') return;
@@ -441,7 +441,7 @@ HUB.Base.prototype = {
     //-----------------------------------EXIT WINDOW
 
     openExit : function(data){
-        _this = this;
+        var _this = this;
 
         var test = this.testOpen();
         if(test == 'exit') return;
@@ -493,7 +493,7 @@ HUB.Base.prototype = {
     //-----------------------------------BUDGET WINDOW
 
     openBudget : function(data){
-        _this = this;
+        var _this = this;
 
         var test = this.testOpen();
         if(test == 'budget') return;
@@ -571,7 +571,7 @@ HUB.Base.prototype = {
     //-----------------------------------DISASTER WINDOW
 
     openDisaster : function(){
-        _this = this;
+        var _this = this;
         var test = this.testOpen();
         if(test == 'disaster') return;
         if(this.disasterWindow == null){
@@ -707,7 +707,7 @@ HUB.Base.prototype = {
     //---------------------------------- SELECTOR 
 
     addSelector : function( type, names, fun, current, size){
-        _this = this;
+        var _this = this;
         var cont = document.createElement('div');
         //cont.style.cssText = 'position:absolute; width:300px; height:50px; font-size:16px; top:0; left:webkit-clac(50% -150px);';
         cont.style.cssText = 'font-size:16px; margin-top:10px; color:'+this.colors[0]+';';
@@ -771,7 +771,7 @@ HUB.Base.prototype = {
 
     removeSelector : function(type){
         var h = 10, def;
-        target = document.getElementById(type);
+        var target = document.getElementById(type);
         while(h--){
             if(document.getElementById(type+h)){
                 def = document.getElementById(type+h);
@@ -786,8 +786,10 @@ HUB.Base.prototype = {
     showToolSelect : function(id){
         if(id.name !==  this.currentToolName){
             this.currentToolName = id.name;
-            var px = (id.getBoundingClientRect().left - _this.toolSet.getBoundingClientRect().left );
-            var py= (id.getBoundingClientRect().top - _this.toolSet.getBoundingClientRect().top );
+           // var px = (id.getBoundingClientRect().left - _this.toolSet.getBoundingClientRect().left );
+            //var py= (id.getBoundingClientRect().top - _this.toolSet.getBoundingClientRect().top );
+            var px = (id.getBoundingClientRect().left - this.toolSet.getBoundingClientRect().left );
+            var py= (id.getBoundingClientRect().top - this.toolSet.getBoundingClientRect().top );
             this.select.style.left = px + 'px'; 
             this.select.style.top = py + 'px';
             this.select.style.display = 'block';

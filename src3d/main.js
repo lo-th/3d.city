@@ -1,38 +1,3 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<title>3D.CITY</title>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-<link rel="icon" href="favicon.ico" />
-<style>
-*{ padding:0; margin: 0; -o-user-select:none; -ms-user-select:none; -khtml-user-select:none; -webkit-user-select:none; -moz-user-select: none;}
-html { width:100%; height:100%; }
-body {  background:#3C89CD; font:11px sans-serif; width:100%; height:100%; color:#DCDCDC; overflow: hidden; }
-#container{ min-width:480px; min-height:480px; width:100%; height:100%; overflow:hidden; text-align:center; }
-#container canvas{position:absolute;top:0;left:0;width:100%;height:100%}
-#debug{ position:absolute; padding:5px; right:0; bottom:0; text-align:right; width:20%; pointer-events:none; display:block; }
-#hub{ position:absolute; top:0; left:0; height:100%; width:100%; pointer-events:none; display:block; text-align:center;}
-#miniGlCanvas{ position:absolute; bottom:60px; left:15px; pointer-events:none;}
-#logo{ position:absolute; left:50%; top:50%;  margin-left:-150px; margin-top:-150px; width:300px; height:320px; pointer-events:none; display:none;}
-</style>
-<script src="js/three.min.js"></script>
-<script src="js/loaders/sea3d.min.js"></script>
-
-<script src="src3d/ImprovedNoise.js"></script>
-<script src="src3d/view3d.js"></script>
-<script src="src3d/hub.js"></script>
-<script src="src3d/saveLoad.js"></script>
-
-</head>
-<body>
-<div id="container"></div>
-<div id="debug">loth 2014 - v 0.1</div>
-<canvas id="miniGlCanvas"></canvas>
-
-<div id="hub"></div>
-<object id="logo" width="300" height="320" type="image/svg+xml" data="img/logo.svg"></object>
-<script>
 var d = document.getElementById('debug');
 var miniGlCanvas = document.getElementById("miniGlCanvas");
 var simulation_timestep = 30;
@@ -50,11 +15,12 @@ var newup = false;
 var powerup = false;
 var cityWorker = new Worker('js/worker.city.js');
 var view3d, hub, im;
+var isWithMiniMap = false;
 
 
 function debug(txt){ d.innerHTML += "<br>"+txt; }
 
-window.onload = init;
+//window.onload = init;
  
 function testMobile() {
     if (navigator.userAgent.match(/Android/i) || navigator.userAgent.match(/webOS/i) || navigator.userAgent.match(/iPhone/i) || navigator.userAgent.match(/iPad/i) 
@@ -64,8 +30,12 @@ function testMobile() {
 
 function init(){
     isMobile = testMobile();
+
+    //cityWorker = new Worker('js/worker.city.js');
+    
     hub = new HUB.Base();
-    view3d = new V3D.Base(isMobile, 0.5, true);
+    view3d = new V3D.Base(isMobile);
+    if(isWithMiniMap)view3d.initMiniRender();
 }
 
 //=======================================
@@ -77,19 +47,23 @@ function loop() {
     if(newup){ 
         view3d.paintMap(); 
         view3d.moveSprite();
-        newup = false;
+        newup=false;
     }
     if(powerup){
         view3d.showPower();
         powerup = false;
     }
-    if(view3d.mouse.dragView || view3d.mouse.button===2){
+    if(view3d.mouse.dragView || view3d.mouse.button===3){
         view3d.dragCenterposition();
     }else{
         if(!isMobile)view3d.updateKey();
     }
-    
+
     view3d.renderer.render( view3d.scene, view3d.camera );
+    if(isWithMiniMap){
+        view3d.miniCheck();
+        view3d.miniRenderer.render( view3d.miniScene, view3d.topCamera );
+    }
 }
 
 //=======================================
@@ -181,6 +155,10 @@ function setDisaster(disaster){
     cityWorker.postMessage({ tell:"DISASTER", disaster:disaster });
 }
 
+function setOverlays(type){
+    //cityWorker.postMessage({ tell:"OVERLAYS", type:type });
+}
+
 function destroy(x,y) {
     cityWorker.postMessage({tell:"DESTROY", x:x, y:y});
 }
@@ -217,7 +195,7 @@ cityWorker.onmessage = function(e) {
         hub.updateCITYinfo(e.data.infos);
 
         newup = true;
-        if(powerData) powerup = true;
+        if(powerData) powerup = true; 
     }
     if( phase == "BUDGET"){
         hub.openBudget(e.data.budgetData);
@@ -232,5 +210,3 @@ cityWorker.onmessage = function(e) {
         saveTextAsFile('test', e.data.saveData);
     }
 }
-
-</script></body></html>
