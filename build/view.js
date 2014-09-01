@@ -225,7 +225,7 @@ V3D.Base = function(isMobile, pix, isLow){
 	this.container = document.getElementById( 'container' );
 	this.isMobile = isMobile || false;
 	this.seaBuffer = false;
-	this.isBuffer = false;
+	this.isBuffer = true;
 	this.isWithTree = true;
 
 	this.key = [0,0,0,0,0,0,0];
