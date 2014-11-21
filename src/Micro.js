@@ -75,13 +75,17 @@ Micro.makeConstantDescriptor = function(value) {
 Micro.rotate10Arrays = function() {
     for (var i = 0; i < Micro.arrs.length; i++) {
         var name10 = Micro.arrs[i] + 'Hist10';
-        this[name10] = [0].concat(this[name10].slice(0, -1));
+        //this[name10] = [0].concat(this[name10].slice(0, -1));
+        this[name10].pop();
+        this[name10].unshift(0);
     }
 }
 Micro.rotate120Arrays = function() {
     for (var i = 0; i < Micro.arrs.length; i++) {
         var name120 = Micro.arrs[i] + 'Hist120';
-        this[name120] = [0].concat(this[name120].slice(0, -1));
+        //this[name120] = [0].concat(this[name120].slice(0, -1));
+        this[name120].pop();
+        this[name120].unshift(0)  
     }
 }
 
@@ -154,3 +158,10 @@ Micro.DISASTER_FLOOD='Flood';
 Micro.DISASTER_CRASH='Crash';
 Micro.DISASTER_MELTDOWN='Meltdown';
 Micro.DISASTER_TORNADO='Tornado';
+
+// storage
+Micro.CURRENT_VERSION = 3;
+Micro.KEY = 'micropolisJSGame';
+///Micro.canStore = window.localStorage;
+
+//Micro.localStorage = null;

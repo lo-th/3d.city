@@ -59,7 +59,7 @@ Micro.Valves.prototype = {
 
         resRatio = Math.min(resRatio, resRatioMax);
         comRatio = Math.min(comRatio, comRatioMax);
-        resRatio = Math.min(indRatio, indRatioMax);
+        indRatio = Math.min(indRatio, indRatioMax);
 
         // Global tax and game level effects.
         var z = Math.min((budget.cityTax + gameLevel), taxMax);

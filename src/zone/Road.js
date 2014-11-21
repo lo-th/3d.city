@@ -129,7 +129,7 @@ Micro.Road = function (SIM) {
 
         var currentDensity = sim.blockMaps.trafficDensityMap.worldGet(x, y) >> 6;
         // Force currentDensity in range 0-3 (trafficDensityMap values are capped at 240)
-        if (currentDensity >> 1) currentDensity -= 1;
+        if (currentDensity > 1) currentDensity -= 1;
         if (currentDensity === density) return;
 
         var newValue = ((tileValue - Tile.ROADBASE) & 15) + densityTable[currentDensity];

@@ -35,6 +35,8 @@ self.onmessage = function (e) {
     if( p == "EVAL") Game.getEvaluation();
 
     if( p == "SAVEGAME") Game.saveGame();
+    if( p == "LOADGAME") Game.loadGame();
+    if( p == "MAKELOADGAME") Game.makeLoadGame(e.data.savegame);
 };
 
 /*var updateTrans = function(data){
@@ -334,16 +336,43 @@ CITY.Game.prototype = {
         this.oldSpeed = this.speed;
         this.changeSpeed(0);
 
-        var saveData = "Yoooooo";
+        var gameData = "Yoooooo";
+        gameData.version = Micro.CURRENT_VERSION;
+        gameData = JSON.stringify(gameData);
         
-        transMessage({ tell:"SAVEGAME", saveData:saveData});
+        transMessage({ tell:"SAVEGAME", gameData:gameData, key:Micro.KEY});
 
         this.changeSpeed(this.oldSpeed);
     },
+    /*makeSaveGame : function(gameData){
+        gameData.version = Micro.CURRENT_VERSION;
+        gameData = JSON.stringify(gameData);
+    }*/
 
     //______________________________________ LOAD
 
     loadGame : function(){
-
+        transMessage({ tell:"LOADGAME", key:Micro.KEY }); 
+    }, 
+    makeLoadGame: function(savedGame){
+        if (savedGame !== null) { 
+            savedGame = JSON.parse(savedGame);
+            if (savedGame.version !== Micro.CURRENT_VERSION) this.transitionOldSave(savedGame);
+            savedGame.isSavedGame = true;
+        }
+    },
+    transitionOldSave : function (savedGame) {
+        switch (savedGame.version) {
+            case 1: savedGame.everClicked = false;
+            /* falls through */
+            case 2:
+                savedGame.pollutionMaxX = Math.floor(savedGame.width / 2);
+                savedGame.pollutionMaxY = Math.floor(savedGame.height / 2);
+                savedGame.cityCentreX = Math.floor(savedGame.width / 2);
+                savedGame.cityCentreY = Math.floor(savedGame.height / 2);
+            break;
+            //default: throw new Error('Unknown save version!');
+        }
     }
+
 };

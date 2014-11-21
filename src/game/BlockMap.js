@@ -16,30 +16,30 @@ Micro.makeArrayOf = function(length, value) {
     return result;
 }
 
-Micro.BlockMap = function(mapWidth, mapHeight, blockSize, defaultValue) {
+Micro.BlockMap = function(gameMapWidth, gameMapHeight, blockSize, defaultValue) {
     var sourceMap;
     var sourceFunction;
     var id = function(x) {return x;};
 
     var e = new Error('Invalid parameters');
     if (arguments.length < 3) { 
-        if (!(mapWidth instanceof Micro.BlockMap) || (arguments.length === 2 && typeof(mapHeight) !== 'function')) throw e;
-        sourceMap = mapWidth;
-        sourceFunction = mapHeight === undefined ? id : mapHeight;
+        if (!(gameMapWidth instanceof Micro.BlockMap) || (arguments.length === 2 && typeof(gameMapHeight) !== 'function')) throw e;
+        sourceMap = gameMapWidth;
+        sourceFunction = gameMapHeight === undefined ? id : gameMapHeight;
     }
 
     if (sourceMap !== undefined) {
-        mapWidth = sourceMap.width;
-        mapHeight = sourceMap.height;
+        gameMapWidth = sourceMap.gameMapWidth;
+        gameMapHeight = sourceMap.gameMapHeight;
         blockSize = sourceMap.blockSize;
         defaultValue = sourceMap.defaultValue;
     }
 
     Object.defineProperties(this,
-        {mapWidth: Micro.makeConstantDescriptor(mapWidth),
-        mapHeight: Micro.makeConstantDescriptor(mapHeight),
-        width: Micro.makeConstantDescriptor(Math.floor((mapWidth  + 1) / blockSize)),
-        height: Micro.makeConstantDescriptor(Math.floor((mapHeight + 1)/ blockSize)),
+        {gameMapWidth: Micro.makeConstantDescriptor(gameMapWidth),
+        gameMapHeight: Micro.makeConstantDescriptor(gameMapHeight),
+        width: Micro.makeConstantDescriptor(Math.floor((gameMapWidth  + 1) / blockSize)),
+        height: Micro.makeConstantDescriptor(Math.floor((gameMapHeight + 1)/ blockSize)),
         blockSize: Micro.makeConstantDescriptor(blockSize),
         defaultValue: Micro.makeConstantDescriptor(defaultValue)}
     );
@@ -55,11 +55,19 @@ Micro.BlockMap.prototype = {
     constructor: Micro.BlockMap,
 
     clear : function() {
-        var maxY = Math.floor(this.mapHeight / this.blockSize) + 1;
-        var maxX = Math.floor(this.mapWidth / this.blockSize) + 1;
+        var maxY = Math.floor(this.gameMapHeight / this.blockSize) + 1;
+        var maxX = Math.floor(this.gameMapWidth / this.blockSize) + 1;
         //for (var y = 0; y < maxY; y++) this.data[y] = Micro.makeArrayOf(maxX, this.defaultValue);
         var y = maxY;
         while(y--) this.data[y] = Micro.makeArrayOf(maxX, this.defaultValue);
+    },
+    copyFrom : function(sourceMap, sourceFn) {
+        if (sourceMap.width !== this.width || sourceMap.height !== this.height || sourceMap.blockSize !== this.blockSize)
+            console.warn('Copying from incompatible blockMap!');
+        for (var y = 0, height = sourceMap.height; y < height; y++) {
+            for (var x = 0, width = sourceMap.width; x < width; x++)
+                this.data[width * y + x] = sourceFn(sourceMap.data[width * y + x]);
+        }
     },
     get : function(x, y) {
         return this.data[y][x];

@@ -8,8 +8,8 @@ Micro.getTrafficAverage = function(blockMaps) {
     var trafficTotal = 0;
     var count = 1;
 
-    for (var x = 0; x < landValueMap.mapWidth; x += landValueMap.blockSize) {
-        for (var y = 0; y < landValueMap.mapHeight; y += landValueMap.blockSize) {
+    for (var x = 0; x < landValueMap.gameMapWidth; x += landValueMap.blockSize) {
+        for (var y = 0; y < landValueMap.gameMapHeight; y += landValueMap.blockSize) {
             if (landValueMap.worldGet(x, y) > 0) {
                 trafficTotal += trafficDensityMap.worldGet(x, y);
                 count++;

@@ -17,6 +17,8 @@ var cityWorker = new Worker('js/worker.city.js');
 var view3d, hub, im;
 var isWithMiniMap = false;
 
+var storage;
+
 
 function debug(txt){ d.innerHTML += "<br>"+txt; }
 
@@ -30,6 +32,8 @@ function testMobile() {
 
 function init(){
     isMobile = testMobile();
+
+    storage = window.localStorage;
 
     //cityWorker = new Worker('js/worker.city.js');
     
@@ -71,16 +75,41 @@ function loop() {
 //=======================================
 
 function saveGame(){
-    console.log("save game");
     cityWorker.postMessage({tell:"SAVEGAME"});
+}
+function loadGame(){
+    cityWorker.postMessage({tell:"LOADGAME"});
+}
+
+function makeGameSave(gameData, key){
+    //gameData.version = version;
+    //gameData = JSON.stringify(gameData);
+    window.localStorage.setItem(key, gameData);
+
+    console.log("game is save");
+    //cityWorker.postMessage({tell:"SAVEGAME"});
     //saveTextAsFile('test', 'game is saved');
 }
 
-function loadGame(){
-    console.log("load game");
-    loadFileAsText();
-    //saveTextAsFile('test', 'game is saved');
+function makeLoadGame(key){
+    var savedGame = window.localStorage.getItem(key);
+    cityWorker.postMessage({tell:"MAKELOADGAME", savegame:savegame});
+    //console.log("load game");
 }
+
+function transitionOldSave(savedGame) {
+    switch (savedGame.version) {
+        case 1: savedGame.everClicked = false;
+        /* falls through */
+        case 2:
+            savedGame.pollutionMaxX = Math.floor(savedGame.width / 2);
+            savedGame.pollutionMaxY = Math.floor(savedGame.height / 2);
+            savedGame.cityCentreX = Math.floor(savedGame.width / 2);
+            savedGame.cityCentreY = Math.floor(savedGame.height / 2);
+        break;
+        //default: throw new Error('Unknown save version!');
+    }
+};
 
 function newGameMap(){
     console.log("new map");
@@ -207,6 +236,9 @@ cityWorker.onmessage = function(e) {
         hub.openEval(e.data.evalData);
     }
     if( phase == "SAVEGAME"){
-        saveTextAsFile('test', e.data.saveData);
+        makeGameSave(e.data.gameData, e.data.key);
+    }
+    if( phase == "LOADGAME"){
+        makeLoadGame( e.data.key);
     }
 }

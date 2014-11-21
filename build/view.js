@@ -220,6 +220,7 @@ var Audio, THREE;
 var V3D = { REVISION: '0.2a' };
 
 V3D.Base = function(isMobile, pix, isLow){
+	
 	this.pix = pix || 1;
 	this.isLow = isLow || false;
 	this.container = document.getElementById( 'container' );
@@ -227,6 +228,8 @@ V3D.Base = function(isMobile, pix, isLow){
 	this.seaBuffer = false;
 	this.isBuffer = true;
 	this.isWithTree = true;
+
+	this.isWithEnv = false;
 
 	this.key = [0,0,0,0,0,0,0];
 
@@ -410,7 +413,9 @@ V3D.Base = function(isMobile, pix, isLow){
 V3D.Base.prototype = {
     constructor: V3D.Base,
     init:function() {
+
     	
+	    	
     	//if(this.isMobile) this.pix = 0.5;
     	this.clock = new THREE.Clock();
 
@@ -420,7 +425,7 @@ V3D.Base.prototype = {
     	this.scene.add( this.camera );
 
     	this.rayVector = new THREE.Vector3( 0, 0, 1 );
-    	this.projector = new THREE.Projector();
+    	//this.projector = new THREE.Projector();
     	this.raycaster = new THREE.Raycaster();
     	
         this.land = new THREE.Object3D();
@@ -665,16 +670,25 @@ V3D.Base.prototype = {
 	},
 
 	createTextures : function (){
+		
+		if(this.isWithEnv){
+		    this.environment = THREE.ImageUtils.loadTexture( 'img/env.jpg', THREE.SphericalReflectionMapping);
+		    this.environment2 = THREE.ImageUtils.loadTexture( 'img/env.jpg', THREE.SphericalReflectionMapping);
+		}
+
 		this.townTexture = new THREE.Texture(this.townCanvas);
 		this.buildingTexture = new THREE.Texture(this.buildingCanvas);
+
+		this.townTexture.flipY = false;
+		this.buildingTexture.flipY = false;
 		
-        this.townTexture.repeat.set( 1, -1 );
-		this.townTexture.wrapS = this.townTexture.wrapT = THREE.RepeatWrapping;
+        //this.townTexture.repeat.set( 1, -1 );
+		//this.townTexture.wrapS = this.townTexture.wrapT = THREE.RepeatWrapping;
 		this.townTexture.magFilter = THREE.NearestFilter;
         this.townTexture.minFilter = THREE.LinearMipMapLinearFilter;
 		
-        this.buildingTexture.repeat.set( 1, -1 );
-		this.buildingTexture.wrapS = this.buildingTexture.wrapT = THREE.RepeatWrapping;
+        //this.buildingTexture.repeat.set( 1, -1 );
+		//this.buildingTexture.wrapS = this.buildingTexture.wrapT = THREE.RepeatWrapping;
 		this.buildingTexture.magFilter = THREE.NearestFilter;
         this.buildingTexture.minFilter = THREE.LinearMipMapLinearFilter;
 
@@ -687,6 +701,11 @@ V3D.Base.prototype = {
 
 	    this.townMaterial = new THREE.MeshBasicMaterial( { map: this.townTexture } );//this.townMap;
 	    this.buildingMaterial = new THREE.MeshBasicMaterial( { map: this.buildingTexture } );//this.buildingMap;
+
+	    if(this.isWithEnv){
+	    	this.townMaterial.envMap = this.environment;
+	    	this.buildingMaterial.envMap = this.environment;
+	    }
 
 	   /* this.townMaterial.vertexColors = THREE.VertexColors
 	    this.townMaterial.map = null;
@@ -755,7 +774,8 @@ V3D.Base.prototype = {
 	        }
 	        _this.defineGeometry();
 	    }
-	    if(!this.seaBuffer) loader.parser = THREE.SEA3D.DEFAULT;
+	    if(!this.seaBuffer)loader.parser = THREE.SEA3D.DEFAULT;
+	    else loader.parser = THREE.SEA3D.BUFFER;
 	    loader.load( this.rootModel );
 	    if(hub!==null)hub.subtitle.innerHTML = "Loading 3d model ...";
 	},
@@ -1020,8 +1040,7 @@ V3D.Base.prototype = {
 	    if(this.isBuffer){
 	    	g.computeVertexNormals();
             //g.computeTangents();
-			g2 = new THREE.BufferGeometry();
-			g2.fromGeometry(g);
+			g2 = new THREE.BufferGeometry().fromGeometry(g);
 			//g2.computeBoundingSphere();
 			g.dispose();
 			this.treeMeshs[l] = new THREE.Mesh( g2, this.townMaterial );
@@ -1050,14 +1069,7 @@ V3D.Base.prototype = {
 		this.center.x = this.mapSize[0]*0.5;
 		this.center.z = this.mapSize[1]*0.5;
 
-		if( this.isWithHeight ){
-		    this.applyHeight();
-		    this.center.y = this.heightData[this.findId(this.center.x,this.center.z)];
-		} else {
-			this.center.y = 0;
-		}
 
-		this.moveCamera();
 
 		// background update
 		if(this.isWithBackground ){
@@ -1079,7 +1091,7 @@ V3D.Base.prototype = {
 		    this.back.material.map = this.skyTexture;//this.gradTexture([[0.51,0.49, 0.3], ['#6666e6','lightskyblue', 'deepskyblue']]);
 
 
-		    this.back.position.copy(this.center);
+		    
 		} else {
 			if(island>0) this.renderer.setClearColor( 0x6666e6, 1 );
 			else this.renderer.setClearColor( 0xcc7f66, 1 );
@@ -1098,12 +1110,16 @@ V3D.Base.prototype = {
         	var colorsY = [ 0x000000, 0x002200, 0x004400, 0x006600, 0x008800, 0x00aa00, 0x00cc00, 0x00ff00 ];
         	for(var i=0; i<8; i++){
         		for(var j=0; j<8; j++){
-        			var geo = new THREE.PlaneGeometry( 16, 16, 16, 16 );
+        			//var geo = new THREE.PlaneGeometry( 16, 16, 16, 16 );
+        			var geo;
+        			if(this.isWithHeight)  geo = new THREE.PlaneGeometry( 16, 16, 16, 16 );
+        			else geo = new THREE.PlaneBufferGeometry( 16, 16, 1, 1 );
         			geo.applyMatrix(new THREE.Matrix4().makeRotationX( - Math.PI * 0.5 ));
         			//geo.computeBoundingSphere();
 	        		//this.miniTerrain[n] = new THREE.Mesh(geo.clone(), new THREE.MeshBasicMaterial({color:colorsX[i]+colorsY[j]}) );
 	        		if(this.isColorTest) this.miniTerrain[n] = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({color:colorsX[i]+colorsY[j]}) );
 	        		else this.miniTerrain[n] = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({color:0xffffff}) );
+	        		if(this.isWithEnv) this.miniTerrain[n].material.envMap = this.environment2;
 	        		this.miniTerrain[n].position.set((8+j*16)-0.5,0,(8+i*16)-0.5);
 	        		this.land.add( this.miniTerrain[n] );
 	        		n++;
@@ -1120,10 +1136,21 @@ V3D.Base.prototype = {
         	texture.minFilter = THREE.LinearMipMapLinearFilter;
         	texture.needsUpdate = true;
         	this.miniTerrain[n].material.map = texture;
+        	
         	//this.miniTerrain[n].material.transparent = true;
 
         	this.terrainTxt[n] = texture;
         } 
+
+        if( this.isWithHeight ){
+		    this.applyHeight();
+		    this.center.y = this.heightData[this.findId(this.center.x,this.center.z)];
+		} else {
+			this.center.y = 0;
+		}
+
+		this.moveCamera();
+		this.back.position.copy(this.center);
 
         
 	},
@@ -1131,6 +1158,12 @@ V3D.Base.prototype = {
 	//------------------------------------------HEIGHT
 
 	generateHeight : function () {
+		if(this.miniTerrain.length != 0){
+			var e = this.miniTerrain.length;
+			while(e--){ this.land.remove( this.miniTerrain[e] ); }
+			this.miniTerrain = [];
+		}
+		
 		var w = this.mapSize[0];
 		var h = this.mapSize[1];
 
@@ -1217,10 +1250,21 @@ V3D.Base.prototype = {
 	moveFaces : function(obj, n, h){
 		var face1 = obj.geometry.faces[n*2];
 		var face2 = obj.geometry.faces[(n*2)+1];
+
+		//var face1 = obj.geometry.attributes.index[n*2];
+		//var face2 = obj.geometry.attributes.index[(n*2)+1];
+		
 		var pv  = obj.geometry.vertices;
+		//var pv = obj.geometry.attributes.position.array;
 
 		pv[face1.a].y = pv[face1.b].y = pv[face1.c].y = h;
 		pv[face2.a].y = pv[face2.b].y = pv[face2.c].y = h;
+		//pv[face1].y = pv[face1+1].y = pv[face1+4].y = h;
+		//pv[face2].y = pv[face2+1].y = pv[face2+4].y = h;
+
+
+		//obj.geometry.attributes.position.needsUpdate = true;
+		//obj.geometry.attributes.index.needsUpdate = true;
 	},
 
 	//------------------------------------------LAYER 8X8
@@ -1266,8 +1310,10 @@ V3D.Base.prototype = {
 	//------------------------------------------RAY
 
 	rayTest : function () {
-		this.projector.unprojectVector( this.rayVector, this.camera );
-		this.raycaster.set( this.camera.position, this.rayVector.sub( this.camera.position ).normalize() );
+		//this.projector.unprojectVector( this.rayVector, this.camera );
+		this.rayVector.unproject( this.camera );
+		//this.raycaster.set( this.camera.position, this.rayVector.sub( this.camera.position ).normalize() );
+		this.raycaster.ray.set( this.camera.position, this.rayVector.sub( this.camera.position ).normalize() );
 
 		if ( this.land.children.length > 0 ) {
 			var intersects = this.raycaster.intersectObjects( this.land.children );
