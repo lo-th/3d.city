@@ -1102,7 +1102,10 @@ Micro.Tile.prototype = {
         this._value &= ~bitMask;
     },
     setFlags : function(bitMask) {
-        if (typeof(bitMask) !== 'number' || bitMask < Tile.BIT_START || bitMask >= (Tile.BIT_END << 1)) throw new Error('Invalid parameter');
+        //if (typeof(bitMask) !== 'number' || bitMask < Tile.BIT_START || bitMask >= (Tile.BIT_END << 1)) throw new Error('Invalid parameter');
+        if (arguments.length === 0) throw new Error('Tile setFlags called with no arguments');
+        if (typeof(bitMask) !== 'number') throw new Error('Tile setFlags called with invalid bitmask ' + bitMask);
+        if (bitMask < Tile.BIT_START || bitMask >= (Tile.BIT_END << 1)) throw new Error('Tile setFlags called with out-of-range bitmask ' + bitMask);
         var existingValue = this._value & ~Tile.ALLBITS;
         this._value = existingValue | bitMask;
     },
@@ -1532,6 +1535,7 @@ Micro.PositionMaker = function (width, height) {
     };
     return Position;
 };
+Micro.saveProps = ['cityCentreX', 'cityCentreY', 'pollutionMaxX', 'pollutionMaxY', 'width', 'height'];
 
 Micro.GameMap = function(width, height, defaultValue){
 
@@ -1559,7 +1563,9 @@ Micro.GameMap = function(width, height, defaultValue){
     } else if (arguments.length === 3) {
       if (typeof(defaultValue) === 'object')
         defaultValue = defaultValue.getValue();
-    }*/
+    }
+*/
+
     this.isIsland = false;
     this.Direction = new Micro.Direction();
     this.Position = new Micro.PositionMaker(width, height);
@@ -1578,7 +1584,10 @@ Micro.GameMap = function(width, height, defaultValue){
     this.powerData = new M_ARRAY_TYPE(this.fsize);
 
     var i = this.fsize;
-    while(i--){this.tilesData[i] = 0;}
+    while(i--){
+        this.data[i] = new Micro.Tile( this.defaultValue);
+        this.tilesData[i] =  this.defaultValue;
+    }
     /*console.log(this.data.length)*/
 
     // Generally set externally
@@ -1591,6 +1600,22 @@ Micro.GameMap = function(width, height, defaultValue){
 Micro.GameMap.prototype = {
 
     constructor: Micro.GameMap,
+
+    save : function(saveData) {
+        for (var i = 0, l = Micro.saveProps.length; i < l; i++)
+            saveData[Micro.saveProps[i]] = this[Micro.saveProps[i]];
+
+        saveData.map = this._data.map(function(t) { return {value: t.getRawValue()};});
+    },
+
+    load : function(saveData) {
+        for (var i = 0, l = Micro.saveProps.length; i < l; i++) 
+            this[Micro.saveProps[i]] = saveData[Micro.saveProps[i]];
+        var map = saveData.map;
+        for (i = 0, l = map.length; i < l; i++)
+            this.setTileValue(i % this.width, Math.floor(i / this.width), map[i].value);
+    },
+
     /*genFull : function(){
         var i = this.data.length;
         while(i--){
@@ -1605,17 +1630,32 @@ Micro.GameMap.prototype = {
     testBounds : function(x, y) {
         return x >= 0 && y >= 0 && x < this.width && y < this.height;
     },
-    getTile : function(x, y) {
-        var e = new Error('Invalid parameter');
-        if (arguments.length < 1) throw e;
+    getTile : function(x, y, newTile) {
+        //var e = new Error('Invalid parameter');
+        //if (arguments.length < 1) throw e;
         // Argument-shuffling
         if (typeof(x) === 'object') { y = x.y; x = x.x; }
-        if (!this.testBounds(x, y)) throw e;
+        //if (!this.testBounds(x, y)) throw e;
 
-        var tileIndex = this._calculateIndex(x, y);
+        var width = this.width;
+        var height = this.height;
 
-        if (!(tileIndex in this.data)) this.data[tileIndex] = new Micro.Tile(this.defaultValue);
-        return this.data[tileIndex];
+        if (x < 0 || y < 0 || x >= width || y >= height) {
+            console.warn('getTile called with bad bounds', x, y);
+            return new Tile(Tile.TILE_INVALID);
+        }
+        var tileIndex = x + y * width;
+        var tile = this.data[tileIndex];
+
+        //var tileIndex = this._calculateIndex(x, y);
+        // Return the original tile if we're not given a tile to fill
+        if (!newTile) return tile;
+
+        newTile.set(tile);
+        return tile;
+
+        //if (!(tileIndex in this.data)) this.data[tileIndex] = new Micro.Tile(this.defaultValue);
+        //return this.data[tileIndex];
     },
     getTileValue : function(x, y) {
         var e = new Error('Invalid parameter');
@@ -1653,29 +1693,44 @@ Micro.GameMap.prototype = {
             res[a - y] = [];
             for (var b = x, xlim = x + w; b < xlim; b++) {
                 var tileIndex = this._calculateIndex(b, a);
-                if (!(tileIndex in this.data)) this.data[tileIndex] = new Micro.Tile(this.defaultValue);
+                //if (!(tileIndex in this.data)) this.data[tileIndex] = new Micro.Tile(this.defaultValue);
                 res[a-y].push(this.data[tileIndex]);
             }
         }
         return res;
     },
-    getTileValues : function(x, y, w, h) {
+    getTileValues : function(x, y, w, h, result) {
+        result = result || [];
         var e = new Error('Invalid parameter');
         if (arguments.length < 3) throw e;
         // Argument-shuffling
         if (arguments.length === 3) { h = w; w = y;  y = x.y; x = x.x; }
-        if (!this.testBounds(x, y)) throw e;
+        //if (!this.testBounds(x, y)) throw e;
+        var width = this.width;
+        var height = this.height;
 
-        var res = [];
+        // Result is stored in row-major order
         for (var a = y, ylim = y + h; a < ylim; a++) {
+            for (var b = x, xlim = x + w; b < xlim; b++) {
+                if (a < 0 || b < 0 || a >= height || b >= width) {
+                    result[(a - y) * w + (b - x)] = Tile.TILE_INVALID;
+                    continue;
+                }
+                var tileIndex =  b + a * width;
+                result[(a - y) * w + (b - x)] = this._data[tileIndex].getRawValue();
+            }
+        }
+
+        //var res = [];
+        /*for (var a = y, ylim = y + h; a < ylim; a++) {
             res[a - y] = [];
             for (var b = x, xlim = x + w; b < xlim; b++) {
                 var tileIndex = this._calculateIndex(b, a);
                 if (!(tileIndex in this.data)) this.data[tileIndex] = new Micro.Tile(this.defaultValue);
                 res[a-y].push(this.data[tileIndex].getValue());
             }
-        }
-        return res;
+        }*/
+        return result;
     },
     getTileFromMapOrDefault : function(pos, dir, defaultTile) {
         switch (dir) {
@@ -1703,7 +1758,7 @@ Micro.GameMap.prototype = {
         if (!this.testBounds(x, y)) throw e;
 
         var tileIndex = this._calculateIndex(x, y);
-        if (!(tileIndex in this.data)) this.data[tileIndex] = new Micro.Tile(this.defaultValue);
+        //if (!(tileIndex in this.data)) this.data[tileIndex] = new Micro.Tile(this.defaultValue);
         this.data[tileIndex].set(value, flags);
         this.tilesData[tileIndex] = value;
     },
@@ -1726,7 +1781,8 @@ Micro.GameMap.prototype = {
         if (!this.testBounds(x, y)) throw e;
 
         var tileIndex = this._calculateIndex(x, y);
-        if (!(tileIndex in this.data)) this.data[tileIndex] = new Micro.Tile(this.defaultValue);
+        //if (!(tileIndex in this.data)) this.data[tileIndex] = new Micro.Tile(this.defaultValue);
+        
         this.data[tileIndex].setValue(value);
         this.tilesData[tileIndex] = value;
     },
@@ -1738,7 +1794,7 @@ Micro.GameMap.prototype = {
         if (!this.testBounds(x, y)) throw e;
 
         var tileIndex = this._calculateIndex(x, y);
-        if (!(tileIndex in this.data)) this.data[tileIndex] = new Micro.Tile(this.defaultValue);
+        //if (!(tileIndex in this.data)) this.data[tileIndex] = new Micro.Tile(this.defaultValue);
         this.data[tileIndex].setFlags(flags);
     },
     addTileFlags : function(x, y, flags) {
@@ -1749,7 +1805,7 @@ Micro.GameMap.prototype = {
         if (!this.testBounds(x, y)) throw e;
 
         var tileIndex = this._calculateIndex(x, y);
-        if (!(tileIndex in this.data)) this.data[tileIndex] = new Micro.Tile(this.defaultValue);
+        //if (!(tileIndex in this.data)) this.data[tileIndex] = new Micro.Tile(this.defaultValue);
         this.data[tileIndex].addFlags(flags);
     },
     removeTileFlags : function(x, y, flags) {
@@ -1760,7 +1816,7 @@ Micro.GameMap.prototype = {
         if (!this.testBounds(x, y)) throw e;
 
         var tileIndex = this._calculateIndex(x, y);
-        if (!(tileIndex in this.data)) this.data[tileIndex] = new Micro.Tile(this.defaultValue);
+        //if (!(tileIndex in this.data)) this.data[tileIndex] = new Micro.Tile(this.defaultValue);
         this.data[tileIndex].removeFlags(flags);
     },
     putZone : function(centreX, centreY, centreTile, size) {
@@ -1786,7 +1842,7 @@ Micro.GameMap.prototype = {
 Micro.TERRAIN_CREATE_ISLAND = 0;
 Micro.TERRAIN_TREE_LEVEL = -1;
 Micro.TERRAIN_LAKE_LEVEL = -1;
-Micro.TERRAIN_CURVE_LEVEL = 0;
+Micro.TERRAIN_CURVE_LEVEL = -1;
 Micro.ISLAND_RADIUS = 18;
 
 Micro.generateMap = function() {
@@ -1896,7 +1952,8 @@ Micro.generateMap.prototype = {
         for (var x = 0; x < this.map.width; x++) {
             for (var y = 0; y < this.map.height; y++) {
                 var tileValue = this.map.getTileValue(x, y);
-                if (tileValue > Tile.WOODS) this.map.setTo(x, y, new Micro.Tile(Tile.DIRT));
+                if (tileValue > Tile.WOODS)// this.map.setTile(x, y, Tile.DIRT, 0);//
+                this.map.setTo(x, y, new Micro.Tile(Tile.DIRT));
             }
         }
     },
@@ -1907,8 +1964,10 @@ Micro.generateMap.prototype = {
         for (x = 0; x < this.map.width; x++) {
             for (y = 0; y < this.map.height; y++) {
                 if ((x < 5) || (x >= this.map.width - 5) || (y < 5) || (y >= this.map.height - 5)) {
+                    //this.map.setTile(x, y, Tile.RIVER, 0);//
                     this.map.setTo(x, y, new Micro.Tile(Tile.RIVER));
                 } else {
+                    //this.map.setTile(x, y, Tile.DIRT, 0);///
                     this.map.setTo(x, y, new Micro.Tile(Tile.DIRT));
                 }
             }
@@ -1937,7 +1996,7 @@ Micro.generateMap.prototype = {
     },
     makeIsland : function() {
         this.makeNakedIsland();
-        this.smoothWater();
+        //this.smoothWater();
         this.smoothRiver();
         this.doTrees();
         
@@ -1975,6 +2034,7 @@ Micro.generateMap.prototype = {
             if (!this.map.testBounds(treePos.x, treePos.y)) return;
             if (this.map.getTileValue(treePos) === Tile.DIRT){
                 this.map.setTo(treePos, new Micro.Tile(Tile.WOODS, Tile.BLBNBIT));
+                //this.map.setTile(treePos, Tile.WOODS, Tile.BLBNBIT);
             }
             numTrees--;
         }

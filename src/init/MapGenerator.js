@@ -2,7 +2,7 @@
 Micro.TERRAIN_CREATE_ISLAND = 0;
 Micro.TERRAIN_TREE_LEVEL = -1;
 Micro.TERRAIN_LAKE_LEVEL = -1;
-Micro.TERRAIN_CURVE_LEVEL = 0;
+Micro.TERRAIN_CURVE_LEVEL = -1;
 Micro.ISLAND_RADIUS = 18;
 
 Micro.generateMap = function() {
@@ -112,7 +112,8 @@ Micro.generateMap.prototype = {
         for (var x = 0; x < this.map.width; x++) {
             for (var y = 0; y < this.map.height; y++) {
                 var tileValue = this.map.getTileValue(x, y);
-                if (tileValue > Tile.WOODS) this.map.setTo(x, y, new Micro.Tile(Tile.DIRT));
+                if (tileValue > Tile.WOODS)// this.map.setTile(x, y, Tile.DIRT, 0);//
+                this.map.setTo(x, y, new Micro.Tile(Tile.DIRT));
             }
         }
     },
@@ -123,8 +124,10 @@ Micro.generateMap.prototype = {
         for (x = 0; x < this.map.width; x++) {
             for (y = 0; y < this.map.height; y++) {
                 if ((x < 5) || (x >= this.map.width - 5) || (y < 5) || (y >= this.map.height - 5)) {
+                    //this.map.setTile(x, y, Tile.RIVER, 0);//
                     this.map.setTo(x, y, new Micro.Tile(Tile.RIVER));
                 } else {
+                    //this.map.setTile(x, y, Tile.DIRT, 0);///
                     this.map.setTo(x, y, new Micro.Tile(Tile.DIRT));
                 }
             }
@@ -153,7 +156,7 @@ Micro.generateMap.prototype = {
     },
     makeIsland : function() {
         this.makeNakedIsland();
-        this.smoothWater();
+        //this.smoothWater();
         this.smoothRiver();
         this.doTrees();
         
@@ -191,6 +194,7 @@ Micro.generateMap.prototype = {
             if (!this.map.testBounds(treePos.x, treePos.y)) return;
             if (this.map.getTileValue(treePos) === Tile.DIRT){
                 this.map.setTo(treePos, new Micro.Tile(Tile.WOODS, Tile.BLBNBIT));
+                //this.map.setTile(treePos, Tile.WOODS, Tile.BLBNBIT);
             }
             numTrees--;
         }

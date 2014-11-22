@@ -1602,6 +1602,8 @@ V3D.Base.prototype = {
 	        this.mouse.button = e.which;
 	    }
 
+	    //if(this.mouse.button===1 && this.currentTool) this.mouse.move = true;
+
 	    this.mouse.ox = px;
 	    this.mouse.oy = py;
 	    this.rayVector.x = ( px / this.vsize.x ) * 2 - 1;
@@ -1612,7 +1614,8 @@ V3D.Base.prototype = {
 	    
 	    if(this.currentTool && this.mouse.button<2){// only for tool
 	    	this.mouse.click = true;
-	        if(this.currentTool.drag) this.mouse.drag = true;
+	        if(this.currentTool.drag){ this.mouse.drag = true;}
+	        
 	    }
 	   
 	},
@@ -1621,6 +1624,7 @@ V3D.Base.prototype = {
 		this.mouse.button = 0;
 	    this.mouse.down = false;
 	    this.mouse.drag = false;
+	    if(this.currentTool==null)this.mouse.move = true;
 	    this.ease.x = 0;
 	    this.ease.z = 0;
 	    document.body.style.cursor = 'auto';

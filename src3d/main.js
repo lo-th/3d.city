@@ -92,15 +92,14 @@ function makeGameSave(gameData, key){
 }
 
 function makeLoadGame(key){
-    var savedGame = window.localStorage.getItem(key);
+    var savegame = window.localStorage.getItem(key);
     cityWorker.postMessage({tell:"MAKELOADGAME", savegame:savegame});
     //console.log("load game");
 }
 
-function transitionOldSave(savedGame) {
+/*function transitionOldSave(savedGame) {
     switch (savedGame.version) {
         case 1: savedGame.everClicked = false;
-        /* falls through */
         case 2:
             savedGame.pollutionMaxX = Math.floor(savedGame.width / 2);
             savedGame.pollutionMaxY = Math.floor(savedGame.height / 2);
@@ -109,7 +108,7 @@ function transitionOldSave(savedGame) {
         break;
         //default: throw new Error('Unknown save version!');
     }
-};
+};*/
 
 function newGameMap(){
     console.log("new map");
@@ -203,6 +202,7 @@ function initCity() {
 
     cityWorker.postMessage = cityWorker.webkitPostMessage || cityWorker.postMessage;
     cityWorker.postMessage({tell:"INIT", url:document.location.href.replace(/\/[^/]*$/,"/") + "build/city.3d.min.js", timestep:simulation_timestep });
+    //cityWorker.postMessage({tell:"INIT", url:document.location.href.replace(/\/[^/]*$/,"/") + "build/city.3d.js", timestep:simulation_timestep });
 }
 
 cityWorker.onmessage = function(e) {

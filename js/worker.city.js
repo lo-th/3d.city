@@ -88,6 +88,7 @@ var update = function(){
     //var tilesData = Game.map.tilesData;
 
     transMessage({ tell:"RUN", infos:Game.infos, tilesData:Game.map.tilesData, powerData:power, sprites:Game.spritesData});
+    //transMessage({ tell:"RUN", infos:Game.infos, tilesData:Game.map.data, powerData:power, sprites:Game.spritesData});
 };
 
 CITY.Game = function(url, timestep) {
@@ -129,6 +130,7 @@ CITY.Game.prototype = {
     newMap : function(){
         this.map = this.mapGen.construct(this.mapSize[0], this.mapSize[1]);
         transMessage({ tell:"NEWMAP", tilesData:this.map.tilesData, mapSize:this.mapSize, island:this.map.isIsland, trans:trans });
+        //transMessage({ tell:"NEWMAP", tilesData:this.map.data, mapSize:this.mapSize, island:this.map.isIsland, trans:trans });
     },
     playMap : function(){
         var money = 20000;

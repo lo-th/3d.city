@@ -47,7 +47,10 @@ Micro.Tile.prototype = {
         this._value &= ~bitMask;
     },
     setFlags : function(bitMask) {
-        if (typeof(bitMask) !== 'number' || bitMask < Tile.BIT_START || bitMask >= (Tile.BIT_END << 1)) throw new Error('Invalid parameter');
+        //if (typeof(bitMask) !== 'number' || bitMask < Tile.BIT_START || bitMask >= (Tile.BIT_END << 1)) throw new Error('Invalid parameter');
+        if (arguments.length === 0) throw new Error('Tile setFlags called with no arguments');
+        if (typeof(bitMask) !== 'number') throw new Error('Tile setFlags called with invalid bitmask ' + bitMask);
+        if (bitMask < Tile.BIT_START || bitMask >= (Tile.BIT_END << 1)) throw new Error('Tile setFlags called with out-of-range bitmask ' + bitMask);
         var existingValue = this._value & ~Tile.ALLBITS;
         this._value = existingValue | bitMask;
     },

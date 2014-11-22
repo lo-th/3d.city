@@ -17,6 +17,8 @@ var cityWorker = new Worker('js/worker.city.js');
 var view3d, hub, im;
 var isWithMiniMap = false;
 
+var storage;
+
 
 function debug(txt){ d.innerHTML += "<br>"+txt; }
 
@@ -30,6 +32,8 @@ function testMobile() {
 
 function init(){
     isMobile = testMobile();
+
+    storage = window.localStorage;
 
     //cityWorker = new Worker('js/worker.city.js');
     
@@ -71,16 +75,40 @@ function loop() {
 //=======================================
 
 function saveGame(){
-    console.log("save game");
     cityWorker.postMessage({tell:"SAVEGAME"});
+}
+function loadGame(){
+    cityWorker.postMessage({tell:"LOADGAME"});
+}
+
+function makeGameSave(gameData, key){
+    //gameData.version = version;
+    //gameData = JSON.stringify(gameData);
+    window.localStorage.setItem(key, gameData);
+
+    console.log("game is save");
+    //cityWorker.postMessage({tell:"SAVEGAME"});
     //saveTextAsFile('test', 'game is saved');
 }
 
-function loadGame(){
-    console.log("load game");
-    loadFileAsText();
-    //saveTextAsFile('test', 'game is saved');
+function makeLoadGame(key){
+    var savegame = window.localStorage.getItem(key);
+    cityWorker.postMessage({tell:"MAKELOADGAME", savegame:savegame});
+    //console.log("load game");
 }
+
+/*function transitionOldSave(savedGame) {
+    switch (savedGame.version) {
+        case 1: savedGame.everClicked = false;
+        case 2:
+            savedGame.pollutionMaxX = Math.floor(savedGame.width / 2);
+            savedGame.pollutionMaxY = Math.floor(savedGame.height / 2);
+            savedGame.cityCentreX = Math.floor(savedGame.width / 2);
+            savedGame.cityCentreY = Math.floor(savedGame.height / 2);
+        break;
+        //default: throw new Error('Unknown save version!');
+    }
+};*/
 
 function newGameMap(){
     console.log("new map");
@@ -174,6 +202,7 @@ function initCity() {
 
     cityWorker.postMessage = cityWorker.webkitPostMessage || cityWorker.postMessage;
     cityWorker.postMessage({tell:"INIT", url:document.location.href.replace(/\/[^/]*$/,"/") + "build/city.3d.min.js", timestep:simulation_timestep });
+    //cityWorker.postMessage({tell:"INIT", url:document.location.href.replace(/\/[^/]*$/,"/") + "build/city.3d.js", timestep:simulation_timestep });
 }
 
 cityWorker.onmessage = function(e) {
@@ -207,7 +236,10 @@ cityWorker.onmessage = function(e) {
         hub.openEval(e.data.evalData);
     }
     if( phase == "SAVEGAME"){
-        saveTextAsFile('test', e.data.saveData);
+        makeGameSave(e.data.gameData, e.data.key);
+    }
+    if( phase == "LOADGAME"){
+        makeLoadGame( e.data.key);
     }
 }
 
@@ -1814,6 +1846,8 @@ V3D.Base.prototype = {
 	        this.mouse.button = e.which;
 	    }
 
+	    //if(this.mouse.button===1 && this.currentTool) this.mouse.move = true;
+
 	    this.mouse.ox = px;
 	    this.mouse.oy = py;
 	    this.rayVector.x = ( px / this.vsize.x ) * 2 - 1;
@@ -1824,7 +1858,8 @@ V3D.Base.prototype = {
 	    
 	    if(this.currentTool && this.mouse.button<2){// only for tool
 	    	this.mouse.click = true;
-	        if(this.currentTool.drag) this.mouse.drag = true;
+	        if(this.currentTool.drag){ this.mouse.drag = true;}
+	        
 	    }
 	   
 	},
@@ -1833,6 +1868,7 @@ V3D.Base.prototype = {
 		this.mouse.button = 0;
 	    this.mouse.down = false;
 	    this.mouse.drag = false;
+	    if(this.currentTool==null)this.mouse.move = true;
 	    this.ease.x = 0;
 	    this.ease.z = 0;
 	    document.body.style.cursor = 'auto';
