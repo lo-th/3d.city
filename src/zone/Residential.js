@@ -1,4 +1,3 @@
-
 Micro.Residential = function (SIM) {
     var sim = SIM;
     // Residential tiles have 'populations' of 16, 24, 32 or 40
@@ -41,7 +40,11 @@ Micro.Residential = function (SIM) {
 
         var score = 1;
         for (var i = 0; i < 4; i++) {
-            tileValue = map.getTileValue(x + xDelta[i], y + yDelta[i]);
+            //tileValue = map.getTileValue(x + xDelta[i], y + yDelta[i]);
+            var edgeX = x + xDelta[i];
+            var edgeY = y + yDelta[i];
+            if (edgeX < 0 || edgeX >= map.width || edgeY < 0 || edgeY >= map.height) continue;
+            tileValue = map.getTileValue(edgeX, edgeY);
             if (tileValue !== Tile.DIRT && tileValue <= Tile.LASTROAD) score += 1;
         }
         return score;
@@ -68,10 +71,12 @@ Micro.Residential = function (SIM) {
                 best = i;
             }
         }
-        if (best > 0) map.setTo(x + xDelta[best], y + yDelta[best], new Micro.Tile(Tile.HOUSE + Random.getRandom(2) + lpValue * 3, Tile.BLBNCNBIT)); 
+        if (best > 0 && map.testBounds(x + xDelta[best], y + yDelta[best])) 
+            map.setTo(x + xDelta[best], y + yDelta[best], new Micro.Tile(Tile.HOUSE + Random.getRandom(2) + lpValue * 3, Tile.BLBNCNBIT));
+            //map.setTile(x + xDelta[best], y + yDelta[best], new Micro.Tile(Tile.HOUSE + Random.getRandom(2) + lpValue * 3, Tile.BLBNCNBIT));
     };
-
-    var doMigrationIn = function(map, x, y, blockMaps, population, lpValue, zonePower) {
+//var growZone
+    var growZone = function(map, x, y, blockMaps, population, lpValue, zonePower) {
         var pollution = blockMaps.pollutionDensityMap.worldGet(x, y);
         // Cough! Too polluted noone wants to move here!
         if (pollution > 128) return;
@@ -102,7 +107,7 @@ Micro.Residential = function (SIM) {
 
     var freeZone = [0, 3, 6, 1, 4, 7, 2, 5, 8];
 
-    var doMigrationOut = function(map, x, y, blockMaps, population, lpValue, zonePower) {
+    var degradeZone = function(map, x, y, blockMaps, population, lpValue, zonePower) {
         var xx, yy;
         if (population === 0) return;
 
@@ -144,6 +149,7 @@ Micro.Residential = function (SIM) {
         } 
     };
 
+    // Returns a score for the zone in the range -3000 - 3000
     var evalResidential = function(blockMaps, x, y, traffic) {
         if (traffic === Micro.NO_ROAD_FOUND) return -3000;
         var landValue = blockMaps.landValueMap.worldGet(x, y);
@@ -155,56 +161,79 @@ Micro.Residential = function (SIM) {
 
 
     var residentialFound = function(map, x, y, simData) {
+        // If we choose to grow this zone, we will fill it with an index in the range 0-3 reflecting the land value and
+        // pollution scores (higher is better). This is then used to select the variant to build
         var lpValue;
-
+        // Notify the census
         sim.census.resZonePop += 1;
+        // Also, notify the census of our population
         var tileValue = map.getTileValue(x, y);
-        var tilePop = getZonePopulation(map, x, y, tileValue);
-        sim.census.resPop += tilePop;
+        var population = getZonePopulation(map, x, y, tileValue);
+        sim.census.resPop += population;
         var zonePower = map.getTile(x, y).isPowered();
 
         var trafficOK = Micro.ROUTE_FOUND;
-        if (tilePop > Random.getRandom(35)) {
-            // Try driving from residential to commercial
+        // Occasionally check to see if the zone is connected to the road network. The chance of this happening increases
+        // as the zone's population increases. Note: we will never execute this conditional if the zone is empty, as zero
+        // will never be be bigger than any of the values Random will generate
+        if (population > Random.getRandom(35)) {
+            // Is there a route from this zone to a commercial zone?
             trafficOK = sim.traffic.makeTraffic(x, y, sim.blockMaps, Micro.isCommercial);
 
-            // Trigger outward migration if not connected to road network
+            // If we're not connected to the road network, then going shopping will be a pain. Move out.
             if (trafficOK ===  Micro.NO_ROAD_FOUND) {
                 lpValue = Micro.getLandPollutionValue(sim.blockMaps, x, y);
-                doMigrationOut(map, x, y, sim.blockMaps, tilePop, lpValue, zonePower);
+                degradeZone(map, x, y, sim.blockMaps, population, lpValue, zonePower);
                 return;
             }
         }
 
-        // Occasionally assess and perhaps modify the tile (or always in the
-        // case of an empty zone)
+        // Sometimes we will randomly choose to assess this block. However, always assess it if it's empty or contains only single houses.
         if (tileValue === Tile.FREEZ || Random.getChance(7)) {
+            // First, score the individual zone. This is a value in the range -3000 to 3000
+            // Then take into account global demand for housing.
             var locationScore = evalResidential(sim.blockMaps, x, y, trafficOK);
             var zoneScore = sim.valves.resValve + locationScore;
-
+            // Naturally unpowered zones should be penalized
             if (!zonePower) zoneScore = -500;
+            // The residential demand valve has range -2000 to 2000, so taking into account the "no traffic" and
+            // "no power" modifiers above, zoneScore must lie in the range -5500 - 5000.
 
-            if (trafficOK && (zoneScore > -350) && ((zoneScore - 26380) > Random.getRandom16Signed())) {
-                // If we have a reasonable population and this zone is empty, make a
-                // hospital
-                if (tilePop === 0 && ((Random.getRandom16() & 3) === 0)) {
+            // Now, observe that if there are no roads we will never take this branch, as zoneScore will equal -3000.
+            // Given the comment above about ranges for zoneScore, zoneScore - 26380, will be in the range -26729 to -20880.
+            // getRandom16() has a range of 65536 possible numbers, in the range -32768 to 32767.
+            // Of those, 9.2% will always be below zoneScore and hence will always take this branch and trigger zone growth.
+            // 81.8% of them are above -20880, so nearly 82% of the time, we will never take this branch.
+            // Thus, there's approximately a 9% chance that the value will be in the range, and we *might* grow.
+            //if (trafficOK && (zoneScore > -350) && ((zoneScore - 26380) > Random.getRandom16Signed())) {
+            if (zoneScore > -350 && (zoneScore - 26380) > Random.getRandom16Signed()) {
+                // If this zone is empty, and residential demand is strong, we might make a hospital
+                //if (population === 0 && ((Random.getRandom16() & 3) === 0)) {
+                if (population === 0 && Random.getChance(3)) {
                     makeHospital(map, x, y, simData, zonePower);
                     return;
                 }
-
+                // Get an index in the range 0-3 scoring the land desirability and pollution, and grow the zone to the next
+                // population rank
                 lpValue = Micro.getLandPollutionValue(sim.blockMaps, x, y);
-                doMigrationIn(map, x, y, sim.blockMaps, tilePop, lpValue, zonePower);
+                growZone(map, x, y, sim.blockMaps, population, lpValue, zonePower);
                 return;
             }
-
+            // Again, given the above, zoneScore + 26380 must lie in the range 20880 - 26030.
+            // There is a 10.2% chance of getRandom16() always yielding a number > 27994 which would take this branch.
+            // There is a 89.7% chance of the number being below 20880 thus never triggering this branch, which leaves a
+            // 0.1% chance of this branch being conditional on zoneScore.
             if (zoneScore < 350 && ((zoneScore + 26380) < Random.getRandom16Signed())) {
+                // Get an index in the range 0-3 scoring the land desirability and pollution, and degrade to the next
+                // lower ranked zone
                 lpValue = Micro.getLandPollutionValue(sim.blockMaps, x, y);
-                doMigrationOut(map, x, y, sim.blockMaps, tilePop, lpValue, zonePower);
+                degradeZone(map, x, y, sim.blockMaps, population, lpValue, zonePower);
             }
         }
     };
 
     var makeHospital = function(map, x, y, simData, zonePower) {
+        // We only build a hospital if the population requires it
         if (sim.census.needHospital > 0) {
             Micro.putZone(map, x, y, Tile.HOSPITAL, zonePower);
             sim.census.needHospital = 0;
@@ -214,8 +243,10 @@ Micro.Residential = function (SIM) {
 
     var hospitalFound = function(map, x, y, simData) {
         sim.census.hospitalPop += 1;
+        // Degrade to an empty zone if a hospital is no longer sustainable
         if (sim.census.needHospital === -1) {
-            if (Random.getRandom(20) === 0) Micro.putZone(map, x, y, Tile.FREEZ);
+            if (Random.getRandom(20) === 0) //Micro.putZone(map, x, y, Tile.FREEZ);
+                Micro.putZone(map, x, y, Tile.FREEZ, map.getTile(x, y).isPowered());
         }
     };
 

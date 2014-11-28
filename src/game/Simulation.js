@@ -1,9 +1,10 @@
 
 var Residential, Commercial, Industrial, Transport, Road, EmergencyServices, MiscTiles, Stadia;
+Micro.savePropsVar = ['cityTime'];
 
-Micro.Simulation = function(gameMap, gameLevel, speed, is3D) {
+Micro.Simulation = function(gameMap, gameLevel, speed, is3D, savedGame) {
     if (gameLevel !== Micro.LEVEL_EASY && gameLevel !== Micro.LEVEL_MED && gameLevel !== Micro.LEVEL_HARD) throw new Error('Invalid level!');
-    if (speed !== Micro.SPEED_PAUSED && speed !== Micro.SPEED_SLOW && speed !== Micro.SPEED_MED && speed !== Micro.SPEED_FAST) throw new Error('Invalid speed!');
+   // if (speed !== Micro.SPEED_PAUSED && speed !== Micro.SPEED_SLOW && speed !== Micro.SPEED_MED && speed !== Micro.SPEED_FAST) throw new Error('Invalid speed!');
 
     this.map = gameMap;
     this.gameLevel = gameLevel;
@@ -11,7 +12,7 @@ Micro.Simulation = function(gameMap, gameLevel, speed, is3D) {
     this.div = this.map.width / 8;
 
     this.is3D = is3D || false;
-    this.needPower = [];
+    //this.needPower = [];
 
     this.speed = speed;
     this.speedCycle = 0;
@@ -56,18 +57,55 @@ Micro.Simulation = function(gameMap, gameLevel, speed, is3D) {
         pollutionDensityMap: new Micro.BlockMap(this.map.width, this.map.height, 2, 0),
         populationDensityMap: new Micro.BlockMap(this.map.width, this.map.height, 2, 0),
         rateOfGrowthMap: new Micro.BlockMap(this.map.width, this.map.height, 8, 0),
+
+        terrainDensityMap: new Micro.BlockMap(this.map.width, this.map.height, 4, 0),
+        trafficDensityMap: new Micro.BlockMap(this.map.width, this.map.height, 2, 0),
+
         tempMap1: new Micro.BlockMap(this.map.width, this.map.height, 2, 0),
         tempMap2: new Micro.BlockMap(this.map.width, this.map.height, 2, 0),
-        tempMap3: new Micro.BlockMap(this.map.width, this.map.height, 4, 0),
-        terrainDensityMap: new Micro.BlockMap(this.map.width, this.map.height, 4, 0),
-        trafficDensityMap: new Micro.BlockMap(this.map.width, this.map.height, 2, 0)
+        tempMap3: new Micro.BlockMap(this.map.width, this.map.height, 4, 0)
+        
     };
+
+    this.clearCensus();
+
+    if (savedGame) {
+        this.load(savedGame);
+        //this.cityPopLast = savedGame.totalPop;      
+    } else {
+        this.budget.setFunds(20000);
+        this.census.totalPop = 1;
+    }
 
     this.init();
 }
 
 Micro.Simulation.prototype = {
     constructor: Micro.Simulation,
+
+    save : function(saveData) {
+        for (var i = 0, l = Micro.savePropsVar.length; i < l; i++)
+            saveData[Micro.savePropsVar[i]] = this[Micro.savePropsVar[i]];
+
+        this.map.save(saveData);
+        this.evaluation.save(saveData);
+        this.valves.save(saveData);
+        this.budget.save(saveData);
+        this.census.save(saveData);
+    },
+    load : function(saveData) {
+        //console.log(saveData)
+        this.messageManager.clear();
+        for (var i = 0, l = Micro.savePropsVar.length; i < l; i++)
+            this[Micro.savePropsVar[i]] = saveData[Micro.savePropsVar[i]];
+
+        //this.map.load(saveData);
+        this.evaluation.load(saveData);
+        this.valves.load(saveData, this.messageManager);
+        this.budget.load(saveData, this.messageManager);
+        this.census.load(saveData);
+    },
+
     setSpeed : function(s) {
         if (s!== Micro.SPEED_PAUSED && s!== Micro.SPEED_SLOW && s!== Micro.SPEED_MED &&  s!== Micro.SPEED_FAST) throw new Error('Invalid speed!');
         this.speed = s;
@@ -127,7 +165,7 @@ Micro.Simulation.prototype = {
         Stadia.registerHandlers(this.mapScanner, this.repairManager);
         Transport.registerHandlers(this.mapScanner, this.repairManager);
 
-        this.budget.setFunds(20000);
+        //this.budget.setFunds(20000);
         
 
         //var simData = this._constructSimData();
@@ -141,7 +179,9 @@ Micro.Simulation.prototype = {
         Micro.crimeScan(this.census, this.blockMaps);
         Micro.populationDensityScan(this.map, this.blockMaps);
         Micro.fireAnalysis(this.blockMaps);
-        this.census.totalPop = 1;
+        //this.census.totalPop = 1;
+
+       // if (savedGame) this.load(savedGame);
     },
     /*simulate : function() {
         var speedIndex = this.speed - 1;

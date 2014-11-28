@@ -1,3 +1,8 @@
+Micro.CensusProps = ['resPop', 'comPop', 'indPop', 'crimeRamp', 'pollutionRamp', 'landValueAverage', 'pollutionAverage',
+               'crimeAverage', 'totalPop', 'resHist10', 'resHist120', 'comHist10', 'comHist120', 'indHist10',
+               'indHist120', 'crimeHist10', 'crimeHist120', 'moneyHist10', 'moneyHist120', 'pollutionHist10',
+               'pollutionHist120'];
+
 Micro.Census = function(){
     this.clearCensus();
     this.changed = false;
@@ -28,6 +33,14 @@ Micro.Census = function(){
 
 Micro.Census.prototype = {
     constructor: Micro.Census,
+    save : function(saveData) {
+        for (var i = 0, l = Micro.CensusProps.length; i < l; i++)
+            saveData[Micro.CensusProps[i]] = this[Micro.CensusProps[i]];
+    },
+    load : function(saveData) {
+        for (var i = 0, l = Micro.CensusProps.length; i < l; i++)
+            this[Micro.CensusProps[i]] = saveData[Micro.CensusProps[i]];
+    },
     clearCensus : function() {
         this.poweredZoneCount = 0;
         this.unpoweredZoneCount = 0;

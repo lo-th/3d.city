@@ -10,6 +10,18 @@ Micro.Valves = function () {
 
 Micro.Valves.prototype = {
     constructor: Micro.Valves,
+    save : function(saveData) {
+        saveData.resValve = this.resValve;
+        saveData.comValve = this.comValve;
+        saveData.indValve = this.indValve;
+    },
+    load : function(saveData, messageManager) {
+        this.resValve = saveData.resValve;
+        this.comValve = saveData.comValve;
+        this.indValve = saveData.indValve;
+        this.changed = true;
+        if (messageManager !== undefined) messageManager.sendMessage(Messages.VALVES_UPDATED);
+    },
     setValves : function(gameLevel, census, budget) {
         var resPopDenom = 8;
         var birthRate = 0.02;

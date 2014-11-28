@@ -75,40 +75,35 @@ function loop() {
 //=======================================
 
 function saveGame(){
-    cityWorker.postMessage({tell:"SAVEGAME"});
+    var saveCity = [];
+    view3d.saveCityBuild(saveCity);
+    saveCity = JSON.stringify(saveCity);
+   // var cityData = view3d.saveCityBuild();
+    cityWorker.postMessage({tell:"SAVEGAME", saveCity:saveCity });
 }
-function loadGame(){
-    cityWorker.postMessage({tell:"LOADGAME"});
+function loadGame(atStart){
+    var isStart = atStart || false;
+    cityWorker.postMessage({tell:"LOADGAME", isStart:isStart});
 }
 
 function makeGameSave(gameData, key){
-    //gameData.version = version;
-    //gameData = JSON.stringify(gameData);
     window.localStorage.setItem(key, gameData);
-
     console.log("game is save");
-    //cityWorker.postMessage({tell:"SAVEGAME"});
-    //saveTextAsFile('test', 'game is saved');
 }
 
-function makeLoadGame(key){
-    var savegame = window.localStorage.getItem(key);
-    cityWorker.postMessage({tell:"MAKELOADGAME", savegame:savegame});
-    //console.log("load game");
-}
-
-/*function transitionOldSave(savedGame) {
-    switch (savedGame.version) {
-        case 1: savedGame.everClicked = false;
-        case 2:
-            savedGame.pollutionMaxX = Math.floor(savedGame.width / 2);
-            savedGame.pollutionMaxY = Math.floor(savedGame.height / 2);
-            savedGame.cityCentreX = Math.floor(savedGame.width / 2);
-            savedGame.cityCentreY = Math.floor(savedGame.height / 2);
-        break;
-        //default: throw new Error('Unknown save version!');
+function makeLoadGame(key, atStart){
+    var isStart = atStart || false;
+    if(atStart){
+        hub.initGameHub();
     }
-};*/
+    var savegame = window.localStorage.getItem(key);
+    if(savegame){ 
+        cityWorker.postMessage({tell:"MAKELOADGAME", savegame:savegame, isStart:isStart});
+        console.log("game is load");
+    } else {
+        console.log("No loading game found");
+    }
+}
 
 function newGameMap(){
     console.log("new map");
@@ -201,8 +196,8 @@ function initCity() {
     loop();
 
     cityWorker.postMessage = cityWorker.webkitPostMessage || cityWorker.postMessage;
-    cityWorker.postMessage({tell:"INIT", url:document.location.href.replace(/\/[^/]*$/,"/") + "build/city.3d.min.js", timestep:simulation_timestep });
-    //cityWorker.postMessage({tell:"INIT", url:document.location.href.replace(/\/[^/]*$/,"/") + "build/city.3d.js", timestep:simulation_timestep });
+    //cityWorker.postMessage({tell:"INIT", url:document.location.href.replace(/\/[^/]*$/,"/") + "build/city.3d.min.js", timestep:simulation_timestep });
+    cityWorker.postMessage({tell:"INIT", url:document.location.href.replace(/\/[^/]*$/,"/") + "build/city.3d.js", timestep:simulation_timestep });
 }
 
 cityWorker.onmessage = function(e) {
@@ -212,6 +207,16 @@ cityWorker.onmessage = function(e) {
         view3d.paintMap( e.data.mapSize, e.data.island, true);
         //trans = e.data.trans;
         hub.start();
+    }
+    if( phase == "FULLREBUILD"){
+        if(e.data.isStart){
+            //hub.initGameHub();
+            view3d.startZoom();
+        }
+        view3d.fullRedraw = true;
+        tilesData = e.data.tilesData;
+        view3d.paintMap( e.data.mapSize, e.data.island, true, true);
+        view3d.loadCityBuild(e.data.cityData);
     }
     if( phase == "BUILD"){
         view3d.build(e.data.x, e.data.y);
@@ -239,6 +244,6 @@ cityWorker.onmessage = function(e) {
         makeGameSave(e.data.gameData, e.data.key);
     }
     if( phase == "LOADGAME"){
-        makeLoadGame( e.data.key);
+        makeLoadGame(e.data.key, e.data.isStart);
     }
 }

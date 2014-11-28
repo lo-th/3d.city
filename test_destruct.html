@@ -48,6 +48,7 @@ var reflectionCube;
 var isDestroy = false;
 var isBurn = false;
 var objInfo;
+var environment;
 
 var snd_destroy = new Audio("./sound/explosion-low.mp3");
 var snd_destroy2 = new Audio("./sound/explosion-high.mp3");
@@ -81,25 +82,6 @@ function start() {
 	view3d.cam.vertical = 85;
     view3d.moveCamera();
 
-
-	var c = document.createElement("canvas");
-	var ctx = c.getContext("2d");
-	c.width = c.height = 64;
-	var grd = ctx.createLinearGradient(0,0,0,64);
-	grd.addColorStop(0,"red");//top
-	grd.addColorStop(0.5,"yellow");//top
-	grd.addColorStop(1,"#cc7f66");
-	ctx.rect(0, 0, 64, 64);
-    ctx.fillStyle = grd;
-	ctx.fill();
-
-	var c2 = document.createElement("canvas");
-	ctx = c2.getContext("2d");
-	c2.width = c2.height = 64;
-	ctx.rect(0, 0, 64, 64);
-    ctx.fillStyle = "red";
-	ctx.fill();
-
 	var c3 = document.createElement("canvas");
 	ctx = c3.getContext("2d");
 	c3.width = c3.height = 64;
@@ -107,14 +89,12 @@ function start() {
     ctx.fillStyle = "#cc7f66";
 	ctx.fill();
 
-	//reflectionCube = new THREE.Texture([c,c,c3,c2,c,c]);
-	reflectionCube = new THREE.Texture([c3,c3,c3,c3,c3,c3]);
-	reflectionCube.needsUpdate = true;
+	environment = new THREE.Texture(c3, THREE.SphericalReflectionMapping );
+	environment.needsUpdate = true;
 
-	var mesh = new THREE.Mesh( new THREE.PlaneGeometry( 30, 30 ), new THREE.MeshBasicMaterial( {color:0xcc7f66} ) );
+	var mesh = new THREE.Mesh( new THREE.PlaneBufferGeometry( 30, 30 ), new THREE.MeshBasicMaterial( {color:0xcc7f66} ) );
 	mesh.geometry.applyMatrix(new THREE.Matrix4().makeRotationX( - Math.PI / 2 ));
 	view3d.scene.add( mesh );
-
 
 	newObject();
 }
@@ -127,7 +107,7 @@ function newObject() {
 	    view3d.scene.remove(obj);
 	}
 	if(particleGroup){
-		 particleGroup.removeEmitter(emitter);
+		particleGroup.removeEmitter(emitter);
         particleGroup.removeEmitter(atmosphereBurnEmitter);
         emitter.reset();
         atmosphereBurnEmitter.reset();
@@ -139,7 +119,7 @@ function newObject() {
 
 	obj.material.reflectivity = 0;
 	obj.material.combine = THREE.MixOperation;
-	obj.material.envMap = reflectionCube;
+	obj.material.envMap = environment;
 	obj.material.side = THREE.DoubleSide;
 
 	obj.geometry.computeBoundingBox();

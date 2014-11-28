@@ -1,3 +1,6 @@
+Micro.BudgetProps = ['autoBudget', 'totalFunds', 'policePercent', 'roadPercent', 'firePercent', 'roadSpend',
+                   'policeSpend', 'fireSpend', 'roadMaintenanceBudget', 'policeMaintenanceBudget',
+                   'fireMaintenanceBudget', 'cityTax', 'roadEffect', 'policeEffect', 'fireEffect'];
 Micro.Budget = function () {
     this.roadEffect = Micro.MAX_ROAD_EFFECT;
     this.policeEffect = Micro.MAX_POLICESTATION_EFFECT;
@@ -29,6 +32,16 @@ Micro.Budget = function () {
 Micro.Budget.prototype = {
 
     constructor: Micro.Budget,
+    save : function(saveData) {
+        for (var i = 0, l = Micro.BudgetProps.length; i < l; i++)
+            saveData[Micro.BudgetProps[i]] = this[Micro.BudgetProps[i]];
+    },
+    load : function(saveData, messageManager) {
+        for (var i = 0, l = Micro.BudgetProps.length; i < l; i++)
+            this[Micro.BudgetProps[i]] = saveData[Micro.BudgetProps[i]];
+        if (messageManager !== undefined) messageManager.sendMessage(Messages.AUTOBUDGET_CHANGED, this.autoBudget);
+        if (messageManager !== undefined) messageManager.sendMessage(Messages.FUNDS_CHANGED, this.totalFunds);
+    },
 
     doBudget : function(messageManager) {
        return this.doBudgetNow(false, messageManager);

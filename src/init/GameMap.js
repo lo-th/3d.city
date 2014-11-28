@@ -1,4 +1,4 @@
-Micro.saveProps = ['cityCentreX', 'cityCentreY', 'pollutionMaxX', 'pollutionMaxY', 'width', 'height'];
+Micro.GameMapProps = ['cityCentreX', 'cityCentreY', 'pollutionMaxX', 'pollutionMaxY', 'width', 'height'];
 
 Micro.GameMap = function(width, height, defaultValue){
 
@@ -65,18 +65,41 @@ Micro.GameMap.prototype = {
     constructor: Micro.GameMap,
 
     save : function(saveData) {
-        for (var i = 0, l = Micro.saveProps.length; i < l; i++)
-            saveData[Micro.saveProps[i]] = this[Micro.saveProps[i]];
+        for (var i = 0, l = Micro.GameMapProps.length; i < l; i++)
+            saveData[Micro.GameMapProps[i]] = this[Micro.GameMapProps[i]];
 
-        saveData.map = this._data.map(function(t) { return {value: t.getRawValue()};});
+        //saveData.map = this.data.map(function(t) { return {value: t.getRawValue()};});
+        saveData.map = this.data.map(function(t) { return {value: t.getRawValue()}; });
+        //saveData.map = [];//this.tilesData.map(function(t) { return {value: t };});
+        saveData.tileValue = [];
+        var j = this.fsize;
+        while(j--) saveData.tileValue[j] = this.tilesData[j];
+        
+        /*saveData.power = [];
+        var j = this.fsize;
+        while(j--){
+           // saveData.map[j] = this.tilesData[j];
+            saveData.power[j] = this.powerData[j];
+        }*/
     },
 
     load : function(saveData) {
-        for (var i = 0, l = Micro.saveProps.length; i < l; i++) 
-            this[Micro.saveProps[i]] = saveData[Micro.saveProps[i]];
-        var map = saveData.map;
-        for (i = 0, l = map.length; i < l; i++)
+        for (var i = 0, l = Micro.GameMapProps.length; i < l; i++) this[Micro.GameMapProps[i]] = saveData[Micro.GameMapProps[i]];
+        var map = saveData.map, value;
+        for (i = 0, l = map.length; i < l; i++){
             this.setTileValue(i % this.width, Math.floor(i / this.width), map[i].value);
+            //value = map[i] || 0;
+            //this.setTileValue(i % this.width, Math.floor(i / this.width), map[i]);
+            //this.data[i].setValue(value);
+            //this.tilesData[i] = value;
+        }
+
+        for (i = 0, l = saveData.tileValue.length; i < l; i++) this.tilesData[i] = saveData.tileValue[i];
+        /*
+        var power = saveData.power;
+        for (i = 0, l = power.length; i < l; i++) this.powerData[i] = power[i];
+        */
+
     },
 
     /*genFull : function(){
@@ -180,7 +203,8 @@ Micro.GameMap.prototype = {
                     continue;
                 }
                 var tileIndex =  b + a * width;
-                result[(a - y) * w + (b - x)] = this._data[tileIndex].getRawValue();
+                //result[(a - y) * w + (b - x)] = this._data[tileIndex].getRawValue();
+                result[(a - y) * w + (b - x)] = this.data[tileIndex].getRawValue();
             }
         }
 

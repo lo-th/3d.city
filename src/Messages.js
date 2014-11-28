@@ -51,7 +51,8 @@ var messageData = {
     TRAFFIC_JAMS: Micro.makeConstantDescriptor('Traffic jams reported'),
     TRAIN_CRASHED: Micro.makeConstantDescriptor('Train crashed'),
     VALVES_UPDATED: Micro.makeConstantDescriptor('Valves updated'),
-    WELCOME: Micro.makeConstantDescriptor('Welcome to 3D city')
+    WELCOME: Micro.makeConstantDescriptor('Welcome to 3D city'),
+    WELCOMEBACK: Micro.makeConstantDescriptor('Welcome back to your 3D city')
 };
 
 var Messages = Object.defineProperties({}, messageData);

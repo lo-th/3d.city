@@ -7,19 +7,19 @@ var HUB = { REVISION: '1' };
 
 HUB.round = [
 '<svg height="66" width="66">',
-'<circle cx="33" cy="33" r="27" stroke="rgb(0,0,0)" stroke-width="1" stroke-opacity="0.3" fill="rgb(0,0,0)" fill-opacity="0.3"/>',
+'<circle cx="33" cy="33" r="27" stroke="rgb(255,255,255)" stroke-width="1" stroke-opacity="0.0" fill="rgb(0,0,0)" fill-opacity="0.1"/>',
 '</svg>'
 ].join("\n");
 
 HUB.roundSelected = [
 '<svg height="66" width="66">',
-'<circle cx="33" cy="33" r="27" stroke="rgb(0,0,0)" stroke-width="1" stroke-opacity="0.5" fill="rgb(0,0,0)" fill-opacity="0.5"/>',
+'<circle cx="33" cy="33" r="27" stroke="rgb(255,255,255)" stroke-width="2" stroke-opacity="0.5" fill="rgb(0,0,0)" fill-opacity="0.3"/>',
 '</svg>'
 ].join("\n");
 
 HUB.roundSelect = [
 '<svg height="66" width="66">',
-'<circle cx="33" cy="33" r="30" stroke="rgb(0,0,0)" stroke-width="4" stroke-opacity="1" fill="rgb(0,0,0)" fill-opacity="0.5"/>',
+'<circle cx="33" cy="33" r="30" stroke="rgb(255,255,255)" stroke-width="4" stroke-opacity="1" fill="rgb(0,0,0)" fill-opacity="0.5"/>',
 '</svg>'
 ].join("\n");
 
@@ -31,7 +31,6 @@ HUB.Base = function(){
 
     this.isIntro = true;
 
-	
 	this.timer = null;
 	this.bg = 1;
 
@@ -39,20 +38,20 @@ HUB.Base = function(){
     this.C=null;
     this.I=null;
 
-    this.rrr= null;
+    //this.rrr= null;
 
     //this.colors = ['#ffffff', '#338099'];
-    this.colors = ['rgba(220,220,220,1)', 'rgba(0,0,0,0.2)', 'rgba(0,0,0,0.6)', 'rgba(0,0,0,0.3)', 'rgba(0,0,0,0.6)'];
+    this.colors = ['rgba(255,255,255,1)', 'rgba(0,0,0,0.2)', 'rgba(0,0,0,1)', 'rgba(0,0,0,0.5)', 'rgba(0,0,0,0.8)', 'rgba(255,255,255,0.5)'];
 
     //this.radius = "-moz-border-radius: 20px; -webkit-border-radius: 20px; border-radius: 20px;";
-    this.radius = "-moz-border-radius: 16px; -webkit-border-radius: 16px; border-radius: 16px;";
-    this.radiusL = "-moz-border-top-left-radius: 16px; -webkit-border-top-left-radius: 16px; border-top-left-radius: 16px;";
-    this.radiusL += "-moz-border-bottom-left-radius: 16px; -webkit-border-bottom-left-radius: 16px; border-bottom-left-radius: 16px;";
-    this.radiusR = "-moz-border-top-right-radius: 16px; -webkit-border-top-right-radius: 16px; border-top-right-radius: 16px;";
-    this.radiusR += "-moz-border-bottom-right-radius: 16px; -webkit-border-bottom-right-radius: 16px; border-bottom-right-radius: 16px;";
+    this.radius = "-moz-border-radius: 6px; -webkit-border-radius: 6px; border-radius: 6px;";
+    this.radiusL = "-moz-border-top-left-radius: 6px; -webkit-border-top-left-radius: 6px; border-top-left-radius: 6px;";
+    this.radiusL += "-moz-border-bottom-left-radius: 6px; -webkit-border-bottom-left-radius: 6px; border-bottom-left-radius: 6px;";
+    this.radiusR = "-moz-border-top-right-radius: 6px; -webkit-border-top-right-radius: 6px; border-top-right-radius: 6px;";
+    this.radiusR += "-moz-border-bottom-right-radius: 6px; -webkit-border-bottom-right-radius: 6px; border-bottom-right-radius: 6px;";
 
-    this.radiusB = "-moz-border-bottom-left-radius: 16px; -webkit-border-bottom-left-radius: 16px; border-bottom-left-radius: 16px;";
-    this.radiusB += "-moz-border-bottom-right-radius: 16px; -webkit-border-bottom-right-radius: 16px; border-bottom-right-radius: 16px;";
+    this.radiusB = "-moz-border-bottom-left-radius: 6px; -webkit-border-bottom-left-radius: 6px; border-bottom-left-radius: 6px;";
+    this.radiusB += "-moz-border-bottom-right-radius: 6px; -webkit-border-bottom-right-radius: 6px; border-bottom-right-radius: 6px;";
 
     this.windowsStyle = ' top:40px; left:10px; border:1px solid '+this.colors[1]+'; background:'+this.colors[3]+';';
 
@@ -88,20 +87,26 @@ HUB.Base.prototype = {
     intro:function(){
 
     	this.full = document.createElement('div'); 
-    	this.full.style.cssText ='position:absolute; top:0px; left:0px; width:100%; height:100%; pointer-events:none; display:block;' + this.degrade();
+    	this.full.style.cssText ='position:absolute; top:0px; left:0px; width:100%; height:100%; pointer-events:none; display:block; background:rgba(102,102,230,1); ' //+ this.degrade();
+
+        this.fullMid = document.createElement('div'); 
+        this.fullMid.style.cssText ='position:absolute; top:10px; left:50%; width:300px; height:300px; margin-left:-150px; pointer-events:none; display:block;';
+
         this.title = document.createElement('div');
         this.title.innerHTML = "3D.CITY";
-    	this.title.style.cssText = 'position:absolute; font-size:44px; top:50%; left:50%; margin-top:-30px; margin-left:-100px; width:200px; height:60px; pointer-events:none;';
+    	this.title.style.cssText = 'position:absolute; font-size:44px; top:50%; left:0; margin-top:-30px; width:300px; height:60px; pointer-events:none; text-align:center;';
         this.subtitle = document.createElement('div');
-        this.subtitle.style.cssText = 'position:absolute; font-size:14px; top:50%; left:50%; margin-top:14px; margin-left:-100px; width:200px; height:80px; pointer-events:none;font-weight:bold;';
+        this.subtitle.style.cssText = 'position:absolute; font-size:14px; top:50%; left:0; margin-top:16px; width:300px; height:80px; pointer-events:none;font-weight:bold; text-align:center;';
         this.subtitle.innerHTML = "Generating world...";
 
-        this.logo = document.getElementById('logo'); 
+        this.logo = document.getElementById('logo');
         this.logo.style.display = 'block';
-        this.full.appendChild( this.logo );
 
-    	this.full.appendChild( this.title );
-        this.full.appendChild( this.subtitle );
+        this.full.appendChild( this.fullMid );
+
+        this.fullMid.appendChild( this.logo );
+    	this.fullMid.appendChild( this.title );
+        this.fullMid.appendChild( this.subtitle );
     	this.hub.appendChild( this.full );
     },
     start:function(){
@@ -115,15 +120,17 @@ HUB.Base.prototype = {
        // background-image:linear-gradient(60deg, white, black);
     	if(t.bg<=0){
     		clearInterval(t.timer);
-    		t.full.removeChild(t.title);
+            t.full.removeChild(t.fullMid);
+    		t.fullMid.removeChild(t.logo);
+            t.fullMid.removeChild(t.title);
+            t.fullMid.removeChild(t.subtitle);
     		t.hub.removeChild(t.full);
     		t.initStartHub();
-
             t.isIntro = false;
     		//t.full = null;
     	}
     },
-    degrade : function(){
+    /*degrade : function(){
         var a = -160;
         var p = [0, 30, 100]
         var c0 = '#BFDDFF';
@@ -137,33 +144,33 @@ HUB.Base.prototype = {
             'background:linear-gradient('+a+'deg, '+c0+' '+p[0]+'%, '+c1+' '+p[1]+'%, '+c2+' '+p[2]+'%);'
         ].join("\n");
         return deg;
-    },
+    },*/
 
     //--------------------------------------start hub
 
     initStartHub : function(){
-        this.full = document.createElement('div'); 
-        //this.full.style.cssText ='position:absolute; top:30px; left:50%; margin-left:-154px; width:316px; pointer-events:none;';
-        this.full.style.cssText ='position:absolute; top:0px; left:50%; margin-left:-150px; width:300px; pointer-events:none;';
+        this.full = document.createElement('div');
+        this.full.style.cssText ='position:absolute; top:10px; left:50%; margin-left:-150px; width:300px; height:300px; pointer-events:none;';
         this.full.id = 'fullStart';
 
         this.hub.appendChild( this.full );
-        var b1 = this.addButton(this.full, 'Play Game', [276,48,40], 'position:absolute; top:20px; left:0px;');
-    	var b2 = this.addButton(this.full, 'New Map',  [120, 26, 22], 'position:absolute; top:104px; left:0px;');
-        var b3 = this.addButton(this.full, 'Height Map',  [120, 26, 22], 'position:absolute; top:104px; right:0px;');
+        var b1 = this.addButton(this.full, 'Play Game', [276,48,40], 'position:absolute; top:10px; left:0px;');
+    	var b2 = this.addButton(this.full, 'New Map',  [120, 26, 22], 'position:absolute; top:150px; left:0px;');
+        var b3 = this.addButton(this.full, 'Height Map',  [120, 26, 22], 'position:absolute; top:150px; right:0px;');
+        var b4 = this.addButton(this.full, 'Load Map',  [276, 26, 22], 'position:absolute; top:90px; left:0px;');
+        this.addSelector("DIFFICULTY", ['LOW', 'MEDIUM', 'HARD'], setDifficulty, 0);
 
         b1.addEventListener('click',  function ( e ) { e.preventDefault(); playMap(); }, false);
         b2.addEventListener('click',  function ( e ) { e.preventDefault(); newMap(); }, false);
         b3.addEventListener('click',  function ( e ) { e.preventDefault(); newHeightMap(); }, false);
-        
-        this.addSelector("LEVEL", ['LOW', 'MEDIUM', 'HARD'], setDifficulty, 0);
+        b4.addEventListener('click',  function ( e ) { e.preventDefault(); loadGame(true); }, false);
     },
 
     //--------------------------------------game hub
 
     initGameHub : function(){
         var _this = this;
-        this.removeSelector("LEVEL");
+        this.removeSelector("DIFFICULTY");
         this.clearElement('fullStart');
 
         this.toolSet = document.createElement('div');
@@ -195,7 +202,7 @@ HUB.Base.prototype = {
         this.toolSet.appendChild(img);
         img.style.cssText ='position:absolute; margin:0px; padding:0px; top:0px; right:0px; width:198px; height:396px; pointer-events:none;';
 
-        this.addSelector("Speed", ['II', '>', '>>', '>>>', '>>>'], setSpeed, 2, [30,30,30,30,30]);
+        this.addSelector("Speed", ['II', '>', '>>', '>>>', '>>>'], setSpeed, 2, [20,20,20,20,20]);
 
         var b1 = this.addButton(this.hub, 'Budget', [75,16,14], 'position:absolute; left:10px; top:-7px; font-weight:bold;', true);
         b1.addEventListener('click',  function ( e ) { e.preventDefault(); getBudjet(); }, false);
@@ -203,13 +210,13 @@ HUB.Base.prototype = {
         var b2 = this.addButton(this.hub, 'Eval', [75,16,14], 'position:absolute; left:110px; top:-7px; font-weight:bold;', true);
         b2.addEventListener('click',  function ( e ) { e.preventDefault(); getEval(); }, false);
 
-        /*
-        var b3 = this.addButton(this.hub, 'Disaster', [75,16,14], 'position:absolute; left:210px; top:-7px; font-weight:bold;', true);
-        b3.addEventListener('click',  function ( e ) { e.preventDefault();  _this.openDisaster(); }, false);
+       
+        //var b3 = this.addButton(this.hub, 'Disaster', [75,16,14], 'position:absolute; left:210px; top:-7px; font-weight:bold;', true);
+        //b3.addEventListener('click',  function ( e ) { e.preventDefault();  _this.openDisaster(); }, false);
 
         var b4 = this.addButton(this.hub, 'Exit', [75,16,14], 'position:absolute; left:310px; top:-7px; font-weight:bold;', true);
         b4.addEventListener('click',  function ( e ) { e.preventDefault();  _this.openExit();  }, false);
-        
+         /*
         var b5 = this.addButton(this.hub, 'Overlays', [75,16,14], 'position:absolute; left:410px; top:-7px; font-weight:bold;', true);
         b5.addEventListener('click',  function ( e ) { e.preventDefault();  _this.openOverlays();  }, false);
         */
@@ -241,10 +248,22 @@ HUB.Base.prototype = {
             this.H[i]=dd;
         }
 
+
+        var winter = document.createElement("div");
+        winter.style.cssText = "position:absolute; bottom:80px; left:25px; width:30px; height:30px; pointer-events:auto; cursor:pointer; background:rgba(0,0,0,0); ";
+        winter.style.cssText += "-moz-border-radius: 30px; -webkit-border-radius: 30px; border-radius: 30px; ";
+        this.hub.appendChild(winter);
+
+        winter.addEventListener('click',  function ( e ) { 
+            view3d.winterSwitch();
+            if(view3d.isWinter) this.style.background = 'rgba(255,255,255,0.5);';
+            else  this.style.background = 'rgba(0,0,0,0);';
+        }, false);
+
         var img2 = document.createElement("img");
         img2.src = "img/basemenu.png";
         this.hub.appendChild(img2);
-        img2.style.cssText ='position:absolute; margin:0px; padding:0px; bottom:1px; left:0px; width:800px; height:80px; pointer-events:none;';
+        img2.style.cssText ='position:absolute; margin:0px; padding:0px; bottom:0px; left:0px; width:630px; height:120px; pointer-events:none;';
 
         this.initCITYinfo();
     },
@@ -259,16 +278,16 @@ HUB.Base.prototype = {
     initCITYinfo : function(){
 
         this.date = document.createElement('div');
-        this.date.style.cssText = 'font-size:14px; position:absolute; width:70px; height:20px; bottom:15px; left:70px; text-align:right; font-weight:bold;';
+        this.date.style.cssText = 'font-size:14px; position:absolute; width:70px; height:19px; bottom:15px; left:65px; text-align:right; font-weight:bold;';
 
         this.money = document.createElement('div');
-        this.money.style.cssText = 'font-size:14px; position:absolute; width:70px; height:20px; bottom:15px; left:310px; text-align:right; font-weight:bold;';
+        this.money.style.cssText = 'font-size:14px; position:absolute; width:70px; height:19px; bottom:15px; left:295px; text-align:right; font-weight:bold;';
 
         this.population = document.createElement('div');
-        this.population.style.cssText = 'font-size:14px; position:absolute; width:70px; height:20px; bottom:15px; left:190px; text-align:right; font-weight:bold;';
+        this.population.style.cssText = 'font-size:14px; position:absolute; width:70px; height:19px; bottom:15px; left:180px; text-align:right; font-weight:bold;';
 
         this.score = document.createElement('div');
-        this.score.style.cssText = 'font-size:14px; position:absolute; width:70px; height:20px; bottom:15px; left:430px; text-align:right; font-weight:bold;';
+        this.score.style.cssText = 'font-size:14px; position:absolute; width:70px; height:19px; bottom:15px; left:410px; text-align:right; font-weight:bold;';
 
         this.msg = document.createElement('div');
         this.msg.style.cssText = 'font-size:14px; letter-spacing:0.02em; position:absolute; width:420px; height:20px; bottom:44px; left:76px; text-align:left; color:'+this.colors[4]+'; font-weight:bold;';
@@ -408,18 +427,18 @@ HUB.Base.prototype = {
             this.evaluationWindow.appendChild( this.evaltOpinion );
 
             this.evaltYes = document.createElement('div');
-            this.evaltYes.style.cssText ='position:absolute; top:46px; left:26px; width:60px; height:20px; pointer-events:none; color:#33FF33; font-size:16px; ';
+            this.evaltYes.style.cssText ='position:absolute; top:46px; left:26px; width:60px; height:20px; pointer-events:none; color:#33FF33; font-size:16px; font-weight:bold;';
             this.evaluationWindow.appendChild( this.evaltYes );
 
             this.evaltNo = document.createElement('div');
-            this.evaltNo.style.cssText ='position:absolute; top:46px; right:26px; width:60px; height:20px; pointer-events:none; color:#FF3300;  font-size:16px; ';
+            this.evaltNo.style.cssText ='position:absolute; top:46px; right:26px; width:60px; height:20px; pointer-events:none; color:#FF3300;  font-size:16px; font-weight:bold;';
             this.evaluationWindow.appendChild( this.evaltNo );
 
             this.evaltProb = document.createElement('div');
-            this.evaltProb.style.cssText ='position:absolute; top:90px; left:10px; width:180px; height:60px; pointer-events:none; color:'+this.colors[0]+'; font-size:16px; ';
+            this.evaltProb.style.cssText ='position:absolute; top:100px; left:10px; width:180px; height:60px; pointer-events:none; color:'+this.colors[0]+'; font-size:16px; ';
             this.evaluationWindow.appendChild( this.evaltProb );
 
-            this.evaltOpinion.innerHTML = "<b>Public opinion</b><br>Is the mayor doing a good job ?<br> <br> <br>What are the worst problems ?<br>"
+            this.evaltOpinion.innerHTML = "<b>Public opinion</b><br>Is the mayor doing a good job ?<br> <br> <br> <br>What are the worst problems ?<br>"
 
         } else {
             this.evaluationWindow.style.display = 'block';
@@ -459,23 +478,25 @@ HUB.Base.prototype = {
             bg1.addEventListener('click',  function(e){ e.preventDefault(); _this.closeExit(); }, false);
             bg2.addEventListener('click',  function(e){ e.preventDefault(); newGameMap(); }, false);
             bg3.addEventListener('click',  function(e){ e.preventDefault(); saveGame(); }, false);
-           // bg4.addEventListener('click',  function(e){ e.preventDefault(); loadGame(); }, false);
+            bg4.addEventListener('click',  function(e){ e.preventDefault(); loadGame(); }, false);
 
-            var x = document.createElement("INPUT");
+            /*var x = document.createElement("INPUT");
             x.setAttribute("id", "fileToLoad");
             x.setAttribute("type", "file");
             x.style.cssText = "pointer-events:auto; opacity:0; position:absolute; left:10px; top:130px; width:120px; height:40px; overflow:hidden;";
+            */
            // x.addEventListener( 'mouseover', function ( e ) { e.preventDefault(); bg4.style.border = '4px solid '+_this.colors[0];  bg4.style.backgroundColor = _this.colors[0]; bg4.style.color = _this.colors[1]; }, false );
+
            // x.addEventListener( 'mouseout', function ( e ) { e.preventDefault(); bg4.style.border = '4px solid '+_this.colors[1]; bg4.style.backgroundColor = _this.colors[1]; bg4.style.color = _this.colors[0];  }, false );
 
-            x.addEventListener( 'mouseover', function ( e ) { e.preventDefault();  bg4.style.backgroundColor = _this.colors[2]; }, false );
-            x.addEventListener( 'mouseout', function ( e ) { e.preventDefault();  bg4.style.backgroundColor = _this.colors[1];  }, false );
+           // x.addEventListener( 'mouseover', function ( e ) { e.preventDefault();  bg4.style.backgroundColor = _this.colors[2]; }, false );
+           // x.addEventListener( 'mouseout', function ( e ) { e.preventDefault();  bg4.style.backgroundColor = _this.colors[1];  }, false );
 
-            x.addEventListener('change', loadGame, false);
+            //x.addEventListener('change', loadGame, false);
 
 
             //"fileToLoad"
-            this.exitWindow.appendChild( x );
+            //this.exitWindow.appendChild( x );
 
         } else {
             this.exitWindow.style.display = 'block';
@@ -710,8 +731,8 @@ HUB.Base.prototype = {
         var _this = this;
         var cont = document.createElement('div');
         //cont.style.cssText = 'position:absolute; width:300px; height:50px; font-size:16px; top:0; left:webkit-clac(50% -150px);';
-        cont.style.cssText = 'font-size:16px; margin-top:10px; color:'+this.colors[0]+';';
-        if(type=='Speed') cont.style.cssText = 'font-size:20px; position:absolute; bottom:3px; left:540px; ';
+        cont.style.cssText = 'font-size:14px; margin-top:10px; color:'+this.colors[0]+';';
+        if(type=='Speed') cont.style.cssText = 'font-size:20px; position:absolute; bottom:8px; left:497px; ';
         else cont.innerHTML = type+"<br>";
         cont.id = type;
         var t = [];
@@ -719,8 +740,9 @@ HUB.Base.prototype = {
             t[i] = document.createElement( 'div' );
            // t[i].style.cssText = 'font-size:14px; border:4px solid '+this.colors[1]+'; background:'+this.colors[1]+';'
            // t[i].style.cssText +=' width:70px; height:16px; margin:4px; padding:4px; pointer-events:auto;  cursor:pointer; display:inline-block; font-weight:bold;' + this.radius;
-            t[i].style.cssText = 'font-size:14px; border:1px solid '+this.colors[1]+'; background:'+this.colors[1]+'; color:'+this.colors[0]+';';
-            t[i].style.cssText +=' width:70px; height:16px; margin:2px; padding:7px; pointer-events:auto;  cursor:pointer; display:inline-block; ';
+            t[i].style.cssText = 'font-size:14px; border:1px solid '+this.colors[5]+'; background:'+this.colors[1]+'; color:'+this.colors[0]+';';
+            if(type=='Speed')t[i].style.cssText +=' width:70px; height:16px; margin-left:2px; padding:6px; pointer-events:auto;  cursor:pointer; display:inline-block; ';
+            else t[i].style.cssText +=' width:70px; height:16px; margin:2px; padding:7px; pointer-events:auto;  cursor:pointer; display:inline-block; ';
 
             if(i==0) t[i].style.cssText += this.radiusL;
             if(i==names.length-1)t[i].style.cssText += this.radiusR;
@@ -731,8 +753,8 @@ HUB.Base.prototype = {
             if(type!=='Speed')t[i].textContent = names[i];
             if(i==current){
                 //t[i].style.border = '4px solid '+this.colors[0];
-                t[i].style.backgroundColor = this.colors[2];
-                //t[i].style.color = this.colors[1];
+                t[i].style.backgroundColor = this.colors[5];
+                t[i].style.color = this.colors[2];
                 t[i].className = "select";
             }
             t[i].name = i;
@@ -741,13 +763,13 @@ HUB.Base.prototype = {
             //t[i].addEventListener( 'mouseover', function ( e ) { e.preventDefault(); this.style.border = '4px solid '+_this.colors[0];  }, false );
             //t[i].addEventListener( 'mouseout', function ( e ) { e.preventDefault();  if(this.className == 'none')this.style.border = '4px solid '+_this.colors[1];  }, false );
 
-            t[i].addEventListener( 'mouseover', function ( e ) { e.preventDefault(); this.style.border = '1px solid '+_this.colors[2];  }, false );
-            t[i].addEventListener( 'mouseout', function ( e ) { e.preventDefault();  this.style.border = '1px solid '+_this.colors[1];  }, false );
+            t[i].addEventListener( 'mouseover', function ( e ) { e.preventDefault(); this.style.border = '1px solid '+_this.colors[0];  }, false );
+            t[i].addEventListener( 'mouseout', function ( e ) { e.preventDefault();  this.style.border = '1px solid '+_this.colors[5];  }, false );
 
             t[i].addEventListener( 'click', function ( e ) { e.preventDefault(); fun( this.name ); _this.setActiveSelector(this.name, type); }, false );
         }
         //this.hub.appendChild( cont );
-        if(type=='LEVEL'){this.full.appendChild( cont ); cont.style.position = 'absolute'; cont.style.top = '160px';cont.style.width = '300px';}
+        if(type=='DIFFICULTY'){this.full.appendChild( cont ); cont.style.position = 'absolute'; cont.style.top = '200px';cont.style.width = '300px';}
         else this.hub.appendChild( cont );
     },
 
@@ -756,7 +778,7 @@ HUB.Base.prototype = {
         while(h--){
             if(document.getElementById(type+h)){
                 def = document.getElementById(type+h);
-                //def.style.color = this.colors[0];
+                def.style.color = this.colors[0];
                // def.style.border = '4px solid '+_this.colors[1]; 
                 def.style.backgroundColor = this.colors[1];
                 def.className = "none";
@@ -764,8 +786,8 @@ HUB.Base.prototype = {
         }
         var select = document.getElementById(type+n);
         //select.style.border = '4px solid '+_this.colors[0]; 
-        select.style.backgroundColor = this.colors[2];
-        //select.style.color = this.colors[1];
+        select.style.backgroundColor = this.colors[5];
+        select.style.color = this.colors[2];
         select.className = "select";
     },
 
@@ -840,7 +862,7 @@ HUB.Base.prototype = {
         //var defStyle = 'font-size:'+size[2]+'px; border:4px solid '+this.colors[1]+'; background:'+this.colors[1]+'; width:'+size[0]+'px; height:'+size[1]+'px;'
         //defStyle += 'margin:4px; padding:4px; pointer-events:auto;  cursor:pointer; display:inline-block; font-weight:bold;' + this.radius;
 
-        var defStyle = 'font-size:'+size[2]+'px;  border:1px solid '+this.colors[1]+'; background:'+this.colors[1]+'; width:'+size[0]+'px; height:'+size[1]+'px; color:'+this.colors[0]+';';
+        var defStyle = 'font-size:'+size[2]+'px;  border:1px solid '+this.colors[5]+'; background:'+this.colors[1]+'; width:'+size[0]+'px; height:'+size[1]+'px; color:'+this.colors[0]+';';
         if(top)defStyle += 'margin:4px; padding:7px; pointer-events:auto;  cursor:pointer; display:inline-block; ' + this.radiusB;
         else defStyle += 'margin:4px; padding:7px; pointer-events:auto;  cursor:pointer; display:inline-block; ' + this.radius;
 
@@ -851,9 +873,8 @@ HUB.Base.prototype = {
        // b.addEventListener( 'mouseover', function ( e ) { e.preventDefault(); this.style.border = '4px solid '+_this.colors[0];  this.style.backgroundColor = _this.colors[0]; this.style.color = _this.colors[1]; }, false );
        // b.addEventListener( 'mouseout', function ( e ) { e.preventDefault(); this.style.border = '4px solid '+_this.colors[1]; this.style.backgroundColor = _this.colors[1]; this.style.color = _this.colors[0];  }, false );
 
-        b.addEventListener( 'mouseover', function ( e ) { e.preventDefault();  this.style.backgroundColor = _this.colors[2]; }, false );
-        b.addEventListener( 'mouseout', function ( e ) { e.preventDefault(); this.style.backgroundColor = _this.colors[1]; }, false );
-
+        b.addEventListener( 'mouseover', function ( e ) { e.preventDefault();  this.style.backgroundColor = _this.colors[5];this.style.color = _this.colors[2]; }, false );
+        b.addEventListener( 'mouseout', function ( e ) { e.preventDefault(); this.style.backgroundColor = _this.colors[1];this.style.color = _this.colors[0]; }, false );
 
         target.appendChild( b );
 

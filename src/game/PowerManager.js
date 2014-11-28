@@ -84,7 +84,9 @@ Micro.PowerManager.prototype = {
         var dX = [-1, 2, 1, 2];
         var dY = [-1, -1, 0, 0];
 
-        if(!this.sim.is3D) for (var i = 0; i < 4; i++) map.addTileFlags(x + dX[i], y + dY[i], Tile.ANIMBIT); 
+        // Ensure animation bits set   no animation for 3d
+        if(!this.sim.is3D) 
+            for (var i = 0; i < 4; i++) map.addTileFlags(x + dX[i], y + dY[i], Tile.ANIMBIT); 
     },
     nuclearPowerFound : function(map, x, y, simData) {
         var meltdownTable = [30000, 20000, 10000];
@@ -99,7 +101,8 @@ Micro.PowerManager.prototype = {
         //console.log(x, y, new map.Position(x, y))
 
         // Ensure animation bits set   no animation for 3d
-        if(!this.sim.is3D) for (var i = 0; i < 4; i++)  map.addTileFlags(x, y, Tile.ANIMBIT | Tile.CONDBIT | Tile.POWERBIT | Tile.BURNBIT);
+        if(!this.sim.is3D) 
+            for (var i = 0; i < 4; i++)  map.addTileFlags(x, y, Tile.ANIMBIT | Tile.CONDBIT | Tile.POWERBIT | Tile.BURNBIT);
     },
     registerHandlers : function(mapScanner, repairManager) {
         mapScanner.addAction(Tile.POWERPLANT, this.coalPowerFound.bind(this));

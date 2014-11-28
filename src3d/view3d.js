@@ -18,6 +18,9 @@ V3D.Base = function(isMobile, pix, isLow){
 	this.isWithTree = true;
 
 	this.isWithEnv = false;
+	this.isWithFog = true;
+	this.isIsland = false;
+	this.isWinter = false;
 
 	this.key = [0,0,0,0,0,0,0];
 
@@ -31,6 +34,10 @@ V3D.Base = function(isMobile, pix, isLow){
 	this.snd_layzone = new Audio("./sound/layzone.mp3");
 
 	this.imgSrc = ['img/tiles32.png','img/town.jpg','img/building.jpg','img/w_building.png','img/w_town.png'];
+	this.imgSrcPlus = ['img/tiles32_w.png','img/town_w.jpg','img/building_w.jpg'];
+	this.winterMapLoaded = false;
+
+	//if(this.isWinter) this.imgSrc = ['img/tiles32_w.png','img/town_w.jpg','img/building_w.jpg','img/w_building.png','img/w_town.png'];
 	this.rootModel = 'img/world.sea';
 	this.imgs = [];
 	this.num=0;
@@ -213,11 +220,20 @@ V3D.Base.prototype = {
     	this.scene.add( this.camera );
 
     	this.rayVector = new THREE.Vector3( 0, 0, 1 );
-    	//this.projector = new THREE.Projector();
     	this.raycaster = new THREE.Raycaster();
     	
         this.land = new THREE.Object3D();
         this.scene.add( this.land );
+        if(this.isWithFog){
+        	this.fog = new THREE.Fog( 0xFFFFFF, 1, 100 );
+        	//this.fog = new THREE.FogExp2 ( 0xFF0000, 0.01 );
+        	this.scene.fog = this.fog;
+        }
+
+        
+        
+
+
 
         this.center = new THREE.Vector3();
         this.moveCamera();
@@ -248,7 +264,7 @@ V3D.Base.prototype = {
         	this.skyCanvas = this.gradTexture([[0.51,0.49, 0.3], ['#cc7f66','#A7DCFA', 'deepskyblue']]);
         	this.skyTexture = new THREE.Texture(this.skyCanvas);
 		    this.skyTexture.needsUpdate = true;
-            this.back = new THREE.Mesh( new THREE.IcosahedronGeometry(300,1), new THREE.MeshBasicMaterial( { map:this.skyTexture, side:THREE.BackSide, depthWrite: false }  ));
+            this.back = new THREE.Mesh( new THREE.IcosahedronGeometry(300,1), new THREE.MeshBasicMaterial( { map:this.skyTexture, side:THREE.BackSide, depthWrite: false, fog:false }  ));
             this.scene.add( this.back );
             this.renderer.autoClear = false;
         } else {
@@ -282,6 +298,10 @@ V3D.Base.prototype = {
 	    
 	    start();
 	    //initCity();
+
+
+	    // load winter extra map
+		this.loadImagesPlus();
     },
 
     //----------------------------------- RENDER
@@ -433,11 +453,31 @@ V3D.Base.prototype = {
     		_this.num++; 
     		if(_this.num===1) if(hub!==null)hub.subtitle.innerHTML = "Loading textures ...";
     		
-    		if(_this.num === _this.imgSrc.length) _this.changeTextures();
+    		if(_this.num === _this.imgSrc.length){ _this.changeTextures(); _this.num=0; }
     		else _this.loadImages();
     	};
-        this.imgs[n].src = this.imgSrc[n];
-        
+        this.imgs[n].src = this.imgSrc[n];   
+    },
+
+    loadImagesPlus:function(){
+    	var _this = this;
+    	var n = this.num + 5;
+
+    	this.imgs[n] = new Image();
+    	this.imgs[n].src = this.imgSrcPlus[this.num];
+    	this.imgs[n].onload = function(){ 
+    		_this.num++;
+    		if(_this.num === _this.imgSrcPlus.length){ _this.winterMapLoaded = true; }
+    		else _this.loadImagesPlus();
+    	};
+    },
+
+    winterSwitch : function (){
+    	if(!this.isWinter && this.winterMapLoaded) this.isWinter = true;
+    	else this.isWinter = false;
+
+		this.updateBackground();
+		this.setTimeColors(this.dayTime);
     },
 
 	changeTextures : function (){
@@ -452,7 +492,7 @@ V3D.Base.prototype = {
 		this.tint(this.groundCanvas, this.imgs[0]);
 		this.tint(this.townCanvas, this.imgs[1], this.imgs[4]);
 		this.tint(this.buildingCanvas, this.imgs[2], this.imgs[3]);
-		
+
 		this.imageSrc = this.groundCanvas;
 		this.createTextures();
 	},
@@ -465,37 +505,29 @@ V3D.Base.prototype = {
 		}
 
 		this.townTexture = new THREE.Texture(this.townCanvas);
-		this.buildingTexture = new THREE.Texture(this.buildingCanvas);
-
 		this.townTexture.flipY = false;
-		this.buildingTexture.flipY = false;
-		
-        //this.townTexture.repeat.set( 1, -1 );
-		//this.townTexture.wrapS = this.townTexture.wrapT = THREE.RepeatWrapping;
 		this.townTexture.magFilter = THREE.NearestFilter;
         this.townTexture.minFilter = THREE.LinearMipMapLinearFilter;
-		
-        //this.buildingTexture.repeat.set( 1, -1 );
-		//this.buildingTexture.wrapS = this.buildingTexture.wrapT = THREE.RepeatWrapping;
-		this.buildingTexture.magFilter = THREE.NearestFilter;
-        this.buildingTexture.minFilter = THREE.LinearMipMapLinearFilter;
-
-        this.buildingTexture.needsUpdate = true;
         this.townTexture.needsUpdate = true;
 
+        this.buildingTexture = new THREE.Texture(this.buildingCanvas);
+		this.buildingTexture.flipY = false;
+		this.buildingTexture.magFilter = THREE.NearestFilter;
+        this.buildingTexture.minFilter = THREE.LinearMipMapLinearFilter;
+        this.buildingTexture.needsUpdate = true;
+        
         // materials
         
-	   
-
-	    this.townMaterial = new THREE.MeshBasicMaterial( { map: this.townTexture } );//this.townMap;
-	    this.buildingMaterial = new THREE.MeshBasicMaterial( { map: this.buildingTexture } );//this.buildingMap;
+	    this.townMaterial = new THREE.MeshBasicMaterial( { map: this.townTexture } );
+	    this.buildingMaterial = new THREE.MeshBasicMaterial( { map: this.buildingTexture } );
 
 	    if(this.isWithEnv){
 	    	this.townMaterial.envMap = this.environment;
 	    	this.buildingMaterial.envMap = this.environment;
 	    }
 
-	   /* this.townMaterial.vertexColors = THREE.VertexColors
+	    /*
+	    this.townMaterial.vertexColors = THREE.VertexColors
 	    this.townMaterial.map = null;
 
 	    this.townMaterial.vertexColors = null;
@@ -533,10 +565,44 @@ V3D.Base.prototype = {
 		if(this.dayTime==3)this.tcolor = {r:10, g: 15, b: 80, a: 0.6};
 
 		this.tint(this.skyCanvas);
-		this.tint(this.groundCanvas, this.imgs[0]);
-		this.tint(this.townCanvas, this.imgs[1], this.imgs[4]);
-		this.tint(this.buildingCanvas, this.imgs[2], this.imgs[3]);
-		
+
+		if(!this.isWinter){
+			this.tint(this.groundCanvas, this.imgs[0]);
+			this.tint(this.townCanvas, this.imgs[1], this.imgs[4]);
+			this.tint(this.buildingCanvas, this.imgs[2], this.imgs[3]);
+	    } else {
+			this.tint(this.groundCanvas, this.imgs[5]);
+			this.tint(this.townCanvas, this.imgs[6], this.imgs[4]);
+			this.tint(this.buildingCanvas, this.imgs[7], this.imgs[3]);
+		}
+
+		if(this.isWithFog){
+			if(this.isIsland){
+				if(this.isWinter){
+					if(this.dayTime==0)this.fog.color.setHex(0xAFEEEE);
+					if(this.dayTime==1)this.fog.color.setHex(0x98ABBF);
+					if(this.dayTime==2)this.fog.color.setHex(0x2B3C70);
+					if(this.dayTime==3)this.fog.color.setHex(0x4C688F);
+				}else{
+					if(this.dayTime==0)this.fog.color.setHex(0x6666e6);
+					if(this.dayTime==1)this.fog.color.setHex(0x654CB9);
+					if(this.dayTime==2)this.fog.color.setHex(0x1C206E);
+					if(this.dayTime==3)this.fog.color.setHex(0x2F328C);
+				}
+			} else {
+				if(this.isWinter){
+					if(this.dayTime==0)this.fog.color.setHex(0xE6F0FF);
+					if(this.dayTime==1)this.fog.color.setHex(0xBFACCA);
+					if(this.dayTime==2)this.fog.color.setHex(0x363C73);
+					if(this.dayTime==3)this.fog.color.setHex(0x626996);
+				}else{
+					if(this.dayTime==0)this.fog.color.setHex(0xE2946D);
+					if(this.dayTime==1)this.fog.color.setHex(0xBC6C64);
+					if(this.dayTime==2)this.fog.color.setHex(0x352A56);
+					if(this.dayTime==3)this.fog.color.setHex(0x60445C);
+				}
+			}
+		}
 		this.buildingTexture.needsUpdate = true;
         this.townTexture.needsUpdate = true;
         this.skyTexture.needsUpdate = true;
@@ -548,16 +614,15 @@ V3D.Base.prototype = {
 
     loadSea3d : function (){
     	var _this = this;
-	    var s = 1;
 	    var loader = new THREE.SEA3D( true );
-	    var basicMap = new THREE.MeshBasicMaterial( {color:0xff0000} )
+	    var basicMap = new THREE.MeshBasicMaterial( {color:0x000000} )
 	    loader.onComplete = function( e ) {
 	        var m, map;
 	        var i = loader.meshes.length;
 	        while(i--){
 	            m = loader.meshes[i];
-	            //m.material.dispose();
-	            m.material = basicMap;
+	            m.material.dispose();
+	            //m.material = basicMap;
 	            _this.meshs[m.name] = m;
 	        }
 	        _this.defineGeometry();
@@ -734,7 +799,7 @@ V3D.Base.prototype = {
 	    		}
 
 	    		if(this.isBuffer){
-	    			g.computeVertexNormals();
+	    			//g.computeVertexNormals();
                     //g.computeTangents();
 	    			g2 = new THREE.BufferGeometry();
 	    			g2.fromGeometry(g);
@@ -826,7 +891,7 @@ V3D.Base.prototype = {
 	    }
 
 	    if(this.isBuffer){
-	    	g.computeVertexNormals();
+	    	//g.computeVertexNormals();
             //g.computeTangents();
 			g2 = new THREE.BufferGeometry().fromGeometry(g);
 			//g2.computeBoundingSphere();
@@ -849,49 +914,53 @@ V3D.Base.prototype = {
 
 
 
+    //------------------------------------ BACKGROUND MAP
+
+    updateBackground : function(){
+    	var rootColors;
+    	if(this.isWithBackground ){
+		    if(this.isIsland){
+		    	rootColors = '#6666e6';
+		    	if(this.isWinter) rootColors = '#AFEEEE';
+		    	this.skyCanvasBasic = this.gradTexture([[0.51,0.49, 0.3], [rootColors,'#BFDDFF', '#4A65FF']]);
+		    	this.skyCanvas = this.gradTexture([[0.51,0.49, 0.3], [rootColors,'#BFDDFF', '#4A65FF']]);
+		    	if(this.isWithFog){
+		    		if(this.isWinter) this.fog.color.setHex(0xAFEEEE);
+		    	    else this.fog.color.setHex(0x6666e6);
+		    	}
+		    }
+		    else{
+		    	rootColors = '#E2946D';
+		    	if(this.isWinter) rootColors = '#E6F0FF';
+		    	this.skyCanvasBasic =  this.gradTexture([[0.51,0.49, 0.3], [rootColors,'#BFDDFF', '#4A65FF']]);
+		    	this.skyCanvas = this.gradTexture([[0.51,0.49, 0.3], [rootColors,'#BFDDFF', '#4A65FF']]);
+		    	if(this.isWithFog){
+		    		if(this.isWinter) this.fog.color.setHex(0xE6F0FF);
+		    	    else this.fog.color.setHex(0xE2946D);
+		    	}
+		    }
+		    this.skyTexture = new THREE.Texture(this.skyCanvas);
+		    this.skyTexture.needsUpdate = true;
+		    this.back.material.map = this.skyTexture;
+		} else {
+			if(this.isIsland) this.renderer.setClearColor( 0x6666e6, 1 );
+			else this.renderer.setClearColor( 0xcc7f66, 1 );
+		}
+    },
+
     //------------------------------------ TERRAIN MAP
 
-
 	updateTerrain : function(island){
+
+		this.isIsland = island || false;
 
 		this.center.x = this.mapSize[0]*0.5;
 		this.center.z = this.mapSize[1]*0.5;
 
-
-
-		// background update
-		if(this.isWithBackground ){
-		    if(island>0){
-		    	this.skyCanvasBasic = this.gradTexture([[0.51,0.49, 0.3], ['#6666e6','#BFDDFF', '#4A65FF']]);
-		    	this.skyCanvas = this.gradTexture([[0.51,0.49, 0.3], ['#6666e6','#BFDDFF', '#4A65FF']]);
-		    	//this.skyTexture = new THREE.Texture(this.skyCanvas);
-		    	//this.skyTexture.needsUpdate = true;
-		    	//this.back.material.map = this.skyTexture;//this.gradTexture([[0.51,0.49, 0.3], ['#6666e6','lightskyblue', 'deepskyblue']]);
-		    }
-		    else{
-		    	this.skyCanvasBasic =  this.gradTexture([[0.51,0.49, 0.3], ['#E2946D','#BFDDFF', '#4A65FF']]);
-		    	this.skyCanvas = this.gradTexture([[0.51,0.49, 0.3], ['#E2946D','#BFDDFF', '#4A65FF']]);
-
-		     //this.back.material.map = this.gradTexture([[0.51,0.49, 0.3], ['#E2946D','lightskyblue', 'deepskyblue']]);		// cc7f66 
-		    }
-		    this.skyTexture = new THREE.Texture(this.skyCanvas);
-		    this.skyTexture.needsUpdate = true;
-		    this.back.material.map = this.skyTexture;//this.gradTexture([[0.51,0.49, 0.3], ['#6666e6','lightskyblue', 'deepskyblue']]);
-
-
-		    
-		} else {
-			if(island>0) this.renderer.setClearColor( 0x6666e6, 1 );
-			else this.renderer.setClearColor( 0xcc7f66, 1 );
-		}
+		this.updateBackground();
 
 		// create terrain if not existe
         if(this.miniTerrain.length === 0){
-        	//var matrix = new THREE.Matrix4();
-        	//var pyGeometry = this.meshs['plane'].geometry;
-        	/*var geo = new THREE.PlaneGeometry( 16, 16, 16, 16 );
-	        geo.applyMatrix(new THREE.Matrix4().makeRotationX( - Math.PI * 0.5 ));
-	        geo.computeBoundingSphere();*/
 
         	var n = 0;//, texture, mat;
         	var colorsX = [ 0x000000, 0x220000, 0x440000, 0x660000, 0x880000, 0xaa0000, 0xcc0000, 0xff0000 ];
@@ -1098,9 +1167,7 @@ V3D.Base.prototype = {
 	//------------------------------------------RAY
 
 	rayTest : function () {
-		//this.projector.unprojectVector( this.rayVector, this.camera );
 		this.rayVector.unproject( this.camera );
-		//this.raycaster.set( this.camera.position, this.rayVector.sub( this.camera.position ).normalize() );
 		this.raycaster.ray.set( this.camera.position, this.rayVector.sub( this.camera.position ).normalize() );
 
 		if ( this.land.children.length > 0 ) {
@@ -1226,7 +1293,7 @@ V3D.Base.prototype = {
 			}
 			// town building
 			if(v==8 || v==9 || v==4 || v==5 || v==7 || v==10 || v==11 || v==12){
-				this.addBaseTown(x,py,y,v, zone);
+				this.addBaseTown(x,py,y,v,zone);
 			    this.snd_layzone.play();
 			}
 
@@ -1326,11 +1393,7 @@ V3D.Base.prototype = {
 					}
 				}
 			}
-			
-
 	    }
-
-
 	},
 
 	showDestruct:function(ar){
@@ -1344,13 +1407,13 @@ V3D.Base.prototype = {
 		var layer = this.findLayer(x,z);
 		if(!this.townLists[layer]) this.townLists[layer]=[];
     	this.townLists[layer].push([x,y,z,v,zone]);
-
     	this.rebuildTownLayer(layer);
 	},
 	rebuildTownLayer : function(l){
 		if(this.townMeshs[l] !== undefined ){
+			//if(this.townMeshs[l].geometry) 
     	    this.scene.remove(this.townMeshs[l]);
-        	this.townMeshs[l].geometry.dispose();
+    	    this.townMeshs[l].geometry.dispose();
         }
         var m = new THREE.Matrix4(), ar, k, g2;
     	var g = new THREE.Geometry();
@@ -1362,10 +1425,9 @@ V3D.Base.prototype = {
 	    }
 
 	    if(this.isBuffer){
-	    	g.computeVertexNormals();
+	    	//g.computeVertexNormals();
             //g.computeTangents();
-			g2 = new THREE.BufferGeometry();
-			g2.fromGeometry(g);
+			g2 = new THREE.BufferGeometry().fromGeometry(g);
 			//g2.computeBoundingSphere();
 			g.dispose();
 			this.townMeshs[l] = new THREE.Mesh( g2, this.townMaterial );
@@ -1412,9 +1474,11 @@ V3D.Base.prototype = {
 	rebuildHouseLayer : function(l){
     	if(this.houseMeshs[l] !== undefined ){
     		if(this.houseMeshs[l] !== null ){
-	    	    this.scene.remove(this.houseMeshs[l]);
-	        	this.houseMeshs[l].geometry.dispose();
-	        	this.houseMeshs[l] = null;
+    			if(this.houseMeshs[l].geometry){
+    				this.scene.remove(this.houseMeshs[l]);
+    				this.houseMeshs[l].geometry.dispose();
+    				this.houseMeshs[l] = null;
+    			}
 	        }
 	    }
 
@@ -1431,10 +1495,9 @@ V3D.Base.prototype = {
 		    }
 
 		    if(this.isBuffer){
-		    	g.computeVertexNormals();
+		    	//g.computeVertexNormals();
                 //g.computeTangents();
-				g2 = new THREE.BufferGeometry();
-				g2.fromGeometry(g);
+				g2 = new THREE.BufferGeometry().fromGeometry(g);
 				//g2.computeBoundingSphere();
 				g.dispose();
 				this.houseMeshs[l] = new THREE.Mesh( g2, this.buildingMaterial );
@@ -1490,8 +1553,9 @@ V3D.Base.prototype = {
     },*/
     rebuildBuildingLayer : function(l){
     	if(this.buildingMeshs[l] !== undefined ){
+    		//if(this.buildingMeshs[l].geometry)
     	    this.scene.remove(this.buildingMeshs[l]);
-        	this.buildingMeshs[l].geometry.dispose();
+    	    //this.buildingMeshs[l].geometry.dispose();
         }
 
     	var m = new THREE.Matrix4(), ar, k, g2;
@@ -1523,10 +1587,9 @@ V3D.Base.prototype = {
 	    }
 
 	    if(this.isBuffer){
-	    	g.computeVertexNormals();
+	    	//g.computeVertexNormals();
             //g.computeTangents();
-			g2 = new THREE.BufferGeometry();
-			g2.fromGeometry(g);
+			g2 = new THREE.BufferGeometry().fromGeometry(g);
 			//g2.computeBoundingSphere();
 			g.dispose();
 			this.buildingMeshs[l] = new THREE.Mesh( g2, this.buildingMaterial );
@@ -1540,6 +1603,41 @@ V3D.Base.prototype = {
 	    this.tempBuildingLayers[l] = 0;
     },
 
+    //---------------------------------------------------BUILDING LISTING
+
+    saveCityBuild : function (saveCity){
+    	
+    	var l = this.nlayers;
+    	while(l--){
+    		saveCity[l]= [0,0,0];
+    		if(this.townLists[l] !== undefined ){saveCity[l][0] = this.townLists[l];}
+	    	if(this.houseLists[l] !== undefined ){saveCity[l][1] = this.houseLists[l];}
+	    	if(this.buildingLists[l] !== undefined ){saveCity[l][2] = this.buildingLists[l];}
+	    	/*
+	    	if(this.townMeshs[l] !== undefined ){saveCity[l][0] = this.townMeshs[l];}
+	    	if(this.houseMeshs[l] !== undefined ){saveCity[l][1] = this.houseMeshs[l];}
+	    	if(this.buildingMeshs[l] !== undefined ){saveCity[l][2] = this.buildingMeshs[l];}*/
+	    }
+	    //
+	   // return saveCity;
+    },
+
+    loadCityBuild : function (saveCity){
+    	saveCity = JSON.parse(saveCity);
+    	var l = this.nlayers;
+    	var ldata;
+    	while(l--){
+    		ldata = saveCity[l];
+    		if(ldata[0] !== 0 ){ this.townLists[l] = ldata[0]; this.rebuildTownLayer(l); }
+	    	if(ldata[1] !== 0 ){ this.houseLists[l] = ldata[1]; this.rebuildHouseLayer(l); }
+	    	if(ldata[2] !== 0 ){ this.buildingLists[l] = ldata[2]; this.rebuildBuildingLayer(l); }
+	    	/*
+    		if(ldata[0] !== 0 ){ this.townMeshs[l] = ldata[0]; this.rebuildTownLayer(l); }
+	    	if(ldata[1] !== 0 ){ this.houseMeshs[l] = ldata[1]; this.rebuildHouseLayer(l); }
+	    	if(ldata[2] !== 0 ){ this.buildingMeshs[l] = ldata[2]; this.rebuildBuildingLayer(l); }
+	    	*/
+    	}
+    },
 
 
 	//--------------------------------------------------- NAVIGATION
@@ -1566,6 +1664,10 @@ V3D.Base.prototype = {
 	moveCamera : function () {
 	    this.camera.position.copy(this.Orbit(this.center, this.cam.horizontal, this.cam.vertical, this.cam.distance));
 	    this.camera.lookAt(this.center);
+	    if(this.isWithFog){
+	        this.fog.far=this.cam.distance*4;
+	        if(this.fog.far<20)this.fog.far=20;
+	    }
 
 	    if(this.deepthTest){
 	    	this.topCamera.position.set(this.center.x, this.topCameraDistance, this.center.z);
@@ -1693,7 +1795,7 @@ V3D.Base.prototype = {
     	}
 	},
 
-	paintMap : function( mapSize, island, isStart) {
+	paintMap : function( mapSize, island, isStart, fullRebuild) {
 		if(!tilesData) return;
 
 		if(mapSize) this.mapSize = mapSize;

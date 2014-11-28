@@ -64,6 +64,7 @@ Micro.Text = function(){
     neutralMessages[Messages.ROAD_NEEDS_FUNDING] = 'Roads deteriorating, due to lack of funds';
     neutralMessages[Messages.POLICE_NEEDS_FUNDING] = 'Police departments need funding';
     neutralMessages[Messages.WELCOME] = 'Welcome to 3D City';
+    neutralMessages[Messages.WELCOMEBACK] = 'Welcome to 3D City';
 
     var badMessages = {};
     badMessages[Messages.BLACKOUTS_REPORTED] = 'Brownouts, build another Power Plant';

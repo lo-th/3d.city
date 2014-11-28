@@ -1,6 +1,7 @@
 Micro.PROBLEMS = ['CVP_CRIME', 'CVP_POLLUTION', 'CVP_HOUSING', 'CVP_TAXES', 'CVP_TRAFFIC', 'CVP_UNEMPLOYMENT', 'CVP_FIRE'];
 Micro.NUMPROBLEMS = Micro.PROBLEMS.length;
 Micro.NUM_COMPLAINTS = 4;
+Micro.EvalProps = ['cityClass', 'cityScore'];
 
 Micro.getTrafficAverage = function(blockMaps) {
     var trafficDensityMap = blockMaps.trafficDensityMap;
@@ -47,6 +48,14 @@ Micro.Evaluation = function (gameLevel, SIM) {
 
 Micro.Evaluation.prototype = {
     constructor: Micro.Evaluation,
+    save : function(saveData) {
+        for (var i = 0, l = Micro.EvalProps.length; i < l; i++)
+            saveData[Micro.EvalProps[i]] = this[Micro.EvalProps[i]];
+    },
+    load : function(saveData) {
+        for (var i = 0, l = Micro.EvalProps.length; i < l; i++)
+            this[Micro.EvalProps[i]] = saveData[Micro.EvalProps[i]];
+    },
     cityEvaluation : function() {
         var census = this.sim.census;
 

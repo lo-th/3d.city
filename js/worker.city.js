@@ -34,9 +34,9 @@ self.onmessage = function (e) {
 
     if( p == "EVAL") Game.getEvaluation();
 
-    if( p == "SAVEGAME") Game.saveGame();
-    if( p == "LOADGAME") Game.loadGame();
-    if( p == "MAKELOADGAME") Game.makeLoadGame(e.data.savegame);
+    if( p == "SAVEGAME") Game.saveGame(e.data.saveCity);
+    if( p == "LOADGAME") Game.loadGame(e.data.isStart);
+    if( p == "MAKELOADGAME") Game.makeLoadGame(e.data.savegame, e.data.isStart);
 };
 
 /*var updateTrans = function(data){
@@ -115,7 +115,7 @@ CITY.Game = function(url, timestep) {
 
     this.spritesData = null;
     this.animsData = null;
-    this.tilesData = null;
+    //this.tilesData = null;
 
     this.spritesData  = [];
 
@@ -132,22 +132,33 @@ CITY.Game.prototype = {
         transMessage({ tell:"NEWMAP", tilesData:this.map.tilesData, mapSize:this.mapSize, island:this.map.isIsland, trans:trans });
         //transMessage({ tell:"NEWMAP", tilesData:this.map.data, mapSize:this.mapSize, island:this.map.isIsland, trans:trans });
     },
-    playMap : function(){
+    playMap : function(loading){
+        var messageMgr = new Micro.MessageManager();
         var money = 20000;
         if(this.difficulty == 1) money = 10000;
         if(this.difficulty == 2) money = 5000;
         this.gameTools = new Micro.GameTools(this.map);
         this.animationManager = new Micro.AnimationManager(this.map);
-        this.simulation = new Micro.Simulation( this.map, this.difficulty, this.speed, true);
 
-        // intro message
-        var messageMgr = new Micro.MessageManager();
-        messageMgr.sendMessage(Messages.WELCOME);
+        if(loading){
+            money = this.savedGame.totalFunds;
+            //this.infos[3] = this.savedGame.totalPop;
+            this.speed = this.savedGame.speed;
+            this.difficulty = this.savedGame.difficulty;
+            this.simulation = new Micro.Simulation( this.map, this.difficulty, this.speed, true, this.savedGame);
+            //this.processMessages(Messages.EVAL_UPDATED);
+            messageMgr.sendMessage(Messages.WELCOMEBACK);
+        }else{
+            this.simulation = new Micro.Simulation( this.map, this.difficulty, this.speed, true);
+            messageMgr.sendMessage(Messages.WELCOME);
+        }
+
         this.simulation.budget.setFunds(money);
         messageMgr.sendMessage(Messages.FUNDS_CHANGED, money);
         this.processMessages(messageMgr.getMessages());
 
         // update simulation time
+        this.isPaused = false
         //if(!trans) 
         this.timer = setInterval(update, 1000/this.timestep);
         //else update();
@@ -334,17 +345,22 @@ CITY.Game.prototype = {
     //______________________________________ SAVE
 
 
-    saveGame : function(){
-        this.oldSpeed = this.speed;
-        this.changeSpeed(0);
+    saveGame : function(cityData){
+        //this.oldSpeed = this.speed;
+        //this.changeSpeed(0);
 
-        var gameData = "Yoooooo";
+        var gameData = {name:"Yoooooo", everClicked: true};
+        gameData.speed = this.speed;
+        gameData.difficulty = this.difficulty;
         gameData.version = Micro.CURRENT_VERSION;
+        gameData.city = cityData;
+        this.simulation.save(gameData);
+
         gameData = JSON.stringify(gameData);
         
         transMessage({ tell:"SAVEGAME", gameData:gameData, key:Micro.KEY});
 
-        this.changeSpeed(this.oldSpeed);
+        //this.changeSpeed(this.oldSpeed);
     },
     /*makeSaveGame : function(gameData){
         gameData.version = Micro.CURRENT_VERSION;
@@ -353,15 +369,36 @@ CITY.Game.prototype = {
 
     //______________________________________ LOAD
 
-    loadGame : function(){
-        transMessage({ tell:"LOADGAME", key:Micro.KEY }); 
+    loadGame : function(atStart){
+        var isStart = atStart || false;
+        transMessage({ tell:"LOADGAME", key:Micro.KEY, isStart:isStart }); 
     }, 
-    makeLoadGame: function(savedGame){
-        if (savedGame !== null) { 
-            savedGame = JSON.parse(savedGame);
-            if (savedGame.version !== Micro.CURRENT_VERSION) this.transitionOldSave(savedGame);
-            savedGame.isSavedGame = true;
-        }
+    makeLoadGame: function(gameData, atStart){
+        var isStart = atStart || false;
+        clearInterval(this.timer);
+        this.savedGame = JSON.parse(gameData);
+
+        //this.simulation.load(this.savedGame);
+        //this.map = this.simulation.map;
+       // this.everClicked = savedGame.everClicked;
+        //if (savedGame.version !== Micro.CURRENT_VERSION) this.transitionOldSave(savedGame);
+        //savedGame.isSavedGame = true;
+        /*if(this.map){
+            this.map.load(this.savedGame);
+        }else{*/
+        this.map = new Micro.GameMap(Micro.MAP_WIDTH, Micro.MAP_HEIGHT); 
+        this.map.load(this.savedGame);
+        //}
+        
+        //
+
+        this.playMap(true);
+        //this.simulation.map = this.map;
+
+        //
+        //this.map = this.simulation.map;
+
+        transMessage({ tell:"FULLREBUILD", tilesData:this.map.tilesData, mapSize:this.mapSize, island:this.map.isIsland, cityData:this.savedGame.city, isStart:isStart });
     },
     transitionOldSave : function (savedGame) {
         switch (savedGame.version) {

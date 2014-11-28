@@ -75,40 +75,35 @@ function loop() {
 //=======================================
 
 function saveGame(){
-    cityWorker.postMessage({tell:"SAVEGAME"});
+    var saveCity = [];
+    view3d.saveCityBuild(saveCity);
+    saveCity = JSON.stringify(saveCity);
+   // var cityData = view3d.saveCityBuild();
+    cityWorker.postMessage({tell:"SAVEGAME", saveCity:saveCity });
 }
-function loadGame(){
-    cityWorker.postMessage({tell:"LOADGAME"});
+function loadGame(atStart){
+    var isStart = atStart || false;
+    cityWorker.postMessage({tell:"LOADGAME", isStart:isStart});
 }
 
 function makeGameSave(gameData, key){
-    //gameData.version = version;
-    //gameData = JSON.stringify(gameData);
     window.localStorage.setItem(key, gameData);
-
     console.log("game is save");
-    //cityWorker.postMessage({tell:"SAVEGAME"});
-    //saveTextAsFile('test', 'game is saved');
 }
 
-function makeLoadGame(key){
-    var savegame = window.localStorage.getItem(key);
-    cityWorker.postMessage({tell:"MAKELOADGAME", savegame:savegame});
-    //console.log("load game");
-}
-
-/*function transitionOldSave(savedGame) {
-    switch (savedGame.version) {
-        case 1: savedGame.everClicked = false;
-        case 2:
-            savedGame.pollutionMaxX = Math.floor(savedGame.width / 2);
-            savedGame.pollutionMaxY = Math.floor(savedGame.height / 2);
-            savedGame.cityCentreX = Math.floor(savedGame.width / 2);
-            savedGame.cityCentreY = Math.floor(savedGame.height / 2);
-        break;
-        //default: throw new Error('Unknown save version!');
+function makeLoadGame(key, atStart){
+    var isStart = atStart || false;
+    if(atStart){
+        hub.initGameHub();
     }
-};*/
+    var savegame = window.localStorage.getItem(key);
+    if(savegame){ 
+        cityWorker.postMessage({tell:"MAKELOADGAME", savegame:savegame, isStart:isStart});
+        console.log("game is load");
+    } else {
+        console.log("No loading game found");
+    }
+}
 
 function newGameMap(){
     console.log("new map");
@@ -201,8 +196,8 @@ function initCity() {
     loop();
 
     cityWorker.postMessage = cityWorker.webkitPostMessage || cityWorker.postMessage;
-    cityWorker.postMessage({tell:"INIT", url:document.location.href.replace(/\/[^/]*$/,"/") + "build/city.3d.min.js", timestep:simulation_timestep });
-    //cityWorker.postMessage({tell:"INIT", url:document.location.href.replace(/\/[^/]*$/,"/") + "build/city.3d.js", timestep:simulation_timestep });
+    //cityWorker.postMessage({tell:"INIT", url:document.location.href.replace(/\/[^/]*$/,"/") + "build/city.3d.min.js", timestep:simulation_timestep });
+    cityWorker.postMessage({tell:"INIT", url:document.location.href.replace(/\/[^/]*$/,"/") + "build/city.3d.js", timestep:simulation_timestep });
 }
 
 cityWorker.onmessage = function(e) {
@@ -212,6 +207,16 @@ cityWorker.onmessage = function(e) {
         view3d.paintMap( e.data.mapSize, e.data.island, true);
         //trans = e.data.trans;
         hub.start();
+    }
+    if( phase == "FULLREBUILD"){
+        if(e.data.isStart){
+            //hub.initGameHub();
+            view3d.startZoom();
+        }
+        view3d.fullRedraw = true;
+        tilesData = e.data.tilesData;
+        view3d.paintMap( e.data.mapSize, e.data.island, true, true);
+        view3d.loadCityBuild(e.data.cityData);
     }
     if( phase == "BUILD"){
         view3d.build(e.data.x, e.data.y);
@@ -239,7 +244,7 @@ cityWorker.onmessage = function(e) {
         makeGameSave(e.data.gameData, e.data.key);
     }
     if( phase == "LOADGAME"){
-        makeLoadGame( e.data.key);
+        makeLoadGame(e.data.key, e.data.isStart);
     }
 }
 
@@ -262,6 +267,9 @@ V3D.Base = function(isMobile, pix, isLow){
 	this.isWithTree = true;
 
 	this.isWithEnv = false;
+	this.isWithFog = true;
+	this.isIsland = false;
+	this.isWinter = false;
 
 	this.key = [0,0,0,0,0,0,0];
 
@@ -275,6 +283,10 @@ V3D.Base = function(isMobile, pix, isLow){
 	this.snd_layzone = new Audio("./sound/layzone.mp3");
 
 	this.imgSrc = ['img/tiles32.png','img/town.jpg','img/building.jpg','img/w_building.png','img/w_town.png'];
+	this.imgSrcPlus = ['img/tiles32_w.png','img/town_w.jpg','img/building_w.jpg'];
+	this.winterMapLoaded = false;
+
+	//if(this.isWinter) this.imgSrc = ['img/tiles32_w.png','img/town_w.jpg','img/building_w.jpg','img/w_building.png','img/w_town.png'];
 	this.rootModel = 'img/world.sea';
 	this.imgs = [];
 	this.num=0;
@@ -457,11 +469,20 @@ V3D.Base.prototype = {
     	this.scene.add( this.camera );
 
     	this.rayVector = new THREE.Vector3( 0, 0, 1 );
-    	//this.projector = new THREE.Projector();
     	this.raycaster = new THREE.Raycaster();
     	
         this.land = new THREE.Object3D();
         this.scene.add( this.land );
+        if(this.isWithFog){
+        	this.fog = new THREE.Fog( 0xFFFFFF, 1, 100 );
+        	//this.fog = new THREE.FogExp2 ( 0xFF0000, 0.01 );
+        	this.scene.fog = this.fog;
+        }
+
+        
+        
+
+
 
         this.center = new THREE.Vector3();
         this.moveCamera();
@@ -492,7 +513,7 @@ V3D.Base.prototype = {
         	this.skyCanvas = this.gradTexture([[0.51,0.49, 0.3], ['#cc7f66','#A7DCFA', 'deepskyblue']]);
         	this.skyTexture = new THREE.Texture(this.skyCanvas);
 		    this.skyTexture.needsUpdate = true;
-            this.back = new THREE.Mesh( new THREE.IcosahedronGeometry(300,1), new THREE.MeshBasicMaterial( { map:this.skyTexture, side:THREE.BackSide, depthWrite: false }  ));
+            this.back = new THREE.Mesh( new THREE.IcosahedronGeometry(300,1), new THREE.MeshBasicMaterial( { map:this.skyTexture, side:THREE.BackSide, depthWrite: false, fog:false }  ));
             this.scene.add( this.back );
             this.renderer.autoClear = false;
         } else {
@@ -526,6 +547,10 @@ V3D.Base.prototype = {
 	    
 	    start();
 	    //initCity();
+
+
+	    // load winter extra map
+		this.loadImagesPlus();
     },
 
     //----------------------------------- RENDER
@@ -677,11 +702,31 @@ V3D.Base.prototype = {
     		_this.num++; 
     		if(_this.num===1) if(hub!==null)hub.subtitle.innerHTML = "Loading textures ...";
     		
-    		if(_this.num === _this.imgSrc.length) _this.changeTextures();
+    		if(_this.num === _this.imgSrc.length){ _this.changeTextures(); _this.num=0; }
     		else _this.loadImages();
     	};
-        this.imgs[n].src = this.imgSrc[n];
-        
+        this.imgs[n].src = this.imgSrc[n];   
+    },
+
+    loadImagesPlus:function(){
+    	var _this = this;
+    	var n = this.num + 5;
+
+    	this.imgs[n] = new Image();
+    	this.imgs[n].src = this.imgSrcPlus[this.num];
+    	this.imgs[n].onload = function(){ 
+    		_this.num++;
+    		if(_this.num === _this.imgSrcPlus.length){ _this.winterMapLoaded = true; }
+    		else _this.loadImagesPlus();
+    	};
+    },
+
+    winterSwitch : function (){
+    	if(!this.isWinter && this.winterMapLoaded) this.isWinter = true;
+    	else this.isWinter = false;
+
+		this.updateBackground();
+		this.setTimeColors(this.dayTime);
     },
 
 	changeTextures : function (){
@@ -696,7 +741,7 @@ V3D.Base.prototype = {
 		this.tint(this.groundCanvas, this.imgs[0]);
 		this.tint(this.townCanvas, this.imgs[1], this.imgs[4]);
 		this.tint(this.buildingCanvas, this.imgs[2], this.imgs[3]);
-		
+
 		this.imageSrc = this.groundCanvas;
 		this.createTextures();
 	},
@@ -709,37 +754,29 @@ V3D.Base.prototype = {
 		}
 
 		this.townTexture = new THREE.Texture(this.townCanvas);
-		this.buildingTexture = new THREE.Texture(this.buildingCanvas);
-
 		this.townTexture.flipY = false;
-		this.buildingTexture.flipY = false;
-		
-        //this.townTexture.repeat.set( 1, -1 );
-		//this.townTexture.wrapS = this.townTexture.wrapT = THREE.RepeatWrapping;
 		this.townTexture.magFilter = THREE.NearestFilter;
         this.townTexture.minFilter = THREE.LinearMipMapLinearFilter;
-		
-        //this.buildingTexture.repeat.set( 1, -1 );
-		//this.buildingTexture.wrapS = this.buildingTexture.wrapT = THREE.RepeatWrapping;
-		this.buildingTexture.magFilter = THREE.NearestFilter;
-        this.buildingTexture.minFilter = THREE.LinearMipMapLinearFilter;
-
-        this.buildingTexture.needsUpdate = true;
         this.townTexture.needsUpdate = true;
 
+        this.buildingTexture = new THREE.Texture(this.buildingCanvas);
+		this.buildingTexture.flipY = false;
+		this.buildingTexture.magFilter = THREE.NearestFilter;
+        this.buildingTexture.minFilter = THREE.LinearMipMapLinearFilter;
+        this.buildingTexture.needsUpdate = true;
+        
         // materials
         
-	   
-
-	    this.townMaterial = new THREE.MeshBasicMaterial( { map: this.townTexture } );//this.townMap;
-	    this.buildingMaterial = new THREE.MeshBasicMaterial( { map: this.buildingTexture } );//this.buildingMap;
+	    this.townMaterial = new THREE.MeshBasicMaterial( { map: this.townTexture } );
+	    this.buildingMaterial = new THREE.MeshBasicMaterial( { map: this.buildingTexture } );
 
 	    if(this.isWithEnv){
 	    	this.townMaterial.envMap = this.environment;
 	    	this.buildingMaterial.envMap = this.environment;
 	    }
 
-	   /* this.townMaterial.vertexColors = THREE.VertexColors
+	    /*
+	    this.townMaterial.vertexColors = THREE.VertexColors
 	    this.townMaterial.map = null;
 
 	    this.townMaterial.vertexColors = null;
@@ -777,10 +814,44 @@ V3D.Base.prototype = {
 		if(this.dayTime==3)this.tcolor = {r:10, g: 15, b: 80, a: 0.6};
 
 		this.tint(this.skyCanvas);
-		this.tint(this.groundCanvas, this.imgs[0]);
-		this.tint(this.townCanvas, this.imgs[1], this.imgs[4]);
-		this.tint(this.buildingCanvas, this.imgs[2], this.imgs[3]);
-		
+
+		if(!this.isWinter){
+			this.tint(this.groundCanvas, this.imgs[0]);
+			this.tint(this.townCanvas, this.imgs[1], this.imgs[4]);
+			this.tint(this.buildingCanvas, this.imgs[2], this.imgs[3]);
+	    } else {
+			this.tint(this.groundCanvas, this.imgs[5]);
+			this.tint(this.townCanvas, this.imgs[6], this.imgs[4]);
+			this.tint(this.buildingCanvas, this.imgs[7], this.imgs[3]);
+		}
+
+		if(this.isWithFog){
+			if(this.isIsland){
+				if(this.isWinter){
+					if(this.dayTime==0)this.fog.color.setHex(0xAFEEEE);
+					if(this.dayTime==1)this.fog.color.setHex(0x98ABBF);
+					if(this.dayTime==2)this.fog.color.setHex(0x2B3C70);
+					if(this.dayTime==3)this.fog.color.setHex(0x4C688F);
+				}else{
+					if(this.dayTime==0)this.fog.color.setHex(0x6666e6);
+					if(this.dayTime==1)this.fog.color.setHex(0x654CB9);
+					if(this.dayTime==2)this.fog.color.setHex(0x1C206E);
+					if(this.dayTime==3)this.fog.color.setHex(0x2F328C);
+				}
+			} else {
+				if(this.isWinter){
+					if(this.dayTime==0)this.fog.color.setHex(0xE6F0FF);
+					if(this.dayTime==1)this.fog.color.setHex(0xBFACCA);
+					if(this.dayTime==2)this.fog.color.setHex(0x363C73);
+					if(this.dayTime==3)this.fog.color.setHex(0x626996);
+				}else{
+					if(this.dayTime==0)this.fog.color.setHex(0xE2946D);
+					if(this.dayTime==1)this.fog.color.setHex(0xBC6C64);
+					if(this.dayTime==2)this.fog.color.setHex(0x352A56);
+					if(this.dayTime==3)this.fog.color.setHex(0x60445C);
+				}
+			}
+		}
 		this.buildingTexture.needsUpdate = true;
         this.townTexture.needsUpdate = true;
         this.skyTexture.needsUpdate = true;
@@ -792,16 +863,15 @@ V3D.Base.prototype = {
 
     loadSea3d : function (){
     	var _this = this;
-	    var s = 1;
 	    var loader = new THREE.SEA3D( true );
-	    var basicMap = new THREE.MeshBasicMaterial( {color:0xff0000} )
+	    var basicMap = new THREE.MeshBasicMaterial( {color:0x000000} )
 	    loader.onComplete = function( e ) {
 	        var m, map;
 	        var i = loader.meshes.length;
 	        while(i--){
 	            m = loader.meshes[i];
-	            //m.material.dispose();
-	            m.material = basicMap;
+	            m.material.dispose();
+	            //m.material = basicMap;
 	            _this.meshs[m.name] = m;
 	        }
 	        _this.defineGeometry();
@@ -978,7 +1048,7 @@ V3D.Base.prototype = {
 	    		}
 
 	    		if(this.isBuffer){
-	    			g.computeVertexNormals();
+	    			//g.computeVertexNormals();
                     //g.computeTangents();
 	    			g2 = new THREE.BufferGeometry();
 	    			g2.fromGeometry(g);
@@ -1070,7 +1140,7 @@ V3D.Base.prototype = {
 	    }
 
 	    if(this.isBuffer){
-	    	g.computeVertexNormals();
+	    	//g.computeVertexNormals();
             //g.computeTangents();
 			g2 = new THREE.BufferGeometry().fromGeometry(g);
 			//g2.computeBoundingSphere();
@@ -1093,49 +1163,53 @@ V3D.Base.prototype = {
 
 
 
+    //------------------------------------ BACKGROUND MAP
+
+    updateBackground : function(){
+    	var rootColors;
+    	if(this.isWithBackground ){
+		    if(this.isIsland){
+		    	rootColors = '#6666e6';
+		    	if(this.isWinter) rootColors = '#AFEEEE';
+		    	this.skyCanvasBasic = this.gradTexture([[0.51,0.49, 0.3], [rootColors,'#BFDDFF', '#4A65FF']]);
+		    	this.skyCanvas = this.gradTexture([[0.51,0.49, 0.3], [rootColors,'#BFDDFF', '#4A65FF']]);
+		    	if(this.isWithFog){
+		    		if(this.isWinter) this.fog.color.setHex(0xAFEEEE);
+		    	    else this.fog.color.setHex(0x6666e6);
+		    	}
+		    }
+		    else{
+		    	rootColors = '#E2946D';
+		    	if(this.isWinter) rootColors = '#E6F0FF';
+		    	this.skyCanvasBasic =  this.gradTexture([[0.51,0.49, 0.3], [rootColors,'#BFDDFF', '#4A65FF']]);
+		    	this.skyCanvas = this.gradTexture([[0.51,0.49, 0.3], [rootColors,'#BFDDFF', '#4A65FF']]);
+		    	if(this.isWithFog){
+		    		if(this.isWinter) this.fog.color.setHex(0xE6F0FF);
+		    	    else this.fog.color.setHex(0xE2946D);
+		    	}
+		    }
+		    this.skyTexture = new THREE.Texture(this.skyCanvas);
+		    this.skyTexture.needsUpdate = true;
+		    this.back.material.map = this.skyTexture;
+		} else {
+			if(this.isIsland) this.renderer.setClearColor( 0x6666e6, 1 );
+			else this.renderer.setClearColor( 0xcc7f66, 1 );
+		}
+    },
+
     //------------------------------------ TERRAIN MAP
 
-
 	updateTerrain : function(island){
+
+		this.isIsland = island || false;
 
 		this.center.x = this.mapSize[0]*0.5;
 		this.center.z = this.mapSize[1]*0.5;
 
-
-
-		// background update
-		if(this.isWithBackground ){
-		    if(island>0){
-		    	this.skyCanvasBasic = this.gradTexture([[0.51,0.49, 0.3], ['#6666e6','#BFDDFF', '#4A65FF']]);
-		    	this.skyCanvas = this.gradTexture([[0.51,0.49, 0.3], ['#6666e6','#BFDDFF', '#4A65FF']]);
-		    	//this.skyTexture = new THREE.Texture(this.skyCanvas);
-		    	//this.skyTexture.needsUpdate = true;
-		    	//this.back.material.map = this.skyTexture;//this.gradTexture([[0.51,0.49, 0.3], ['#6666e6','lightskyblue', 'deepskyblue']]);
-		    }
-		    else{
-		    	this.skyCanvasBasic =  this.gradTexture([[0.51,0.49, 0.3], ['#E2946D','#BFDDFF', '#4A65FF']]);
-		    	this.skyCanvas = this.gradTexture([[0.51,0.49, 0.3], ['#E2946D','#BFDDFF', '#4A65FF']]);
-
-		     //this.back.material.map = this.gradTexture([[0.51,0.49, 0.3], ['#E2946D','lightskyblue', 'deepskyblue']]);		// cc7f66 
-		    }
-		    this.skyTexture = new THREE.Texture(this.skyCanvas);
-		    this.skyTexture.needsUpdate = true;
-		    this.back.material.map = this.skyTexture;//this.gradTexture([[0.51,0.49, 0.3], ['#6666e6','lightskyblue', 'deepskyblue']]);
-
-
-		    
-		} else {
-			if(island>0) this.renderer.setClearColor( 0x6666e6, 1 );
-			else this.renderer.setClearColor( 0xcc7f66, 1 );
-		}
+		this.updateBackground();
 
 		// create terrain if not existe
         if(this.miniTerrain.length === 0){
-        	//var matrix = new THREE.Matrix4();
-        	//var pyGeometry = this.meshs['plane'].geometry;
-        	/*var geo = new THREE.PlaneGeometry( 16, 16, 16, 16 );
-	        geo.applyMatrix(new THREE.Matrix4().makeRotationX( - Math.PI * 0.5 ));
-	        geo.computeBoundingSphere();*/
 
         	var n = 0;//, texture, mat;
         	var colorsX = [ 0x000000, 0x220000, 0x440000, 0x660000, 0x880000, 0xaa0000, 0xcc0000, 0xff0000 ];
@@ -1342,9 +1416,7 @@ V3D.Base.prototype = {
 	//------------------------------------------RAY
 
 	rayTest : function () {
-		//this.projector.unprojectVector( this.rayVector, this.camera );
 		this.rayVector.unproject( this.camera );
-		//this.raycaster.set( this.camera.position, this.rayVector.sub( this.camera.position ).normalize() );
 		this.raycaster.ray.set( this.camera.position, this.rayVector.sub( this.camera.position ).normalize() );
 
 		if ( this.land.children.length > 0 ) {
@@ -1470,7 +1542,7 @@ V3D.Base.prototype = {
 			}
 			// town building
 			if(v==8 || v==9 || v==4 || v==5 || v==7 || v==10 || v==11 || v==12){
-				this.addBaseTown(x,py,y,v, zone);
+				this.addBaseTown(x,py,y,v,zone);
 			    this.snd_layzone.play();
 			}
 
@@ -1570,11 +1642,7 @@ V3D.Base.prototype = {
 					}
 				}
 			}
-			
-
 	    }
-
-
 	},
 
 	showDestruct:function(ar){
@@ -1588,13 +1656,13 @@ V3D.Base.prototype = {
 		var layer = this.findLayer(x,z);
 		if(!this.townLists[layer]) this.townLists[layer]=[];
     	this.townLists[layer].push([x,y,z,v,zone]);
-
     	this.rebuildTownLayer(layer);
 	},
 	rebuildTownLayer : function(l){
 		if(this.townMeshs[l] !== undefined ){
+			//if(this.townMeshs[l].geometry) 
     	    this.scene.remove(this.townMeshs[l]);
-        	this.townMeshs[l].geometry.dispose();
+    	    this.townMeshs[l].geometry.dispose();
         }
         var m = new THREE.Matrix4(), ar, k, g2;
     	var g = new THREE.Geometry();
@@ -1606,10 +1674,9 @@ V3D.Base.prototype = {
 	    }
 
 	    if(this.isBuffer){
-	    	g.computeVertexNormals();
+	    	//g.computeVertexNormals();
             //g.computeTangents();
-			g2 = new THREE.BufferGeometry();
-			g2.fromGeometry(g);
+			g2 = new THREE.BufferGeometry().fromGeometry(g);
 			//g2.computeBoundingSphere();
 			g.dispose();
 			this.townMeshs[l] = new THREE.Mesh( g2, this.townMaterial );
@@ -1656,9 +1723,11 @@ V3D.Base.prototype = {
 	rebuildHouseLayer : function(l){
     	if(this.houseMeshs[l] !== undefined ){
     		if(this.houseMeshs[l] !== null ){
-	    	    this.scene.remove(this.houseMeshs[l]);
-	        	this.houseMeshs[l].geometry.dispose();
-	        	this.houseMeshs[l] = null;
+    			if(this.houseMeshs[l].geometry){
+    				this.scene.remove(this.houseMeshs[l]);
+    				this.houseMeshs[l].geometry.dispose();
+    				this.houseMeshs[l] = null;
+    			}
 	        }
 	    }
 
@@ -1675,10 +1744,9 @@ V3D.Base.prototype = {
 		    }
 
 		    if(this.isBuffer){
-		    	g.computeVertexNormals();
+		    	//g.computeVertexNormals();
                 //g.computeTangents();
-				g2 = new THREE.BufferGeometry();
-				g2.fromGeometry(g);
+				g2 = new THREE.BufferGeometry().fromGeometry(g);
 				//g2.computeBoundingSphere();
 				g.dispose();
 				this.houseMeshs[l] = new THREE.Mesh( g2, this.buildingMaterial );
@@ -1734,8 +1802,9 @@ V3D.Base.prototype = {
     },*/
     rebuildBuildingLayer : function(l){
     	if(this.buildingMeshs[l] !== undefined ){
+    		//if(this.buildingMeshs[l].geometry)
     	    this.scene.remove(this.buildingMeshs[l]);
-        	this.buildingMeshs[l].geometry.dispose();
+    	    //this.buildingMeshs[l].geometry.dispose();
         }
 
     	var m = new THREE.Matrix4(), ar, k, g2;
@@ -1767,10 +1836,9 @@ V3D.Base.prototype = {
 	    }
 
 	    if(this.isBuffer){
-	    	g.computeVertexNormals();
+	    	//g.computeVertexNormals();
             //g.computeTangents();
-			g2 = new THREE.BufferGeometry();
-			g2.fromGeometry(g);
+			g2 = new THREE.BufferGeometry().fromGeometry(g);
 			//g2.computeBoundingSphere();
 			g.dispose();
 			this.buildingMeshs[l] = new THREE.Mesh( g2, this.buildingMaterial );
@@ -1784,6 +1852,41 @@ V3D.Base.prototype = {
 	    this.tempBuildingLayers[l] = 0;
     },
 
+    //---------------------------------------------------BUILDING LISTING
+
+    saveCityBuild : function (saveCity){
+    	
+    	var l = this.nlayers;
+    	while(l--){
+    		saveCity[l]= [0,0,0];
+    		if(this.townLists[l] !== undefined ){saveCity[l][0] = this.townLists[l];}
+	    	if(this.houseLists[l] !== undefined ){saveCity[l][1] = this.houseLists[l];}
+	    	if(this.buildingLists[l] !== undefined ){saveCity[l][2] = this.buildingLists[l];}
+	    	/*
+	    	if(this.townMeshs[l] !== undefined ){saveCity[l][0] = this.townMeshs[l];}
+	    	if(this.houseMeshs[l] !== undefined ){saveCity[l][1] = this.houseMeshs[l];}
+	    	if(this.buildingMeshs[l] !== undefined ){saveCity[l][2] = this.buildingMeshs[l];}*/
+	    }
+	    //
+	   // return saveCity;
+    },
+
+    loadCityBuild : function (saveCity){
+    	saveCity = JSON.parse(saveCity);
+    	var l = this.nlayers;
+    	var ldata;
+    	while(l--){
+    		ldata = saveCity[l];
+    		if(ldata[0] !== 0 ){ this.townLists[l] = ldata[0]; this.rebuildTownLayer(l); }
+	    	if(ldata[1] !== 0 ){ this.houseLists[l] = ldata[1]; this.rebuildHouseLayer(l); }
+	    	if(ldata[2] !== 0 ){ this.buildingLists[l] = ldata[2]; this.rebuildBuildingLayer(l); }
+	    	/*
+    		if(ldata[0] !== 0 ){ this.townMeshs[l] = ldata[0]; this.rebuildTownLayer(l); }
+	    	if(ldata[1] !== 0 ){ this.houseMeshs[l] = ldata[1]; this.rebuildHouseLayer(l); }
+	    	if(ldata[2] !== 0 ){ this.buildingMeshs[l] = ldata[2]; this.rebuildBuildingLayer(l); }
+	    	*/
+    	}
+    },
 
 
 	//--------------------------------------------------- NAVIGATION
@@ -1810,6 +1913,10 @@ V3D.Base.prototype = {
 	moveCamera : function () {
 	    this.camera.position.copy(this.Orbit(this.center, this.cam.horizontal, this.cam.vertical, this.cam.distance));
 	    this.camera.lookAt(this.center);
+	    if(this.isWithFog){
+	        this.fog.far=this.cam.distance*4;
+	        if(this.fog.far<20)this.fog.far=20;
+	    }
 
 	    if(this.deepthTest){
 	    	this.topCamera.position.set(this.center.x, this.topCameraDistance, this.center.z);
@@ -1937,7 +2044,7 @@ V3D.Base.prototype = {
     	}
 	},
 
-	paintMap : function( mapSize, island, isStart) {
+	paintMap : function( mapSize, island, isStart, fullRebuild) {
 		if(!tilesData) return;
 
 		if(mapSize) this.mapSize = mapSize;
@@ -2388,19 +2495,19 @@ var HUB = { REVISION: '1' };
 
 HUB.round = [
 '<svg height="66" width="66">',
-'<circle cx="33" cy="33" r="27" stroke="rgb(0,0,0)" stroke-width="1" stroke-opacity="0.3" fill="rgb(0,0,0)" fill-opacity="0.3"/>',
+'<circle cx="33" cy="33" r="27" stroke="rgb(255,255,255)" stroke-width="1" stroke-opacity="0.0" fill="rgb(0,0,0)" fill-opacity="0.1"/>',
 '</svg>'
 ].join("\n");
 
 HUB.roundSelected = [
 '<svg height="66" width="66">',
-'<circle cx="33" cy="33" r="27" stroke="rgb(0,0,0)" stroke-width="1" stroke-opacity="0.5" fill="rgb(0,0,0)" fill-opacity="0.5"/>',
+'<circle cx="33" cy="33" r="27" stroke="rgb(255,255,255)" stroke-width="2" stroke-opacity="0.5" fill="rgb(0,0,0)" fill-opacity="0.3"/>',
 '</svg>'
 ].join("\n");
 
 HUB.roundSelect = [
 '<svg height="66" width="66">',
-'<circle cx="33" cy="33" r="30" stroke="rgb(0,0,0)" stroke-width="4" stroke-opacity="1" fill="rgb(0,0,0)" fill-opacity="0.5"/>',
+'<circle cx="33" cy="33" r="30" stroke="rgb(255,255,255)" stroke-width="4" stroke-opacity="1" fill="rgb(0,0,0)" fill-opacity="0.5"/>',
 '</svg>'
 ].join("\n");
 
@@ -2412,7 +2519,6 @@ HUB.Base = function(){
 
     this.isIntro = true;
 
-	
 	this.timer = null;
 	this.bg = 1;
 
@@ -2420,20 +2526,20 @@ HUB.Base = function(){
     this.C=null;
     this.I=null;
 
-    this.rrr= null;
+    //this.rrr= null;
 
     //this.colors = ['#ffffff', '#338099'];
-    this.colors = ['rgba(220,220,220,1)', 'rgba(0,0,0,0.2)', 'rgba(0,0,0,0.6)', 'rgba(0,0,0,0.3)', 'rgba(0,0,0,0.6)'];
+    this.colors = ['rgba(255,255,255,1)', 'rgba(0,0,0,0.2)', 'rgba(0,0,0,1)', 'rgba(0,0,0,0.5)', 'rgba(0,0,0,0.8)', 'rgba(255,255,255,0.5)'];
 
     //this.radius = "-moz-border-radius: 20px; -webkit-border-radius: 20px; border-radius: 20px;";
-    this.radius = "-moz-border-radius: 16px; -webkit-border-radius: 16px; border-radius: 16px;";
-    this.radiusL = "-moz-border-top-left-radius: 16px; -webkit-border-top-left-radius: 16px; border-top-left-radius: 16px;";
-    this.radiusL += "-moz-border-bottom-left-radius: 16px; -webkit-border-bottom-left-radius: 16px; border-bottom-left-radius: 16px;";
-    this.radiusR = "-moz-border-top-right-radius: 16px; -webkit-border-top-right-radius: 16px; border-top-right-radius: 16px;";
-    this.radiusR += "-moz-border-bottom-right-radius: 16px; -webkit-border-bottom-right-radius: 16px; border-bottom-right-radius: 16px;";
+    this.radius = "-moz-border-radius: 6px; -webkit-border-radius: 6px; border-radius: 6px;";
+    this.radiusL = "-moz-border-top-left-radius: 6px; -webkit-border-top-left-radius: 6px; border-top-left-radius: 6px;";
+    this.radiusL += "-moz-border-bottom-left-radius: 6px; -webkit-border-bottom-left-radius: 6px; border-bottom-left-radius: 6px;";
+    this.radiusR = "-moz-border-top-right-radius: 6px; -webkit-border-top-right-radius: 6px; border-top-right-radius: 6px;";
+    this.radiusR += "-moz-border-bottom-right-radius: 6px; -webkit-border-bottom-right-radius: 6px; border-bottom-right-radius: 6px;";
 
-    this.radiusB = "-moz-border-bottom-left-radius: 16px; -webkit-border-bottom-left-radius: 16px; border-bottom-left-radius: 16px;";
-    this.radiusB += "-moz-border-bottom-right-radius: 16px; -webkit-border-bottom-right-radius: 16px; border-bottom-right-radius: 16px;";
+    this.radiusB = "-moz-border-bottom-left-radius: 6px; -webkit-border-bottom-left-radius: 6px; border-bottom-left-radius: 6px;";
+    this.radiusB += "-moz-border-bottom-right-radius: 6px; -webkit-border-bottom-right-radius: 6px; border-bottom-right-radius: 6px;";
 
     this.windowsStyle = ' top:40px; left:10px; border:1px solid '+this.colors[1]+'; background:'+this.colors[3]+';';
 
@@ -2469,20 +2575,26 @@ HUB.Base.prototype = {
     intro:function(){
 
     	this.full = document.createElement('div'); 
-    	this.full.style.cssText ='position:absolute; top:0px; left:0px; width:100%; height:100%; pointer-events:none; display:block;' + this.degrade();
+    	this.full.style.cssText ='position:absolute; top:0px; left:0px; width:100%; height:100%; pointer-events:none; display:block; background:rgba(102,102,230,1); ' //+ this.degrade();
+
+        this.fullMid = document.createElement('div'); 
+        this.fullMid.style.cssText ='position:absolute; top:10px; left:50%; width:300px; height:300px; margin-left:-150px; pointer-events:none; display:block;';
+
         this.title = document.createElement('div');
         this.title.innerHTML = "3D.CITY";
-    	this.title.style.cssText = 'position:absolute; font-size:44px; top:50%; left:50%; margin-top:-30px; margin-left:-100px; width:200px; height:60px; pointer-events:none;';
+    	this.title.style.cssText = 'position:absolute; font-size:44px; top:50%; left:0; margin-top:-30px; width:300px; height:60px; pointer-events:none; text-align:center;';
         this.subtitle = document.createElement('div');
-        this.subtitle.style.cssText = 'position:absolute; font-size:14px; top:50%; left:50%; margin-top:14px; margin-left:-100px; width:200px; height:80px; pointer-events:none;font-weight:bold;';
+        this.subtitle.style.cssText = 'position:absolute; font-size:14px; top:50%; left:0; margin-top:16px; width:300px; height:80px; pointer-events:none;font-weight:bold; text-align:center;';
         this.subtitle.innerHTML = "Generating world...";
 
-        this.logo = document.getElementById('logo'); 
+        this.logo = document.getElementById('logo');
         this.logo.style.display = 'block';
-        this.full.appendChild( this.logo );
 
-    	this.full.appendChild( this.title );
-        this.full.appendChild( this.subtitle );
+        this.full.appendChild( this.fullMid );
+
+        this.fullMid.appendChild( this.logo );
+    	this.fullMid.appendChild( this.title );
+        this.fullMid.appendChild( this.subtitle );
     	this.hub.appendChild( this.full );
     },
     start:function(){
@@ -2496,15 +2608,17 @@ HUB.Base.prototype = {
        // background-image:linear-gradient(60deg, white, black);
     	if(t.bg<=0){
     		clearInterval(t.timer);
-    		t.full.removeChild(t.title);
+            t.full.removeChild(t.fullMid);
+    		t.fullMid.removeChild(t.logo);
+            t.fullMid.removeChild(t.title);
+            t.fullMid.removeChild(t.subtitle);
     		t.hub.removeChild(t.full);
     		t.initStartHub();
-
             t.isIntro = false;
     		//t.full = null;
     	}
     },
-    degrade : function(){
+    /*degrade : function(){
         var a = -160;
         var p = [0, 30, 100]
         var c0 = '#BFDDFF';
@@ -2518,33 +2632,33 @@ HUB.Base.prototype = {
             'background:linear-gradient('+a+'deg, '+c0+' '+p[0]+'%, '+c1+' '+p[1]+'%, '+c2+' '+p[2]+'%);'
         ].join("\n");
         return deg;
-    },
+    },*/
 
     //--------------------------------------start hub
 
     initStartHub : function(){
-        this.full = document.createElement('div'); 
-        //this.full.style.cssText ='position:absolute; top:30px; left:50%; margin-left:-154px; width:316px; pointer-events:none;';
-        this.full.style.cssText ='position:absolute; top:0px; left:50%; margin-left:-150px; width:300px; pointer-events:none;';
+        this.full = document.createElement('div');
+        this.full.style.cssText ='position:absolute; top:10px; left:50%; margin-left:-150px; width:300px; height:300px; pointer-events:none;';
         this.full.id = 'fullStart';
 
         this.hub.appendChild( this.full );
-        var b1 = this.addButton(this.full, 'Play Game', [276,48,40], 'position:absolute; top:20px; left:0px;');
-    	var b2 = this.addButton(this.full, 'New Map',  [120, 26, 22], 'position:absolute; top:104px; left:0px;');
-        var b3 = this.addButton(this.full, 'Height Map',  [120, 26, 22], 'position:absolute; top:104px; right:0px;');
+        var b1 = this.addButton(this.full, 'Play Game', [276,48,40], 'position:absolute; top:10px; left:0px;');
+    	var b2 = this.addButton(this.full, 'New Map',  [120, 26, 22], 'position:absolute; top:150px; left:0px;');
+        var b3 = this.addButton(this.full, 'Height Map',  [120, 26, 22], 'position:absolute; top:150px; right:0px;');
+        var b4 = this.addButton(this.full, 'Load Map',  [276, 26, 22], 'position:absolute; top:90px; left:0px;');
+        this.addSelector("DIFFICULTY", ['LOW', 'MEDIUM', 'HARD'], setDifficulty, 0);
 
         b1.addEventListener('click',  function ( e ) { e.preventDefault(); playMap(); }, false);
         b2.addEventListener('click',  function ( e ) { e.preventDefault(); newMap(); }, false);
         b3.addEventListener('click',  function ( e ) { e.preventDefault(); newHeightMap(); }, false);
-        
-        this.addSelector("LEVEL", ['LOW', 'MEDIUM', 'HARD'], setDifficulty, 0);
+        b4.addEventListener('click',  function ( e ) { e.preventDefault(); loadGame(true); }, false);
     },
 
     //--------------------------------------game hub
 
     initGameHub : function(){
         var _this = this;
-        this.removeSelector("LEVEL");
+        this.removeSelector("DIFFICULTY");
         this.clearElement('fullStart');
 
         this.toolSet = document.createElement('div');
@@ -2576,7 +2690,7 @@ HUB.Base.prototype = {
         this.toolSet.appendChild(img);
         img.style.cssText ='position:absolute; margin:0px; padding:0px; top:0px; right:0px; width:198px; height:396px; pointer-events:none;';
 
-        this.addSelector("Speed", ['II', '>', '>>', '>>>', '>>>'], setSpeed, 2, [30,30,30,30,30]);
+        this.addSelector("Speed", ['II', '>', '>>', '>>>', '>>>'], setSpeed, 2, [20,20,20,20,20]);
 
         var b1 = this.addButton(this.hub, 'Budget', [75,16,14], 'position:absolute; left:10px; top:-7px; font-weight:bold;', true);
         b1.addEventListener('click',  function ( e ) { e.preventDefault(); getBudjet(); }, false);
@@ -2584,13 +2698,13 @@ HUB.Base.prototype = {
         var b2 = this.addButton(this.hub, 'Eval', [75,16,14], 'position:absolute; left:110px; top:-7px; font-weight:bold;', true);
         b2.addEventListener('click',  function ( e ) { e.preventDefault(); getEval(); }, false);
 
-        /*
-        var b3 = this.addButton(this.hub, 'Disaster', [75,16,14], 'position:absolute; left:210px; top:-7px; font-weight:bold;', true);
-        b3.addEventListener('click',  function ( e ) { e.preventDefault();  _this.openDisaster(); }, false);
+       
+        //var b3 = this.addButton(this.hub, 'Disaster', [75,16,14], 'position:absolute; left:210px; top:-7px; font-weight:bold;', true);
+        //b3.addEventListener('click',  function ( e ) { e.preventDefault();  _this.openDisaster(); }, false);
 
         var b4 = this.addButton(this.hub, 'Exit', [75,16,14], 'position:absolute; left:310px; top:-7px; font-weight:bold;', true);
         b4.addEventListener('click',  function ( e ) { e.preventDefault();  _this.openExit();  }, false);
-        
+         /*
         var b5 = this.addButton(this.hub, 'Overlays', [75,16,14], 'position:absolute; left:410px; top:-7px; font-weight:bold;', true);
         b5.addEventListener('click',  function ( e ) { e.preventDefault();  _this.openOverlays();  }, false);
         */
@@ -2622,10 +2736,22 @@ HUB.Base.prototype = {
             this.H[i]=dd;
         }
 
+
+        var winter = document.createElement("div");
+        winter.style.cssText = "position:absolute; bottom:80px; left:25px; width:30px; height:30px; pointer-events:auto; cursor:pointer; background:rgba(0,0,0,0); ";
+        winter.style.cssText += "-moz-border-radius: 30px; -webkit-border-radius: 30px; border-radius: 30px; ";
+        this.hub.appendChild(winter);
+
+        winter.addEventListener('click',  function ( e ) { 
+            view3d.winterSwitch();
+            if(view3d.isWinter) this.style.background = 'rgba(255,255,255,0.5);';
+            else  this.style.background = 'rgba(0,0,0,0);';
+        }, false);
+
         var img2 = document.createElement("img");
         img2.src = "img/basemenu.png";
         this.hub.appendChild(img2);
-        img2.style.cssText ='position:absolute; margin:0px; padding:0px; bottom:1px; left:0px; width:800px; height:80px; pointer-events:none;';
+        img2.style.cssText ='position:absolute; margin:0px; padding:0px; bottom:0px; left:0px; width:630px; height:120px; pointer-events:none;';
 
         this.initCITYinfo();
     },
@@ -2640,16 +2766,16 @@ HUB.Base.prototype = {
     initCITYinfo : function(){
 
         this.date = document.createElement('div');
-        this.date.style.cssText = 'font-size:14px; position:absolute; width:70px; height:20px; bottom:15px; left:70px; text-align:right; font-weight:bold;';
+        this.date.style.cssText = 'font-size:14px; position:absolute; width:70px; height:19px; bottom:15px; left:65px; text-align:right; font-weight:bold;';
 
         this.money = document.createElement('div');
-        this.money.style.cssText = 'font-size:14px; position:absolute; width:70px; height:20px; bottom:15px; left:310px; text-align:right; font-weight:bold;';
+        this.money.style.cssText = 'font-size:14px; position:absolute; width:70px; height:19px; bottom:15px; left:295px; text-align:right; font-weight:bold;';
 
         this.population = document.createElement('div');
-        this.population.style.cssText = 'font-size:14px; position:absolute; width:70px; height:20px; bottom:15px; left:190px; text-align:right; font-weight:bold;';
+        this.population.style.cssText = 'font-size:14px; position:absolute; width:70px; height:19px; bottom:15px; left:180px; text-align:right; font-weight:bold;';
 
         this.score = document.createElement('div');
-        this.score.style.cssText = 'font-size:14px; position:absolute; width:70px; height:20px; bottom:15px; left:430px; text-align:right; font-weight:bold;';
+        this.score.style.cssText = 'font-size:14px; position:absolute; width:70px; height:19px; bottom:15px; left:410px; text-align:right; font-weight:bold;';
 
         this.msg = document.createElement('div');
         this.msg.style.cssText = 'font-size:14px; letter-spacing:0.02em; position:absolute; width:420px; height:20px; bottom:44px; left:76px; text-align:left; color:'+this.colors[4]+'; font-weight:bold;';
@@ -2789,18 +2915,18 @@ HUB.Base.prototype = {
             this.evaluationWindow.appendChild( this.evaltOpinion );
 
             this.evaltYes = document.createElement('div');
-            this.evaltYes.style.cssText ='position:absolute; top:46px; left:26px; width:60px; height:20px; pointer-events:none; color:#33FF33; font-size:16px; ';
+            this.evaltYes.style.cssText ='position:absolute; top:46px; left:26px; width:60px; height:20px; pointer-events:none; color:#33FF33; font-size:16px; font-weight:bold;';
             this.evaluationWindow.appendChild( this.evaltYes );
 
             this.evaltNo = document.createElement('div');
-            this.evaltNo.style.cssText ='position:absolute; top:46px; right:26px; width:60px; height:20px; pointer-events:none; color:#FF3300;  font-size:16px; ';
+            this.evaltNo.style.cssText ='position:absolute; top:46px; right:26px; width:60px; height:20px; pointer-events:none; color:#FF3300;  font-size:16px; font-weight:bold;';
             this.evaluationWindow.appendChild( this.evaltNo );
 
             this.evaltProb = document.createElement('div');
-            this.evaltProb.style.cssText ='position:absolute; top:90px; left:10px; width:180px; height:60px; pointer-events:none; color:'+this.colors[0]+'; font-size:16px; ';
+            this.evaltProb.style.cssText ='position:absolute; top:100px; left:10px; width:180px; height:60px; pointer-events:none; color:'+this.colors[0]+'; font-size:16px; ';
             this.evaluationWindow.appendChild( this.evaltProb );
 
-            this.evaltOpinion.innerHTML = "<b>Public opinion</b><br>Is the mayor doing a good job ?<br> <br> <br>What are the worst problems ?<br>"
+            this.evaltOpinion.innerHTML = "<b>Public opinion</b><br>Is the mayor doing a good job ?<br> <br> <br> <br>What are the worst problems ?<br>"
 
         } else {
             this.evaluationWindow.style.display = 'block';
@@ -2840,23 +2966,25 @@ HUB.Base.prototype = {
             bg1.addEventListener('click',  function(e){ e.preventDefault(); _this.closeExit(); }, false);
             bg2.addEventListener('click',  function(e){ e.preventDefault(); newGameMap(); }, false);
             bg3.addEventListener('click',  function(e){ e.preventDefault(); saveGame(); }, false);
-           // bg4.addEventListener('click',  function(e){ e.preventDefault(); loadGame(); }, false);
+            bg4.addEventListener('click',  function(e){ e.preventDefault(); loadGame(); }, false);
 
-            var x = document.createElement("INPUT");
+            /*var x = document.createElement("INPUT");
             x.setAttribute("id", "fileToLoad");
             x.setAttribute("type", "file");
             x.style.cssText = "pointer-events:auto; opacity:0; position:absolute; left:10px; top:130px; width:120px; height:40px; overflow:hidden;";
+            */
            // x.addEventListener( 'mouseover', function ( e ) { e.preventDefault(); bg4.style.border = '4px solid '+_this.colors[0];  bg4.style.backgroundColor = _this.colors[0]; bg4.style.color = _this.colors[1]; }, false );
+
            // x.addEventListener( 'mouseout', function ( e ) { e.preventDefault(); bg4.style.border = '4px solid '+_this.colors[1]; bg4.style.backgroundColor = _this.colors[1]; bg4.style.color = _this.colors[0];  }, false );
 
-            x.addEventListener( 'mouseover', function ( e ) { e.preventDefault();  bg4.style.backgroundColor = _this.colors[2]; }, false );
-            x.addEventListener( 'mouseout', function ( e ) { e.preventDefault();  bg4.style.backgroundColor = _this.colors[1];  }, false );
+           // x.addEventListener( 'mouseover', function ( e ) { e.preventDefault();  bg4.style.backgroundColor = _this.colors[2]; }, false );
+           // x.addEventListener( 'mouseout', function ( e ) { e.preventDefault();  bg4.style.backgroundColor = _this.colors[1];  }, false );
 
-            x.addEventListener('change', loadGame, false);
+            //x.addEventListener('change', loadGame, false);
 
 
             //"fileToLoad"
-            this.exitWindow.appendChild( x );
+            //this.exitWindow.appendChild( x );
 
         } else {
             this.exitWindow.style.display = 'block';
@@ -3091,8 +3219,8 @@ HUB.Base.prototype = {
         var _this = this;
         var cont = document.createElement('div');
         //cont.style.cssText = 'position:absolute; width:300px; height:50px; font-size:16px; top:0; left:webkit-clac(50% -150px);';
-        cont.style.cssText = 'font-size:16px; margin-top:10px; color:'+this.colors[0]+';';
-        if(type=='Speed') cont.style.cssText = 'font-size:20px; position:absolute; bottom:3px; left:540px; ';
+        cont.style.cssText = 'font-size:14px; margin-top:10px; color:'+this.colors[0]+';';
+        if(type=='Speed') cont.style.cssText = 'font-size:20px; position:absolute; bottom:8px; left:497px; ';
         else cont.innerHTML = type+"<br>";
         cont.id = type;
         var t = [];
@@ -3100,8 +3228,9 @@ HUB.Base.prototype = {
             t[i] = document.createElement( 'div' );
            // t[i].style.cssText = 'font-size:14px; border:4px solid '+this.colors[1]+'; background:'+this.colors[1]+';'
            // t[i].style.cssText +=' width:70px; height:16px; margin:4px; padding:4px; pointer-events:auto;  cursor:pointer; display:inline-block; font-weight:bold;' + this.radius;
-            t[i].style.cssText = 'font-size:14px; border:1px solid '+this.colors[1]+'; background:'+this.colors[1]+'; color:'+this.colors[0]+';';
-            t[i].style.cssText +=' width:70px; height:16px; margin:2px; padding:7px; pointer-events:auto;  cursor:pointer; display:inline-block; ';
+            t[i].style.cssText = 'font-size:14px; border:1px solid '+this.colors[5]+'; background:'+this.colors[1]+'; color:'+this.colors[0]+';';
+            if(type=='Speed')t[i].style.cssText +=' width:70px; height:16px; margin-left:2px; padding:6px; pointer-events:auto;  cursor:pointer; display:inline-block; ';
+            else t[i].style.cssText +=' width:70px; height:16px; margin:2px; padding:7px; pointer-events:auto;  cursor:pointer; display:inline-block; ';
 
             if(i==0) t[i].style.cssText += this.radiusL;
             if(i==names.length-1)t[i].style.cssText += this.radiusR;
@@ -3112,8 +3241,8 @@ HUB.Base.prototype = {
             if(type!=='Speed')t[i].textContent = names[i];
             if(i==current){
                 //t[i].style.border = '4px solid '+this.colors[0];
-                t[i].style.backgroundColor = this.colors[2];
-                //t[i].style.color = this.colors[1];
+                t[i].style.backgroundColor = this.colors[5];
+                t[i].style.color = this.colors[2];
                 t[i].className = "select";
             }
             t[i].name = i;
@@ -3122,13 +3251,13 @@ HUB.Base.prototype = {
             //t[i].addEventListener( 'mouseover', function ( e ) { e.preventDefault(); this.style.border = '4px solid '+_this.colors[0];  }, false );
             //t[i].addEventListener( 'mouseout', function ( e ) { e.preventDefault();  if(this.className == 'none')this.style.border = '4px solid '+_this.colors[1];  }, false );
 
-            t[i].addEventListener( 'mouseover', function ( e ) { e.preventDefault(); this.style.border = '1px solid '+_this.colors[2];  }, false );
-            t[i].addEventListener( 'mouseout', function ( e ) { e.preventDefault();  this.style.border = '1px solid '+_this.colors[1];  }, false );
+            t[i].addEventListener( 'mouseover', function ( e ) { e.preventDefault(); this.style.border = '1px solid '+_this.colors[0];  }, false );
+            t[i].addEventListener( 'mouseout', function ( e ) { e.preventDefault();  this.style.border = '1px solid '+_this.colors[5];  }, false );
 
             t[i].addEventListener( 'click', function ( e ) { e.preventDefault(); fun( this.name ); _this.setActiveSelector(this.name, type); }, false );
         }
         //this.hub.appendChild( cont );
-        if(type=='LEVEL'){this.full.appendChild( cont ); cont.style.position = 'absolute'; cont.style.top = '160px';cont.style.width = '300px';}
+        if(type=='DIFFICULTY'){this.full.appendChild( cont ); cont.style.position = 'absolute'; cont.style.top = '200px';cont.style.width = '300px';}
         else this.hub.appendChild( cont );
     },
 
@@ -3137,7 +3266,7 @@ HUB.Base.prototype = {
         while(h--){
             if(document.getElementById(type+h)){
                 def = document.getElementById(type+h);
-                //def.style.color = this.colors[0];
+                def.style.color = this.colors[0];
                // def.style.border = '4px solid '+_this.colors[1]; 
                 def.style.backgroundColor = this.colors[1];
                 def.className = "none";
@@ -3145,8 +3274,8 @@ HUB.Base.prototype = {
         }
         var select = document.getElementById(type+n);
         //select.style.border = '4px solid '+_this.colors[0]; 
-        select.style.backgroundColor = this.colors[2];
-        //select.style.color = this.colors[1];
+        select.style.backgroundColor = this.colors[5];
+        select.style.color = this.colors[2];
         select.className = "select";
     },
 
@@ -3221,7 +3350,7 @@ HUB.Base.prototype = {
         //var defStyle = 'font-size:'+size[2]+'px; border:4px solid '+this.colors[1]+'; background:'+this.colors[1]+'; width:'+size[0]+'px; height:'+size[1]+'px;'
         //defStyle += 'margin:4px; padding:4px; pointer-events:auto;  cursor:pointer; display:inline-block; font-weight:bold;' + this.radius;
 
-        var defStyle = 'font-size:'+size[2]+'px;  border:1px solid '+this.colors[1]+'; background:'+this.colors[1]+'; width:'+size[0]+'px; height:'+size[1]+'px; color:'+this.colors[0]+';';
+        var defStyle = 'font-size:'+size[2]+'px;  border:1px solid '+this.colors[5]+'; background:'+this.colors[1]+'; width:'+size[0]+'px; height:'+size[1]+'px; color:'+this.colors[0]+';';
         if(top)defStyle += 'margin:4px; padding:7px; pointer-events:auto;  cursor:pointer; display:inline-block; ' + this.radiusB;
         else defStyle += 'margin:4px; padding:7px; pointer-events:auto;  cursor:pointer; display:inline-block; ' + this.radius;
 
@@ -3232,9 +3361,8 @@ HUB.Base.prototype = {
        // b.addEventListener( 'mouseover', function ( e ) { e.preventDefault(); this.style.border = '4px solid '+_this.colors[0];  this.style.backgroundColor = _this.colors[0]; this.style.color = _this.colors[1]; }, false );
        // b.addEventListener( 'mouseout', function ( e ) { e.preventDefault(); this.style.border = '4px solid '+_this.colors[1]; this.style.backgroundColor = _this.colors[1]; this.style.color = _this.colors[0];  }, false );
 
-        b.addEventListener( 'mouseover', function ( e ) { e.preventDefault();  this.style.backgroundColor = _this.colors[2]; }, false );
-        b.addEventListener( 'mouseout', function ( e ) { e.preventDefault(); this.style.backgroundColor = _this.colors[1]; }, false );
-
+        b.addEventListener( 'mouseover', function ( e ) { e.preventDefault();  this.style.backgroundColor = _this.colors[5];this.style.color = _this.colors[2]; }, false );
+        b.addEventListener( 'mouseout', function ( e ) { e.preventDefault(); this.style.backgroundColor = _this.colors[1];this.style.color = _this.colors[0]; }, false );
 
         target.appendChild( b );
 
@@ -3322,46 +3450,3 @@ var ImprovedNoise = function () {
 	}
 }
 
-function saveTextAsFile(name, txt){
-	var textToWrite = txt;//document.getElementById("inputTextToSave").value;
-	var textFileAsBlob = new Blob([textToWrite], {type:'text/plain'});
-	var fileNameToSaveAs = name;//document.getElementById("inputFileNameToSaveAs").value;
-
-	var downloadLink = document.createElement("a");
-	downloadLink.download = fileNameToSaveAs;
-	downloadLink.innerHTML = "Download File";
-	if (window.webkitURL != null)
-	{
-		// Chrome allows the link to be clicked
-		// without actually adding it to the DOM.
-		downloadLink.href = window.webkitURL.createObjectURL(textFileAsBlob);
-	}
-	else
-	{
-		// Firefox requires the link to be added to the DOM
-		// before it can be clicked.
-		downloadLink.href = window.URL.createObjectURL(textFileAsBlob);
-		downloadLink.onclick = destroyClickedElement;
-		downloadLink.style.display = "none";
-		document.body.appendChild(downloadLink);
-	}
-
-	downloadLink.click();
-}
-
-function destroyClickedElement(event){
-	document.body.removeChild(event.target);
-}
-
-function loadFileAsText(){
-	var fileToLoad = document.getElementById("fileToLoad").files[0];
-
-	var fileReader = new FileReader();
-	fileReader.onload = function(fileLoadedEvent) 
-	{
-		var textFromFileLoaded = fileLoadedEvent.target.result;
-		console.log(textFromFileLoaded);
-		//document.getElementById("inputTextToSave").value = textFromFileLoaded;
-	};
-	fileReader.readAsText(fileToLoad, "UTF-8");
-}

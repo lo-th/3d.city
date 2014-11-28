@@ -302,7 +302,8 @@ var messageData = {
     TRAFFIC_JAMS: Micro.makeConstantDescriptor('Traffic jams reported'),
     TRAIN_CRASHED: Micro.makeConstantDescriptor('Train crashed'),
     VALVES_UPDATED: Micro.makeConstantDescriptor('Valves updated'),
-    WELCOME: Micro.makeConstantDescriptor('Welcome to 3D city')
+    WELCOME: Micro.makeConstantDescriptor('Welcome to 3D city'),
+    WELCOMEBACK: Micro.makeConstantDescriptor('Welcome back to your 3D city')
 };
 
 var Messages = Object.defineProperties({}, messageData);
@@ -389,6 +390,7 @@ Micro.Text = function(){
     neutralMessages[Messages.ROAD_NEEDS_FUNDING] = 'Roads deteriorating, due to lack of funds';
     neutralMessages[Messages.POLICE_NEEDS_FUNDING] = 'Police departments need funding';
     neutralMessages[Messages.WELCOME] = 'Welcome to 3D City';
+    neutralMessages[Messages.WELCOMEBACK] = 'Welcome to 3D City';
 
     var badMessages = {};
     badMessages[Messages.BLACKOUTS_REPORTED] = 'Brownouts, build another Power Plant';
@@ -438,6 +440,11 @@ Micro.Text = function(){
 };
 
 var TXT = new Micro.Text();
+Micro.CensusProps = ['resPop', 'comPop', 'indPop', 'crimeRamp', 'pollutionRamp', 'landValueAverage', 'pollutionAverage',
+               'crimeAverage', 'totalPop', 'resHist10', 'resHist120', 'comHist10', 'comHist120', 'indHist10',
+               'indHist120', 'crimeHist10', 'crimeHist120', 'moneyHist10', 'moneyHist120', 'pollutionHist10',
+               'pollutionHist120'];
+
 Micro.Census = function(){
     this.clearCensus();
     this.changed = false;
@@ -468,6 +475,14 @@ Micro.Census = function(){
 
 Micro.Census.prototype = {
     constructor: Micro.Census,
+    save : function(saveData) {
+        for (var i = 0, l = Micro.CensusProps.length; i < l; i++)
+            saveData[Micro.CensusProps[i]] = this[Micro.CensusProps[i]];
+    },
+    load : function(saveData) {
+        for (var i = 0, l = Micro.CensusProps.length; i < l; i++)
+            this[Micro.CensusProps[i]] = saveData[Micro.CensusProps[i]];
+    },
     clearCensus : function() {
         this.poweredZoneCount = 0;
         this.unpoweredZoneCount = 0;
@@ -532,6 +547,7 @@ Micro.Census.prototype = {
 Micro.PROBLEMS = ['CVP_CRIME', 'CVP_POLLUTION', 'CVP_HOUSING', 'CVP_TAXES', 'CVP_TRAFFIC', 'CVP_UNEMPLOYMENT', 'CVP_FIRE'];
 Micro.NUMPROBLEMS = Micro.PROBLEMS.length;
 Micro.NUM_COMPLAINTS = 4;
+Micro.EvalProps = ['cityClass', 'cityScore'];
 
 Micro.getTrafficAverage = function(blockMaps) {
     var trafficDensityMap = blockMaps.trafficDensityMap;
@@ -578,6 +594,14 @@ Micro.Evaluation = function (gameLevel, SIM) {
 
 Micro.Evaluation.prototype = {
     constructor: Micro.Evaluation,
+    save : function(saveData) {
+        for (var i = 0, l = Micro.EvalProps.length; i < l; i++)
+            saveData[Micro.EvalProps[i]] = this[Micro.EvalProps[i]];
+    },
+    load : function(saveData) {
+        for (var i = 0, l = Micro.EvalProps.length; i < l; i++)
+            this[Micro.EvalProps[i]] = saveData[Micro.EvalProps[i]];
+    },
     cityEvaluation : function() {
         var census = this.sim.census;
 
@@ -806,6 +830,9 @@ Micro.Evaluation.prototype = {
     }
 }
 
+Micro.BudgetProps = ['autoBudget', 'totalFunds', 'policePercent', 'roadPercent', 'firePercent', 'roadSpend',
+                   'policeSpend', 'fireSpend', 'roadMaintenanceBudget', 'policeMaintenanceBudget',
+                   'fireMaintenanceBudget', 'cityTax', 'roadEffect', 'policeEffect', 'fireEffect'];
 Micro.Budget = function () {
     this.roadEffect = Micro.MAX_ROAD_EFFECT;
     this.policeEffect = Micro.MAX_POLICESTATION_EFFECT;
@@ -837,6 +864,16 @@ Micro.Budget = function () {
 Micro.Budget.prototype = {
 
     constructor: Micro.Budget,
+    save : function(saveData) {
+        for (var i = 0, l = Micro.BudgetProps.length; i < l; i++)
+            saveData[Micro.BudgetProps[i]] = this[Micro.BudgetProps[i]];
+    },
+    load : function(saveData, messageManager) {
+        for (var i = 0, l = Micro.BudgetProps.length; i < l; i++)
+            this[Micro.BudgetProps[i]] = saveData[Micro.BudgetProps[i]];
+        if (messageManager !== undefined) messageManager.sendMessage(Messages.AUTOBUDGET_CHANGED, this.autoBudget);
+        if (messageManager !== undefined) messageManager.sendMessage(Messages.FUNDS_CHANGED, this.totalFunds);
+    },
 
     doBudget : function(messageManager) {
        return this.doBudgetNow(false, messageManager);
@@ -983,6 +1020,18 @@ Micro.Valves = function () {
 
 Micro.Valves.prototype = {
     constructor: Micro.Valves,
+    save : function(saveData) {
+        saveData.resValve = this.resValve;
+        saveData.comValve = this.comValve;
+        saveData.indValve = this.indValve;
+    },
+    load : function(saveData, messageManager) {
+        this.resValve = saveData.resValve;
+        this.comValve = saveData.comValve;
+        this.indValve = saveData.indValve;
+        this.changed = true;
+        if (messageManager !== undefined) messageManager.sendMessage(Messages.VALVES_UPDATED);
+    },
     setValves : function(gameLevel, census, budget) {
         var resPopDenom = 8;
         var birthRate = 0.02;
@@ -1535,7 +1584,7 @@ Micro.PositionMaker = function (width, height) {
     };
     return Position;
 };
-Micro.saveProps = ['cityCentreX', 'cityCentreY', 'pollutionMaxX', 'pollutionMaxY', 'width', 'height'];
+Micro.GameMapProps = ['cityCentreX', 'cityCentreY', 'pollutionMaxX', 'pollutionMaxY', 'width', 'height'];
 
 Micro.GameMap = function(width, height, defaultValue){
 
@@ -1602,18 +1651,41 @@ Micro.GameMap.prototype = {
     constructor: Micro.GameMap,
 
     save : function(saveData) {
-        for (var i = 0, l = Micro.saveProps.length; i < l; i++)
-            saveData[Micro.saveProps[i]] = this[Micro.saveProps[i]];
+        for (var i = 0, l = Micro.GameMapProps.length; i < l; i++)
+            saveData[Micro.GameMapProps[i]] = this[Micro.GameMapProps[i]];
 
-        saveData.map = this._data.map(function(t) { return {value: t.getRawValue()};});
+        //saveData.map = this.data.map(function(t) { return {value: t.getRawValue()};});
+        saveData.map = this.data.map(function(t) { return {value: t.getRawValue()}; });
+        //saveData.map = [];//this.tilesData.map(function(t) { return {value: t };});
+        saveData.tileValue = [];
+        var j = this.fsize;
+        while(j--) saveData.tileValue[j] = this.tilesData[j];
+        
+        /*saveData.power = [];
+        var j = this.fsize;
+        while(j--){
+           // saveData.map[j] = this.tilesData[j];
+            saveData.power[j] = this.powerData[j];
+        }*/
     },
 
     load : function(saveData) {
-        for (var i = 0, l = Micro.saveProps.length; i < l; i++) 
-            this[Micro.saveProps[i]] = saveData[Micro.saveProps[i]];
-        var map = saveData.map;
-        for (i = 0, l = map.length; i < l; i++)
+        for (var i = 0, l = Micro.GameMapProps.length; i < l; i++) this[Micro.GameMapProps[i]] = saveData[Micro.GameMapProps[i]];
+        var map = saveData.map, value;
+        for (i = 0, l = map.length; i < l; i++){
             this.setTileValue(i % this.width, Math.floor(i / this.width), map[i].value);
+            //value = map[i] || 0;
+            //this.setTileValue(i % this.width, Math.floor(i / this.width), map[i]);
+            //this.data[i].setValue(value);
+            //this.tilesData[i] = value;
+        }
+
+        for (i = 0, l = saveData.tileValue.length; i < l; i++) this.tilesData[i] = saveData.tileValue[i];
+        /*
+        var power = saveData.power;
+        for (i = 0, l = power.length; i < l; i++) this.powerData[i] = power[i];
+        */
+
     },
 
     /*genFull : function(){
@@ -1717,7 +1789,8 @@ Micro.GameMap.prototype = {
                     continue;
                 }
                 var tileIndex =  b + a * width;
-                result[(a - y) * w + (b - x)] = this._data[tileIndex].getRawValue();
+                //result[(a - y) * w + (b - x)] = this._data[tileIndex].getRawValue();
+                result[(a - y) * w + (b - x)] = this.data[tileIndex].getRawValue();
             }
         }
 
@@ -2959,7 +3032,6 @@ Micro.fireAnalysis = function(blockMaps) {
 
     blockMaps.fireStationEffectMap = new Micro.BlockMap(fireStationMap);
 };
-
 Micro.Residential = function (SIM) {
     var sim = SIM;
     // Residential tiles have 'populations' of 16, 24, 32 or 40
@@ -3002,7 +3074,11 @@ Micro.Residential = function (SIM) {
 
         var score = 1;
         for (var i = 0; i < 4; i++) {
-            tileValue = map.getTileValue(x + xDelta[i], y + yDelta[i]);
+            //tileValue = map.getTileValue(x + xDelta[i], y + yDelta[i]);
+            var edgeX = x + xDelta[i];
+            var edgeY = y + yDelta[i];
+            if (edgeX < 0 || edgeX >= map.width || edgeY < 0 || edgeY >= map.height) continue;
+            tileValue = map.getTileValue(edgeX, edgeY);
             if (tileValue !== Tile.DIRT && tileValue <= Tile.LASTROAD) score += 1;
         }
         return score;
@@ -3029,10 +3105,12 @@ Micro.Residential = function (SIM) {
                 best = i;
             }
         }
-        if (best > 0) map.setTo(x + xDelta[best], y + yDelta[best], new Micro.Tile(Tile.HOUSE + Random.getRandom(2) + lpValue * 3, Tile.BLBNCNBIT)); 
+        if (best > 0 && map.testBounds(x + xDelta[best], y + yDelta[best])) 
+            map.setTo(x + xDelta[best], y + yDelta[best], new Micro.Tile(Tile.HOUSE + Random.getRandom(2) + lpValue * 3, Tile.BLBNCNBIT));
+            //map.setTile(x + xDelta[best], y + yDelta[best], new Micro.Tile(Tile.HOUSE + Random.getRandom(2) + lpValue * 3, Tile.BLBNCNBIT));
     };
-
-    var doMigrationIn = function(map, x, y, blockMaps, population, lpValue, zonePower) {
+//var growZone
+    var growZone = function(map, x, y, blockMaps, population, lpValue, zonePower) {
         var pollution = blockMaps.pollutionDensityMap.worldGet(x, y);
         // Cough! Too polluted noone wants to move here!
         if (pollution > 128) return;
@@ -3063,7 +3141,7 @@ Micro.Residential = function (SIM) {
 
     var freeZone = [0, 3, 6, 1, 4, 7, 2, 5, 8];
 
-    var doMigrationOut = function(map, x, y, blockMaps, population, lpValue, zonePower) {
+    var degradeZone = function(map, x, y, blockMaps, population, lpValue, zonePower) {
         var xx, yy;
         if (population === 0) return;
 
@@ -3105,6 +3183,7 @@ Micro.Residential = function (SIM) {
         } 
     };
 
+    // Returns a score for the zone in the range -3000 - 3000
     var evalResidential = function(blockMaps, x, y, traffic) {
         if (traffic === Micro.NO_ROAD_FOUND) return -3000;
         var landValue = blockMaps.landValueMap.worldGet(x, y);
@@ -3116,56 +3195,79 @@ Micro.Residential = function (SIM) {
 
 
     var residentialFound = function(map, x, y, simData) {
+        // If we choose to grow this zone, we will fill it with an index in the range 0-3 reflecting the land value and
+        // pollution scores (higher is better). This is then used to select the variant to build
         var lpValue;
-
+        // Notify the census
         sim.census.resZonePop += 1;
+        // Also, notify the census of our population
         var tileValue = map.getTileValue(x, y);
-        var tilePop = getZonePopulation(map, x, y, tileValue);
-        sim.census.resPop += tilePop;
+        var population = getZonePopulation(map, x, y, tileValue);
+        sim.census.resPop += population;
         var zonePower = map.getTile(x, y).isPowered();
 
         var trafficOK = Micro.ROUTE_FOUND;
-        if (tilePop > Random.getRandom(35)) {
-            // Try driving from residential to commercial
+        // Occasionally check to see if the zone is connected to the road network. The chance of this happening increases
+        // as the zone's population increases. Note: we will never execute this conditional if the zone is empty, as zero
+        // will never be be bigger than any of the values Random will generate
+        if (population > Random.getRandom(35)) {
+            // Is there a route from this zone to a commercial zone?
             trafficOK = sim.traffic.makeTraffic(x, y, sim.blockMaps, Micro.isCommercial);
 
-            // Trigger outward migration if not connected to road network
+            // If we're not connected to the road network, then going shopping will be a pain. Move out.
             if (trafficOK ===  Micro.NO_ROAD_FOUND) {
                 lpValue = Micro.getLandPollutionValue(sim.blockMaps, x, y);
-                doMigrationOut(map, x, y, sim.blockMaps, tilePop, lpValue, zonePower);
+                degradeZone(map, x, y, sim.blockMaps, population, lpValue, zonePower);
                 return;
             }
         }
 
-        // Occasionally assess and perhaps modify the tile (or always in the
-        // case of an empty zone)
+        // Sometimes we will randomly choose to assess this block. However, always assess it if it's empty or contains only single houses.
         if (tileValue === Tile.FREEZ || Random.getChance(7)) {
+            // First, score the individual zone. This is a value in the range -3000 to 3000
+            // Then take into account global demand for housing.
             var locationScore = evalResidential(sim.blockMaps, x, y, trafficOK);
             var zoneScore = sim.valves.resValve + locationScore;
-
+            // Naturally unpowered zones should be penalized
             if (!zonePower) zoneScore = -500;
+            // The residential demand valve has range -2000 to 2000, so taking into account the "no traffic" and
+            // "no power" modifiers above, zoneScore must lie in the range -5500 - 5000.
 
-            if (trafficOK && (zoneScore > -350) && ((zoneScore - 26380) > Random.getRandom16Signed())) {
-                // If we have a reasonable population and this zone is empty, make a
-                // hospital
-                if (tilePop === 0 && ((Random.getRandom16() & 3) === 0)) {
+            // Now, observe that if there are no roads we will never take this branch, as zoneScore will equal -3000.
+            // Given the comment above about ranges for zoneScore, zoneScore - 26380, will be in the range -26729 to -20880.
+            // getRandom16() has a range of 65536 possible numbers, in the range -32768 to 32767.
+            // Of those, 9.2% will always be below zoneScore and hence will always take this branch and trigger zone growth.
+            // 81.8% of them are above -20880, so nearly 82% of the time, we will never take this branch.
+            // Thus, there's approximately a 9% chance that the value will be in the range, and we *might* grow.
+            //if (trafficOK && (zoneScore > -350) && ((zoneScore - 26380) > Random.getRandom16Signed())) {
+            if (zoneScore > -350 && (zoneScore - 26380) > Random.getRandom16Signed()) {
+                // If this zone is empty, and residential demand is strong, we might make a hospital
+                //if (population === 0 && ((Random.getRandom16() & 3) === 0)) {
+                if (population === 0 && Random.getChance(3)) {
                     makeHospital(map, x, y, simData, zonePower);
                     return;
                 }
-
+                // Get an index in the range 0-3 scoring the land desirability and pollution, and grow the zone to the next
+                // population rank
                 lpValue = Micro.getLandPollutionValue(sim.blockMaps, x, y);
-                doMigrationIn(map, x, y, sim.blockMaps, tilePop, lpValue, zonePower);
+                growZone(map, x, y, sim.blockMaps, population, lpValue, zonePower);
                 return;
             }
-
+            // Again, given the above, zoneScore + 26380 must lie in the range 20880 - 26030.
+            // There is a 10.2% chance of getRandom16() always yielding a number > 27994 which would take this branch.
+            // There is a 89.7% chance of the number being below 20880 thus never triggering this branch, which leaves a
+            // 0.1% chance of this branch being conditional on zoneScore.
             if (zoneScore < 350 && ((zoneScore + 26380) < Random.getRandom16Signed())) {
+                // Get an index in the range 0-3 scoring the land desirability and pollution, and degrade to the next
+                // lower ranked zone
                 lpValue = Micro.getLandPollutionValue(sim.blockMaps, x, y);
-                doMigrationOut(map, x, y, sim.blockMaps, tilePop, lpValue, zonePower);
+                degradeZone(map, x, y, sim.blockMaps, population, lpValue, zonePower);
             }
         }
     };
 
     var makeHospital = function(map, x, y, simData, zonePower) {
+        // We only build a hospital if the population requires it
         if (sim.census.needHospital > 0) {
             Micro.putZone(map, x, y, Tile.HOSPITAL, zonePower);
             sim.census.needHospital = 0;
@@ -3175,8 +3277,10 @@ Micro.Residential = function (SIM) {
 
     var hospitalFound = function(map, x, y, simData) {
         sim.census.hospitalPop += 1;
+        // Degrade to an empty zone if a hospital is no longer sustainable
         if (sim.census.needHospital === -1) {
-            if (Random.getRandom(20) === 0) Micro.putZone(map, x, y, Tile.FREEZ);
+            if (Random.getRandom(20) === 0) //Micro.putZone(map, x, y, Tile.FREEZ);
+                Micro.putZone(map, x, y, Tile.FREEZ, map.getTile(x, y).isPowered());
         }
     };
 
@@ -5766,7 +5870,9 @@ Micro.PowerManager.prototype = {
         var dX = [-1, 2, 1, 2];
         var dY = [-1, -1, 0, 0];
 
-        if(!this.sim.is3D) for (var i = 0; i < 4; i++) map.addTileFlags(x + dX[i], y + dY[i], Tile.ANIMBIT); 
+        // Ensure animation bits set   no animation for 3d
+        if(!this.sim.is3D) 
+            for (var i = 0; i < 4; i++) map.addTileFlags(x + dX[i], y + dY[i], Tile.ANIMBIT); 
     },
     nuclearPowerFound : function(map, x, y, simData) {
         var meltdownTable = [30000, 20000, 10000];
@@ -5781,7 +5887,8 @@ Micro.PowerManager.prototype = {
         //console.log(x, y, new map.Position(x, y))
 
         // Ensure animation bits set   no animation for 3d
-        if(!this.sim.is3D) for (var i = 0; i < 4; i++)  map.addTileFlags(x, y, Tile.ANIMBIT | Tile.CONDBIT | Tile.POWERBIT | Tile.BURNBIT);
+        if(!this.sim.is3D) 
+            for (var i = 0; i < 4; i++)  map.addTileFlags(x, y, Tile.ANIMBIT | Tile.CONDBIT | Tile.POWERBIT | Tile.BURNBIT);
     },
     registerHandlers : function(mapScanner, repairManager) {
         mapScanner.addAction(Tile.POWERPLANT, this.coalPowerFound.bind(this));
@@ -6610,10 +6717,11 @@ Micro.BlockMap.prototype = {
 
 
 var Residential, Commercial, Industrial, Transport, Road, EmergencyServices, MiscTiles, Stadia;
+Micro.savePropsVar = ['cityTime'];
 
-Micro.Simulation = function(gameMap, gameLevel, speed, is3D) {
+Micro.Simulation = function(gameMap, gameLevel, speed, is3D, savedGame) {
     if (gameLevel !== Micro.LEVEL_EASY && gameLevel !== Micro.LEVEL_MED && gameLevel !== Micro.LEVEL_HARD) throw new Error('Invalid level!');
-    if (speed !== Micro.SPEED_PAUSED && speed !== Micro.SPEED_SLOW && speed !== Micro.SPEED_MED && speed !== Micro.SPEED_FAST) throw new Error('Invalid speed!');
+   // if (speed !== Micro.SPEED_PAUSED && speed !== Micro.SPEED_SLOW && speed !== Micro.SPEED_MED && speed !== Micro.SPEED_FAST) throw new Error('Invalid speed!');
 
     this.map = gameMap;
     this.gameLevel = gameLevel;
@@ -6621,7 +6729,7 @@ Micro.Simulation = function(gameMap, gameLevel, speed, is3D) {
     this.div = this.map.width / 8;
 
     this.is3D = is3D || false;
-    this.needPower = [];
+    //this.needPower = [];
 
     this.speed = speed;
     this.speedCycle = 0;
@@ -6666,18 +6774,55 @@ Micro.Simulation = function(gameMap, gameLevel, speed, is3D) {
         pollutionDensityMap: new Micro.BlockMap(this.map.width, this.map.height, 2, 0),
         populationDensityMap: new Micro.BlockMap(this.map.width, this.map.height, 2, 0),
         rateOfGrowthMap: new Micro.BlockMap(this.map.width, this.map.height, 8, 0),
+
+        terrainDensityMap: new Micro.BlockMap(this.map.width, this.map.height, 4, 0),
+        trafficDensityMap: new Micro.BlockMap(this.map.width, this.map.height, 2, 0),
+
         tempMap1: new Micro.BlockMap(this.map.width, this.map.height, 2, 0),
         tempMap2: new Micro.BlockMap(this.map.width, this.map.height, 2, 0),
-        tempMap3: new Micro.BlockMap(this.map.width, this.map.height, 4, 0),
-        terrainDensityMap: new Micro.BlockMap(this.map.width, this.map.height, 4, 0),
-        trafficDensityMap: new Micro.BlockMap(this.map.width, this.map.height, 2, 0)
+        tempMap3: new Micro.BlockMap(this.map.width, this.map.height, 4, 0)
+        
     };
+
+    this.clearCensus();
+
+    if (savedGame) {
+        this.load(savedGame);
+        //this.cityPopLast = savedGame.totalPop;      
+    } else {
+        this.budget.setFunds(20000);
+        this.census.totalPop = 1;
+    }
 
     this.init();
 }
 
 Micro.Simulation.prototype = {
     constructor: Micro.Simulation,
+
+    save : function(saveData) {
+        for (var i = 0, l = Micro.savePropsVar.length; i < l; i++)
+            saveData[Micro.savePropsVar[i]] = this[Micro.savePropsVar[i]];
+
+        this.map.save(saveData);
+        this.evaluation.save(saveData);
+        this.valves.save(saveData);
+        this.budget.save(saveData);
+        this.census.save(saveData);
+    },
+    load : function(saveData) {
+        //console.log(saveData)
+        this.messageManager.clear();
+        for (var i = 0, l = Micro.savePropsVar.length; i < l; i++)
+            this[Micro.savePropsVar[i]] = saveData[Micro.savePropsVar[i]];
+
+        //this.map.load(saveData);
+        this.evaluation.load(saveData);
+        this.valves.load(saveData, this.messageManager);
+        this.budget.load(saveData, this.messageManager);
+        this.census.load(saveData);
+    },
+
     setSpeed : function(s) {
         if (s!== Micro.SPEED_PAUSED && s!== Micro.SPEED_SLOW && s!== Micro.SPEED_MED &&  s!== Micro.SPEED_FAST) throw new Error('Invalid speed!');
         this.speed = s;
@@ -6737,7 +6882,7 @@ Micro.Simulation.prototype = {
         Stadia.registerHandlers(this.mapScanner, this.repairManager);
         Transport.registerHandlers(this.mapScanner, this.repairManager);
 
-        this.budget.setFunds(20000);
+        //this.budget.setFunds(20000);
         
 
         //var simData = this._constructSimData();
@@ -6751,7 +6896,9 @@ Micro.Simulation.prototype = {
         Micro.crimeScan(this.census, this.blockMaps);
         Micro.populationDensityScan(this.map, this.blockMaps);
         Micro.fireAnalysis(this.blockMaps);
-        this.census.totalPop = 1;
+        //this.census.totalPop = 1;
+
+       // if (savedGame) this.load(savedGame);
     },
     /*simulate : function() {
         var speedIndex = this.speed - 1;
