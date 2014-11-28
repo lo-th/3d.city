@@ -1,4 +1,11 @@
-
+/* micropolisJS. Adapted by Graeme McCutcheon from Micropolis.
+ *
+ * This code is released under the GNU GPL v3, with some additional terms.
+ * Please see the files LICENSE and COPYING for details. Alternatively,
+ * consult http://micropolisjs.graememcc.co.uk/LICENSE and
+ * http://micropolisjs.graememcc.co.uk/COPYING
+ *
+ */
 Micro.BuildingTool = function(cost, centreTile, map, size, animated) {
     Micro.BaseToolConnector.call( this );
     this.init(cost, map, false);

@@ -1,4 +1,11 @@
-
+/* micropolisJS. Adapted by Graeme McCutcheon from Micropolis.
+ *
+ * This code is released under the GNU GPL v3, with some additional terms.
+ * Please see the files LICENSE and COPYING for details. Alternatively,
+ * consult http://micropolisjs.graememcc.co.uk/LICENSE and
+ * http://micropolisjs.graememcc.co.uk/COPYING
+ *
+ */
 Micro.SMOOTH_NEIGHBOURS_THEN_BLOCK = 0;
 Micro.SMOOTH_ALL_THEN_CLAMP = 1;
 
