@@ -3,7 +3,7 @@
 
 3d city builder [LAUNCH](http://lo-th.github.io/3d.city/index.html)<br>
 
-Start with the excelent port of Micropolis by [graememcc](https://github.com/graememcc/micropolisJS) <br>
+Start with the excelent port of Micropolis by [graememcc](https://github.com/graememcc/micropolisJS) : micropolisJS<br>
 I remove all thirdparty library and optimize, compact the code.
 
 The goal is create full 3d city builder. All game simulation in a worker,<br>
