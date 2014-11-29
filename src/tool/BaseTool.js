@@ -6,6 +6,7 @@
  * http://micropolisjs.graememcc.co.uk/COPYING
  *
  */
+
 Micro.BaseTool = function(){
     this.TOOLRESULT_OK = 0;
     this.TOOLRESULT_FAILED = 1;
@@ -30,7 +31,7 @@ Micro.BaseTool.prototype = {
     clear : function() {
         this._applicationCost = 0;
         this._worldEffects.clear();
-        this.result = null;
+        //this.result = null;
     },
     addCost : function(cost) {
         this._applicationCost += cost;
@@ -46,16 +47,17 @@ Micro.BaseTool.prototype = {
             }
         }
     },
-    apply : function(budget, messageManager) {
+    apply : function(budget) {//, messageManager) {
         this._worldEffects.apply();
-        budget.spend(this._applicationCost, messageManager);
-        messageManager.sendMessage(Messages.DID_TOOL);
+        budget.spend(this._applicationCost);//, messageManager);
+        //messageManager.sendMessage(Messages.DID_TOOL);
         this.clear();
     },
     modifyIfEnoughFunding : function(budget, messageManager) {
-        if (this.result !== this.TOOLRESULT_OK) return false;
-        if (budget.totalFunds < this._applicationCost) { this.result = this.TOOLRESULT_NO_MONEY; return false; }
-        this.apply.call(this, budget, messageManager);
+        if (this.result !== this.TOOLRESULT_OK) { this.clear(); return false; }
+        if (budget.totalFunds < this._applicationCost) { this.result = this.TOOLRESULT_NO_MONEY; this.clear(); return false; }
+        this.apply.call(this, budget);//, messageManager);
+        this.clear();
         return true;
     },
     setAutoBulldoze: function(value) {

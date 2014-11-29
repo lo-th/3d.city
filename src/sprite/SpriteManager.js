@@ -6,6 +6,7 @@
  * http://micropolisjs.graememcc.co.uk/COPYING
  *
  */
+
 Micro.SpriteManager = function (map, SIM) {
     this.sim = SIM;
     this.spriteList = [];
@@ -155,8 +156,8 @@ Micro.SpriteManager.prototype = {
         for (var i = 0, l = this.spriteList.length; i < l; i++) {
           sprite = this.spriteList[i];
           if (sprite.type === Micro.SPRITE_SHIP && sprite.frame !== 0) {
-            var sprDist = Micro.absoluteValue(sprite.x - pixelX) + Micro.absoluteValue(sprite.y - pixelY);
-
+            //var sprDist = Micro.absoluteValue(sprite.x - pixelX) + Micro.absoluteValue(sprite.y - pixelY);
+            var sprDist = Math.abs(sprite.x - pixelX) + Math.abs(sprite.y - pixelY);
             dist = Math.min(dist, sprDist);
           }
         }

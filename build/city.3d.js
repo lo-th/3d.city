@@ -1,3 +1,11 @@
+/* micropolisJS. Adapted by Graeme McCutcheon from Micropolis.
+ *
+ * This code is released under the GNU GPL v3, with some additional terms.
+ * Please see the files LICENSE and COPYING for details. Alternatively,
+ * consult http://micropolisjs.graememcc.co.uk/LICENSE and
+ * http://micropolisjs.graememcc.co.uk/COPYING
+ *
+ */
 var Micro = {};
 //Game
 /*Micro.nextFrame = window.requestAnimationFrame ||
@@ -165,6 +173,15 @@ Micro.KEY = 'micropolisJSGame';
 ///Micro.canStore = window.localStorage;
 
 //Micro.localStorage = null;
+/* micropolisJS. Adapted by Graeme McCutcheon from Micropolis.
+ *
+ * This code is released under the GNU GPL v3, with some additional terms.
+ * Please see the files LICENSE and COPYING for details. Alternatively,
+ * consult http://micropolisjs.graememcc.co.uk/LICENSE and
+ * http://micropolisjs.graememcc.co.uk/COPYING
+ *
+ */
+ 
 Micro.Random = function(){}
 
 Micro.Random.prototype = {
@@ -193,7 +210,14 @@ Micro.Random.prototype = {
 
 var Random = new Micro.Random();
 
-
+/* micropolisJS. Adapted by Graeme McCutcheon from Micropolis.
+ *
+ * This code is released under the GNU GPL v3, with some additional terms.
+ * Please see the files LICENSE and COPYING for details. Alternatively,
+ * consult http://micropolisjs.graememcc.co.uk/LICENSE and
+ * http://micropolisjs.graememcc.co.uk/COPYING
+ *
+ */
 Micro.Direction = function(){};
 
 Micro.Direction.prototype = {
@@ -249,6 +273,14 @@ Micro.Direction.prototype = {
 
 var Direction = new Micro.Direction();
 
+/* micropolisJS. Adapted by Graeme McCutcheon from Micropolis.
+ *
+ * This code is released under the GNU GPL v3, with some additional terms.
+ * Please see the files LICENSE and COPYING for details. Alternatively,
+ * consult http://micropolisjs.graememcc.co.uk/LICENSE and
+ * http://micropolisjs.graememcc.co.uk/COPYING
+ *
+ */
 var messageData = {
     AUTOBUDGET_CHANGED: Micro.makeConstantDescriptor('Autobudget changed'),
     BUDGET_NEEDED: Micro.makeConstantDescriptor('User needs to budget'),
@@ -307,6 +339,14 @@ var messageData = {
 };
 
 var Messages = Object.defineProperties({}, messageData);
+/* micropolisJS. Adapted by Graeme McCutcheon from Micropolis.
+ *
+ * This code is released under the GNU GPL v3, with some additional terms.
+ * Please see the files LICENSE and COPYING for details. Alternatively,
+ * consult http://micropolisjs.graememcc.co.uk/LICENSE and
+ * http://micropolisjs.graememcc.co.uk/COPYING
+ *
+ */
 Micro.MessageManager = function(){
     this.data = [];
 }
@@ -324,7 +364,15 @@ Micro.MessageManager.prototype = {
 }
 
 
-
+/* micropolisJS. Adapted by Graeme McCutcheon from Micropolis.
+ *
+ * This code is released under the GNU GPL v3, with some additional terms.
+ * Please see the files LICENSE and COPYING for details. Alternatively,
+ * consult http://micropolisjs.graememcc.co.uk/LICENSE and
+ * http://micropolisjs.graememcc.co.uk/COPYING
+ *
+ */
+ 
 Micro.Text = function(){
     // TODO Some kind of rudimentary L20N based on navigator.language?
 
@@ -440,6 +488,14 @@ Micro.Text = function(){
 };
 
 var TXT = new Micro.Text();
+/* micropolisJS. Adapted by Graeme McCutcheon from Micropolis.
+ *
+ * This code is released under the GNU GPL v3, with some additional terms.
+ * Please see the files LICENSE and COPYING for details. Alternatively,
+ * consult http://micropolisjs.graememcc.co.uk/LICENSE and
+ * http://micropolisjs.graememcc.co.uk/COPYING
+ *
+ */
 Micro.CensusProps = ['resPop', 'comPop', 'indPop', 'crimeRamp', 'pollutionRamp', 'landValueAverage', 'pollutionAverage',
                'crimeAverage', 'totalPop', 'resHist10', 'resHist120', 'comHist10', 'comHist120', 'indHist10',
                'indHist120', 'crimeHist10', 'crimeHist120', 'moneyHist10', 'moneyHist120', 'pollutionHist10',
@@ -544,6 +600,14 @@ Micro.Census.prototype = {
     }
 }
 
+/* micropolisJS. Adapted by Graeme McCutcheon from Micropolis.
+ *
+ * This code is released under the GNU GPL v3, with some additional terms.
+ * Please see the files LICENSE and COPYING for details. Alternatively,
+ * consult http://micropolisjs.graememcc.co.uk/LICENSE and
+ * http://micropolisjs.graememcc.co.uk/COPYING
+ *
+ */
 Micro.PROBLEMS = ['CVP_CRIME', 'CVP_POLLUTION', 'CVP_HOUSING', 'CVP_TAXES', 'CVP_TRAFFIC', 'CVP_UNEMPLOYMENT', 'CVP_FIRE'];
 Micro.NUMPROBLEMS = Micro.PROBLEMS.length;
 Micro.NUM_COMPLAINTS = 4;
@@ -830,6 +894,14 @@ Micro.Evaluation.prototype = {
     }
 }
 
+/* micropolisJS. Adapted by Graeme McCutcheon from Micropolis.
+ *
+ * This code is released under the GNU GPL v3, with some additional terms.
+ * Please see the files LICENSE and COPYING for details. Alternatively,
+ * consult http://micropolisjs.graememcc.co.uk/LICENSE and
+ * http://micropolisjs.graememcc.co.uk/COPYING
+ *
+ */
 Micro.BudgetProps = ['autoBudget', 'totalFunds', 'policePercent', 'roadPercent', 'firePercent', 'roadSpend',
                    'policeSpend', 'fireSpend', 'roadMaintenanceBudget', 'policeMaintenanceBudget',
                    'fireMaintenanceBudget', 'cityTax', 'roadEffect', 'policeEffect', 'fireEffect'];
@@ -1008,6 +1080,15 @@ Micro.Budget.prototype = {
 
 }
 
+/* micropolisJS. Adapted by Graeme McCutcheon from Micropolis.
+ *
+ * This code is released under the GNU GPL v3, with some additional terms.
+ * Please see the files LICENSE and COPYING for details. Alternatively,
+ * consult http://micropolisjs.graememcc.co.uk/LICENSE and
+ * http://micropolisjs.graememcc.co.uk/COPYING
+ *
+ */
+ 
 Micro.Valves = function () {
     this.changed = false;
     this.resValve = 0;
@@ -1102,6 +1183,14 @@ Micro.Valves.prototype = {
     }
 }
 
+/* micropolisJS. Adapted by Graeme McCutcheon from Micropolis.
+ *
+ * This code is released under the GNU GPL v3, with some additional terms.
+ * Please see the files LICENSE and COPYING for details. Alternatively,
+ * consult http://micropolisjs.graememcc.co.uk/LICENSE and
+ * http://micropolisjs.graememcc.co.uk/COPYING
+ *
+ */
 Micro.Tile = function(tileValue, bitMask){
     if (!(this instanceof Micro.Tile)) return new Micro.Tile();
     if (arguments.length && (typeof(tileValue) !== 'number' || (arguments.length > 1 && typeof(bitMask) !== 'number') || tileValue < 0)) throw new Error('Invalid parameter');
@@ -1507,7 +1596,14 @@ Tile.CHURCH7LAST    = 1018;
 Tile.TILE_COUNT     = 1024;
 Tile.TILE_INVALID   = -1; // Invalid tile (not used in the world map).
 Tile.MIN_SIZE = 16; // Minimum size of tile in pixels
-
+/* micropolisJS. Adapted by Graeme McCutcheon from Micropolis.
+ *
+ * This code is released under the GNU GPL v3, with some additional terms.
+ * Please see the files LICENSE and COPYING for details. Alternatively,
+ * consult http://micropolisjs.graememcc.co.uk/LICENSE and
+ * http://micropolisjs.graememcc.co.uk/COPYING
+ *
+ */
 Micro.PositionMaker = function (width, height) {
     if (arguments.length < 2 || typeof(width) !== 'number' || typeof(height) !== 'number' || width < 0 || height < 0) throw new Error('Invalid parameter');
 
@@ -1584,6 +1680,14 @@ Micro.PositionMaker = function (width, height) {
     };
     return Position;
 };
+/* micropolisJS. Adapted by Graeme McCutcheon from Micropolis.
+ *
+ * This code is released under the GNU GPL v3, with some additional terms.
+ * Please see the files LICENSE and COPYING for details. Alternatively,
+ * consult http://micropolisjs.graememcc.co.uk/LICENSE and
+ * http://micropolisjs.graememcc.co.uk/COPYING
+ *
+ */
 Micro.GameMapProps = ['cityCentreX', 'cityCentreY', 'pollutionMaxX', 'pollutionMaxY', 'width', 'height'];
 
 Micro.GameMap = function(width, height, defaultValue){
@@ -1911,7 +2015,14 @@ Micro.GameMap.prototype = {
     }
 }
 
-
+/* micropolisJS. Adapted by Graeme McCutcheon from Micropolis.
+ *
+ * This code is released under the GNU GPL v3, with some additional terms.
+ * Please see the files LICENSE and COPYING for details. Alternatively,
+ * consult http://micropolisjs.graememcc.co.uk/LICENSE and
+ * http://micropolisjs.graememcc.co.uk/COPYING
+ *
+ */
 Micro.TERRAIN_CREATE_ISLAND = 0;
 Micro.TERRAIN_TREE_LEVEL = -1;
 Micro.TERRAIN_LAKE_LEVEL = -1;
@@ -2326,7 +2437,14 @@ Micro.generateMap.prototype = {
         }
     }
 }
-
+/* micropolisJS. Adapted by Graeme McCutcheon from Micropolis.
+ *
+ * This code is released under the GNU GPL v3, with some additional terms.
+ * Please see the files LICENSE and COPYING for details. Alternatively,
+ * consult http://micropolisjs.graememcc.co.uk/LICENSE and
+ * http://micropolisjs.graememcc.co.uk/COPYING
+ *
+ */
 Micro.unwrapTile = function(f) {
     return function(tile) {
         if (tile instanceof Micro.Tile) tile = tile.getValue();
@@ -2349,7 +2467,8 @@ Micro.isIndustrial = Micro.unwrapTile(function(tile) { return tile >= Tile.INDBA
 Micro.isManualExplosion = Micro.unwrapTile(function(tile) { return tile >= Tile.TINYEXP && tile <= Tile.LASTTINYEXP; });
 Micro.isRail = Micro.unwrapTile(function(tile) { return tile >= Tile.RAILBASE && tile < Tile.RESBASE; });
 Micro.isResidential = Micro.unwrapTile(function(tile) { return tile >= Tile.RESBASE && tile < Tile.HOSPITALBASE; });
-Micro.isRoad = Micro.unwrapTile(function(tile) { return tile >= Tile.ROADBASE && tile <= Tile.POWERBASE; });
+//Micro.isRoad = Micro.unwrapTile(function(tile) { return tile >= Tile.ROADBASE && tile <= Tile.POWERBASE; });
+Micro.isRoad = Micro.unwrapTile(function(tile) { return tile >= Tile.ROADBASE && tile < Tile.POWERBASE; });
 Micro.normalizeRoad = Micro.unwrapTile(function(tile) { return (tile >= Tile.ROADBASE && tile <= Tile.LASTROAD + 1) ? (tile & 15) + 64 : tile; });
 
 Micro.isCommercialZone = function(tile) { return tile.isZone() && Micro.isCommercial(tile); };
@@ -2358,7 +2477,14 @@ Micro.isResidentialZone = function(tile) { return tile.isZone() && Micro.isResid
 Micro.randomFire = function() { return new Micro.Tile(Tile.FIRE + (Random.getRandom16() & 3), Tile.ANIMBIT); };
 Micro.randomRubble = function() {  return new Micro.Tile(Tile.RUBBLE + (Random.getRandom16() & 3), Tile.BULLBIT); };
 Micro.HOSPITAL = function() { };
-
+/* micropolisJS. Adapted by Graeme McCutcheon from Micropolis.
+ *
+ * This code is released under the GNU GPL v3, with some additional terms.
+ * Please see the files LICENSE and COPYING for details. Alternatively,
+ * consult http://micropolisjs.graememcc.co.uk/LICENSE and
+ * http://micropolisjs.graememcc.co.uk/COPYING
+ *
+ */
 Micro.checkBigZone = function(tileValue) {
     var result;
 
@@ -2483,7 +2609,14 @@ Micro.putZone = function(map, x, y, centreTile, isPowered) {
     map.addTileFlags(x, y, Tile.BULLBIT);
     if (isPowered) map.addTileFlags(x, y, Tile.POWERBIT);
 };
-
+/* micropolisJS. Adapted by Graeme McCutcheon from Micropolis.
+ *
+ * This code is released under the GNU GPL v3, with some additional terms.
+ * Please see the files LICENSE and COPYING for details. Alternatively,
+ * consult http://micropolisjs.graememcc.co.uk/LICENSE and
+ * http://micropolisjs.graememcc.co.uk/COPYING
+ *
+ */
 Micro.pixToWorld = function(p) {
     return p >> 4;
 };
@@ -2586,7 +2719,14 @@ Micro.getDistance = function(x1, y1, x2, y2) {
 Micro.checkSpriteCollision = function(s1, s2) {
     return s1.frame !== 0 && s2.frame !== 0 && Micro.getDistance(s1.x, s1.y, s2.x, s2.y) < 30;
 };
-
+/* micropolisJS. Adapted by Graeme McCutcheon from Micropolis.
+ *
+ * This code is released under the GNU GPL v3, with some additional terms.
+ * Please see the files LICENSE and COPYING for details. Alternatively,
+ * consult http://micropolisjs.graememcc.co.uk/LICENSE and
+ * http://micropolisjs.graememcc.co.uk/COPYING
+ *
+ */
 Micro.SMOOTH_NEIGHBOURS_THEN_BLOCK = 0;
 Micro.SMOOTH_ALL_THEN_CLAMP = 1;
 
@@ -3032,6 +3172,14 @@ Micro.fireAnalysis = function(blockMaps) {
 
     blockMaps.fireStationEffectMap = new Micro.BlockMap(fireStationMap);
 };
+/* micropolisJS. Adapted by Graeme McCutcheon from Micropolis.
+ *
+ * This code is released under the GNU GPL v3, with some additional terms.
+ * Please see the files LICENSE and COPYING for details. Alternatively,
+ * consult http://micropolisjs.graememcc.co.uk/LICENSE and
+ * http://micropolisjs.graememcc.co.uk/COPYING
+ *
+ */
 Micro.Residential = function (SIM) {
     var sim = SIM;
     // Residential tiles have 'populations' of 16, 24, 32 or 40
@@ -3293,7 +3441,14 @@ Micro.Residential = function (SIM) {
         getZonePopulation:getZonePopulation
     };
 };
-
+/* micropolisJS. Adapted by Graeme McCutcheon from Micropolis.
+ *
+ * This code is released under the GNU GPL v3, with some additional terms.
+ * Please see the files LICENSE and COPYING for details. Alternatively,
+ * consult http://micropolisjs.graememcc.co.uk/LICENSE and
+ * http://micropolisjs.graememcc.co.uk/COPYING
+ *
+ */
 Micro.Commercial = function (SIM) {
     var sim = SIM;
     // Commercial tiles have 'populations' from 1 to 5,
@@ -3389,7 +3544,14 @@ Micro.Commercial = function (SIM) {
         getZonePopulation: getZonePopulation
     }
 };
-
+/* micropolisJS. Adapted by Graeme McCutcheon from Micropolis.
+ *
+ * This code is released under the GNU GPL v3, with some additional terms.
+ * Please see the files LICENSE and COPYING for details. Alternatively,
+ * consult http://micropolisjs.graememcc.co.uk/LICENSE and
+ * http://micropolisjs.graememcc.co.uk/COPYING
+ *
+ */
 Micro.Industrial = function (SIM) {
     var sim = SIM;
     // Industrial tiles have 'populations' from 1 to 4,
@@ -3496,7 +3658,14 @@ Micro.Industrial = function (SIM) {
         getZonePopulation: getZonePopulation
     };
 };
-
+/* micropolisJS. Adapted by Graeme McCutcheon from Micropolis.
+ *
+ * This code is released under the GNU GPL v3, with some additional terms.
+ * Please see the files LICENSE and COPYING for details. Alternatively,
+ * consult http://micropolisjs.graememcc.co.uk/LICENSE and
+ * http://micropolisjs.graememcc.co.uk/COPYING
+ *
+ */
 Micro.MiscTiles = function (SIM) {
     var sim = SIM;
     var xDelta = [-1,  0,  1,  0 ];
@@ -3561,7 +3730,14 @@ Micro.MiscTiles = function (SIM) {
         }
     };
 };
-
+/* micropolisJS. Adapted by Graeme McCutcheon from Micropolis.
+ *
+ * This code is released under the GNU GPL v3, with some additional terms.
+ * Please see the files LICENSE and COPYING for details. Alternatively,
+ * consult http://micropolisjs.graememcc.co.uk/LICENSE and
+ * http://micropolisjs.graememcc.co.uk/COPYING
+ *
+ */
 Micro.Road = function (SIM) {
     var sim = SIM;
 
@@ -3570,7 +3746,7 @@ Micro.Road = function (SIM) {
             var x = origX + xDelta[i];
             var y = origY + yDelta[i];
             if (map.testBounds(x, y)) {
-                if (map.getTileValue(x, y) === (oldTiles[i] & Tile.BIT_MASK)) map.setTileValue(newTiles[i]);
+                if (map.getTileValue(x, y) === (oldTiles[i] & Tile.BIT_MASK)) map.setTileValue(x, y, newTiles[i]);//map.setTileValue(newTiles[i]);
             }
         }
     }
@@ -3581,7 +3757,7 @@ Micro.Road = function (SIM) {
             var y = origY + yDelta[i];
             if (map.testBounds(x, y)) {
                 var tileValue = map.getTileValue(x, y);
-                if (tileValue === Tile.CHANNEL || (tileValue & 15) === (oldTiles[i] & 15)) map.setTileValue(newTiles[i]);
+                if (tileValue === Tile.CHANNEL || (tileValue & 15) === (oldTiles[i] & 15)) map.setTileValue(x, y, newTiles[i]);//map.setTileValue(newTiles[i]);
             }
        }
     }
@@ -3634,7 +3810,8 @@ Micro.Road = function (SIM) {
                 if (y > 0) {
                     if (map.getTileValue(x, y - 1) === Tile.CHANNEL) {
                             // We have a closed horizontal bridge. Open it.
-                            openBridge(map, x, y, horizontalDeltaX, horizontalDeltaY, openVertical, closeVertical);
+                            //openBridge(map, x, y, horizontalDeltaX, horizontalDeltaY, openVertical, closeVertical);
+                            openBridge(map, x, y, horizontalDeltaX, horizontalDeltaY, closeHorizontal, openHorizontal);
                         return true;
                     }
                 }
@@ -3672,7 +3849,8 @@ Micro.Road = function (SIM) {
             // The comment in the original Micropolis code states bridges count for 4
             // However, with the increment above, it's actually 5. Bug?
             sim.census.roadTotal += 4;
-            if (doBridge(map, x, y, tileValue, null)) return;
+            //if (doBridge(map, x, y, tileValue, null)) return;
+            if (doBridge(map, x, y, tileValue, simData)) return;
         }
 
         // Examine traffic density, and modify tile to represent last scanned traffic
@@ -3709,7 +3887,14 @@ Micro.Road = function (SIM) {
         }
     }
 };
-
+/* micropolisJS. Adapted by Graeme McCutcheon from Micropolis.
+ *
+ * This code is released under the GNU GPL v3, with some additional terms.
+ * Please see the files LICENSE and COPYING for details. Alternatively,
+ * consult http://micropolisjs.graememcc.co.uk/LICENSE and
+ * http://micropolisjs.graememcc.co.uk/COPYING
+ *
+ */
 Micro.Stadia = function (SIM) {
     var sim = SIM;
     var emptyStadiumFound = function(map, x, y, simData) {
@@ -3744,7 +3929,14 @@ Micro.Stadia = function (SIM) {
         }
     }
 };
-
+/* micropolisJS. Adapted by Graeme McCutcheon from Micropolis.
+ *
+ * This code is released under the GNU GPL v3, with some additional terms.
+ * Please see the files LICENSE and COPYING for details. Alternatively,
+ * consult http://micropolisjs.graememcc.co.uk/LICENSE and
+ * http://micropolisjs.graememcc.co.uk/COPYING
+ *
+ */
 Micro.EmergencyServices = function (SIM) {
     var sim = SIM;
 
@@ -3776,7 +3968,14 @@ Micro.EmergencyServices = function (SIM) {
         }
     }
 };
-
+/* micropolisJS. Adapted by Graeme McCutcheon from Micropolis.
+ *
+ * This code is released under the GNU GPL v3, with some additional terms.
+ * Please see the files LICENSE and COPYING for details. Alternatively,
+ * consult http://micropolisjs.graememcc.co.uk/LICENSE and
+ * http://micropolisjs.graememcc.co.uk/COPYING
+ *
+ */
 Micro.Transport = function (SIM) {
     var sim = SIM;
 
@@ -3836,7 +4035,14 @@ Micro.Transport = function (SIM) {
         }
     }
 };
-
+/* micropolisJS. Adapted by Graeme McCutcheon from Micropolis.
+ *
+ * This code is released under the GNU GPL v3, with some additional terms.
+ * Please see the files LICENSE and COPYING for details. Alternatively,
+ * consult http://micropolisjs.graememcc.co.uk/LICENSE and
+ * http://micropolisjs.graememcc.co.uk/COPYING
+ *
+ */
 Micro.toKey = function(x, y) {
     return [x, y].join(',');
 };
@@ -3880,6 +4086,14 @@ Micro.WorldEffects.prototype = {
         }
     }
 };
+/* micropolisJS. Adapted by Graeme McCutcheon from Micropolis.
+ *
+ * This code is released under the GNU GPL v3, with some additional terms.
+ * Please see the files LICENSE and COPYING for details. Alternatively,
+ * consult http://micropolisjs.graememcc.co.uk/LICENSE and
+ * http://micropolisjs.graememcc.co.uk/COPYING
+ *
+ */
 
 Micro.BaseTool = function(){
     this.TOOLRESULT_OK = 0;
@@ -3905,7 +4119,7 @@ Micro.BaseTool.prototype = {
     clear : function() {
         this._applicationCost = 0;
         this._worldEffects.clear();
-        this.result = null;
+        //this.result = null;
     },
     addCost : function(cost) {
         this._applicationCost += cost;
@@ -3921,16 +4135,17 @@ Micro.BaseTool.prototype = {
             }
         }
     },
-    apply : function(budget, messageManager) {
+    apply : function(budget) {//, messageManager) {
         this._worldEffects.apply();
-        budget.spend(this._applicationCost, messageManager);
-        messageManager.sendMessage(Messages.DID_TOOL);
+        budget.spend(this._applicationCost);//, messageManager);
+        //messageManager.sendMessage(Messages.DID_TOOL);
         this.clear();
     },
     modifyIfEnoughFunding : function(budget, messageManager) {
-        if (this.result !== this.TOOLRESULT_OK) return false;
-        if (budget.totalFunds < this._applicationCost) { this.result = this.TOOLRESULT_NO_MONEY; return false; }
-        this.apply.call(this, budget, messageManager);
+        if (this.result !== this.TOOLRESULT_OK) { this.clear(); return false; }
+        if (budget.totalFunds < this._applicationCost) { this.result = this.TOOLRESULT_NO_MONEY; this.clear(); return false; }
+        this.apply.call(this, budget);//, messageManager);
+        this.clear();
         return true;
     },
     setAutoBulldoze: function(value) {
@@ -3938,6 +4153,15 @@ Micro.BaseTool.prototype = {
     }
 };
 
+/* micropolisJS. Adapted by Graeme McCutcheon from Micropolis.
+ *
+ * This code is released under the GNU GPL v3, with some additional terms.
+ * Please see the files LICENSE and COPYING for details. Alternatively,
+ * consult http://micropolisjs.graememcc.co.uk/LICENSE and
+ * http://micropolisjs.graememcc.co.uk/COPYING
+ *
+ */
+ 
 Micro.RoadTable = [
     Tile.ROADS, Tile.ROADS2, Tile.ROADS, Tile.ROADS3,
     Tile.ROADS2, Tile.ROADS2, Tile.ROADS4, Tile.ROADS8,
@@ -4083,7 +4307,15 @@ Micro.BaseToolConnector.prototype.checkBorder = function(x, y, size) {
     for (i = 0; i < size; i++) this.fixZone(x + size, y + i);
 }
 
-
+/* micropolisJS. Adapted by Graeme McCutcheon from Micropolis.
+ *
+ * This code is released under the GNU GPL v3, with some additional terms.
+ * Please see the files LICENSE and COPYING for details. Alternatively,
+ * consult http://micropolisjs.graememcc.co.uk/LICENSE and
+ * http://micropolisjs.graememcc.co.uk/COPYING
+ *
+ */
+ 
 Micro.ParkTool = function (map) {
     Micro.BaseTool.call( this );
     this.init(10, map, true);
@@ -4111,7 +4343,14 @@ Micro.ParkTool.prototype.doTool = function(x, y, messageManager, blockMaps) {
     this.addCost(10);
     this.result = this.TOOLRESULT_OK;
 };
-
+/* micropolisJS. Adapted by Graeme McCutcheon from Micropolis.
+ *
+ * This code is released under the GNU GPL v3, with some additional terms.
+ * Please see the files LICENSE and COPYING for details. Alternatively,
+ * consult http://micropolisjs.graememcc.co.uk/LICENSE and
+ * http://micropolisjs.graememcc.co.uk/COPYING
+ *
+ */
 Micro.BulldozerTool = function (map) {
     Micro.BaseTool.call( this );
     this.init(10, map, true);
@@ -4223,7 +4462,14 @@ Micro.BulldozerTool.prototype.doTool = function(x, y, messageManager, blockMaps)
 
     this.result = toolResult;
 };
-
+/* micropolisJS. Adapted by Graeme McCutcheon from Micropolis.
+ *
+ * This code is released under the GNU GPL v3, with some additional terms.
+ * Please see the files LICENSE and COPYING for details. Alternatively,
+ * consult http://micropolisjs.graememcc.co.uk/LICENSE and
+ * http://micropolisjs.graememcc.co.uk/COPYING
+ *
+ */
 Micro.BuildingTool = function(cost, centreTile, map, size, animated) {
     Micro.BaseToolConnector.call( this );
     this.init(cost, map, false);
@@ -4305,7 +4551,14 @@ Micro.BuildingTool.prototype.buildBuilding = function(x, y) {
 Micro.BuildingTool.prototype.doTool = function(x, y, messageManager, blockMaps) {
     this.result = this.buildBuilding(x, y);
 };
-
+/* micropolisJS. Adapted by Graeme McCutcheon from Micropolis.
+ *
+ * This code is released under the GNU GPL v3, with some additional terms.
+ * Please see the files LICENSE and COPYING for details. Alternatively,
+ * consult http://micropolisjs.graememcc.co.uk/LICENSE and
+ * http://micropolisjs.graememcc.co.uk/COPYING
+ *
+ */
 Micro.RailTool = function (map) {
     Micro.BaseToolConnector.call( this );
     this.init(20, map, true, true);
@@ -4377,10 +4630,19 @@ Micro.RailTool.prototype.doTool = function(x, y, messageManager, blockMaps) {
     this.result = this.layRail(x, y);
 };
 
+/* micropolisJS. Adapted by Graeme McCutcheon from Micropolis.
+ *
+ * This code is released under the GNU GPL v3, with some additional terms.
+ * Please see the files LICENSE and COPYING for details. Alternatively,
+ * consult http://micropolisjs.graememcc.co.uk/LICENSE and
+ * http://micropolisjs.graememcc.co.uk/COPYING
+ *
+ */
 
 Micro.WireTool = function (map) {
     Micro.BaseToolConnector.call( this );
-    this.init(20, map, true, true);
+    //this.init(20, map, true, true);
+    this.init(5, map, true, true);
 }
 
 Micro.WireTool.prototype = Object.create( Micro.BaseToolConnector.prototype );
@@ -4457,7 +4719,14 @@ Micro.WireTool.prototype.doTool = function(x, y, messageManager, blockMaps) {
     this.result = this.layWire(x, y);
 };
 
-
+/* micropolisJS. Adapted by Graeme McCutcheon from Micropolis.
+ *
+ * This code is released under the GNU GPL v3, with some additional terms.
+ * Please see the files LICENSE and COPYING for details. Alternatively,
+ * consult http://micropolisjs.graememcc.co.uk/LICENSE and
+ * http://micropolisjs.graememcc.co.uk/COPYING
+ *
+ */
 Micro.RoadTool = function (map) {
     Micro.BaseToolConnector.call( this );
     this.init(10, map, true, true);
@@ -4529,7 +4798,14 @@ Micro.RoadTool.prototype.layRoad = function(x, y) {
 Micro.RoadTool.prototype.doTool = function(x, y, messageManager, blockMaps) {
     this.result = this.layRoad(x, y);
 };
-
+/* micropolisJS. Adapted by Graeme McCutcheon from Micropolis.
+ *
+ * This code is released under the GNU GPL v3, with some additional terms.
+ * Please see the files LICENSE and COPYING for details. Alternatively,
+ * consult http://micropolisjs.graememcc.co.uk/LICENSE and
+ * http://micropolisjs.graememcc.co.uk/COPYING
+ *
+ */
 Micro.QueryTool = function (map) {
     Micro.BaseTool.call( this );
     this.init(0, map, false, false);
@@ -4665,7 +4941,14 @@ Micro.QueryTool.prototype.doTool = function(x, y, messageManager, blockMaps) {
 
     this.result = this.TOOLRESULT_OK;
 };
-
+/* micropolisJS. Adapted by Graeme McCutcheon from Micropolis.
+ *
+ * This code is released under the GNU GPL v3, with some additional terms.
+ * Please see the files LICENSE and COPYING for details. Alternatively,
+ * consult http://micropolisjs.graememcc.co.uk/LICENSE and
+ * http://micropolisjs.graememcc.co.uk/COPYING
+ *
+ */
 Micro.GameTools = function (map) {
     return {
         airport: new Micro.BuildingTool(10000, Tile.AIRPORT, map, 6, false),
@@ -4686,7 +4969,14 @@ Micro.GameTools = function (map) {
         wire: new Micro.WireTool(map),
     };
 };
-
+/* micropolisJS. Adapted by Graeme McCutcheon from Micropolis.
+ *
+ * This code is released under the GNU GPL v3, with some additional terms.
+ * Please see the files LICENSE and COPYING for details. Alternatively,
+ * consult http://micropolisjs.graememcc.co.uk/LICENSE and
+ * http://micropolisjs.graememcc.co.uk/COPYING
+ *
+ */
 Micro.BaseSprite = function(){}
 
 Micro.BaseSprite.prototype = {
@@ -4721,7 +5011,14 @@ Micro.BaseSprite.prototype = {
         return x < 0 || y < 0 || x >= this.map.width || y >= this.map.height;
     }
 }
-
+/* micropolisJS. Adapted by Graeme McCutcheon from Micropolis.
+ *
+ * This code is released under the GNU GPL v3, with some additional terms.
+ * Please see the files LICENSE and COPYING for details. Alternatively,
+ * consult http://micropolisjs.graememcc.co.uk/LICENSE and
+ * http://micropolisjs.graememcc.co.uk/COPYING
+ *
+ */
  Micro.TrainSprite = function(map, spriteManager, x, y) {
     Micro.BaseSprite.call( this );
     this.init(Micro.SPRITE_TRAIN, map, spriteManager, x, y);
@@ -4860,7 +5157,14 @@ Micro.TrainSprite.prototype = Object.create( Micro.BaseSprite.prototype );
 //return TrainSprite;
 //});
 
-
+/* micropolisJS. Adapted by Graeme McCutcheon from Micropolis.
+ *
+ * This code is released under the GNU GPL v3, with some additional terms.
+ * Please see the files LICENSE and COPYING for details. Alternatively,
+ * consult http://micropolisjs.graememcc.co.uk/LICENSE and
+ * http://micropolisjs.graememcc.co.uk/COPYING
+ *
+ */
 Micro.AirplaneSprite = function(map, spriteManager, x, y) {
   Micro.BaseSprite.call( this );
     this.init(Micro.SPRITE_AIRPLANE, map, spriteManager, x, y);
@@ -4957,7 +5261,14 @@ Micro.AirplaneSprite.prototype.explodeSprite = function(messageManager) {
 
 */
 
-
+/* micropolisJS. Adapted by Graeme McCutcheon from Micropolis.
+ *
+ * This code is released under the GNU GPL v3, with some additional terms.
+ * Please see the files LICENSE and COPYING for details. Alternatively,
+ * consult http://micropolisjs.graememcc.co.uk/LICENSE and
+ * http://micropolisjs.graememcc.co.uk/COPYING
+ *
+ */
 Micro.BoatSprite = function(map, spriteManager, x, y) {
   Micro.BaseSprite.call( this );
     this.init(Micro.SPRITE_SHIP, map, spriteManager, x, y);
@@ -5108,7 +5419,14 @@ Micro.BoatSprite.prototype.oppositeAndUnderwater = function(tileValue, oldDir, n
   return BoatSprite;
 });*/
 
-
+/* micropolisJS. Adapted by Graeme McCutcheon from Micropolis.
+ *
+ * This code is released under the GNU GPL v3, with some additional terms.
+ * Please see the files LICENSE and COPYING for details. Alternatively,
+ * consult http://micropolisjs.graememcc.co.uk/LICENSE and
+ * http://micropolisjs.graememcc.co.uk/COPYING
+ *
+ */
 Micro.CopterSprite = function (map, spriteManager, x, y) {
   Micro.BaseSprite.call( this );
     this.init(Micro.SPRITE_HELICOPTER, map, spriteManager, x, y);
@@ -5208,7 +5526,14 @@ Micro.CopterSprite.prototype.explodeSprite = function(messageManager) {
   return CopterSprite;
 });
 */
-
+/* micropolisJS. Adapted by Graeme McCutcheon from Micropolis.
+ *
+ * This code is released under the GNU GPL v3, with some additional terms.
+ * Please see the files LICENSE and COPYING for details. Alternatively,
+ * consult http://micropolisjs.graememcc.co.uk/LICENSE and
+ * http://micropolisjs.graememcc.co.uk/COPYING
+ *
+ */
  Micro.ExplosionSprite = function (map, spriteManager, x, y) {
   Micro.BaseSprite.call( this );
     this.init(Micro.SPRITE_EXPLOSION, map, spriteManager, x, y);
@@ -5277,7 +5602,14 @@ Micro.ExplosionSprite.prototype = Object.create( Micro.BaseSprite.prototype );
   return ExplosionSprite;
 });
 */
-
+/* micropolisJS. Adapted by Graeme McCutcheon from Micropolis.
+ *
+ * This code is released under the GNU GPL v3, with some additional terms.
+ * Please see the files LICENSE and COPYING for details. Alternatively,
+ * consult http://micropolisjs.graememcc.co.uk/LICENSE and
+ * http://micropolisjs.graememcc.co.uk/COPYING
+ *
+ */
 Micro.MonsterSprite = function (map, spriteManager, x, y) {
   Micro.BaseSprite.call( this );
     this.init(Micro.SPRITE_MONSTER, map, spriteManager, x, y);
@@ -5430,7 +5762,14 @@ Micro.MonsterSprite.prototype.move = function(spriteCycle, messageManager, disas
   return MonsterSprite;
 });
 */
-
+/* micropolisJS. Adapted by Graeme McCutcheon from Micropolis.
+ *
+ * This code is released under the GNU GPL v3, with some additional terms.
+ * Please see the files LICENSE and COPYING for details. Alternatively,
+ * consult http://micropolisjs.graememcc.co.uk/LICENSE and
+ * http://micropolisjs.graememcc.co.uk/COPYING
+ *
+ */
  Micro.TornadoSprite = function (map, spriteManager, x, y) {
   Micro.BaseSprite.call( this );
     this.init(Micro.SPRITE_TORNADO, map, spriteManager, x, y);
@@ -5511,6 +5850,14 @@ Micro.TornadoSprite.prototype.move = function(spriteCycle, messageManager, disas
   return TornadoSprite;
 });
 */
+/* micropolisJS. Adapted by Graeme McCutcheon from Micropolis.
+ *
+ * This code is released under the GNU GPL v3, with some additional terms.
+ * Please see the files LICENSE and COPYING for details. Alternatively,
+ * consult http://micropolisjs.graememcc.co.uk/LICENSE and
+ * http://micropolisjs.graememcc.co.uk/COPYING
+ *
+ */
 
 Micro.SpriteManager = function (map, SIM) {
     this.sim = SIM;
@@ -5661,8 +6008,8 @@ Micro.SpriteManager.prototype = {
         for (var i = 0, l = this.spriteList.length; i < l; i++) {
           sprite = this.spriteList[i];
           if (sprite.type === Micro.SPRITE_SHIP && sprite.frame !== 0) {
-            var sprDist = Micro.absoluteValue(sprite.x - pixelX) + Micro.absoluteValue(sprite.y - pixelY);
-
+            //var sprDist = Micro.absoluteValue(sprite.x - pixelX) + Micro.absoluteValue(sprite.y - pixelY);
+            var sprDist = Math.abs(sprite.x - pixelX) + Math.abs(sprite.y - pixelY);
             dist = Math.min(dist, sprDist);
           }
         }
@@ -5724,6 +6071,14 @@ constructors[Micro.SPRITE_EXPLOSION] = Micro.ExplosionSprite;
 //  return SpriteManager;
 //});
 
+/* micropolisJS. Adapted by Graeme McCutcheon from Micropolis.
+ *
+ * This code is released under the GNU GPL v3, with some additional terms.
+ * Please see the files LICENSE and COPYING for details. Alternatively,
+ * consult http://micropolisjs.graememcc.co.uk/LICENSE and
+ * http://micropolisjs.graememcc.co.uk/COPYING
+ *
+ */
 Micro.MapScanner = function (map, Sim) {
     this._map = map;
     this.mapHeight = this._map.height;
@@ -5784,8 +6139,14 @@ Micro.MapScanner.prototype = {
     }
 }
 
-
-
+/* micropolisJS. Adapted by Graeme McCutcheon from Micropolis.
+ *
+ * This code is released under the GNU GPL v3, with some additional terms.
+ * Please see the files LICENSE and COPYING for details. Alternatively,
+ * consult http://micropolisjs.graememcc.co.uk/LICENSE and
+ * http://micropolisjs.graememcc.co.uk/COPYING
+ *
+ */
 
 Micro.PowerManager = function (map, SIM) {
     this.sim = SIM;
@@ -5901,6 +6262,14 @@ Micro.PowerManager.prototype = {
 // var dX = [1, 2, 1, 2];
 //  var dY = [-1, -1, 0, 0];
 
+/* micropolisJS. Adapted by Graeme McCutcheon from Micropolis.
+ *
+ * This code is released under the GNU GPL v3, with some additional terms.
+ * Please see the files LICENSE and COPYING for details. Alternatively,
+ * consult http://micropolisjs.graememcc.co.uk/LICENSE and
+ * http://micropolisjs.graememcc.co.uk/COPYING
+ *
+ */
 Micro.RepairManager = function (map) {
     this._map = map;
     this._actions = [];
@@ -5945,6 +6314,14 @@ Micro.RepairManager.prototype = {
     }
 }
 
+/* micropolisJS. Adapted by Graeme McCutcheon from Micropolis.
+ *
+ * This code is released under the GNU GPL v3, with some additional terms.
+ * Please see the files LICENSE and COPYING for details. Alternatively,
+ * consult http://micropolisjs.graememcc.co.uk/LICENSE and
+ * http://micropolisjs.graememcc.co.uk/COPYING
+ *
+ */
 Micro.vulnerable = function(tile) {
     var tileValue = tile.getValue();
     if (tileValue < Tile.RESBASE || tileValue > Tile.LASTZONE || tile.isZone()) return false;
@@ -6149,7 +6526,14 @@ Micro.DisasterManager.prototype = {
     }
 }
 
-
+/* micropolisJS. Adapted by Graeme McCutcheon from Micropolis.
+ *
+ * This code is released under the GNU GPL v3, with some additional terms.
+ * Please see the files LICENSE and COPYING for details. Alternatively,
+ * consult http://micropolisjs.graememcc.co.uk/LICENSE and
+ * http://micropolisjs.graememcc.co.uk/COPYING
+ *
+ */
 Micro.InputStatus = function(map){
     this.gameTools = new Micro.GameTools(map);
     this.canvas = document.getElementById(Micro.DEFAULT_ID);
@@ -6314,7 +6698,14 @@ Micro.InputStatus.prototype = {
         this.budgetRequested = false;
     }
 }
-
+/* micropolisJS. Adapted by Graeme McCutcheon from Micropolis.
+ *
+ * This code is released under the GNU GPL v3, with some additional terms.
+ * Please see the files LICENSE and COPYING for details. Alternatively,
+ * consult http://micropolisjs.graememcc.co.uk/LICENSE and
+ * http://micropolisjs.graememcc.co.uk/COPYING
+ *
+ */
 Micro.Traffic = function(map, spriteManager) {
     this._map = map;
     this._stack = [];
@@ -6441,18 +6832,28 @@ Micro.Traffic.prototype = {
     }
 }
 
+/* micropolisJS. Adapted by Graeme McCutcheon from Micropolis.
+ *
+ * This code is released under the GNU GPL v3, with some additional terms.
+ * Please see the files LICENSE and COPYING for details. Alternatively,
+ * consult http://micropolisjs.graememcc.co.uk/LICENSE and
+ * http://micropolisjs.graememcc.co.uk/COPYING
+ *
+ */
+
 Micro.toKey = function(x, y) {
     return [x, y].join(',');
 }
 
 Micro.TileHistory = function(){
-    this.data = {};
+    this.clear();
 }
 
 Micro.TileHistory.prototype = {
-
     constructor: Micro.TileHistory,
-    
+    clear : function() {
+        this.data = {};
+    },
     getTile : function(x, y) {
         var key = Micro.toKey(x, y);
         return this.data[key];
@@ -6462,8 +6863,14 @@ Micro.TileHistory.prototype = {
         this.data[key] = value;
     }
 }
-
-
+/* micropolisJS. Adapted by Graeme McCutcheon from Micropolis.
+ *
+ * This code is released under the GNU GPL v3, with some additional terms.
+ * Please see the files LICENSE and COPYING for details. Alternatively,
+ * consult http://micropolisjs.graememcc.co.uk/LICENSE and
+ * http://micropolisjs.graememcc.co.uk/COPYING
+ *
+ */
 Micro.AnimationManager = function(map, animationPeriod, blinkPeriod){
 
     animationPeriod = animationPeriod || 5;
@@ -6627,9 +7034,14 @@ Micro.AnimationManager.prototype = {
 
 }
 
-
-
-
+/* micropolisJS. Adapted by Graeme McCutcheon from Micropolis.
+ *
+ * This code is released under the GNU GPL v3, with some additional terms.
+ * Please see the files LICENSE and COPYING for details. Alternatively,
+ * consult http://micropolisjs.graememcc.co.uk/LICENSE and
+ * http://micropolisjs.graememcc.co.uk/COPYING
+ *
+ */
 Micro.copyFrom = function(sourceMap, sourceFn) {
     var mapFn = function(elem) { return sourceFn(elem); };
     //for (var y = 0, l = sourceMap.data.length; y < l; y++) this.data[y] = sourceMap.data[y].map(mapFn);
@@ -6715,7 +7127,14 @@ Micro.BlockMap.prototype = {
     }
 }
 
-
+/* micropolisJS. Adapted by Graeme McCutcheon from Micropolis.
+ *
+ * This code is released under the GNU GPL v3, with some additional terms.
+ * Please see the files LICENSE and COPYING for details. Alternatively,
+ * consult http://micropolisjs.graememcc.co.uk/LICENSE and
+ * http://micropolisjs.graememcc.co.uk/COPYING
+ *
+ */
 var Residential, Commercial, Industrial, Transport, Road, EmergencyServices, MiscTiles, Stadia;
 Micro.savePropsVar = ['cityTime'];
 

@@ -6,6 +6,7 @@
  * http://micropolisjs.graememcc.co.uk/COPYING
  *
  */
+ 
 Micro.ParkTool = function (map) {
     Micro.BaseTool.call( this );
     this.init(10, map, true);

@@ -14,7 +14,7 @@ Micro.Road = function (SIM) {
             var x = origX + xDelta[i];
             var y = origY + yDelta[i];
             if (map.testBounds(x, y)) {
-                if (map.getTileValue(x, y) === (oldTiles[i] & Tile.BIT_MASK)) map.setTileValue(newTiles[i]);
+                if (map.getTileValue(x, y) === (oldTiles[i] & Tile.BIT_MASK)) map.setTileValue(x, y, newTiles[i]);//map.setTileValue(newTiles[i]);
             }
         }
     }
@@ -25,7 +25,7 @@ Micro.Road = function (SIM) {
             var y = origY + yDelta[i];
             if (map.testBounds(x, y)) {
                 var tileValue = map.getTileValue(x, y);
-                if (tileValue === Tile.CHANNEL || (tileValue & 15) === (oldTiles[i] & 15)) map.setTileValue(newTiles[i]);
+                if (tileValue === Tile.CHANNEL || (tileValue & 15) === (oldTiles[i] & 15)) map.setTileValue(x, y, newTiles[i]);//map.setTileValue(newTiles[i]);
             }
        }
     }
@@ -78,7 +78,8 @@ Micro.Road = function (SIM) {
                 if (y > 0) {
                     if (map.getTileValue(x, y - 1) === Tile.CHANNEL) {
                             // We have a closed horizontal bridge. Open it.
-                            openBridge(map, x, y, horizontalDeltaX, horizontalDeltaY, openVertical, closeVertical);
+                            //openBridge(map, x, y, horizontalDeltaX, horizontalDeltaY, openVertical, closeVertical);
+                            openBridge(map, x, y, horizontalDeltaX, horizontalDeltaY, closeHorizontal, openHorizontal);
                         return true;
                     }
                 }
@@ -116,7 +117,8 @@ Micro.Road = function (SIM) {
             // The comment in the original Micropolis code states bridges count for 4
             // However, with the increment above, it's actually 5. Bug?
             sim.census.roadTotal += 4;
-            if (doBridge(map, x, y, tileValue, null)) return;
+            //if (doBridge(map, x, y, tileValue, null)) return;
+            if (doBridge(map, x, y, tileValue, simData)) return;
         }
 
         // Examine traffic density, and modify tile to represent last scanned traffic

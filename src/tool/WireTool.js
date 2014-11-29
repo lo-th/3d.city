@@ -6,9 +6,11 @@
  * http://micropolisjs.graememcc.co.uk/COPYING
  *
  */
+
 Micro.WireTool = function (map) {
     Micro.BaseToolConnector.call( this );
-    this.init(20, map, true, true);
+    //this.init(20, map, true, true);
+    this.init(5, map, true, true);
 }
 
 Micro.WireTool.prototype = Object.create( Micro.BaseToolConnector.prototype );

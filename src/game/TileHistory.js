@@ -6,18 +6,20 @@
  * http://micropolisjs.graememcc.co.uk/COPYING
  *
  */
+
 Micro.toKey = function(x, y) {
     return [x, y].join(',');
 }
 
 Micro.TileHistory = function(){
-    this.data = {};
+    this.clear();
 }
 
 Micro.TileHistory.prototype = {
-
     constructor: Micro.TileHistory,
-    
+    clear : function() {
+        this.data = {};
+    },
     getTile : function(x, y) {
         var key = Micro.toKey(x, y);
         return this.data[key];
