@@ -9,7 +9,6 @@
 	"src/Evaluation.js",
 	"src/Budget.js",
 	"src/Valves.js",
-
 	"src/Tile.js",
 	"src/PositionMaker.js",
 	"src/GameMap.js",
