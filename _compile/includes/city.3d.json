@@ -9,10 +9,11 @@
 	"src/Evaluation.js",
 	"src/Budget.js",
 	"src/Valves.js",
-	"src/init/Tile.js",
-	"src/init/PositionMaker.js",
-	"src/init/GameMap.js",
-	"src/init/MapGenerator.js",
+
+	"src/Tile.js",
+	"src/PositionMaker.js",
+	"src/GameMap.js",
+	"src/MapGenerator.js",
 
 	"src/utils/TileUtils.js",
 	"src/utils/ZoneUtils.js",

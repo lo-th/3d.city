@@ -2787,7 +2787,7 @@ Micro.isIndustrial = Micro.unwrapTile(function(tile) { return tile >= Tile.INDBA
 Micro.isManualExplosion = Micro.unwrapTile(function(tile) { return tile >= Tile.TINYEXP && tile <= Tile.LASTTINYEXP; });
 Micro.isRail = Micro.unwrapTile(function(tile) { return tile >= Tile.RAILBASE && tile < Tile.RESBASE; });
 Micro.isResidential = Micro.unwrapTile(function(tile) { return tile >= Tile.RESBASE && tile < Tile.HOSPITALBASE; });
-Micro.isRoad = Micro.unwrapTile(function(tile) { return tile >= Tile.ROADBASE && tile <= Tile.POWERBASE; });
+Micro.isRoad = Micro.unwrapTile(function(tile) { return tile >= Tile.ROADBASE && tile < Tile.POWERBASE; });
 Micro.normalizeRoad = Micro.unwrapTile(function(tile) { return (tile >= Tile.ROADBASE && tile <= Tile.LASTROAD + 1) ? (tile & 15) + 64 : tile; });
 
 Micro.isCommercialZone = function(tile) { return tile.isZone() && Micro.isCommercial(tile); };
@@ -4065,7 +4065,7 @@ Micro.Road = function (SIM) {
             var x = origX + xDelta[i];
             var y = origY + yDelta[i];
             if (map.testBounds(x, y)) {
-                if (map.getTileValue(x, y) === (oldTiles[i] & Tile.BIT_MASK)) map.setTileValue(newTiles[i]);
+                if (map.getTileValue(x, y) === (oldTiles[i] & Tile.BIT_MASK)) map.setTileValue(x, y, newTiles[i]);//map.setTileValue(newTiles[i]);
             }
         }
     }
@@ -4076,7 +4076,7 @@ Micro.Road = function (SIM) {
             var y = origY + yDelta[i];
             if (map.testBounds(x, y)) {
                 var tileValue = map.getTileValue(x, y);
-                if (tileValue === Tile.CHANNEL || (tileValue & 15) === (oldTiles[i] & 15)) map.setTileValue(newTiles[i]);
+                if (tileValue === Tile.CHANNEL || (tileValue & 15) === (oldTiles[i] & 15)) map.setTileValue(x, y, newTiles[i]);//map.setTileValue(newTiles[i]);
             }
        }
     }
@@ -4129,7 +4129,8 @@ Micro.Road = function (SIM) {
                 if (y > 0) {
                     if (map.getTileValue(x, y - 1) === Tile.CHANNEL) {
                             // We have a closed horizontal bridge. Open it.
-                            openBridge(map, x, y, horizontalDeltaX, horizontalDeltaY, openVertical, closeVertical);
+                            //openBridge(map, x, y, horizontalDeltaX, horizontalDeltaY, openVertical, closeVertical);
+                            openBridge(map, x, y, horizontalDeltaX, horizontalDeltaY, closeHorizontal, openHorizontal);
                         return true;
                     }
                 }
@@ -4167,7 +4168,8 @@ Micro.Road = function (SIM) {
             // The comment in the original Micropolis code states bridges count for 4
             // However, with the increment above, it's actually 5. Bug?
             sim.census.roadTotal += 4;
-            if (doBridge(map, x, y, tileValue, null)) return;
+            //if (doBridge(map, x, y, tileValue, null)) return;
+            if (doBridge(map, x, y, tileValue, simData)) return;
         }
 
         // Examine traffic density, and modify tile to represent last scanned traffic
@@ -4411,6 +4413,7 @@ Micro.WorldEffects.prototype = {
  * http://micropolisjs.graememcc.co.uk/COPYING
  *
  */
+
 Micro.BaseTool = function(){
     this.TOOLRESULT_OK = 0;
     this.TOOLRESULT_FAILED = 1;
@@ -4435,7 +4438,7 @@ Micro.BaseTool.prototype = {
     clear : function() {
         this._applicationCost = 0;
         this._worldEffects.clear();
-        this.result = null;
+        //this.result = null;
     },
     addCost : function(cost) {
         this._applicationCost += cost;
@@ -4451,16 +4454,17 @@ Micro.BaseTool.prototype = {
             }
         }
     },
-    apply : function(budget, messageManager) {
+    apply : function(budget) {//, messageManager) {
         this._worldEffects.apply();
-        budget.spend(this._applicationCost, messageManager);
-        messageManager.sendMessage(Messages.DID_TOOL);
+        budget.spend(this._applicationCost);//, messageManager);
+        //messageManager.sendMessage(Messages.DID_TOOL);
         this.clear();
     },
     modifyIfEnoughFunding : function(budget, messageManager) {
-        if (this.result !== this.TOOLRESULT_OK) return false;
-        if (budget.totalFunds < this._applicationCost) { this.result = this.TOOLRESULT_NO_MONEY; return false; }
-        this.apply.call(this, budget, messageManager);
+        if (this.result !== this.TOOLRESULT_OK) { this.clear(); return false; }
+        if (budget.totalFunds < this._applicationCost) { this.result = this.TOOLRESULT_NO_MONEY; this.clear(); return false; }
+        this.apply.call(this, budget);//, messageManager);
+        this.clear();
         return true;
     },
     setAutoBulldoze: function(value) {
@@ -4476,6 +4480,7 @@ Micro.BaseTool.prototype = {
  * http://micropolisjs.graememcc.co.uk/COPYING
  *
  */
+ 
 Micro.RoadTable = [
     Tile.ROADS, Tile.ROADS2, Tile.ROADS, Tile.ROADS3,
     Tile.ROADS2, Tile.ROADS2, Tile.ROADS4, Tile.ROADS8,
@@ -4629,6 +4634,7 @@ Micro.BaseToolConnector.prototype.checkBorder = function(x, y, size) {
  * http://micropolisjs.graememcc.co.uk/COPYING
  *
  */
+ 
 Micro.ParkTool = function (map) {
     Micro.BaseTool.call( this );
     this.init(10, map, true);
@@ -6171,6 +6177,7 @@ Micro.TornadoSprite.prototype.move = function(spriteCycle, messageManager, disas
  * http://micropolisjs.graememcc.co.uk/COPYING
  *
  */
+
 Micro.SpriteManager = function (map, SIM) {
     this.sim = SIM;
     this.spriteList = [];
@@ -6320,8 +6327,8 @@ Micro.SpriteManager.prototype = {
         for (var i = 0, l = this.spriteList.length; i < l; i++) {
           sprite = this.spriteList[i];
           if (sprite.type === Micro.SPRITE_SHIP && sprite.frame !== 0) {
-            var sprDist = Micro.absoluteValue(sprite.x - pixelX) + Micro.absoluteValue(sprite.y - pixelY);
-
+            //var sprDist = Micro.absoluteValue(sprite.x - pixelX) + Micro.absoluteValue(sprite.y - pixelY);
+            var sprDist = Math.abs(sprite.x - pixelX) + Math.abs(sprite.y - pixelY);
             dist = Math.min(dist, sprDist);
           }
         }
@@ -7728,18 +7735,20 @@ Micro.Traffic.prototype = {
  * http://micropolisjs.graememcc.co.uk/COPYING
  *
  */
+
 Micro.toKey = function(x, y) {
     return [x, y].join(',');
 }
 
 Micro.TileHistory = function(){
-    this.data = {};
+    this.clear();
 }
 
 Micro.TileHistory.prototype = {
-
     constructor: Micro.TileHistory,
-    
+    clear : function() {
+        this.data = {};
+    },
     getTile : function(x, y) {
         var key = Micro.toKey(x, y);
         return this.data[key];
@@ -7749,7 +7758,6 @@ Micro.TileHistory.prototype = {
         this.data[key] = value;
     }
 }
-
 /* micropolisJS. Adapted by Graeme McCutcheon from Micropolis.
  *
  * This code is released under the GNU GPL v3, with some additional terms.

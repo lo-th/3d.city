@@ -2467,7 +2467,6 @@ Micro.isIndustrial = Micro.unwrapTile(function(tile) { return tile >= Tile.INDBA
 Micro.isManualExplosion = Micro.unwrapTile(function(tile) { return tile >= Tile.TINYEXP && tile <= Tile.LASTTINYEXP; });
 Micro.isRail = Micro.unwrapTile(function(tile) { return tile >= Tile.RAILBASE && tile < Tile.RESBASE; });
 Micro.isResidential = Micro.unwrapTile(function(tile) { return tile >= Tile.RESBASE && tile < Tile.HOSPITALBASE; });
-//Micro.isRoad = Micro.unwrapTile(function(tile) { return tile >= Tile.ROADBASE && tile <= Tile.POWERBASE; });
 Micro.isRoad = Micro.unwrapTile(function(tile) { return tile >= Tile.ROADBASE && tile < Tile.POWERBASE; });
 Micro.normalizeRoad = Micro.unwrapTile(function(tile) { return (tile >= Tile.ROADBASE && tile <= Tile.LASTROAD + 1) ? (tile & 15) + 64 : tile; });
 
