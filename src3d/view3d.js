@@ -22,6 +22,9 @@ V3D.Base = function(isMobile, pix, isLow){
 	this.isIsland = false;
 	this.isWinter = false;
 
+	this.isComputeVertex = true;
+	this.isTransGeo = true;
+
 	this.key = [0,0,0,0,0,0,0];
 
 	if(this.isMobile || this.isLow) this.isWithTree = false;
@@ -763,6 +766,18 @@ V3D.Base.prototype = {
 	randRange : function (min, max) {
 		return Math.floor(Math.random() * (max - min + 1)) + min;
 	},
+
+	transGeo : function(g){
+		if(this.isTransGeo){
+			g.mergeVertices();
+			g.computeVertexNormals( true );
+			g.computeTangents();
+			//g.computeBoundingBox();
+			//g.computeBoundingSphere();
+			g.verticesNeedUpdate = true;
+		}
+		return g;
+	},
 	
 
 	//----------------------------------- TREE TEST
@@ -799,15 +814,11 @@ V3D.Base.prototype = {
 	    		}
 
 	    		if(this.isBuffer){
-	    			//g.computeVertexNormals();
-                    //g.computeTangents();
-	    			g2 = new THREE.BufferGeometry();
-	    			g2.fromGeometry(g);
-	    			//g2.computeBoundingSphere();
+	    			g = this.transGeo(g);
+	    			g2 = new THREE.BufferGeometry().fromGeometry(g);
 	    			g.dispose();
 	    			this.treeMeshs[l] = new THREE.Mesh( g2, this.townMaterial );
 	    		} else {
-	    			//g.computeBoundingSphere();
 	    			this.treeMeshs[l] = new THREE.Mesh( g, this.townMaterial );
 	    		}
 	    		//g.computeBoundingSphere();
@@ -830,7 +841,7 @@ V3D.Base.prototype = {
     	while(l--){
     		if(this.treeMeshs[l]){
     			this.scene.remove(this.treeMeshs[l]);
-    			this.treeMeshs[l].geometry.dispose();
+    			if(this.treeMeshs[l].geometry)this.treeMeshs[l].geometry.dispose();
     		}
     	}
     	this.treeMeshs = [];
@@ -891,10 +902,8 @@ V3D.Base.prototype = {
 	    }
 
 	    if(this.isBuffer){
-	    	//g.computeVertexNormals();
-            //g.computeTangents();
+	    	g = this.transGeo(g);
 			g2 = new THREE.BufferGeometry().fromGeometry(g);
-			//g2.computeBoundingSphere();
 			g.dispose();
 			this.treeMeshs[l] = new THREE.Mesh( g2, this.townMaterial );
 		} else {
@@ -1078,7 +1087,7 @@ V3D.Base.prototype = {
 		var n = this.miniTerrain.length;
         while(n--){ 
         	this.miniTerrain[n].geometry.computeFaceNormals();
-        	this.miniTerrain[n].geometry.computeVertexNormals();
+        	if(this.isComputeVertex) this.miniTerrain[n].geometry.computeVertexNormals();
         	this.miniTerrain[n].geometry.verticesNeedUpdate = true;
         }
 	},
@@ -1098,7 +1107,7 @@ V3D.Base.prototype = {
     	while(i--){
     		if(this.tempHeightLayers[i] === 1){
     			this.miniTerrain[i].geometry.computeFaceNormals();
-    			this.miniTerrain[i].geometry.computeVertexNormals();
+    			if(this.isComputeVertex) this.miniTerrain[i].geometry.computeVertexNormals();
     			this.miniTerrain[i].geometry.verticesNeedUpdate = true;
     		}
     	}
@@ -1398,7 +1407,6 @@ V3D.Base.prototype = {
 
 	showDestruct:function(ar){
 		this.tempDestruct = ar[4];
-
 	},
 
 	//--------------------------------------------------TOWN BUILDING
@@ -1411,9 +1419,9 @@ V3D.Base.prototype = {
 	},
 	rebuildTownLayer : function(l){
 		if(this.townMeshs[l] !== undefined ){
-			//if(this.townMeshs[l].geometry) 
+			// 
     	    this.scene.remove(this.townMeshs[l]);
-    	    this.townMeshs[l].geometry.dispose();
+    	    if(this.townMeshs[l].geometry)this.townMeshs[l].geometry.dispose();
         }
         var m = new THREE.Matrix4(), ar, k, g2;
     	var g = new THREE.Geometry();
@@ -1425,10 +1433,8 @@ V3D.Base.prototype = {
 	    }
 
 	    if(this.isBuffer){
-	    	//g.computeVertexNormals();
-            //g.computeTangents();
+	    	g = this.transGeo(g);
 			g2 = new THREE.BufferGeometry().fromGeometry(g);
-			//g2.computeBoundingSphere();
 			g.dispose();
 			this.townMeshs[l] = new THREE.Mesh( g2, this.townMaterial );
 		} else {
@@ -1495,10 +1501,8 @@ V3D.Base.prototype = {
 		    }
 
 		    if(this.isBuffer){
-		    	//g.computeVertexNormals();
-                //g.computeTangents();
+		    	g = this.transGeo(g);
 				g2 = new THREE.BufferGeometry().fromGeometry(g);
-				//g2.computeBoundingSphere();
 				g.dispose();
 				this.houseMeshs[l] = new THREE.Mesh( g2, this.buildingMaterial );
 			} else {
@@ -1587,10 +1591,8 @@ V3D.Base.prototype = {
 	    }
 
 	    if(this.isBuffer){
-	    	//g.computeVertexNormals();
-            //g.computeTangents();
+	    	g = this.transGeo(g);
 			g2 = new THREE.BufferGeometry().fromGeometry(g);
-			//g2.computeBoundingSphere();
 			g.dispose();
 			this.buildingMeshs[l] = new THREE.Mesh( g2, this.buildingMaterial );
 		} else {
