@@ -1980,6 +1980,11 @@ this.industrials = [616, 625, 634, 643, 652, 661, 670, 679, 688];*/
 			this.spriteObjs[this.spriteLists[v]].rotation.y = this.rotationSprite(c[0], frame);*/
 
 			if(this.spriteObjs[this.spriteLists[v]] == null) this.spriteObjs[this.spriteLists[v]] = this.addSprite( v, pos );
+
+			// underwater train
+			if(v===1 && frame===5)this.spriteObjs[this.spriteLists[v]].visible = false;
+			else this.spriteObjs[this.spriteLists[v]].visible = true;
+
 			this.spriteObjs[this.spriteLists[v]].position.lerp(pos, 0.6);
 			this.spriteObjs[this.spriteLists[v]].rotation.y = this.rotationSprite(c[0], frame);
 		}
