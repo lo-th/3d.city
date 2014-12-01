@@ -64,6 +64,7 @@ function loop() {
     }
 
     view3d.renderer.render( view3d.scene, view3d.camera );
+    if(view3d.isWithStats) view3d.runStats();
     if(isWithMiniMap){
         view3d.miniCheck();
         view3d.miniRenderer.render( view3d.miniScene, view3d.topCamera );
@@ -109,6 +110,18 @@ function newGameMap(){
     console.log("new map");
 
     //saveTextAsFile('test', 'game is saved');
+}
+
+//=======================================
+//  STATS
+//=======================================
+
+function displayStats() {
+    view3d.isWithStats = true;
+}
+
+function hideStats() {
+    view3d.isWithStats = false;
 }
 
 //=======================================

@@ -64,6 +64,7 @@ function loop() {
     }
 
     view3d.renderer.render( view3d.scene, view3d.camera );
+    if(view3d.isWithStats) view3d.runStats();
     if(isWithMiniMap){
         view3d.miniCheck();
         view3d.miniRenderer.render( view3d.miniScene, view3d.topCamera );
@@ -109,6 +110,18 @@ function newGameMap(){
     console.log("new map");
 
     //saveTextAsFile('test', 'game is saved');
+}
+
+//=======================================
+//  STATS
+//=======================================
+
+function displayStats() {
+    view3d.isWithStats = true;
+}
+
+function hideStats() {
+    view3d.isWithStats = false;
 }
 
 //=======================================
@@ -278,6 +291,10 @@ V3D.Base = function(isMobile, pix, isLow){
 
 	if(this.isMobile || this.isLow) this.isWithTree = false;
 
+	this.f = [0,0,0];
+	this.stats = [0,0];
+	this.isWithStats = false;
+
 
 	this.dayTime = 0;
 
@@ -302,7 +319,7 @@ V3D.Base = function(isMobile, pix, isLow){
 
 	this.deepthTest = false;
 
-	this.clock = null;
+	//this.clock = null;
 
 	//this.tileSize = 32;
 	this.mu = 2;
@@ -461,10 +478,8 @@ V3D.Base.prototype = {
     constructor: V3D.Base,
     init:function() {
 
-    	
-	    	
     	//if(this.isMobile) this.pix = 0.5;
-    	this.clock = new THREE.Clock();
+    	//this.clock = new THREE.Clock();
 
     	this.scene = new THREE.Scene();
 
@@ -474,18 +489,13 @@ V3D.Base.prototype = {
     	this.rayVector = new THREE.Vector3( 0, 0, 1 );
     	this.raycaster = new THREE.Raycaster();
     	
-        this.land = new THREE.Object3D();
+        this.land = new THREE.Group();
         this.scene.add( this.land );
+
         if(this.isWithFog){
         	this.fog = new THREE.Fog( 0xCC7F66, 1, 100 );
-        	//this.fog = new THREE.FogExp2 ( 0xFF0000, 0.01 );
         	this.scene.fog = this.fog;
         }
-
-        
-        
-
-
 
         this.center = new THREE.Vector3();
         this.moveCamera();
@@ -495,23 +505,18 @@ V3D.Base.prototype = {
 
         this.powerMaterial = new THREE.SpriteMaterial({map:this.powerTexture(), transparent:true})
 
-
          //this.renderer = new THREE.WebGLRenderer({ canvas:this.canvas, antialias:false });
     	this.renderer = new THREE.WebGLRenderer({ precision: "mediump", devicePixelRatio:this.pix, antialias:false });
     	this.renderer.sortObjects = false;
     	this.renderer.sortElements = false;
+    	this.renderer.autoClear = this.isWithBackground;
     	//this.renderer.autoClear = false;
     	this.renderer.setSize( this.vsize.x, this.vsize.y );
     	
-
-
-    	//this.renderer.autoClear = this.isWithBackground;
     	var _this = this;
     	this.container.appendChild( _this.renderer.domElement );
-    	//this.container = glCanvas;
 
         if(this.isWithBackground ){
-        	//var sky = this.gradTexture([[0.5,0.45, 0.2], ['#6666e6','lightskyblue','deepskyblue']]);
         	this.skyCanvasBasic = this.gradTexture([[0.51,0.49, 0.3], ['#cc7f66','#A7DCFA', 'deepskyblue']]);
         	this.skyCanvas = this.gradTexture([[0.51,0.49, 0.3], ['#cc7f66','#A7DCFA', 'deepskyblue']]);
         	this.skyTexture = new THREE.Texture(this.skyCanvas);
@@ -549,8 +554,6 @@ V3D.Base.prototype = {
 	    if(!this.isMobile)this.bindKeys();
 	    
 	    start();
-	    //initCity();
-
 
 	    // load winter extra map
 		this.loadImagesPlus();
@@ -558,7 +561,18 @@ V3D.Base.prototype = {
 
     //----------------------------------- RENDER
 
+    runStats : function(){
+    	this.f[1] = Date.now();
+        if (this.f[1]-1000 > this.f[0]){ 
+        	this.f[0] = this.f[1];
+        	hub.upStats(this.f[2], this.renderer.info.memory.programs);
+        	this.f[2] = 0;
+	    }
+	    this.f[2]++;
+    },
+
     render: function(){
+    	if(this.isWithStats) this.runStats();
     	//this.renderer.clear();
     	this.renderer.render( this.scene, this.camera );
     	if(this.deepthTest) this.miniRender();//miniRenderer.render( this.miniScene, this.topCamera );
@@ -1015,6 +1029,8 @@ V3D.Base.prototype = {
 	randRange : function (min, max) {
 		return Math.floor(Math.random() * (max - min + 1)) + min;
 	},
+
+	//----------------------------------- GEOMETRY PROCESS
 
 	transGeo : function(g){
 		if(this.isTransGeo){
@@ -2557,6 +2573,8 @@ HUB.Base = function(){
     this.exitWindow = null;
     this.queryWindow = null;
     this.overlaysWindow = null;
+    this.aboutWindow = null;
+
 
     this.selector = null;
     this.select = null;
@@ -2705,16 +2723,14 @@ HUB.Base.prototype = {
         var b2 = this.addButton(this.hub, 'Eval', [75,16,14], 'position:absolute; left:110px; top:-7px; font-weight:bold;', true);
         b2.addEventListener('click',  function ( e ) { e.preventDefault(); getEval(); }, false);
 
-       
-        //var b3 = this.addButton(this.hub, 'Disaster', [75,16,14], 'position:absolute; left:210px; top:-7px; font-weight:bold;', true);
-        //b3.addEventListener('click',  function ( e ) { e.preventDefault();  _this.openDisaster(); }, false);
+        /*var b3 = this.addButton(this.hub, 'Disaster', [75,16,14], 'position:absolute; left:210px; top:-7px; font-weight:bold;', true);
+        b3.addEventListener('click',  function ( e ) { e.preventDefault();  _this.openDisaster(); }, false);*/
 
         var b4 = this.addButton(this.hub, 'Exit', [75,16,14], 'position:absolute; left:310px; top:-7px; font-weight:bold;', true);
         b4.addEventListener('click',  function ( e ) { e.preventDefault();  _this.openExit();  }, false);
-         /*
-        var b5 = this.addButton(this.hub, 'Overlays', [75,16,14], 'position:absolute; left:410px; top:-7px; font-weight:bold;', true);
-        b5.addEventListener('click',  function ( e ) { e.preventDefault();  _this.openOverlays();  }, false);
-        */
+
+        var b5 = this.addButton(this.hub, 'About', [75,16,14], 'position:absolute; left:410px; top:-7px; font-weight:bold;', true);
+        b5.addEventListener('click',  function ( e ) { e.preventDefault();  _this.openAbout();  }, false);
 
 
         this.H = [];
@@ -2837,10 +2853,66 @@ HUB.Base.prototype = {
             this.closeOverlays();
             t = 'overlays';
         }
+        if(this.aboutWindow !== null && this.aboutWindow.className == "open"){
+            this.closeAbout();
+            t = 'about';
+        }
 
         return t;
 
     },
+
+    //-----------------------------------ABOUT WINDOW
+
+    openAbout : function(data){
+        var _this = this;
+
+        var test = this.testOpen();
+        if(test == 'about') return;
+
+        if(this.aboutWindow == null){
+            this.aboutWindow = document.createElement('div');
+            this.aboutWindow.style.cssText = this.radius+ 'position:absolute; width:200px; height:210px; pointer-events:none; display:block;'+ this.windowsStyle;
+            this.hub.appendChild( this.aboutWindow );
+            var bg1 = this.addButton(this.aboutWindow, 'X', [16,16,14], 'position:absolute; left:10px; top:10px;');
+            bg1.addEventListener('click',  function(e){ e.preventDefault(); _this.closeAbout(); }, false);
+
+            this.fps = document.createElement('div');
+            this.fps.style.cssText ='position:absolute; top:20px; left:60px; width:120px; height:20px; pointer-events:none; font-size:12px; text-align:center; color:'+this.colors[0]+';';
+            this.aboutWindow.appendChild( this.fps );
+            this.abb = document.createElement('div');
+            this.abb.style.cssText ='position:absolute; top:60px; left:10px; width:180px; height:180px; pointer-events:none; font-size:12px; text-align:center; color:'+this.colors[0]+';';
+            this.aboutWindow.appendChild( this.abb );
+            this.linke = document.createElement('div');
+            this.linke.style.cssText ='position:absolute; top:160px; left:10px; width:180px; height:20px; pointer-events:auto; font-size:12px; text-align:center; color:'+this.colors[0]+';';
+            this.aboutWindow.appendChild( this.linke );
+
+            this.abb.innerHTML = "3D CITY<br><br>All 3d side made by loth<br>Simulation from MicropolisJS<br><br><br>More info and source<br>";
+            this.linke.innerHTML = "<a href='https://github.com/lo-th/3d.city' target='_blank'>https://github.com/lo-th/3d.city";
+
+
+
+        } else {
+            this.aboutWindow.style.display = 'block';
+        }
+
+        displayStats();
+
+        this.aboutWindow.className = "open";
+
+    },
+
+    upStats : function(fps, memory){
+        this.fps.innerHTML = 'Fps: '+ fps + ' -- Shaders: ' + memory;
+    },
+
+    closeAbout :function(){
+        hideStats();
+
+        this.aboutWindow.style.display = 'none';
+        this.aboutWindow.className = "close";
+    },
+
 
     //-----------------------------------OVERLAYS WINDOW
 

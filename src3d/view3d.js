@@ -29,6 +29,10 @@ V3D.Base = function(isMobile, pix, isLow){
 
 	if(this.isMobile || this.isLow) this.isWithTree = false;
 
+	this.f = [0,0,0];
+	this.stats = [0,0];
+	this.isWithStats = false;
+
 
 	this.dayTime = 0;
 
@@ -53,7 +57,7 @@ V3D.Base = function(isMobile, pix, isLow){
 
 	this.deepthTest = false;
 
-	this.clock = null;
+	//this.clock = null;
 
 	//this.tileSize = 32;
 	this.mu = 2;
@@ -212,10 +216,8 @@ V3D.Base.prototype = {
     constructor: V3D.Base,
     init:function() {
 
-    	
-	    	
     	//if(this.isMobile) this.pix = 0.5;
-    	this.clock = new THREE.Clock();
+    	//this.clock = new THREE.Clock();
 
     	this.scene = new THREE.Scene();
 
@@ -225,18 +227,13 @@ V3D.Base.prototype = {
     	this.rayVector = new THREE.Vector3( 0, 0, 1 );
     	this.raycaster = new THREE.Raycaster();
     	
-        this.land = new THREE.Object3D();
+        this.land = new THREE.Group();
         this.scene.add( this.land );
+
         if(this.isWithFog){
         	this.fog = new THREE.Fog( 0xCC7F66, 1, 100 );
-        	//this.fog = new THREE.FogExp2 ( 0xFF0000, 0.01 );
         	this.scene.fog = this.fog;
         }
-
-        
-        
-
-
 
         this.center = new THREE.Vector3();
         this.moveCamera();
@@ -246,23 +243,18 @@ V3D.Base.prototype = {
 
         this.powerMaterial = new THREE.SpriteMaterial({map:this.powerTexture(), transparent:true})
 
-
          //this.renderer = new THREE.WebGLRenderer({ canvas:this.canvas, antialias:false });
     	this.renderer = new THREE.WebGLRenderer({ precision: "mediump", devicePixelRatio:this.pix, antialias:false });
     	this.renderer.sortObjects = false;
     	this.renderer.sortElements = false;
+    	this.renderer.autoClear = this.isWithBackground;
     	//this.renderer.autoClear = false;
     	this.renderer.setSize( this.vsize.x, this.vsize.y );
     	
-
-
-    	//this.renderer.autoClear = this.isWithBackground;
     	var _this = this;
     	this.container.appendChild( _this.renderer.domElement );
-    	//this.container = glCanvas;
 
         if(this.isWithBackground ){
-        	//var sky = this.gradTexture([[0.5,0.45, 0.2], ['#6666e6','lightskyblue','deepskyblue']]);
         	this.skyCanvasBasic = this.gradTexture([[0.51,0.49, 0.3], ['#cc7f66','#A7DCFA', 'deepskyblue']]);
         	this.skyCanvas = this.gradTexture([[0.51,0.49, 0.3], ['#cc7f66','#A7DCFA', 'deepskyblue']]);
         	this.skyTexture = new THREE.Texture(this.skyCanvas);
@@ -300,8 +292,6 @@ V3D.Base.prototype = {
 	    if(!this.isMobile)this.bindKeys();
 	    
 	    start();
-	    //initCity();
-
 
 	    // load winter extra map
 		this.loadImagesPlus();
@@ -309,7 +299,18 @@ V3D.Base.prototype = {
 
     //----------------------------------- RENDER
 
+    runStats : function(){
+    	this.f[1] = Date.now();
+        if (this.f[1]-1000 > this.f[0]){ 
+        	this.f[0] = this.f[1];
+        	hub.upStats(this.f[2], this.renderer.info.memory.programs);
+        	this.f[2] = 0;
+	    }
+	    this.f[2]++;
+    },
+
     render: function(){
+    	if(this.isWithStats) this.runStats();
     	//this.renderer.clear();
     	this.renderer.render( this.scene, this.camera );
     	if(this.deepthTest) this.miniRender();//miniRenderer.render( this.miniScene, this.topCamera );
@@ -766,6 +767,8 @@ V3D.Base.prototype = {
 	randRange : function (min, max) {
 		return Math.floor(Math.random() * (max - min + 1)) + min;
 	},
+
+	//----------------------------------- GEOMETRY PROCESS
 
 	transGeo : function(g){
 		if(this.isTransGeo){

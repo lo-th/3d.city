@@ -62,6 +62,8 @@ HUB.Base = function(){
     this.exitWindow = null;
     this.queryWindow = null;
     this.overlaysWindow = null;
+    this.aboutWindow = null;
+
 
     this.selector = null;
     this.select = null;
@@ -210,16 +212,14 @@ HUB.Base.prototype = {
         var b2 = this.addButton(this.hub, 'Eval', [75,16,14], 'position:absolute; left:110px; top:-7px; font-weight:bold;', true);
         b2.addEventListener('click',  function ( e ) { e.preventDefault(); getEval(); }, false);
 
-       
-        //var b3 = this.addButton(this.hub, 'Disaster', [75,16,14], 'position:absolute; left:210px; top:-7px; font-weight:bold;', true);
-        //b3.addEventListener('click',  function ( e ) { e.preventDefault();  _this.openDisaster(); }, false);
+        /*var b3 = this.addButton(this.hub, 'Disaster', [75,16,14], 'position:absolute; left:210px; top:-7px; font-weight:bold;', true);
+        b3.addEventListener('click',  function ( e ) { e.preventDefault();  _this.openDisaster(); }, false);*/
 
         var b4 = this.addButton(this.hub, 'Exit', [75,16,14], 'position:absolute; left:310px; top:-7px; font-weight:bold;', true);
         b4.addEventListener('click',  function ( e ) { e.preventDefault();  _this.openExit();  }, false);
-         /*
-        var b5 = this.addButton(this.hub, 'Overlays', [75,16,14], 'position:absolute; left:410px; top:-7px; font-weight:bold;', true);
-        b5.addEventListener('click',  function ( e ) { e.preventDefault();  _this.openOverlays();  }, false);
-        */
+
+        var b5 = this.addButton(this.hub, 'About', [75,16,14], 'position:absolute; left:410px; top:-7px; font-weight:bold;', true);
+        b5.addEventListener('click',  function ( e ) { e.preventDefault();  _this.openAbout();  }, false);
 
 
         this.H = [];
@@ -342,10 +342,66 @@ HUB.Base.prototype = {
             this.closeOverlays();
             t = 'overlays';
         }
+        if(this.aboutWindow !== null && this.aboutWindow.className == "open"){
+            this.closeAbout();
+            t = 'about';
+        }
 
         return t;
 
     },
+
+    //-----------------------------------ABOUT WINDOW
+
+    openAbout : function(data){
+        var _this = this;
+
+        var test = this.testOpen();
+        if(test == 'about') return;
+
+        if(this.aboutWindow == null){
+            this.aboutWindow = document.createElement('div');
+            this.aboutWindow.style.cssText = this.radius+ 'position:absolute; width:200px; height:210px; pointer-events:none; display:block;'+ this.windowsStyle;
+            this.hub.appendChild( this.aboutWindow );
+            var bg1 = this.addButton(this.aboutWindow, 'X', [16,16,14], 'position:absolute; left:10px; top:10px;');
+            bg1.addEventListener('click',  function(e){ e.preventDefault(); _this.closeAbout(); }, false);
+
+            this.fps = document.createElement('div');
+            this.fps.style.cssText ='position:absolute; top:20px; left:60px; width:120px; height:20px; pointer-events:none; font-size:12px; text-align:center; color:'+this.colors[0]+';';
+            this.aboutWindow.appendChild( this.fps );
+            this.abb = document.createElement('div');
+            this.abb.style.cssText ='position:absolute; top:60px; left:10px; width:180px; height:180px; pointer-events:none; font-size:12px; text-align:center; color:'+this.colors[0]+';';
+            this.aboutWindow.appendChild( this.abb );
+            this.linke = document.createElement('div');
+            this.linke.style.cssText ='position:absolute; top:160px; left:10px; width:180px; height:20px; pointer-events:auto; font-size:12px; text-align:center; color:'+this.colors[0]+';';
+            this.aboutWindow.appendChild( this.linke );
+
+            this.abb.innerHTML = "3D CITY<br><br>All 3d side made by loth<br>Simulation from MicropolisJS<br><br><br>More info and source<br>";
+            this.linke.innerHTML = "<a href='https://github.com/lo-th/3d.city' target='_blank'>https://github.com/lo-th/3d.city";
+
+
+
+        } else {
+            this.aboutWindow.style.display = 'block';
+        }
+
+        displayStats();
+
+        this.aboutWindow.className = "open";
+
+    },
+
+    upStats : function(fps, memory){
+        this.fps.innerHTML = 'Fps: '+ fps + ' -- Shaders: ' + memory;
+    },
+
+    closeAbout :function(){
+        hideStats();
+
+        this.aboutWindow.style.display = 'none';
+        this.aboutWindow.className = "close";
+    },
+
 
     //-----------------------------------OVERLAYS WINDOW
 
