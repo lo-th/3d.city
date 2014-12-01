@@ -228,7 +228,7 @@ V3D.Base.prototype = {
         this.land = new THREE.Object3D();
         this.scene.add( this.land );
         if(this.isWithFog){
-        	this.fog = new THREE.Fog( 0xFFFFFF, 1, 100 );
+        	this.fog = new THREE.Fog( 0xCC7F66, 1, 100 );
         	//this.fog = new THREE.FogExp2 ( 0xFF0000, 0.01 );
         	this.scene.fog = this.fog;
         }

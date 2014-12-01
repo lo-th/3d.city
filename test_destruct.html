@@ -16,9 +16,8 @@ body {  padding:0; margin: 0px; background:#6666e6; font:12px sans-serif; width:
 </style>
 <script src="js/three.min.js"></script>
 <script src="js/sea3d.min.js"></script>
-<script src="js/spe.min.js"></script>
+<script src="js/ShaderParticles.min.js"></script>
 <script src="src3d/view3d.js"></script>
-<script src="src3d/hub.js"></script>
 
 </head>
 <body>
@@ -54,22 +53,13 @@ window.onload = init;
 
 function init(){
     view3d = new V3D.Base();
-    /*document.addEventListener('click',  function ( e ) { 
-    	e.preventDefault(); 
-    	if(e.clientY<50) newObject(); 
-    	if(e.clientY>50 && e.clientY<100) destroy();
-    	if(e.clientY>50 && e.clientY<100) destroy();
-    }, false);*/
-
     document.getElementById('top').addEventListener('click',  function ( e ) {e.preventDefault(); newObject(); }, false);
     document.getElementById('destroy').addEventListener('click',  function ( e ) {e.preventDefault(); destroy(); }, false);
     document.getElementById('burn').addEventListener('click',  function ( e ) {e.preventDefault(); burning(); }, false);
 }
 
 function log(txt){ l.innerHTML = txt || '';  }
-function initCity() {
-    start();
-}
+
 function start() {
 
 	loop();
