@@ -217,7 +217,7 @@ V3D.Base.prototype = {
     init:function() {
 
     	//if(this.isMobile) this.pix = 0.5;
-    	//this.clock = new THREE.Clock();
+    	this.clock = new THREE.Clock();
 
     	this.scene = new THREE.Scene();
 
