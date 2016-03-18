@@ -39,7 +39,7 @@ Micro.GameMap = function(width, height, defaultValue){
 
     this.isIsland = false;
     this.Direction = new Micro.Direction();
-    this.Position = new Micro.PositionMaker(width, height);
+    this.Position = new Micro.PositionMaker( width, height );
     this.width = width;
     this.height = height;
     this.fsize = this.width*this.height;
@@ -50,14 +50,14 @@ Micro.GameMap = function(width, height, defaultValue){
     this.defaultValue = 0;//new Micro.Tile().getValue();//defaultValue;
 
 
-    this.data = new Array(this.fsize);
+    this.data = [];//new Array(this.fsize);
     this.tilesData = new M_ARRAY_TYPE(this.fsize);
     this.powerData = new M_ARRAY_TYPE(this.fsize);
 
     var i = this.fsize;
     while(i--){
-        this.data[i] = new Micro.Tile( this.defaultValue);
-        this.tilesData[i] =  this.defaultValue;
+        this.data[i] = new Micro.Tile( this.defaultValue );
+        this.tilesData[i] = this.defaultValue;
     }
     /*console.log(this.data.length)*/
 
@@ -245,29 +245,37 @@ Micro.GameMap.prototype = {
                 return defaultTile;
         }
     },
+
     setTile : function(x, y, value, flags) {
-        var e = new Error('Invalid parameter');
-        if (arguments.length < 3) throw e;
+
+        //var e = new Error('Invalid parameter');
+        //if (arguments.length < 3) throw e;
         // Argument-shuffling
         if (arguments.length === 3) { flags = value; value = y; y = x.y; x = x.x; }
-        if (!this.testBounds(x, y)) throw e;
+        //if (!this.testBounds(x, y)) throw e;
 
-        var tileIndex = this._calculateIndex(x, y);
-        //if (!(tileIndex in this.data)) this.data[tileIndex] = new Micro.Tile(this.defaultValue);
-        this.data[tileIndex].set(value, flags);
-        this.tilesData[tileIndex] = value;
+        var id = this._calculateIndex( x, y );
+
+        this.data[ id ].set( value, flags );
+        this.tilesData[ id ] = value;
+
     },
-    setTo : function(x, y, tile) {
-        var e = new Error('Invalid parameter');
-        if (arguments.length < 2) throw e;
+
+    setTo : function( x, y, tile ) {
+
+        //var e = new Error('Invalid parameter');
+        //if (arguments.length < 2) throw e;
         // Argument-shuffling
         if (tile === undefined) { tile = y; y = x.y; x = x.x; }
-        if (!this.testBounds(x, y)) throw e;
+        //if (!this.testBounds(x, y)) throw e;
 
         var tileIndex = this._calculateIndex(x, y);
-        this.data[tileIndex] = tile;
-        this.tilesData[tileIndex] = tile.getValue();
+        this.data[ tileIndex ] = tile;
+
+        this.tilesData[ tileIndex ] = tile.getValue();
+
     },
+
     setTileValue : function(x, y, value) {
         var e = new Error('Invalid parameter');
         if (arguments.length < 2) throw e;
@@ -275,12 +283,13 @@ Micro.GameMap.prototype = {
         if (arguments.length === 2) { value = y; y = x.y; x = x.x; }
         if (!this.testBounds(x, y)) throw e;
 
-        var tileIndex = this._calculateIndex(x, y);
+        var tileIndex = this._calculateIndex( x, y );
         //if (!(tileIndex in this.data)) this.data[tileIndex] = new Micro.Tile(this.defaultValue);
         
-        this.data[tileIndex].setValue(value);
+        this.data[tileIndex].setValue( value );
         this.tilesData[tileIndex] = value;
     },
+
     setTileFlags : function(x, y, flags) {
         var e = new Error('Invalid parameter');
         if (arguments.length < 2) throw e;
@@ -292,6 +301,7 @@ Micro.GameMap.prototype = {
         //if (!(tileIndex in this.data)) this.data[tileIndex] = new Micro.Tile(this.defaultValue);
         this.data[tileIndex].setFlags(flags);
     },
+
     addTileFlags : function(x, y, flags) {
         var e = new Error('Invalid parameter');
         if (arguments.length < 2) throw e;
@@ -303,6 +313,7 @@ Micro.GameMap.prototype = {
         //if (!(tileIndex in this.data)) this.data[tileIndex] = new Micro.Tile(this.defaultValue);
         this.data[tileIndex].addFlags(flags);
     },
+
     removeTileFlags : function(x, y, flags) {
         var e = new Error('Invalid parameter');
         if (arguments.length < 2) throw e;
@@ -314,6 +325,7 @@ Micro.GameMap.prototype = {
         //if (!(tileIndex in this.data)) this.data[tileIndex] = new Micro.Tile(this.defaultValue);
         this.data[tileIndex].removeFlags(flags);
     },
+
     putZone : function(centreX, centreY, centreTile, size) {
         var e = new Error('Invalid parameter');
 

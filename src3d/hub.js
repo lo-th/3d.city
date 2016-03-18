@@ -97,8 +97,9 @@ HUB.Base.prototype = {
         this.title = document.createElement('div');
         this.title.innerHTML = "3D.CITY";
     	this.title.style.cssText = 'position:absolute; font-size:44px; top:50%; left:0; margin-top:-30px; width:300px; height:60px; pointer-events:none; text-align:center;';
+        
         this.subtitle = document.createElement('div');
-        this.subtitle.style.cssText = 'position:absolute; font-size:14px; top:50%; left:0; margin-top:16px; width:300px; height:80px; pointer-events:none;font-weight:bold; text-align:center;';
+        this.subtitle.style.cssText = 'position:absolute; font-size:14px; top:50%; left:0; margin-top:20px; width:300px; height:80px; pointer-events:none; text-align:center;';
         this.subtitle.innerHTML = "Generating world...";
 
         this.logo = document.getElementById('logo');
@@ -109,7 +110,9 @@ HUB.Base.prototype = {
         this.fullMid.appendChild( this.logo );
     	this.fullMid.appendChild( this.title );
         this.fullMid.appendChild( this.subtitle );
+
     	this.hub.appendChild( this.full );
+
     },
     start:function(){
     	if(this.isIntro){

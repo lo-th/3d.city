@@ -33,6 +33,7 @@ Micro.MAP_BIG_DEFAULT_HEIGHT = Micro.MAP_HEIGHT*16;
 Micro.MAP_BIG_DEFAULT_ID = "bigMap";
 Micro.MAP_PARENT_ID = "splashContainer";
 Micro.MAP_DEFAULT_ID = "SplashCanvas";
+
 //GameCanvas
 Micro.DEFAULT_WIDTH = 400;
 Micro.DEFAULT_HEIGHT = 400;
@@ -46,8 +47,9 @@ Micro.arrs = ['res', 'com', 'ind', 'crime', 'money', 'pollution'];
 var M_ARRAY_TYPE;
 if(!M_ARRAY_TYPE) { M_ARRAY_TYPE = (typeof Float32Array !== 'undefined') ? Float32Array : Array; }
 
-Micro.MouseBox = {
-    draw: function(c, pos, width, height, options) {
+/*Micro.MouseBox = {
+
+    draw: function( c, pos, width, height, options ) {
         var lineWidth = options.lineWidth || 3.0;
         var strokeStyle = options.colour || 'yellow';
         var shouldOutline = (('outline' in options) && options.outline === true) || false;
@@ -69,7 +71,7 @@ Micro.MouseBox = {
         ctx.strokeStyle = strokeStyle;
         ctx.strokeRect(startX, startY, width, height); 
     }
-}
+}*/
 
 // MiscUtils,
 Micro.clamp = function(value, min, max) {
@@ -77,9 +79,11 @@ Micro.clamp = function(value, min, max) {
     if (value > max) return max;
     return value;
 }
+
 Micro.makeConstantDescriptor = function(value) {
     return {configurable: false, enumerable: false, writeable: false, value: value};
 }
+
 Micro.rotate10Arrays = function() {
     for (var i = 0; i < Micro.arrs.length; i++) {
         var name10 = Micro.arrs[i] + 'Hist10';
@@ -88,6 +92,7 @@ Micro.rotate10Arrays = function() {
         this[name10].unshift(0);
     }
 }
+
 Micro.rotate120Arrays = function() {
     for (var i = 0; i < Micro.arrs.length; i++) {
         var name120 = Micro.arrs[i] + 'Hist120';
@@ -97,7 +102,7 @@ Micro.rotate120Arrays = function() {
     }
 }
 
-Micro.isCallable = function(f) {
+Micro.isCallable = function( f ) {
     return typeof(f) === 'function';
 };
 

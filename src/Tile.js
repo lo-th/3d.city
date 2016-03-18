@@ -8,8 +8,8 @@
  */
 Micro.Tile = function(tileValue, bitMask){
     if (!(this instanceof Micro.Tile)) return new Micro.Tile();
-    if (arguments.length && (typeof(tileValue) !== 'number' || (arguments.length > 1 && typeof(bitMask) !== 'number') || tileValue < 0)) throw new Error('Invalid parameter');
-    if (arguments.length > 1 && (tileValue >= Tile.TILE_COUNT || bitMask < Tile.BIT_START || bitMask >= (Tile.BIT_END << 1))) throw new Error('Invalid parameter');
+    //if (arguments.length && (typeof(tileValue) !== 'number' || (arguments.length > 1 && typeof(bitMask) !== 'number') || tileValue < 0)) throw new Error('Invalid parameter');
+    //if (arguments.length > 1 && (tileValue >= Tile.TILE_COUNT || bitMask < Tile.BIT_START || bitMask >= (Tile.BIT_END << 1))) throw new Error('Invalid parameter');
     this._value = tileValue;
     // If no value supplied, default to Tile.DIRT
     if (this._value === undefined) this._value = Tile.DIRT;
@@ -21,11 +21,11 @@ Micro.Tile.prototype = {
     getValue : function() {
         return this._value & Tile.BIT_MASK;
     },
-    setValue : function(tileValue) {
-        if (!arguments.length || typeof(tileValue) !== 'number' || tileValue < 0) throw new Error('Invalid parameter');
+    setValue : function( tileValue ) {
+        if ( arguments.length === 0 || typeof(tileValue) !== 'number' || tileValue < 0) throw new Error('Invalid parameter');
 
         var existingFlags = 0;
-        if (tileValue < Tile.BIT_START) existingFlags = this.getFlags();
+        if ( tileValue < Tile.BIT_START ) existingFlags = this._value & Tile.ALLBITS;//this.getFlags();
         this._value = tileValue | existingFlags;
     },
     isBulldozable : function() {
@@ -56,9 +56,9 @@ Micro.Tile.prototype = {
     },
     setFlags : function(bitMask) {
         //if (typeof(bitMask) !== 'number' || bitMask < Tile.BIT_START || bitMask >= (Tile.BIT_END << 1)) throw new Error('Invalid parameter');
-        if (arguments.length === 0) throw new Error('Tile setFlags called with no arguments');
-        if (typeof(bitMask) !== 'number') throw new Error('Tile setFlags called with invalid bitmask ' + bitMask);
-        if (bitMask < Tile.BIT_START || bitMask >= (Tile.BIT_END << 1)) throw new Error('Tile setFlags called with out-of-range bitmask ' + bitMask);
+        //if (arguments.length === 0) throw new Error('Tile setFlags called with no arguments');
+        //if (typeof(bitMask) !== 'number') throw new Error('Tile setFlags called with invalid bitmask ' + bitMask);
+       // if (bitMask < Tile.BIT_START || bitMask >= (Tile.BIT_END << 1)) throw new Error('Tile setFlags called with out-of-range bitmask ' + bitMask);
         var existingValue = this._value & ~Tile.ALLBITS;
         this._value = existingValue | bitMask;
     },

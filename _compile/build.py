@@ -24,10 +24,10 @@ def main(argv=None):
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--include', action='append', required=True)
-    parser.add_argument('--externs', action='append', default=['externs/common.js'])
+    parser.add_argument('--externs', action='append', default=['common.js'])
     parser.add_argument('--amd', action='store_true', default=False)
     parser.add_argument('--minify', action='store_true', default=False)
-    parser.add_argument('--output', default='../build/city.js')
+    parser.add_argument('--output', default='')
     parser.add_argument('--sourcemaps', action='store_true', default=False)
 
     args = parser.parse_args()
@@ -56,7 +56,7 @@ def main(argv=None):
         tmp.write('( function ( root, factory ) {\n\n\tif ( typeof define === \'function\' && define.amd ) {\n\n\t\tdefine( [ \'exports\' ], factory );\n\n\t} else if ( typeof exports === \'object\' ) {\n\n\t\tfactory( exports );\n\n\t} else {\n\n\t\tfactory( root );\n\n\t}\n\n}( this, function ( exports ) {\n\n')
 
     for include in args.include:
-        with open('includes/' + include + '.json','r') as f:
+        with open( include + '.json','r') as f:
             files = json.load(f)
         for filename in files:
             filename = '../' + filename;
@@ -66,7 +66,7 @@ def main(argv=None):
                 tmp.write('\n')
 
     if args.amd:
-        tmp.write('exports.THREE = THREE;\n\n} ) );')
+        tmp.write('exports.UIL = UIL;\n\n} ) );')
 
     tmp.close()
 
@@ -80,7 +80,7 @@ def main(argv=None):
 
         externs = ' --externs '.join(args.externs)
         source = ' '.join(sources)
-        cmd = 'java -jar compiler/compiler.jar --warning_level=VERBOSE --jscomp_off=globalThis --externs %s --jscomp_off=checkTypes --language_in=ECMASCRIPT5_STRICT --js %s --js_output_file %s %s' % (externs, source, output, sourcemapargs)
+        cmd = 'java -jar c.jar --warning_level=VERBOSE --jscomp_off=globalThis --externs %s --jscomp_off=checkTypes --language_in=ECMASCRIPT5_STRICT --js %s --js_output_file %s %s' % (externs, source, output, sourcemapargs)
         os.system(cmd)
 
         # header

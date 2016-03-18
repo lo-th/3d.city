@@ -11,9 +11,9 @@ html { width:100%; height:100%; }
 body { background:#6666E6; font:10px sans-serif; width:100%; height:100%; color:#FFFFFF; overflow: hidden; }
 #container{ min-width:465px; min-height:465px; width:100%; height:100%; overflow:hidden; text-align:center; }
 #container canvas{ position:absolute;top:0;left:0;width:100%;height:100% }
-#debug{ position:absolute; padding:5px; right:0; bottom:0; text-align:right; width:20%; pointer-events:none; display:block; color:#000;}
+#debug{ position:absolute; padding:5px; right:0; bottom:0; text-align:right; width:20%; pointer-events:none; display:block; }
 #hub{ position:absolute; top:0; left:0; height:100%; width:100%; pointer-events:none; display:block; text-align:center;}
-#miniGlCanvas{ position:absolute; bottom:60px; left:15px; pointer-events:none;}
+#miniGlCanvas{ position:absolute; bottom:60px; left:15px; pointer-events:none; }
 #logo{pointer-events:none; display:none;}
 a:link {text-decoration: none; color:#FFAA66;}
 a:visited {text-decoration: none; color:#FFAA66;}
@@ -27,7 +27,7 @@ a:hover {text-decoration: underline; color: red;}
 </head>
 <body onload="init()">
 <div id="container"></div>
-<div id="debug">v 0.3</div>
+<div id="debug">v 0.4</div>
 <canvas id="miniGlCanvas"></canvas>
 
 <div id="hub"></div>

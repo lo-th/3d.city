@@ -13,7 +13,7 @@ var isMobile = false;
 var trans = false;
 var newup = false;
 var powerup = false;
-var cityWorker = new Worker('js/worker.city.js');
+var cityWorker = new Worker( 'js/worker.city.js' );
 var view3d, hub, im;
 var isWithMiniMap = false;
 
@@ -31,6 +31,7 @@ function testMobile() {
 }
 
 function init(){
+    
     isMobile = testMobile();
 
     storage = window.localStorage;
@@ -47,28 +48,33 @@ function init(){
 //=======================================
 
 function loop() {
+    
     requestAnimationFrame( loop );
+
     if(newup){ 
         view3d.paintMap(); 
         view3d.moveSprite();
-        newup=false;
+        newup = false;
     }
     if(powerup){
         view3d.showPower();
         powerup = false;
     }
-    if(view3d.mouse.dragView || view3d.mouse.button===3){
+    if( view3d.mouse.dragView || view3d.mouse.button===3 ){
         view3d.dragCenterposition();
     }else{
         if(!isMobile)view3d.updateKey();
     }
 
     view3d.renderer.render( view3d.scene, view3d.camera );
+
     if(view3d.isWithStats) view3d.runStats();
+
     if(isWithMiniMap){
         view3d.miniCheck();
         view3d.miniRenderer.render( view3d.miniScene, view3d.topCamera );
     }
+
 }
 
 //=======================================
@@ -214,6 +220,7 @@ function initCity() {
 }
 
 cityWorker.onmessage = function(e) {
+
     var phase = e.data.tell;
     if( phase == "NEWMAP"){
         tilesData = e.data.tilesData;

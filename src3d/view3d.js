@@ -5,19 +5,35 @@
 
 'use strict';
 var Audio, THREE;
-var V3D = { REVISION: '0.2a' };
+var V3D = { REVISION: '0.4' };
 
 V3D.Base = function(isMobile, pix, isLow){
+
+    this.metalness = 0.7;
+    this.roughness = 0.6;
+    this.wireframe = false;
+    this.envType = 'base';
+
+
+    this.M_list = ['treeLists'     , 'townLists'     , 'houseLists'       , 'buildingLists' ];
+    this.M_temp = ['tempTreeLayers', 'temptownLayers', 'tempHouseLayers'  , 'tempBuildingLayers' ];
+    this.M_geom = ['treeGeo'       , 'buildingGeo'   , 'houseGeo'         , 'X' ];
+    this.M_mesh = ['treeMeshs'     , 'townMeshs'     , 'houseMeshs'       , 'buildingMeshs' ];
+    this.M_mats = ['townMaterial'  , 'townMaterial'  , 'buildingMaterial' , 'buildingMaterial' ];
 	
 	this.pix = pix || 1;
 	this.isLow = isLow || false;
 	this.container = document.getElementById( 'container' );
 	this.isMobile = isMobile || false;
-	this.seaBuffer = false;
-	this.isBuffer = true;
+    
+	//this.seaBuffer = true;
+	//this.isBuffer = true;
 	this.isWithTree = true;
 
-	this.isWithEnv = false;
+    this.isWithLight = true;
+
+	this.isWithEnv = true;//true;
+    this.isWithNormal = false;
 	this.isWithFog = true;
 	this.isIsland = false;
 	this.isWinter = false;
@@ -27,7 +43,12 @@ V3D.Base = function(isMobile, pix, isLow){
 
 	this.key = [0,0,0,0,0,0,0];
 
-	if(this.isMobile || this.isLow) this.isWithTree = false;
+	if(this.isMobile || this.isLow){ 
+        this.isWithTree = false;
+        this.isWithEnv = false;
+        this.isWithNormal = false;
+        this.isWithLight = false;
+    }
 
 	this.f = [0,0,0];
 	this.stats = [0,0];
@@ -40,14 +61,14 @@ V3D.Base = function(isMobile, pix, isLow){
 
 	this.snd_layzone = new Audio("./sound/layzone.mp3");
 
-	this.imgSrc = ['img/tiles32.png','img/town.jpg','img/building.jpg','img/w_building.png','img/w_town.png'];
+	this.imgSrc = ['img/tiles32.png','img/town.jpg','img/building.jpg','img/w_building.png','img/w_town.png', 'img/env/'+this.envType+'.jpg'];//, 'img/building_n.png', 'img/town_n.png', 'img/tiles32_n.png' 
 	this.imgSrcPlus = ['img/tiles32_w.png','img/town_w.jpg','img/building_w.jpg'];
 	this.winterMapLoaded = false;
 
 	//if(this.isWinter) this.imgSrc = ['img/tiles32_w.png','img/town_w.jpg','img/building_w.jpg','img/w_building.png','img/w_town.png'];
 	this.rootModel = 'img/world.sea';
 	this.imgs = [];
-	this.num=0;
+	this.num = 0;
 
 	this.fullRedraw = false;
 
@@ -77,6 +98,8 @@ V3D.Base = function(isMobile, pix, isLow){
 
     this.miniCanvas = [];
     this.miniCtx = [];
+    this.miniCanvasN = [];
+    this.miniCtxN = [];
     this.txtNeedUpdate = [];
     this.miniTerrain = [];
     this.terrainTxt = [];
@@ -191,10 +214,10 @@ V3D.Base = function(isMobile, pix, isLow){
 	this.buildingStaticMeshs = [];
 	this.buildingStaticLists = [];
 
-	this.H = [249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260];
-	this.R = [244, 265, 274, 283, 292, 301, 310, 319, 328, 337, 346, 355, 364, 373, 382, 391, 400, 409, 418];
-	this.C = [427, 436, 445, 454, 463, 475, 481, 490, 499, 508, 517, 526, 535, 544, 553, 562, 571, 580, 589, 598, 607];
-	this.I = [616, 625, 634, 643, 652, 661, 670, 679, 688];
+	this.H = [ 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260 ];
+	this.R = [ 244, 265, 274, 283, 292, 301, 310, 319, 328, 337, 346, 355, 364, 373, 382, 391, 400, 409, 418 ];
+	this.C = [ 427, 436, 445, 454, 463, 475, 481, 490, 499, 508, 517, 526, 535, 544, 553, 562, 571, 580, 589, 598, 607 ];
+	this.I = [ 616, 625, 634, 643, 652, 661, 670, 679, 688 ];
 
 	this.tilesUpdateList = [];
 
@@ -213,7 +236,9 @@ V3D.Base = function(isMobile, pix, isLow){
 }
 
 V3D.Base.prototype = {
+
     constructor: V3D.Base,
+
     init:function() {
 
     	//if(this.isMobile) this.pix = 0.5;
@@ -224,35 +249,77 @@ V3D.Base.prototype = {
     	this.camera = new THREE.PerspectiveCamera( 55, this.vsize.z, 0.1, 1000 );
     	this.scene.add( this.camera );
 
-    	this.rayVector = new THREE.Vector3( 0, 0, 1 );
+    	this.rayVector = new THREE.Vector2( 0, 0 );
     	this.raycaster = new THREE.Raycaster();
     	
         this.land = new THREE.Group();
         this.scene.add( this.land );
 
-        if(this.isWithFog){
+        if( this.isWithFog ){
+
         	this.fog = new THREE.Fog( 0xCC7F66, 1, 100 );
         	this.scene.fog = this.fog;
+        
         }
 
         this.center = new THREE.Vector3();
+        this.center.x = this.mapSize[0]*0.5;
+        this.center.z = this.mapSize[1]*0.5;
         this.moveCamera();
 
         this.ease = new THREE.Vector3();
         this.easeRot = new THREE.Vector3();
 
-        this.powerMaterial = new THREE.SpriteMaterial({map:this.powerTexture(), transparent:true})
+        this.powerMaterial = new THREE.SpriteMaterial({ map:this.powerTexture(), transparent:true })
 
          //this.renderer = new THREE.WebGLRenderer({ canvas:this.canvas, antialias:false });
-    	this.renderer = new THREE.WebGLRenderer({ precision: "mediump", devicePixelRatio:this.pix, antialias:false });
-    	this.renderer.sortObjects = false;
-    	this.renderer.sortElements = false;
-    	this.renderer.autoClear = this.isWithBackground;
+    	var renderer = new THREE.WebGLRenderer({ precision: "mediump", antialias:false });
+        renderer.setSize( this.vsize.x, this.vsize.y );
+        renderer.setPixelRatio( this.pix || window.devicePixelRatio )
+    	renderer.sortObjects = false;
+    	renderer.sortElements = false;
+    	renderer.autoClear = this.isWithBackground;
+
+        renderer.gammaInput = true;
+        renderer.gammaOutput = true;
+
     	//this.renderer.autoClear = false;
-    	this.renderer.setSize( this.vsize.x, this.vsize.y );
+        this.container.appendChild( renderer.domElement );
+
+
+    	this.renderer = renderer;
+
+        if( this.isWithLight ){
+
+            var light = new THREE.DirectionalLight( 0xfffffe, 0.6 );//new THREE.SpotLight( 0xffffff, 1, 0, Math.PI / 2, 10, 2 );
+            light.position.set(  this.center.x+100 , 300, this.center.z-100 );
+            light.target.position.set( this.center.x, this.center.y, this.center.z );
+
+            this.scene.add( light );
+
+            //var hemiLight = new THREE.HemisphereLight( 0xCC7F66, 0xEFEFFF, 0.8 );
+            var hemiLight = new THREE.HemisphereLight( 0x6666e6, 0xeffffff, 1 );
+            //hemiLight.color.setHSL( 0.6, 1, 0.6 );
+            //hemiLight.groundColor.setHSL( 0.095, 1, 0.75 );
+            hemiLight.position.set( 0, 20, 0 );
+            this.scene.add( hemiLight );
+
+
+            this.hemiLight = hemiLight;
+
+
+
+            /*var pointLight = new THREE.PointLight( 0xFFFFFF, 1 );
+            pointLight.position.set( this.center.x, 10, this.center.x );
+            this.scene.add( pointLight );*/
+
+            //this.scene.add( new THREE.AmbientLight( 0xcc7f66 ) );
+
+
+        }
     	
-    	var _this = this;
-    	this.container.appendChild( _this.renderer.domElement );
+    	//var _this = this;
+    
 
         if(this.isWithBackground ){
         	this.skyCanvasBasic = this.gradTexture([[0.51,0.49, 0.3], ['#cc7f66','#A7DCFA', 'deepskyblue']]);
@@ -267,12 +334,41 @@ V3D.Base.prototype = {
         }
 
         
-        window.addEventListener( 'resize', function(e) { _this.resize() }, false );
+        window.addEventListener( 'resize', function(e) { this.resize() }.bind(this), false );
 
         // disable context menu
         document.addEventListener("contextmenu", function(e){ e.preventDefault(); }, false);
 
-	    this.container.addEventListener( 'mousemove',  function(e) {_this.onMouseMove(e)} , false );
+        document.addEventListener( 'mousewheel', this, false );
+
+        this.container.addEventListener( 'mousemove', this, false );
+        this.container.addEventListener( 'mousedown', this, false );
+        this.container.addEventListener( 'mouseup', this, false );
+
+        this.container.addEventListener( 'touchmove', this, false );
+        this.container.addEventListener( 'touchstart', this, false );
+        this.container.addEventListener( 'touchend', this, false );
+
+
+        /*this.bigG = new THREE.PlaneBufferGeometry( 16*8, 16*8, 16*8, 16*8 );
+        this.bigG.rotateX( -Math.PI * 0.5 );
+
+        var qq = this.bigG.attributes.position.array;
+        var k = qq.length/3;
+        while(k--){
+            var m = k * 3;
+            qq[m] += this.center.x-0.5;
+            qq[m+2] += this.center.z-0.5;
+        }*/
+
+        //var bigm = new THREE.Mesh(this.bigG, new THREE.MeshStandardMaterial({color:0xffffff, metalness:0.8, roughness:0.3 }) );//, wireframe:true }) );
+        //bigm.position.set(this.center.x-0.5, -0.1, this.center.z-0.5)
+
+        //console.log(this.bigG.attributes.position.array.length/3)
+
+        //this.scene.add(bigm);
+
+	   /* this.container.addEventListener( 'mousemove',  function(e) {_this.onMouseMove(e)} , false );
 	    this.container.addEventListener( 'mousedown',  function(e) {_this.onMouseDown(e)}, false );
 	    this.container.addEventListener( 'mouseup',  function(e) {_this.onMouseUp(e)}, false );
 	    this.container.addEventListener( 'mouseout',  function(e) {_this.onMouseUp(e)}, false );
@@ -280,21 +376,33 @@ V3D.Base.prototype = {
 	    this.container.addEventListener( 'touchstart',  function(e) {_this.onMouseDown(e)}, false );
 	    this.container.addEventListener( 'touchend',  function(e) {_this.onMouseUp(e)}, false );
 	    this.container.addEventListener( 'touchmove',  function(e) {_this.onMouseMove(e)}, false );
+
 	    var body = document.body;
 	    if( body.addEventListener ){
 	        body.addEventListener( 'mousewheel',  function(e) {_this.onMouseWheel(e)}, false ); //chrome
 	        body.addEventListener( 'DOMMouseScroll',  function(e) {_this.onMouseWheel(e)}, false ); // firefox
 	    }else if( body.attachEvent ){
 	        body.attachEvent("onmousewheel" ,  function(e) {_this.onMouseWheel(e)}); // ie
-	    }
+	    }*/
 
 	    // active key
-	    if(!this.isMobile)this.bindKeys();
+	    if(!this.isMobile) this.bindKeys();
 	    
 	    start();
 
 	    // load winter extra map
 		this.loadImagesPlus();
+    },
+
+    handleEvent : function( e ) {
+
+        switch( e.type ) {
+            case 'mouseup': case 'touchend': this.onMouseUp( e ); break;
+            case 'mousedown': case 'touchstart': this.onMouseDown( e ); break;
+            case 'mousemove': case 'touchmove': this.onMouseMove( e ); break;
+            case 'mousewheel': this.onMouseWheel( e ); break;
+        }
+
     },
 
     //----------------------------------- RENDER
@@ -340,6 +448,7 @@ V3D.Base.prototype = {
 	    this.deepthTest = true;
     },
     customShader:function(){
+
 		var deepShader={
 		    attributes:{},
 		    uniforms:{ 
@@ -368,8 +477,11 @@ V3D.Base.prototype = {
 			fragmentShader: deepShader.fs
 		});
 		return material;
+
 	},
+
     miniClear:function(){
+
     	var i = this.miniScene.children.length;
     	var m;
     	while(i--){
@@ -380,12 +492,17 @@ V3D.Base.prototype = {
 	    	}
     		
     	}
+
     },
+
     miniClearMesh:function(m){
+
 	    m.geometry.dispose();
 	    this.miniScene.remove(m);
 	    m = null;
+
     },
+
     miniCheck: function(){
     	var l = this.findLayer(this.center.x, this.center.z);
     	var m;
@@ -407,11 +524,13 @@ V3D.Base.prototype = {
     		}
     	}
     },
+
     miniUpTree:function(l){
     	if(this.miniTree !== null) this.miniClearMesh(this.miniTree);
     	this.miniTree = new THREE.Mesh( this.treeMeshs[l].geometry.clone(), this.townHeigth);
     	this.miniScene.add(this.miniTree);
     },
+
     miniUpBuilding:function(l){
     	if(this.buildingMeshs[l]){
 	    	if(this.minibuilding !== null) this.miniClearMesh(this.minibuilding);
@@ -437,9 +556,11 @@ V3D.Base.prototype = {
 	    this.camera.updateProjectionMatrix();
 	    this.renderer.setSize(this.vsize.x,this.vsize.y);
 	},
+
 	startZoom : function(){
 		this.timer = setInterval(this.faddingZoom, 1000/60, this);
 	},
+
 	faddingZoom : function(t){
 		if(t.cam.distance>20){
 			t.cam.distance--;
@@ -455,7 +576,7 @@ V3D.Base.prototype = {
     	this.imgs[n] = new Image();
     	this.imgs[n].onload = function(){ 
     		_this.num++; 
-    		if(_this.num===1) if(hub!==null)hub.subtitle.innerHTML = "Loading textures ...";
+    		if(_this.num===1) if(hub!==null) hub.subtitle.innerHTML = "Loading textures ...";
     		
     		if(_this.num === _this.imgSrc.length){ _this.changeTextures(); _this.num=0; }
     		else _this.loadImages();
@@ -485,50 +606,76 @@ V3D.Base.prototype = {
     },
 
 	changeTextures : function (){
+
+        this.envCanvas = document.createElement("canvas");
 		this.groundCanvas = document.createElement("canvas");
 		this.townCanvas = document.createElement("canvas");
 		this.buildingCanvas = document.createElement("canvas");
 
+        this.envCanvas.width = this.envCanvas.height = this.imgs[5].width;
 		this.groundCanvas.width = this.groundCanvas.height = this.imgs[0].width;
 		this.townCanvas.width = this.townCanvas.height = this.imgs[1].width;
 		this.buildingCanvas.width = this.buildingCanvas.height = this.imgs[2].width;
 
+        this.tint(this.envCanvas, this.imgs[5]);
 		this.tint(this.groundCanvas, this.imgs[0]);
 		this.tint(this.townCanvas, this.imgs[1], this.imgs[4]);
 		this.tint(this.buildingCanvas, this.imgs[2], this.imgs[3]);
 
 		this.imageSrc = this.groundCanvas;
+
 		this.createTextures();
 	},
 
 	createTextures : function (){
 		
 		if(this.isWithEnv){
-		    this.environment = THREE.ImageUtils.loadTexture( 'img/env.jpg', THREE.SphericalReflectionMapping);
-		    this.environment2 = THREE.ImageUtils.loadTexture( 'img/env.jpg', THREE.SphericalReflectionMapping);
+            this.environment = new THREE.Texture( this.envCanvas );
+            this.environment.mapping = THREE.SphericalReflectionMapping;
+            this.environment.needsUpdate = true;
+            
+		    //this.environment = THREE.ImageUtils.loadTexture( 'img/env.jpg', THREE.SphericalReflectionMapping);
+		    //this.environment2 = THREE.ImageUtils.loadTexture( 'img/env.jpg', THREE.SphericalReflectionMapping);
 		}
 
-		this.townTexture = new THREE.Texture(this.townCanvas);
+		this.townTexture = new THREE.Texture( this.townCanvas );
 		this.townTexture.flipY = false;
-		this.townTexture.magFilter = THREE.NearestFilter;
-        this.townTexture.minFilter = THREE.LinearMipMapLinearFilter;
+		//this.townTexture.magFilter = THREE.NearestFilter;
+        //this.townTexture.minFilter = THREE.LinearMipMapLinearFilter;
         this.townTexture.needsUpdate = true;
 
-        this.buildingTexture = new THREE.Texture(this.buildingCanvas);
+        this.buildingTexture = new THREE.Texture( this.buildingCanvas );
 		this.buildingTexture.flipY = false;
-		this.buildingTexture.magFilter = THREE.NearestFilter;
-        this.buildingTexture.minFilter = THREE.LinearMipMapLinearFilter;
+		//this.buildingTexture.magFilter = THREE.NearestFilter;
+        //this.buildingTexture.minFilter = THREE.LinearMipMapLinearFilter;
         this.buildingTexture.needsUpdate = true;
+
+
+        
         
         // materials
+
+        if(this.isWithLight){
+            var s = new THREE.Vector2( 2, 2 );
+            this.townMaterial = new THREE.MeshStandardMaterial( { map: this.townTexture, metalness:this.metalness, roughness:this.roughness, wireframe:this.wireframe  } );
+            this.buildingMaterial = new THREE.MeshStandardMaterial( { map: this.buildingTexture, metalness:this.metalness, roughness:this.roughness, wireframe:this.wireframe  } );
+        } else {
+            this.townMaterial = new THREE.MeshBasicMaterial( { map: this.townTexture } );
+            this.buildingMaterial = new THREE.MeshBasicMaterial( { map: this.buildingTexture } );
+        }
         
-	    this.townMaterial = new THREE.MeshBasicMaterial( { map: this.townTexture } );
-	    this.buildingMaterial = new THREE.MeshBasicMaterial( { map: this.buildingTexture } );
+	    
+
+
 
 	    if(this.isWithEnv){
 	    	this.townMaterial.envMap = this.environment;
 	    	this.buildingMaterial.envMap = this.environment;
 	    }
+
+        if(this.isWithNormal){
+            this.addNormalMap();
+        }
 
 	    /*
 	    this.townMaterial.vertexColors = THREE.VertexColors
@@ -547,6 +694,27 @@ V3D.Base.prototype = {
 
     	this.loadSea3d();
 	},
+
+    addNormalMap:function(){
+
+        this.buildingTexture_n = new THREE.Texture( this.imgs[6] );
+        this.buildingTexture_n.flipY = false;
+        //this.buildingTexture_n.magFilter = THREE.NearestFilter;
+        //this.buildingTexture_n.minFilter = THREE.LinearMipMapLinearFilter;
+        this.buildingTexture_n.needsUpdate = true;
+
+        this.townTexture_n = new THREE.Texture( this.imgs[7] );
+        this.townTexture_n.flipY = false;
+        //this.townTexture_n.magFilter = THREE.NearestFilter;
+        //this.townTexture_n.minFilter = THREE.LinearMipMapLinearFilter;
+        this.townTexture_n.needsUpdate = true;
+
+        this.ground_n = this.imgs[8];
+
+        this.townMaterial.normalMap = this.townTexture_n;
+        this.buildingMaterial.normalMap = this.buildingTexture_n;
+
+    },
 
 	textureSwitch : function(type){
 		switch(type){
@@ -618,22 +786,24 @@ V3D.Base.prototype = {
 
     loadSea3d : function (){
     	var _this = this;
-	    var loader = new THREE.SEA3D( true );
-	    var basicMap = new THREE.MeshBasicMaterial( {color:0x000000} )
+	    var loader = new THREE.SEA3D();// true );
+	    //var basicMap = new THREE.MeshBasicMaterial( {color:0x000000} )
 	    loader.onComplete = function( e ) {
 	        var m, map;
 	        var i = loader.meshes.length;
 	        while(i--){
 	            m = loader.meshes[i];
+                //console.log(m.name)
 	            m.material.dispose();
 	            //m.material = basicMap;
 	            _this.meshs[m.name] = m;
 	        }
 	        _this.defineGeometry();
 	    }
-	    if(!this.seaBuffer)loader.parser = THREE.SEA3D.DEFAULT;
-	    else loader.parser = THREE.SEA3D.BUFFER;
+	    //if(!this.seaBuffer)loader.parser = THREE.SEA3D.DEFAULT;
+	    //else loader.parser = THREE.SEA3D.BUFFER;
 	    loader.load( this.rootModel );
+
 	    if(hub!==null)hub.subtitle.innerHTML = "Loading 3d model ...";
 	},
 
@@ -642,7 +812,9 @@ V3D.Base.prototype = {
 	defineGeometry : function(){
 		var i;
 		var m = new THREE.Matrix4().makeScale(1, 1, -1);
-		var m2 = new THREE.Matrix4();
+		//var m2 = new THREE.Matrix4().makeTranslation(0.5, 0,0);
+
+        var o = this.meshs;
 
 		// BUILDING
 
@@ -652,18 +824,17 @@ V3D.Base.prototype = {
 		this.buildingGeo[2] = null;
 		this.buildingGeo[3] = null;
 
-		this.buildingGeo[4] = this.meshs['police'].geometry;
-		this.buildingGeo[5] = this.meshs['park_1'].geometry;
-		this.buildingGeo[6] = this.meshs['park_2'].geometry;
-		this.buildingGeo[7] = this.meshs['fire'].geometry;
+		this.buildingGeo[4] = o['police'].geometry;
+		this.buildingGeo[5] = o['park_1'].geometry;
+		this.buildingGeo[6] = o['park_2'].geometry;
+		this.buildingGeo[7] = o['fire'].geometry;
 
+		this.buildingGeo[8] = o['coal'].geometry;
+		this.buildingGeo[9] = o['nuclear'].geometry;
 
-		this.buildingGeo[8] = this.meshs['coal'].geometry;
-		this.buildingGeo[9] = this.meshs['nuclear'].geometry;
-
-		this.buildingGeo[10] = this.meshs['port'].geometry;
-		this.buildingGeo[11] = this.meshs['stadium'].geometry;
-		this.buildingGeo[12] = this.meshs['airport'].geometry;
+		this.buildingGeo[10] = o['port'].geometry;
+		this.buildingGeo[11] = o['stadium'].geometry;
+		this.buildingGeo[12] = o['airport'].geometry;
 
 		// BASIC 
 
@@ -674,28 +845,28 @@ V3D.Base.prototype = {
 
 		i = 9;
 		while(i--){
-			this.industrialGeo[i] = this.meshs['i_0'+i].geometry;
+			this.industrialGeo[i] = o['i_0'+i].geometry;
 			this.industrialGeo[i].applyMatrix(m);
 		}
 
 		i = 19;
 		while(i--){
-			if(i<10) this.residentialGeo[i] = this.meshs['r_0'+i].geometry;
-			else this.residentialGeo[i] = this.meshs['r_'+i].geometry;
+			if(i<10) this.residentialGeo[i] = o['r_0'+i].geometry;
+			else this.residentialGeo[i] = o['r_'+i].geometry;
 			this.residentialGeo[i].applyMatrix(m);
 		}
 
 		i = 21;
 		while(i--){
-			if(i<10) this.commercialGeo[i] = this.meshs['c_0'+i].geometry;
-			else this.commercialGeo[i] = this.meshs['c_'+i].geometry;
+			if(i<10) this.commercialGeo[i] = o['c_0'+i].geometry;
+			else this.commercialGeo[i] = o['c_'+i].geometry;
 			this.commercialGeo[i].applyMatrix(m);
 		}
 
 		i = 12;
 		while(i--){
-			if(i<10) this.houseGeo[i] = this.meshs['rh_0'+i].geometry;
-			else this.houseGeo[i] = this.meshs['rh_'+i].geometry;
+			if(i<10) this.houseGeo[i] = o['rh_0'+i].geometry;
+			else this.houseGeo[i] = o['rh_'+i].geometry;
 			this.houseGeo[i].applyMatrix(m);
 		}
 
@@ -707,9 +878,9 @@ V3D.Base.prototype = {
 		// SPRITE
 
 		this.spriteGeo = [];
-		this.spriteGeo[0] = this.meshs['train'].geometry;
-		this.spriteGeo[1] = this.meshs['elico'].geometry.clone();
-		this.spriteGeo[2] = this.meshs['plane'].geometry;
+		this.spriteGeo[0] = o['train'].geometry.clone();
+		this.spriteGeo[1] = o['elico'].geometry.clone();
+		this.spriteGeo[2] = o['plane'].geometry.clone();;
 
 		i = this.spriteGeo.length;
 		while(i--) {
@@ -720,15 +891,15 @@ V3D.Base.prototype = {
 
 		this.treeGeo = [];
 
-		this.treeGeo[0] = this.meshs['ttt3'].geometry;
-		this.treeGeo[1] = this.meshs['ttt3'].geometry.clone();
-		this.treeGeo[2] = this.meshs['ttt4'].geometry;
-		this.treeGeo[3] = this.meshs['ttt4'].geometry.clone();
+		this.treeGeo[0] = o['ttt3'].geometry;
+		this.treeGeo[1] = o['ttt3'].geometry.clone();
+		this.treeGeo[2] = o['ttt4'].geometry;
+		this.treeGeo[3] = o['ttt4'].geometry.clone();
 
-		this.treeGeo[4] = this.meshs['ttt0'].geometry;
-		this.treeGeo[5] = this.meshs['ttt1'].geometry;
-		this.treeGeo[6] = this.meshs['ttt2'].geometry;
-		this.treeGeo[7] = this.meshs['ttt5'].geometry;
+		this.treeGeo[4] = o['ttt0'].geometry;
+		this.treeGeo[5] = o['ttt1'].geometry;
+		this.treeGeo[6] = o['ttt2'].geometry;
+		this.treeGeo[7] = o['ttt5'].geometry;
 
 		i = this.treeGeo.length;
 		
@@ -764,93 +935,206 @@ V3D.Base.prototype = {
 		mesh.name = geo.name;
 		return mesh;
 	},
+
 	randRange : function (min, max) {
 		return Math.floor(Math.random() * (max - min + 1)) + min;
 	},
 
 	//----------------------------------- GEOMETRY PROCESS
 
-	transGeo : function(g){
+	/*transGeo : function(g){
 		if(this.isTransGeo){
 			g.mergeVertices();
 			g.computeVertexNormals( true );
-			g.computeTangents();
+			//g.computeTangents();
 			//g.computeBoundingBox();
 			//g.computeBoundingSphere();
 			g.verticesNeedUpdate = true;
 		}
 		return g;
-	},
+	},*/
 	
 
-	//----------------------------------- TREE TEST
+	//----------------------------------- MESH CONSTRUCTOR    
 
+    buildMeshLayer:function( layer, type ){
+
+        type = type || 'tree';
+
+        var id = 0;
+
+        if( type === 'tree' ) id = 0;
+        if( type === 'town' ) id = 1;
+        if( type === 'house' ) id = 2;
+        if( type === 'building' ) id = 3;
+
+        
+
+        var list = this.M_list[id];
+        var temp = this.M_temp[id];
+        var geom = this.M_geom[id];
+        var mesh = this.M_mesh[id];
+        var mats = this.M_mats[id];
+
+        var g, _g, v, nr, uv, t, i, j, lng, n, ar, k, decal = 0;
+
+        if( this[list][layer] ){
+
+            i = this[list][layer].length;
+
+            v = [];
+            uv = [];
+            nr = [];
+
+            while(i--){
+
+                ar = this[list][layer][i];
+
+                if( id === 3 ){ // building
+
+                    k = this.R.length;
+                    while(k--){ 
+                        if(ar[3] === this.R[k] ){ 
+                            _g = this.residentialGeo[k];
+                            // remove little house
+                            if(k===0 && ar[5]===0){ this.buildingLists[layer][i][5] = 1; this.addBaseHouse( ar[0], ar[1], ar[2] ); }
+                            else if(k>0 && ar[5]===1){ this.buildingLists[layer][i][5] = 0;  this.removeBaseHouse( ar[0], ar[1], ar[2] ); }
+                        }
+
+                    }
+
+                    k = this.C.length;
+                    while(k--){ if(ar[3] === this.C[k] ) _g = this.commercialGeo[k]; }
+
+                    k = this.I.length;
+                    while(k--){ if(ar[3] === this.I[k] ) _g = this.industrialGeo[k]; }
+
+                } else if( id === 2 ){// house
+
+                    k = this.H.length;
+                    while(k--){ if( ar[3] === this.H[k] ) _g = this.houseGeo[k]; }
+
+                } else {
+
+                    if(ar[3] === 8 || ar[3] === 9 || ar[3] === 10 || ar[3] === 11) decal = 1;
+                    if(ar[3] === 12) decal = 3;
+
+                    _g = this[geom][ar[3]];
+
+                }
+
+                
+
+                // position
+
+                if( _g ){
+
+                    t = _g.attributes.position.array;
+                    lng = t.length/3;
+
+                    for( j = 0; j < lng; j++){
+
+                        n = j * 3;
+                        v.push( t[n] + ar[0]  );
+                        v.push( t[n+1] + ar[1] );
+                        v.push( t[n+2] + ar[2] + decal );
+
+                    }
+
+                    // normal
+
+                    t = _g.attributes.normal.array;
+                    lng = t.length;
+
+                    for( j = 0; j < lng; j++){
+                        nr.push( t[j] );
+                    }
+
+                    // uv
+
+                    t = _g.attributes.uv.array;
+                    lng = t.length;
+
+                    for( j = 0; j < lng; j++){
+                        uv.push( t[j] );
+                    }
+
+                }
+
+            }
+
+            // remove old mesh
+
+            if( this[mesh][layer] ){
+                //console.log('remove');
+                this.scene.remove( this[mesh][layer] );
+                this[mesh][layer].geometry.dispose();
+
+            }
+
+            
+
+            if( v.length > 0 ){
+
+                // final geometry
+
+                g = new THREE.BufferGeometry();
+                g.addAttribute( 'position', new THREE.BufferAttribute( new Float32Array( v ), 3 ) );
+                g.addAttribute( 'normal', new THREE.BufferAttribute( new Float32Array( nr ), 3 ) );
+                g.addAttribute( 'uv', new THREE.BufferAttribute( new Float32Array( uv ), 2 ) );
+                //g.computeVertexNormals();
+
+                // final mesh
+
+                this[mesh][layer] = new THREE.Mesh( g, this[mats] );
+                this.scene.add( this[mesh][layer] );
+
+            }
+
+            // clear temp
+
+            this[temp][layer] = 0;
+
+        }
+
+    },
+
+    //----------------------------------- TREE TEST
 
     addTree : function(x,y,z,v,layer){
-    	if(!this.isWithTree) return;
-    	// v  21 to 43
-    	if(!this.treeLists[layer]) this.treeLists[layer]=[];
-    	this.treeLists[layer].push([x,y,z,v]);
+        if( !this.isWithTree ) return;
+        // v  21 to 43
+        if( !this.treeLists[layer] ) this.treeLists[layer]=[];
+        this.treeLists[layer].push([x,y,z,v]);
     },
+
     populateTree:function(){
     	if(!this.isWithTree) return;
-    	//this.treeMeshs = [];
-    	//this.tempTreeLayers = [];
-    	var m = new THREE.Matrix4(), ar, g2;
+
     	var l = this.nlayers;
-    	while(l--){
-    		//var g = new THREE.Geometry();
-    		
-    		if(this.treeLists[l]){
-	    		var i = this.treeLists[l].length;
-	    		var g = new THREE.Geometry();
-	    		//if(this.seaBuffer) g = new THREE.TypedGeometry(i*500); 
-	    		//else g = new THREE.Geometry();
 
-	    		while(i--){
-	    			//rand = Math.floor(Math.random()*4);
-	    			ar = this.treeLists[l][i];
-	    			m.makeTranslation(ar[0],ar[1],ar[2]);
-	    			g.merge( this.treeGeo[ar[3]], m );
+    	while( l-- ){
 
-	    			//else g.merge( this.treeGeo[4+rand], m );
-	    		}
+            this.buildMeshLayer( l );
 
-	    		if(this.isBuffer){
-	    			g = this.transGeo(g);
-	    			g2 = new THREE.BufferGeometry().fromGeometry(g);
-	    			g.dispose();
-	    			this.treeMeshs[l] = new THREE.Mesh( g2, this.townMaterial );
-	    		} else {
-	    			this.treeMeshs[l] = new THREE.Mesh( g, this.townMaterial );
-	    		}
-	    		//g.computeBoundingSphere();
-	    		//var g2 = new THREE.BufferGeometry();
-	    		//g2.fromGeometry(g);
-	    	    
-	    	    this.scene.add(this.treeMeshs[l]);
-	    	    this.tempTreeLayers[l] = 0;
-
-	    	    /*if(this.deepthTest){
-			    	this.treeDeepMeshs[l] = new THREE.Mesh( g.clone(), this.townHeigth);
-			    	this.miniScene.add(this.treeDeepMeshs[l]);
-			    }*/
-	    	}
     	}
+
     },
+
     clearAllTrees : function(){
     	if(!this.isWithTree) return;
     	var l = this.nlayers;
     	while(l--){
-    		if(this.treeMeshs[l]){
-    			this.scene.remove(this.treeMeshs[l]);
-    			if(this.treeMeshs[l].geometry)this.treeMeshs[l].geometry.dispose();
+    		if( this.treeMeshs[l] ){
+    			this.scene.remove( this.treeMeshs[l] );
+    			if(this.treeMeshs[l].geometry) this.treeMeshs[l].geometry.dispose();
     		}
     	}
     	this.treeMeshs = [];
     	this.treeLists = [];
     	this.tempTreeLayers = [];
     },
+
     removeTreePack : function(ar){
     	if(!this.isWithTree) return;
     	//this.tempTreeLayers = [];
@@ -864,6 +1148,7 @@ V3D.Base.prototype = {
     		if(this.tempTreeLayers[i] === 1){ this.rebuildTreeLayer(i); }
     	}
     },
+
     removeTree : function(x, z, m){
     	var l = this.findLayer(x, z), ar;
 		if(this.treeLists[l]){
@@ -883,45 +1168,16 @@ V3D.Base.prototype = {
     		}
 		}
     },
-    rebuildTreeLayer : function(l){
+
+    rebuildTreeLayer : function( l ){
     	if(!this.isWithTree) return;
     	this.scene.remove(this.treeMeshs[l]);
     	this.treeMeshs[l].geometry.dispose();
 
-    	/*if(this.deepthTest){
-    		this.miniScene.remove(this.treeDeepMeshs[l]);
-    		this.treeDeepMeshs[l].geometry.dispose();
-    	}*/
+        this.buildMeshLayer(l);
 
-    	var m = new THREE.Matrix4(), ar, g2;
-    	var i = this.treeLists[l].length;
-    	var g = new THREE.Geometry();
-    	//var g = new THREE.TypedGeometry(i*200); 
-    	while(i--){
-	    	ar = this.treeLists[l][i];
-	    	m.makeTranslation(ar[0],ar[1],ar[2]);
-	    	//g.merge( this.treeGeo[0], m );
-	    	g.merge( this.treeGeo[ar[3]], m );
-	    }
+	    if(l == this.currentLayer) this.miniTreeUpdate = 1;
 
-	    if(this.isBuffer){
-	    	g = this.transGeo(g);
-			g2 = new THREE.BufferGeometry().fromGeometry(g);
-			g.dispose();
-			this.treeMeshs[l] = new THREE.Mesh( g2, this.townMaterial );
-		} else {
-			//g.computeBoundingSphere();
-			this.treeMeshs[l] = new THREE.Mesh( g, this.townMaterial );
-		}
-	   // g.computeBoundingSphere();
-	    //this.treeMeshs[l] = new THREE.Mesh( g, this.townMaterial);
-	    this.scene.add(this.treeMeshs[l]);
-	    /*if(this.deepthTest){
-	    	this.treeDeepMeshs[l] = new THREE.Mesh( g.clone(), this.townHeigth);
-	    	this.miniScene.add(this.treeDeepMeshs[l]);
-	    }*/
-	    this.tempTreeLayers[l] = 0;
-	    if(l == this.currentLayer)this.miniTreeUpdate = 1;
     },
 
 
@@ -930,25 +1186,32 @@ V3D.Base.prototype = {
 
     updateBackground : function(){
     	var rootColors;
+        var fogColors;
     	if(this.isWithBackground ){
 		    if(this.isIsland){
 		    	rootColors = '#6666e6';
-		    	if(this.isWinter) rootColors = '#AFEEEE';
+                fogColors = 0x6666e6; 
+		    	if(this.isWinter){ 
+                    rootColors = '#AFEEEE';
+                    fogColors = 0xAFEEEE; 
+                }
 		    	this.skyCanvasBasic = this.gradTexture([[0.51,0.49, 0.3], [rootColors,'#BFDDFF', '#4A65FF']]);
 		    	this.skyCanvas = this.gradTexture([[0.51,0.49, 0.3], [rootColors,'#BFDDFF', '#4A65FF']]);
 		    	if(this.isWithFog){
-		    		if(this.isWinter) this.fog.color.setHex(0xAFEEEE);
-		    	    else this.fog.color.setHex(0x6666e6);
+		    		this.fog.color.setHex(fogColors);
 		    	}
 		    }
 		    else{
 		    	rootColors = '#E2946D';
-		    	if(this.isWinter) rootColors = '#E6F0FF';
+                fogColors = 0xE2946D; 
+		    	if(this.isWinter){ 
+                    rootColors = '#E6F0FF';
+                    fogColors = 0xE6F0FF; 
+                }
 		    	this.skyCanvasBasic =  this.gradTexture([[0.51,0.49, 0.3], [rootColors,'#BFDDFF', '#4A65FF']]);
 		    	this.skyCanvas = this.gradTexture([[0.51,0.49, 0.3], [rootColors,'#BFDDFF', '#4A65FF']]);
 		    	if(this.isWithFog){
-		    		if(this.isWinter) this.fog.color.setHex(0xE6F0FF);
-		    	    else this.fog.color.setHex(0xE2946D);
+		    		this.fog.color.setHex(fogColors);
 		    	}
 		    }
 		    this.skyTexture = new THREE.Texture(this.skyCanvas);
@@ -958,6 +1221,12 @@ V3D.Base.prototype = {
 			if(this.isIsland) this.renderer.setClearColor( 0x6666e6, 1 );
 			else this.renderer.setClearColor( 0xcc7f66, 1 );
 		}
+
+        if(this.isWithLight){
+
+            this.hemiLight.groundColor.setHex( fogColors );
+
+        }
     },
 
     //------------------------------------ TERRAIN MAP
@@ -971,6 +1240,8 @@ V3D.Base.prototype = {
 
 		this.updateBackground();
 
+        
+
 		// create terrain if not existe
         if(this.miniTerrain.length === 0){
 
@@ -981,15 +1252,34 @@ V3D.Base.prototype = {
         		for(var j=0; j<8; j++){
         			//var geo = new THREE.PlaneGeometry( 16, 16, 16, 16 );
         			var geo;
-        			if(this.isWithHeight)  geo = new THREE.PlaneGeometry( 16, 16, 16, 16 );
-        			else geo = new THREE.PlaneBufferGeometry( 16, 16, 1, 1 );
-        			geo.applyMatrix(new THREE.Matrix4().makeRotationX( - Math.PI * 0.5 ));
+        			if(this.isWithHeight){  
+                        geo = new THREE.PlaneBufferGeometry( 16, 16, 16, 16 );
+                    } else {
+                        geo = new THREE.PlaneBufferGeometry( 16, 16, 1, 1 );  
+                    }
+
+                    geo.rotateX( -Math.PI * 0.5 );
+
+
+                    var qq = geo.attributes.position.array;
+                    var k = qq.length/3;
+                    while(k--){
+                        var m = k * 3;
+                        qq[m] += (8+j*16)-0.5;
+                        qq[m+2] += (8+i*16)-0.5;
+                    }
+        			//geo.applyMatrix( new THREE.Matrix4().makeRotationX( - Math.PI * 0.5 ) );
+                    
         			//geo.computeBoundingSphere();
 	        		//this.miniTerrain[n] = new THREE.Mesh(geo.clone(), new THREE.MeshBasicMaterial({color:colorsX[i]+colorsY[j]}) );
 	        		if(this.isColorTest) this.miniTerrain[n] = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({color:colorsX[i]+colorsY[j]}) );
-	        		else this.miniTerrain[n] = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({color:0xffffff}) );
-	        		if(this.isWithEnv) this.miniTerrain[n].material.envMap = this.environment2;
-	        		this.miniTerrain[n].position.set((8+j*16)-0.5,0,(8+i*16)-0.5);
+	        		else{
+                        if(this.isWithLight) this.miniTerrain[n] = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({color:0xffffff, metalness:this.metalness, roughness:this.roughness, wireframe:this.wireframe }) );
+                        else this.miniTerrain[n] = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({color:0xffffff}) );
+                    }
+
+	        		if(this.isWithEnv) this.miniTerrain[n].material.envMap = this.environment;
+	        		//this.miniTerrain[n].position.set((8+j*16)-0.5,0,(8+i*16)-0.5);
 	        		this.land.add( this.miniTerrain[n] );
 	        		n++;
 	        	}
@@ -998,13 +1288,21 @@ V3D.Base.prototype = {
 
 	    // update start map texture
         n = this.miniTerrain.length;
-        var texture;
+        var texture, textureN;
         while(n--){
         	texture = new THREE.Texture( this.miniCanvas[n] );
-        	texture.magFilter = THREE.NearestFilter;
-        	texture.minFilter = THREE.LinearMipMapLinearFilter;
+        	//texture.magFilter = THREE.NearestFilter;
+        	//texture.minFilter = THREE.LinearMipMapLinearFilter;
         	texture.needsUpdate = true;
         	this.miniTerrain[n].material.map = texture;
+
+            if(this.isWithNormal){
+                textureN = new THREE.Texture( this.miniCanvasN[n] );
+                //textureN.magFilter = THREE.NearestFilter;
+                //textureN.minFilter = THREE.LinearMipMapLinearFilter;
+                textureN.needsUpdate = true;
+                this.miniTerrain[n].material.normalMap = textureN;
+            }
         	
         	//this.miniTerrain[n].material.transparent = true;
 
@@ -1013,7 +1311,8 @@ V3D.Base.prototype = {
 
         if( this.isWithHeight ){
 		    this.applyHeight();
-		    this.center.y = this.heightData[this.findId(this.center.x,this.center.z)];
+		    //this.center.y = this.heightData[this.findId(this.center.x,this.center.z)];
+            this.center.y = this.heightData[this.findHeightId(this.center.x,this.center.z)];
 		} else {
 			this.center.y = 0;
 		}
@@ -1032,42 +1331,57 @@ V3D.Base.prototype = {
 			while(e--){ this.land.remove( this.miniTerrain[e] ); }
 			this.miniTerrain = [];
 		}
+
+
+        this.bigG = new THREE.PlaneBufferGeometry( 16*8, 16*8, 16*8, 16*8 );
+        this.bigG.rotateX( -Math.PI * 0.5 );
+
+        var qq = this.bigG.attributes.position.array;
+        var k = qq.length/3;
+        while(k--){
+            var m = k * 3;
+            qq[m] += this.center.x;//-0.5;
+            qq[m+2] += this.center.z;//-0.5;
+        }
+
 		
 		var w = this.mapSize[0];
 		var h = this.mapSize[1];
 
-		var size = w * h;
+        var i, j, x, y;
+
+        var d = (8*16)+1;
+		var size = d * d;
+
 		var data = new ARRAY_TYPE( size );
-		var perlin = new ImprovedNoise(), quality = 1, z = Math.random() * 100;
+		var perlin = new Perlin();//, z = Math.random() * 100;
 
-		for ( var j = 0; j < 4; j ++ ) {
-			//if ( j == 0 ) for ( var i = 0; i < size; i ++ ) data[ i ] = 0;
-			for ( var i = 0; i < size; i ++ ) {
-				//var x = i % w, y = ( i / w ) | 0;
-				var x = i % w, y = ~~ ( i / w );
-				//data[ i ] += Math.round(Math.abs( perlin.noise( x / quality, y / quality, z ) * quality * 0.2 ))*0.5;
-				data[ i ] += (Math.abs( perlin.noise( x / quality, y / quality, z ) * quality * 0.2 ))
-			}
-			quality *= 5;
+        var noise;
+
+        var r = 1 / d;//w;
+        var quality = 1 / 20;
+
+        var multy = 3 + ( Math.random() * 2 );
+
+        i = size;
+
+
+
+        while(i--){
+
+			x = i % d;
+            y = ~~ ( i * r );
+
+            noise = perlin.noise( x * quality, y  * quality );
+
+			data[ i ] = (0.5+(noise*0.5))*multy;
 		}
 
-		var n = data.length;
-		var pos, x, y, l, d;
-		while(n--){
-			pos = this.findPosition(n);
-			x = pos[0];
-			y = pos[1];
-			l = 0; d = 0;
-			if(y==16 || y == 32 || y == 48 || y == 64|| y == 80 || y == 96 || y == 112  ) d = 1;
-			if(x==16 || x == 32 || x == 48 || x == 64|| x == 80 || x == 96 || x == 112  ) l = 1;
+        //console.log('total: ' + data.length )
 
-			if(l)data[n]=data[n-1];
-			if(d)data[n]=data[n-128];
-			if(l && d) data[n]=data[n-129];
-			
-		}
 		return data;
 	},
+
 	resetHeight : function () {
 		var i = this.heightData.length;
 		while(i--){
@@ -1076,67 +1390,215 @@ V3D.Base.prototype = {
 		this.applyHeight();
 		this.isWithHeight = false;
 	},
+
+    findHeightId : function ( x, z ){
+        return this.findSamePoint(x, z);
+        //var ratio = 16384 / 16641;
+        //return Math.floor(n*ratio);
+    },
+
+    findSamePoint : function(x, z){
+        var ar 
+        if( this.bigG ) ar = this.bigG.attributes.position.array;
+        else ar = this.positionRef;
+        var i = ar.length/3, n, y = 0;
+        while(i--){
+            n = i*3;
+            if(ar[n] === x && ar[n+2] === z){ 
+                y = i;//ar[n+1];
+                break; 
+            }
+        }
+
+        return y;
+
+    },
+
 	applyHeight : function () {
-		var i = this.heightData.length;
-		var pos, layer, h, v;
+
+		var i, j, gr, gn;
+        var lng = this.heightData.length;
+		var pos, layer, h, v, d=0, n, nn, idd;
+        this.Gtmp = [];
+
+        gr = this.bigG.attributes.position.array;
+
+        
+        i = gr.length/3;
+        while(i--){
+            n = i*3;
+            gr[n+1] = this.heightData[i];
+        }
+
+        this.bigG.attributes.position.needUpdate = true;
+        this.bigG.computeVertexNormals();
+
+        this.positionRef = new Float32Array( gr.length );
+        i = gr.length;
+        while(i--){
+            this.positionRef[i] = gr[i];
+        }
+
+        //this.positionRef = this.bigG.attributes.position.array;///new Float32Array( this.bigG.attributes.position.array );
+
+
+        var rn = this.bigG.attributes.normal.array;
+
+        //console.log( 'base' ,  this.bigG.attributes.position.array[0], this.bigG.attributes.position.array[2] )
+
+
+        i = 64;
+        while (i--){
+            this.Gtmp[i] = new ARRAY_TYPE(289);
+        }
+
+        i = 64;
+        while (i--){
+            gr = this.miniTerrain[i].geometry.attributes.position.array;
+            gn = this.miniTerrain[i].geometry.attributes.normal.array;
+            j = gr.length/3;
+            while(j--){
+                n = j * 3;
+
+                idd = this.findSamePoint( gr[n]+0.5, gr[n+2]+0.5 );
+                this.Gtmp[j] = this.heightData[ idd ]; 
+
+                gr[n+1] = this.Gtmp[j];
+
+                nn = idd*3;
+                gn[n] = rn[nn];
+                gn[n+1] = rn[nn+1];
+                gn[n+2] = rn[nn+2];
+
+                //if(j===0) console.log(gr[n], gr[n+2] )
+
+                //this.Gtmp[i][j] = 
+            }
+
+            this.miniTerrain[i].geometry.attributes.position.needUpdate = true;
+            this.miniTerrain[i].geometry.attributes.normal.needUpdate = true;
+            //this.miniTerrain[i].geometry.computeVertexNormals();
+
+        }
+
+        this.bigG.dispose();
+        this.bigG = null;
+        /*for(i = 0; i < lng; i++ ){
+            pos = this.findPositionDisp(i);
+            //layer = this.findLayer(pos[0], pos[1]);
+            layer = this.findLayerDisp(pos[0], pos[1]);
+            //pos = this.findPosition(i);
+            //layer = Math.floor(i/289);
+            if( this.Gtmp[layer] === undefined ){ 
+                //console.log(layer)
+                this.Gtmp[layer] = [];
+            }
+            //v = this.findVertices( layer, pos );
+            v = this.findVerticesDisp( layer, pos );
+            //v = i - (layer*289);
+            //v = this.findVertices( layer, pos );
+            this.Gtmp[layer][v] = this.heightData[i];
+
+        }*/
+      /*  var i = lng;
 		while(i--){
-			pos = this.findPosition(i);
-			layer = this.findLayer(pos[0], pos[1]);
-			v = this.findVertices(layer, pos);
-			this.moveFaces(this.miniTerrain[layer], v, this.heightData[i]);
-			//this.miniTerrain[layer].geometry.vertices[ v ].y = this.heightData[i];
+
+            n = i*3;
+            this.bigG.attributes.position.array[n+1] = this.heightData[i];
+
+            //pos = [this.bigG.attributes.position.array[n], this.bigG.attributes.position.array[n+2]]
+
+
+
+			pos = this.findPositionDisp(i);//this.findPosition(i);
+			layer = this.findLayerDisp( pos[0], pos[1] );
+            //if( this.Gtmp[layer] === undefined ) this.Gtmp[layer] = [];
+			//v = this.findVertices( layer, pos );
+            v = this.findVerticesDisp( layer, pos );
+            //d = layer*33;
+            this.Gtmp[layer][v] = this.heightData[i];
+
 		}
 
-		var n = this.miniTerrain.length;
-        while(n--){ 
-        	this.miniTerrain[n].geometry.computeFaceNormals();
-        	if(this.isComputeVertex) this.miniTerrain[n].geometry.computeVertexNormals();
-        	this.miniTerrain[n].geometry.verticesNeedUpdate = true;
+        console.log(this.Gtmp.length, this.Gtmp[0].length,  this.miniTerrain[0].geometry.attributes.position.array.length/3, this.heightData.length/64, this.heightData.length/289 )
+
+		i = this.miniTerrain.length;
+        while(i--){ 
+            this.updateVertices( this.miniTerrain[i].geometry, this.Gtmp[i] );
         }
+
+        this.bigG.attributes.position.needUpdate = true;
+        this.bigG.computeVertexNormals();*/
+        //tmp = null;
 	},
-	makePlanar:function(ar, y){	
-		var layer, v, x, z;
+
+	makePlanar:function(ar, y){
+
+		/*var layer, v, x, z;
+        var tmp = [];
 		var i = ar.length;
     	while(i--){
     		x = ar[i][0];
     		z = ar[i][1];
     		layer = this.findLayer(x, z);
-    		v = this.findVertices(layer, [x, z] );
-    		this.moveFaces(this.miniTerrain[layer], v, y);
+            //if( tmp[layer] === undefined ) tmp[layer] = [];
+    		v = this.findVertices(layer, [x, z] );//findVertices(layer, [x, z] );
+            this.Gtmp[layer][v] = y;//this.heightData[i];
     		this.tempHeightLayers[layer] = 1;
     	}
     	// rebuild layers
     	i = this.tempHeightLayers.length;
     	while(i--){
     		if(this.tempHeightLayers[i] === 1){
-    			this.miniTerrain[i].geometry.computeFaceNormals();
-    			if(this.isComputeVertex) this.miniTerrain[i].geometry.computeVertexNormals();
-    			this.miniTerrain[i].geometry.verticesNeedUpdate = true;
+                this.updateVertices( this.miniTerrain[i].geometry, this.Gtmp[i]  );
     		}
     	}
-    	this.tempHeightLayers = [];
+    	this.tempHeightLayers = [];*/
+        //tmp = null;
+
 	},
-	moveFaces : function(obj, n, h){
-		var face1 = obj.geometry.faces[n*2];
-		var face2 = obj.geometry.faces[(n*2)+1];
 
-		//var face1 = obj.geometry.attributes.index[n*2];
-		//var face2 = obj.geometry.attributes.index[(n*2)+1];
-		
-		var pv  = obj.geometry.vertices;
-		//var pv = obj.geometry.attributes.position.array;
+    updateVertices : function( g, ar ){
+        var vertices = g.attributes.position.array;
+        var i = ar.length, n;
+        while(i--){
+            n = i*3;
+            vertices[n+1] = ar[i]; 
+        }
 
-		pv[face1.a].y = pv[face1.b].y = pv[face1.c].y = h;
-		pv[face2.a].y = pv[face2.b].y = pv[face2.c].y = h;
-		//pv[face1].y = pv[face1+1].y = pv[face1+4].y = h;
-		//pv[face2].y = pv[face2+1].y = pv[face2+4].y = h;
+        g.attributes.position.needUpdate = true;
+        //g.computeBoundingSphere();
+        //g.computeVertexNormals();
 
-
-		//obj.geometry.attributes.position.needsUpdate = true;
-		//obj.geometry.attributes.index.needsUpdate = true;
-	},
+    },
 
 	//------------------------------------------LAYER 8X8
+
+    findPositionDisp : function(id){
+        var n = Math.floor(id/129);
+        var y = n;
+        var x = id-Math.floor(n*129);
+        return [x,y];
+    },
+
+    findLayerDisp : function(x,z){
+        var cy = Math.floor(z/16);
+        var cx = Math.floor(x/16);
+        return cx+(cy*8);
+    },
+
+    findVerticesDisp : function(layer, pos){
+        var v = 0;
+        var cy = Math.floor(layer/8);
+        var cx = Math.floor(layer-(cy*8));
+        //var py = pos[1]-(16*cy);
+        //var px = pos[0]-(16*cx);
+        //v = px + (py*16);
+        var py = pos[1]-(16*cy);
+        var px = pos[0]-(16*cx);
+        v = px + (py*16);
+        return v;
+    },
 
 
 	findLayer : function(x,z){
@@ -1145,6 +1607,8 @@ V3D.Base.prototype = {
 		return cx+(cy*8);
 	},
 
+    
+
 	findLayerPos:function(x,y,layer){
 		var cy = Math.floor(layer/8);
         var cx = Math.floor(layer-(cy*8));
@@ -1152,6 +1616,8 @@ V3D.Base.prototype = {
         var px = x-(16*cx);
         return [px,py];
 	},
+
+    
 
 	findPosition : function(id){
 		var n = Math.floor(id/this.mapSize[1]);
@@ -1165,10 +1631,15 @@ V3D.Base.prototype = {
 		return id;
 	},
 
+    
+
 	findVertices : function(layer, pos){
 		var v = 0;
 		var cy = Math.floor(layer/8);
         var cx = Math.floor(layer-(cy*8));
+        //var py = pos[1]-(16*cy);
+        //var px = pos[0]-(16*cx);
+        //v = px + (py*16);
         var py = pos[1]-(16*cy);
         var px = pos[0]-(16*cx);
         v = px + (py*16);
@@ -1179,8 +1650,8 @@ V3D.Base.prototype = {
 	//------------------------------------------RAY
 
 	rayTest : function () {
-		this.rayVector.unproject( this.camera );
-		this.raycaster.ray.set( this.camera.position, this.rayVector.sub( this.camera.position ).normalize() );
+
+        this.raycaster.setFromCamera( this.rayVector, this.camera );
 
 		if ( this.land.children.length > 0 ) {
 			var intersects = this.raycaster.intersectObjects( this.land.children );
@@ -1248,6 +1719,7 @@ V3D.Base.prototype = {
         }*/
         sendTool(this.toolSet[id].tool);
 	},
+
 	customTool : function(){
 		var size = this.currentTool.size;
 		var color = this.currentTool.color;
@@ -1259,10 +1731,12 @@ V3D.Base.prototype = {
 		var geo = new THREE.Geometry();
 		var vertices = [ new THREE.Vector3( -mid+d, y, -mid+d ), new THREE.Vector3( -mid+d, y, mid+d ), new THREE.Vector3( mid+d, y, mid+d ), new THREE.Vector3( mid+d, y, -mid+d ) ];
 	    geo.vertices.push( vertices[ 0 ], vertices[ 1 ], vertices[ 1 ], vertices[ 2 ], vertices[ 2 ], vertices[ 3 ], vertices[ 3 ], vertices[ 0 ] );
-		var m =  new THREE.Line( geo, new THREE.LineBasicMaterial( { color: color, linewidth:3 } ), THREE.LinePieces );
+		//var m =  new THREE.Line( geo, new THREE.LineBasicMaterial( { color: color, linewidth:3 } ), THREE.LinePieces );
+        var m = new THREE.LineSegments( geo, new THREE.LineBasicMaterial({ color: color, linewidth:3, depthWrite: false, depthTest: false }))
 		m.overdraw = true;
 		return m;
 	},
+
 	build : function(x,y){
 		
 		if(this.currentTool.tool==='query') return;
@@ -1273,7 +1747,8 @@ V3D.Base.prototype = {
 			var sizey = this.currentTool.sy;
 
 			var py = 0;
-			if( this.isWithHeight ) py = this.heightData[this.findId(x,y)];//this.pos.y;//this.heightData[ n ];
+			//if( this.isWithHeight ) py = this.heightData[this.findId(x,y)];//this.pos.y;//this.heightData[ n ];
+            if( this.isWithHeight ) py = this.heightData[this.findHeightId(x,y)];
 
 			var zone; 
 			if(size == 1 ) zone = [ [x, y] ];
@@ -1312,7 +1787,8 @@ V3D.Base.prototype = {
 		} else {
 			this.removeTree(x,y);
 			if( this.isWithHeight ){
-				py = this.heightData[this.findId(x,y)];
+				//py = this.heightData[this.findId(x,y)];
+                py = this.heightData[this.findHeightId(x,y)];
 			    this.makePlanar( [[x,y]],  py );
 			}
 			if(this.currentTool.tool=='bulldozer'){
@@ -1322,6 +1798,7 @@ V3D.Base.prototype = {
 		    }
 		}
 	},
+
 	removeTool : function(){
 		this.scene.remove(this.tool);
 		this.tool.geometry.dispose();
@@ -1409,46 +1886,26 @@ V3D.Base.prototype = {
 	},
 
 	showDestruct:function(ar){
+
 		this.tempDestruct = ar[4];
+
 	},
 
 	//--------------------------------------------------TOWN BUILDING
 
-	addBaseTown : function(x,y,z,v,zone){
+	addBaseTown : function( x, y, z, v, zone ){
+
 		var layer = this.findLayer(x,z);
 		if(!this.townLists[layer]) this.townLists[layer]=[];
     	this.townLists[layer].push([x,y,z,v,zone]);
     	this.rebuildTownLayer(layer);
+
 	},
+
 	rebuildTownLayer : function(l){
-		if(this.townMeshs[l] !== undefined ){
-			// 
-    	    this.scene.remove(this.townMeshs[l]);
-    	    if(this.townMeshs[l].geometry)this.townMeshs[l].geometry.dispose();
-        }
-        var m = new THREE.Matrix4(), ar, k, g2;
-    	var g = new THREE.Geometry();
-    	var i = this.townLists[l].length;
-    	while(i--){
-	    	ar = this.townLists[l][i];
-	    	m.makeTranslation(ar[0],ar[1],ar[2]);
-	    	g.merge(this.buildingGeo[ar[3]], m);
-	    }
 
-	    if(this.isBuffer){
-	    	g = this.transGeo(g);
-			g2 = new THREE.BufferGeometry().fromGeometry(g);
-			g.dispose();
-			this.townMeshs[l] = new THREE.Mesh( g2, this.townMaterial );
-		} else {
-			//g.computeBoundingSphere();
-			this.townMeshs[l] = new THREE.Mesh( g, this.townMaterial );
-		}
+        this.buildMeshLayer( l, 'town' );
 
-
-	    //this.townMeshs[l] = new THREE.Mesh( g, this.townMaterial);
-	    this.scene.add(this.townMeshs[l]);
-	    this.temptownLayers[l] = 0;
 	},
 
 	//--------------------------------------------------HOUSE CREATE/UPDATE/DELETE
@@ -1481,42 +1938,9 @@ V3D.Base.prototype = {
 	},
 
 	rebuildHouseLayer : function(l){
-    	if(this.houseMeshs[l] !== undefined ){
-    		if(this.houseMeshs[l] !== null ){
-    			if(this.houseMeshs[l].geometry){
-    				this.scene.remove(this.houseMeshs[l]);
-    				this.houseMeshs[l].geometry.dispose();
-    				this.houseMeshs[l] = null;
-    			}
-	        }
-	    }
 
-    	var m = new THREE.Matrix4(), ar, k, g2;
-    	var g = new THREE.Geometry();
-    	var i = this.houseLists[l].length;
-    	if(i!==0){
-	    	while(i--){
-		    	ar = this.houseLists[l][i];
-		    	m.makeTranslation(ar[0],ar[1],ar[2]);
-		    	k = this.H.length;
-		    	while(k--){ if(ar[3]===this.H[k]) g.merge( this.houseGeo[k], m );}
-		    	//while(k--){ if(ar[3]===this.H[k]) g.merge( this.houseGeo[0], m );}
-		    }
+        this.buildMeshLayer( l, 'house' );
 
-		    if(this.isBuffer){
-		    	g = this.transGeo(g);
-				g2 = new THREE.BufferGeometry().fromGeometry(g);
-				g.dispose();
-				this.houseMeshs[l] = new THREE.Mesh( g2, this.buildingMaterial );
-			} else {
-				//g.computeBoundingSphere();
-				this.houseMeshs[l] = new THREE.Mesh( g, this.buildingMaterial );
-			}
-
-		    //this.houseMeshs[l] = new THREE.Mesh( g, this.buildingMaterial);
-		    this.scene.add(this.houseMeshs[l]);
-		    this.tempHouseLayers[l] = 0;
-		}
     },
 
 
@@ -1535,77 +1959,10 @@ V3D.Base.prototype = {
     	this.rebuildBuildingLayer(layer);
     },
 
-    /*populateBaseBuilding:function( l ){
-    	if(this.buildingMeshs[l] !== undefined ){
-    		this.scene.remove(this.buildingMeshs[l]);
-    		if(this.buildingMeshs[l].geometry)this.buildingMeshs[l].geometry.dispose();
-    	}
-    	var m = new THREE.Matrix4(), ar;
-    	var g = new THREE.Geometry();
-    	var i = this.buildingLists[l].length;
-
-    	while(i--){
-	    	ar = this.buildingLists[l][i];
-	    	m.makeTranslation(ar[0],ar[1],ar[2]);
-	    	if(ar[3] == 244) g.merge( this.residentialGeo[0], m );
-	    	else if(ar[3] == 427) g.merge( this.commercialGeo[0], m );
-	    	else if(ar[3] == 616) g.merge( this.industrialGeo[0], m );
-	    }
-	    this.buildingMeshs[l] = new THREE.Mesh( g, this.buildingMaterial );
-	    this.scene.add(this.buildingMeshs[l]);
-    },
-    redrawBuildings:function(){
-    	
-
-    },*/
     rebuildBuildingLayer : function(l){
-    	if(this.buildingMeshs[l] !== undefined ){
-    		//if(this.buildingMeshs[l].geometry)
-    	    this.scene.remove(this.buildingMeshs[l]);
-    	    //this.buildingMeshs[l].geometry.dispose();
-        }
 
-    	var m = new THREE.Matrix4(), ar, k, g2;
-    	var g = new THREE.Geometry();
-    	var i = this.buildingLists[l].length;
-    	while(i--){
-	    	ar = this.buildingLists[l][i];
-	    	m.makeTranslation(ar[0],ar[1],ar[2]);
-	    	k = this.R.length;
-	    	while(k--){ 
-	    		if(ar[3]===this.R[k]){
-	    			g.merge( this.residentialGeo[k], m );
-	    			// if residential basic add house list
-	    			//if(ar[3]==244){ this.buildingLists[l][i][4] = 1; this.addBaseHouse(ar[0],ar[1],ar[2]); }
-	    			//else { if(ar[4]==1){ this.buildingLists[l][i][4] = 0;  this.removeBaseHouse(ar[0],ar[1],ar[2]);} }
+        this.buildMeshLayer( l, 'building' );
 
-	    			//if(k===0 && ar[4]===0){ this.buildingLists[l][i][4] = 1; this.addBaseHouse(ar[0],ar[1],ar[2]); }
-	    			//else if(k>0 && ar[4]===1){ this.buildingLists[l][i][4] = 0;  this.removeBaseHouse(ar[0],ar[1],ar[2]); } 
-	    			if(k===0 && ar[5]===0){ this.buildingLists[l][i][5] = 1; this.addBaseHouse(ar[0],ar[1],ar[2]); }
-	    			else if(k>0 && ar[5]===1){ this.buildingLists[l][i][5] = 0;  this.removeBaseHouse(ar[0],ar[1],ar[2]); } 
-	    		}
-	    	}
-
-	    	k = this.C.length;
-	    	while(k--){ if(ar[3]===this.C[k]) g.merge( this.commercialGeo[k], m );}
-
-	    	k = this.I.length;
-	    	while(k--){ if(ar[3]===this.I[k]) g.merge( this.industrialGeo[k], m );}
-	    }
-
-	    if(this.isBuffer){
-	    	g = this.transGeo(g);
-			g2 = new THREE.BufferGeometry().fromGeometry(g);
-			g.dispose();
-			this.buildingMeshs[l] = new THREE.Mesh( g2, this.buildingMaterial );
-		} else {
-			//g.computeBoundingSphere();
-			this.buildingMeshs[l] = new THREE.Mesh( g, this.buildingMaterial );
-		}
-
-	    //this.buildingMeshs[l] = new THREE.Mesh( g, this.buildingMaterial);
-	    this.scene.add(this.buildingMeshs[l]);
-	    this.tempBuildingLayers[l] = 0;
     },
 
     //---------------------------------------------------BUILDING LISTING
@@ -1660,12 +2017,14 @@ V3D.Base.prototype = {
 	    p.y = (distance * Math.cos(phi)) + origine.y;
 	    return p;
 	},
+
 	unwrapDegrees : function (r){
 		r = r % 360;
 		if (r > 180) r -= 360;
 		if (r < -180) r += 360;
 		return r;
 	},
+
 	moveCamera : function () {
 	    this.camera.position.copy(this.Orbit(this.center, this.cam.horizontal, this.cam.vertical, this.cam.distance));
 	    this.camera.lookAt(this.center);
@@ -1679,6 +2038,7 @@ V3D.Base.prototype = {
 	    	this.topCamera.lookAt(this.center);
 	    }
 	},
+
 	dragCenterposition : function(){
 		if ( this.ease.x == 0 && this.ease.z == 0 ) return;
     	this.easeRot.y = this.cam.horizontal*this.ToRad;
@@ -1696,6 +2056,7 @@ V3D.Base.prototype = {
     	
         this.moveCamera();
 	},
+
 	onMouseDown : function (e) {   
 		e.preventDefault();
 	    var px, py;
@@ -1726,6 +2087,7 @@ V3D.Base.prototype = {
 	    }
 	   
 	},
+
 	onMouseUp : function (e) {
 		e.preventDefault();
 		this.mouse.button = 0;
@@ -1736,6 +2098,7 @@ V3D.Base.prototype = {
 	    this.ease.z = 0;
 	    document.body.style.cursor = 'auto';
 	},
+
 	onMouseMove : function (e) {
 	    e.preventDefault();
 
@@ -1770,6 +2133,7 @@ V3D.Base.prototype = {
 			this.rayTest();
 		}
 	},
+
 	onMouseWheel : function (e) { 
 		e.preventDefault();   
 	    var delta = 0;
@@ -1818,6 +2182,12 @@ V3D.Base.prototype = {
 				this.miniCanvas[i] = document.createElement('canvas');
 				this.miniCanvas[i].width = this.miniCanvas[i].height = 256*this.mu;
         		this.miniCtx[i] = this.miniCanvas[i].getContext("2d");
+
+                if(this.isWithNormal){
+                    this.miniCanvasN[i] = document.createElement('canvas');
+                    this.miniCanvasN[i].width = this.miniCanvasN[i].height = 256*this.mu;
+                    this.miniCtxN[i] = this.miniCanvasN[i].getContext("2d");
+                }
         		this.txtNeedUpdate[i] = 0;		
         	}
 		}
@@ -1844,10 +2214,10 @@ V3D.Base.prototype = {
 				if(isStart){// || this.fullRedraw){ 
 					if(v > 1 && v < 21){ // water
 					//if(v > 1 && v < 5){ // water
-						if( this.isWithHeight ) this.heightData[ n ] = 0; 
+						if( this.isWithHeight ) this.heightData[ this.findHeightId(x, y) ] = 0; 
 					}
 					if(v > 20 && v < 44){// tree
-						if( this.isWithHeight ) ty = this.heightData[ n ];
+						if( this.isWithHeight ) ty = this.heightData[ this.findHeightId( x, y) ];
 						r = Math.floor(Math.random()*4);
 						//if(v==43 || v==42|| v==41) r = 4;
 						//if( v==40 || v==39|| v==38 || v==37 || v==36) r = 5;
@@ -1874,13 +2244,15 @@ V3D.Base.prototype = {
                 	//if(v==1)this.miniCtx[layer].clearRect(((x-(cx*16))*16)*this.mu,((y-(cy*16))*16)*this.mu, 16*this.mu, 16*this.mu);
                 	//else 
                 	this.miniCtx[layer].drawImage(this.imageSrc,px*this.mu, py*this.mu, 16*this.mu, 16*this.mu, ((x-(cx*16))*16)*this.mu,((y-(cy*16))*16)*this.mu, 16*this.mu, 16*this.mu);
+                    if(this.isWithNormal){ this.miniCtxN[layer].drawImage(this.ground_n,px*this.mu, py*this.mu, 16*this.mu, 16*this.mu, ((x-(cx*16))*16)*this.mu,((y-(cy*16))*16)*this.mu, 16*this.mu, 16*this.mu); }
                 } else { // draw only need update
                 	if(x===this.forceUpdate.x && y===this.forceUpdate.y){ force=true; this.forceUpdate.x=-1; this.forceUpdate.y=-1 }
                 	if((v>43 && v<240) || force){ // road . rail . wire
                 		if(force){force = false;  if(v > 20 && v < 44){px = 0; py=0;}};// bulldozer
                 		//this.miniCtx[layer].drawImage(this.imageSrc,px, py, 16, 16, ((x-(cx*16))*16),((y-(cy*16))*16), 16, 16);
                 		this.miniCtx[layer].drawImage(this.imageSrc,px*this.mu, py*this.mu, 16*this.mu, 16*this.mu, ((x-(cx*16))*16)*this.mu,((y-(cy*16))*16)*this.mu, 16*this.mu, 16*this.mu);
-                		this.txtNeedUpdate[layer] = 1;
+                		if(this.isWithNormal){ this.miniCtxN[layer].drawImage(this.ground_n,px*this.mu, py*this.mu, 16*this.mu, 16*this.mu, ((x-(cx*16))*16)*this.mu,((y-(cy*16))*16)*this.mu, 16*this.mu, 16*this.mu); }
+                        this.txtNeedUpdate[layer] = 1;
                 	}
                 	else if(v>240 || v==0){
                 		if((v>248 && v<261) || v==0){
@@ -1951,6 +2323,7 @@ this.industrials = [616, 625, 634, 643, 652, 661, 670, 679, 688];*/
 
 
 	moveSprite : function(){
+
 		if(!spriteData) return;
 		var i = spriteData.length;
 		var pos = new THREE.Vector3();
@@ -1964,7 +2337,10 @@ this.industrials = [616, 625, 634, 643, 652, 661, 670, 679, 688];*/
 			pos.x =  Math.round((c[2]-8)/16);
 			pos.z =  Math.round((c[3]-8)/16);
 			pos.y = 0;
-			if( this.isWithHeight ) pos.y = this.heightData[this.findId(pos.x,pos.z)];
+			//if( this.isWithHeight ) pos.y = this.heightData[this.findId(pos.x,pos.z)];
+
+            if( this.isWithHeight ) pos.y = this.heightData[ this.findHeightId(pos.x,pos.z) ];
+            
 
 			if( c[0] == 2) pos.y += 5;
 			if( c[0] == 3){
@@ -1992,6 +2368,7 @@ this.industrials = [616, 625, 634, 643, 652, 661, 670, 679, 688];*/
 			this.spriteObjs[this.spriteLists[v]].rotation.y = this.rotationSprite(c[0], frame);
 		}
 	},
+
 	rotationSprite : function(v, f){
 		var r = 0;
 		if(v===1){// train
@@ -2015,6 +2392,7 @@ this.industrials = [616, 625, 634, 643, 652, 661, 670, 679, 688];*/
 		}
 		return r;
 	},
+
 	addSprite : function(v, p){
 		var m;
 		if(v===1){// train
@@ -2053,6 +2431,7 @@ this.industrials = [616, 625, 634, 643, 652, 661, 670, 679, 688];*/
 
 
 	showPower : function(){
+
 		if(!powerData) return;
 		var i = powerData.length, pos;
 
@@ -2074,10 +2453,13 @@ this.industrials = [616, 625, 634, 643, 652, 661, 670, 679, 688];*/
 			else if(powerData[i]==1){ if(this.powerMeshs[i] !== null) this.removePowerMesh(i); }
 		}
 	},
+
 	addPowerMesh : function(i, ar){
 		//var m = new THREE.Mesh(new THREE.BoxGeometry(0.5,0.5,0.5), this.powerMaterial );
 		var py = 0;
-		if( this.isWithHeight ) py = this.heightData[this.findId(ar[0],ar[1])];
+		//if( this.isWithHeight ) py = this.heightData[this.findId(ar[0],ar[1])];
+
+        if( this.isWithHeight ) py = this.heightData[ this.findHeightId(ar[0],ar[1])];
 
 		var m = new THREE.Sprite( this.powerMaterial );
 		//m.scale.set( 2, 2, 1 );
@@ -2085,13 +2467,14 @@ this.industrials = [616, 625, 634, 643, 652, 661, 670, 679, 688];*/
 		this.scene.add(m);
 		this.powerMeshs[i] = m;
 	},
-	/*removePowerMeshPos : function(x,y){
-	}*/
+
 	removePowerMesh : function(i){
 		this.scene.remove(this.powerMeshs[i]);
 		this.powerMeshs[i] = null;
 	},
+
 	powerTexture : function() {
+
 	    var c = document.createElement("canvas");
 	    var ctx = c.getContext("2d");
 	    c.width = c.height = 64;
@@ -2114,6 +2497,7 @@ this.industrials = [616, 625, 634, 643, 652, 661, 670, 679, 688];*/
 	    var texture = new THREE.Texture(c);
 	    texture.needsUpdate = true;
 	    return texture;
+
 	},
 
 
@@ -2134,7 +2518,6 @@ this.industrials = [616, 625, 634, 643, 652, 661, 670, 679, 688];*/
 	    //texture.needsUpdate = true;
 	    return c;
 	},
-
 
 	tint : function(canvas, image, supImage) {
 		var data, i, n;
@@ -2243,7 +2626,7 @@ this.industrials = [616, 625, 634, 643, 652, 661, 670, 679, 688];*/
 			}
 		}
 	    self.focus();
-	},
+	}
 
 
 }
