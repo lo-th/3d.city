@@ -2098,14 +2098,14 @@ Micro.generateMap = function() {
     ];
 
     this.riverEdges = [
-        13, 13, 17, 15,
+        /*13, 13, 17, 15,
         5 , 2 , 19, 17,
         9 , 11, 2 , 13,
-        7 , 9 , 5 , 2
-        /*13 | Tile.BULLBIT, 13 | Tile.BULLBIT, 17 | Tile.BULLBIT, 15 | Tile.BULLBIT,
+        7 , 9 , 5 , 2*/
+        13 | Tile.BULLBIT, 13 | Tile.BULLBIT, 17 | Tile.BULLBIT, 15 | Tile.BULLBIT,
         5 | Tile.BULLBIT, 2, 19 | Tile.BULLBIT, 17 | Tile.BULLBIT,
         9 | Tile.BULLBIT, 11 | Tile.BULLBIT, 2, 13 | Tile.BULLBIT,
-        7 | Tile.BULLBIT, 9 | Tile.BULLBIT, 5 | Tile.BULLBIT, 2*/
+        7 | Tile.BULLBIT, 9 | Tile.BULLBIT, 5 | Tile.BULLBIT, 2
     ];
 
     
@@ -2424,8 +2424,8 @@ Micro.generateMap.prototype = {
                     var temp = this.riverEdges[bitIndex & 15];
                     if ( temp !== Tile.RIVER && Random.getRandom(1) ){ temp++; }
                     //if ( temp !== Tile.RIVER ){ temp++; }
-                    //this.map.setTo(x, y, new Micro.Tile(temp, 0));
-                    this.map.setTile(x, y, temp, 0);
+                    this.map.setTo(x, y, new Micro.Tile(temp));
+                    //this.map.setTile(x, y, temp, Tile.BULLBIT);
                     //this.map.setTileValue(x, y, temp, 0);
                 }
             }
@@ -2478,8 +2478,8 @@ Micro.generateMap.prototype = {
             //this.map.setTo(x, y, new Micro.Tile(temp, Tile.BLBNBIT));
             this.map.setTile(x, y, temp, Tile.BLBNBIT);
         } else {
-            //if (!preserve) this.map.setTo(x, y, new Micro.Tile(temp));
-            if (!preserve) this.map.setTile(x, y, temp, 0);
+            if (!preserve) this.map.setTo(x, y, new Micro.Tile(temp));
+            //if (!preserve) this.map.setTile(x, y, temp, 0);
             //if (!preserve) this.map.setTileValue(x, y, temp, 0);
         }
 

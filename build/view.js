@@ -1630,7 +1630,7 @@ V3D.Base.prototype = {
         var r = 1 / d;//w;
         var quality = 1 / 20;
 
-        var multy = 3 + ( Math.random() * 3 );
+        var multy = 3 + ( Math.random() * 2 );
 
         i = size;
 
