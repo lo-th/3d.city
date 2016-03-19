@@ -2219,6 +2219,9 @@ V3D.Base.prototype = {
 					if(v > 1 && v < 5){ // water
 						if( this.isWithHeight ) this.heightData[ this.findHeightId(x, y) ] = -0.1; 
 					}
+                    if(v > 5 && v < 21){ // water border
+                        if( this.isWithHeight ) this.heightData[ this.findHeightId(x, y) ] *= 0.5; 
+                    }
 					if(v > 20 && v < 44){// tree
 						if( this.isWithHeight ) ty = this.heightData[ this.findHeightId( x, y) ]-0.1;
 						r = Math.floor(Math.random()*4);

@@ -2097,16 +2097,19 @@ Micro.generateMap = function() {
         [0, 0, 0, Tile.REDGE, Tile.REDGE, Tile.REDGE, 0, 0, 0]*/
     ];
 
-    this.riverEdges = [
-        /*13, 13, 17, 15,
+    this.riverEdge = [
+        13, 13, 17, 15,
         5 , 2 , 19, 17,
         9 , 11, 2 , 13,
-        7 , 9 , 5 , 2*/
+        7 , 9 , 5 , 2
+    ];
+
+    /*this.riverEdges = [
         13 | Tile.BULLBIT, 13 | Tile.BULLBIT, 17 | Tile.BULLBIT, 15 | Tile.BULLBIT,
         5 | Tile.BULLBIT, 2, 19 | Tile.BULLBIT, 17 | Tile.BULLBIT,
         9 | Tile.BULLBIT, 11 | Tile.BULLBIT, 2, 13 | Tile.BULLBIT,
         7 | Tile.BULLBIT, 9 | Tile.BULLBIT, 5 | Tile.BULLBIT, 2
-    ];
+    ];*/
 
     
 
@@ -2118,10 +2121,8 @@ Micro.generateMap = function() {
             return this.map;
         }
     }
-
     if (Micro.TERRAIN_CREATE_ISLAND === 1) this.makeNakedIsland();
     else this.clearMap();
-
     // Lay a river.
     if (Micro.TERRAIN_CURVE_LEVEL !== 0) {
         var terrainXStart = 40 + Random.getRandom(this.map.width - 80);
@@ -2129,15 +2130,11 @@ Micro.generateMap = function() {
         var terrainPos = new this.map.Position(terrainXStart, terrainYStart);
         this.doRivers(terrainPos);
     }
-
     // Lay a few lakes.
     if (Micro.TERRAIN_LAKE_LEVEL !== 0) this.makeLakes();
-
     this.smoothRiver();
-
     // And add trees.
     if (Micro.TERRAIN_TREE_LEVEL !== 0) this.doTrees();
-
     return this.map;*/
 };
 
@@ -2283,9 +2280,7 @@ Micro.generateMap.prototype = {
     },
 
     /*makeLand : function() {
-
         console.time("start land");
-
         
         if (Micro.TERRAIN_CURVE_LEVEL !== 0) {
             var terrainXStart = 40 + Random.getRandom( this.map.width - 80 );
@@ -2296,27 +2291,21 @@ Micro.generateMap.prototype = {
             console.timeEnd("start river");
         }
         
-
         // Lay a few lakes.
         console.time("start lake");
         if (Micro.TERRAIN_LAKE_LEVEL !== 0) this.makeLakes();
         console.timeEnd("start lake");
-
         console.time("start smoothWater");
         this.smoothWater();
         console.timeEnd("start smoothWater");
-
         console.time("start smoothRiver");
         this.smoothRiver();
         console.timeEnd("start smoothRiver");
-
         // And add trees.
         console.time("start tree");
         if (Micro.TERRAIN_TREE_LEVEL !== 0) this.doTrees();
         console.timeEnd("start tree")
-
         console.timeEnd("start land");
-
     },*/
 
     makeIsland : function() {
@@ -2421,12 +2410,21 @@ Micro.generateMap.prototype = {
                         //    bitIndex++;
                         //}
                     }
-                    var temp = this.riverEdges[bitIndex & 15];
+
+                    /*var temp = this.riverEdges[bitIndex & 15];
                     if ( temp !== Tile.RIVER && Random.getRandom(1) ){ temp++; }
-                    //if ( temp !== Tile.RIVER ){ temp++; }
-                    this.map.setTo(x, y, new Micro.Tile(temp));
+                    this.map.setTo(x, y, new Micro.Tile(temp));*/
+
                     //this.map.setTile( x, y, temp );
                     //this.map.setTileValue(x, y, temp, 0);
+
+                    var temp = this.riverEdge[bitIndex & 15];
+                    if ( temp !== Tile.RIVER && Random.getRandom(2) ){ temp++; }
+                  //  if ( temp !== Tile.RIVER) this.map.setTo(x, y, new Micro.Tile(temp, Tile.BULLBIT));
+                   //else 
+                   this.map.setTile( x, y, temp, Tile.BULLBIT );
+                    //this.map.setTo(x, y, new Micro.Tile(temp));
+
                 }
             }
         }
@@ -2478,8 +2476,8 @@ Micro.generateMap.prototype = {
             //this.map.setTo(x, y, new Micro.Tile(temp, Tile.BLBNBIT));
             this.map.setTile(x, y, temp, Tile.BLBNBIT);
         } else {
-            if (!preserve) this.map.setTo(x, y, new Micro.Tile(temp));
-            //if (!preserve) this.map.setTile(x, y, temp, 0);
+            //if (!preserve) this.map.setTo(x, y, new Micro.Tile(temp));
+            if (!preserve) this.map.setTile(x, y, temp, 0);
             //if (!preserve) this.map.setTileValue(x, y, temp, 0);
         }
 
@@ -2647,7 +2645,6 @@ Micro.generateMap.prototype = {
 
 
 }
-
 /* micropolisJS. Adapted by Graeme McCutcheon from Micropolis.
  *
  * This code is released under the GNU GPL v3, with some additional terms.
