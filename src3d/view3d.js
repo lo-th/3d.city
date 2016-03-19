@@ -9,8 +9,8 @@ var V3D = { REVISION: '0.4' };
 
 V3D.Base = function(isMobile, pix, isLow){
 
-    this.metalness = 0.7;
-    this.roughness = 0.6;
+    this.metalness = 0.8;
+    this.roughness = 0.5;
     this.wireframe = false;
     this.envType = 'base';
 
@@ -343,11 +343,14 @@ V3D.Base.prototype = {
 
         this.container.addEventListener( 'mousemove', this, false );
         this.container.addEventListener( 'mousedown', this, false );
-        this.container.addEventListener( 'mouseup', this, false );
+        //this.container.addEventListener( 'mouseup', this, false );
+        //this.container.addEventListener( 'mouseout', this, false );
 
         this.container.addEventListener( 'touchmove', this, false );
         this.container.addEventListener( 'touchstart', this, false );
         this.container.addEventListener( 'touchend', this, false );
+
+        document.addEventListener( 'mouseup', this, false );
 
 
         /*this.bigG = new THREE.PlaneBufferGeometry( 16*8, 16*8, 16*8, 16*8 );
@@ -397,7 +400,7 @@ V3D.Base.prototype = {
     handleEvent : function( e ) {
 
         switch( e.type ) {
-            case 'mouseup': case 'touchend': this.onMouseUp( e ); break;
+            case 'mouseup': case 'mouseout': case 'touchend':this.onMouseUp( e ); break;
             case 'mousedown': case 'touchstart': this.onMouseDown( e ); break;
             case 'mousemove': case 'touchmove': this.onMouseMove( e ); break;
             case 'mousewheel': this.onMouseWheel( e ); break;
@@ -411,7 +414,7 @@ V3D.Base.prototype = {
     	this.f[1] = Date.now();
         if (this.f[1]-1000 > this.f[0]){ 
         	this.f[0] = this.f[1];
-        	hub.upStats(this.f[2], this.renderer.info.memory.programs);
+        	hub.upStats(this.f[2], this.renderer.info.memory.geometries );
         	this.f[2] = 0;
 	    }
 	    this.f[2]++;
@@ -2212,12 +2215,12 @@ V3D.Base.prototype = {
 				v = tilesData[n];
 
 				if(isStart){// || this.fullRedraw){ 
-					if(v > 1 && v < 21){ // water
-					//if(v > 1 && v < 5){ // water
-						if( this.isWithHeight ) this.heightData[ this.findHeightId(x, y) ] = 0; 
+					//if(v > 1 && v < 21){ // water
+					if(v > 1 && v < 5){ // water
+						if( this.isWithHeight ) this.heightData[ this.findHeightId(x, y) ] = -0.1; 
 					}
 					if(v > 20 && v < 44){// tree
-						if( this.isWithHeight ) ty = this.heightData[ this.findHeightId( x, y) ];
+						if( this.isWithHeight ) ty = this.heightData[ this.findHeightId( x, y) ]-0.1;
 						r = Math.floor(Math.random()*4);
 						//if(v==43 || v==42|| v==41) r = 4;
 						//if( v==40 || v==39|| v==38 || v==37 || v==36) r = 5;

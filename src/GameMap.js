@@ -47,7 +47,7 @@ Micro.GameMap = function(width, height, defaultValue){
       {width: new Micro.makeConstantDescriptor(width),
        height: new Micro.makeConstantDescriptor(height)});*/
 
-    this.defaultValue = 0;//new Micro.Tile().getValue();//defaultValue;
+    this.defaultValue = new Micro.Tile().getValue();
 
 
     this.data = [];//new Array(this.fsize);
@@ -269,25 +269,25 @@ Micro.GameMap.prototype = {
         if (tile === undefined) { tile = y; y = x.y; x = x.x; }
         //if (!this.testBounds(x, y)) throw e;
 
-        var tileIndex = this._calculateIndex(x, y);
-        this.data[ tileIndex ] = tile;
+        var id = this._calculateIndex( x, y );
 
-        this.tilesData[ tileIndex ] = tile.getValue();
+        this.data[ id ] = tile;
+        this.tilesData[ id ] = tile.getValue();
 
     },
 
-    setTileValue : function(x, y, value) {
-        var e = new Error('Invalid parameter');
-        if (arguments.length < 2) throw e;
+    setTileValue : function( x, y, value ) {
+        //var e = new Error('Invalid parameter');
+        //if (arguments.length < 2) throw e;
         // Argument-shuffling
         if (arguments.length === 2) { value = y; y = x.y; x = x.x; }
-        if (!this.testBounds(x, y)) throw e;
+        //if (!this.testBounds(x, y)) throw e;
 
-        var tileIndex = this._calculateIndex( x, y );
+        var id = this._calculateIndex( x, y );
         //if (!(tileIndex in this.data)) this.data[tileIndex] = new Micro.Tile(this.defaultValue);
         
-        this.data[tileIndex].setValue( value );
-        this.tilesData[tileIndex] = value;
+        this.data[ id ].setValue( value );
+        this.tilesData[ id ] = value;
     },
 
     setTileFlags : function(x, y, flags) {

@@ -381,7 +381,7 @@ Micro.generateMap.prototype = {
                     if ( temp !== Tile.RIVER && Random.getRandom(1) ){ temp++; }
                     //if ( temp !== Tile.RIVER ){ temp++; }
                     this.map.setTo(x, y, new Micro.Tile(temp));
-                    //this.map.setTile(x, y, temp, Tile.BULLBIT);
+                    //this.map.setTile( x, y, temp );
                     //this.map.setTileValue(x, y, temp, 0);
                 }
             }

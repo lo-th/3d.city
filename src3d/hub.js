@@ -379,7 +379,7 @@ HUB.Base.prototype = {
             this.linke.style.cssText ='position:absolute; top:160px; left:10px; width:180px; height:20px; pointer-events:auto; font-size:12px; text-align:center; color:'+this.colors[0]+';';
             this.aboutWindow.appendChild( this.linke );
 
-            this.abb.innerHTML = "3D CITY<br><br>All 3d side made by loth<br>Simulation from MicropolisJS<br><br><br>More info and source<br>";
+            this.abb.innerHTML = "3D CITY<br><br>All 3d side made by Lo.th<br>Simulation from MicropolisJS<br><br><br>More info and source<br>";
             this.linke.innerHTML = "<a href='https://github.com/lo-th/3d.city' target='_blank'>https://github.com/lo-th/3d.city";
 
 
@@ -395,7 +395,7 @@ HUB.Base.prototype = {
     },
 
     upStats : function(fps, memory){
-        this.fps.innerHTML = 'Fps: '+ fps + ' -- Shaders: ' + memory;
+        this.fps.innerHTML = 'Fps: '+ fps + ' <br> geometry: ' + memory;
     },
 
     closeAbout :function(){
