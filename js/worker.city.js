@@ -358,7 +358,7 @@ CITY.Game.prototype = {
 
         gameData = JSON.stringify(gameData);
         
-        transMessage({ tell:"SAVEGAME", gameData:gameData, key:Micro.KEY});
+        transMessage({ tell:"SAVEGAME", gameData:gameData, key:Micro.KEY });
 
         //this.changeSpeed(this.oldSpeed);
     },

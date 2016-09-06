@@ -1705,7 +1705,7 @@ Micro.PositionMaker = function (width, height) {
  */
 Micro.GameMapProps = ['cityCentreX', 'cityCentreY', 'pollutionMaxX', 'pollutionMaxY', 'width', 'height'];
 
-Micro.GameMap = function(width, height, defaultValue){
+Micro.GameMap = function( width, height, defaultValue ){
 
     /*if (!(this instanceof Micro.GameMap)) return new Micro.GameMap(width, height, defaultValue);
     var e = new Error('Invalid parameter');
@@ -1739,7 +1739,7 @@ Micro.GameMap = function(width, height, defaultValue){
     this.Position = new Micro.PositionMaker( width, height );
     this.width = width;
     this.height = height;
-    this.fsize = this.width*this.height;
+    this.fsize = this.width * this.height;
     /*Object.defineProperties(this,
       {width: new Micro.makeConstantDescriptor(width),
        height: new Micro.makeConstantDescriptor(height)});*/
@@ -1769,17 +1769,46 @@ Micro.GameMap.prototype = {
 
     constructor: Micro.GameMap,
 
-    save : function(saveData) {
-        for (var i = 0, l = Micro.GameMapProps.length; i < l; i++)
+    save : function( saveData ) {
+
+        var i=0, lng;
+
+        // GAME PROPS
+        lng = Micro.GameMapProps.length;
+        while( i < lng ){
             saveData[Micro.GameMapProps[i]] = this[Micro.GameMapProps[i]];
+            i++;
+        }
+
+        // MAP DATA
+        //saveData.map = this.data.map(function(t) { return {value: t.getRawValue()}; });
+
+        
+        saveData.map = [];
+        i = 0;
+        lng = this.fsize;
+        while( i < lng ){
+            saveData.map[i] = this.data[i].getRawValue();
+            i++;
+        }
+
+        // TILES VALUES
+        saveData.tileValue = [];
+        i = 0;
+        lng = this.fsize;
+        while( i < lng ){
+            saveData.tileValue[i] = this.tilesData[i];
+            i++;
+        }
+
 
         //saveData.map = this.data.map(function(t) { return {value: t.getRawValue()};});
-        saveData.map = this.data.map(function(t) { return {value: t.getRawValue()}; });
+        //saveData.map = this.data.map(function(t) { return {value: t.getRawValue()}; });
         //saveData.map = [];//this.tilesData.map(function(t) { return {value: t };});
-        saveData.tileValue = [];
+        /*saveData.tileValue = [];
         var j = this.fsize;
-        while(j--) saveData.tileValue[j] = this.tilesData[j];
-        
+        while( j-- ) saveData.tileValue[j] = this.tilesData[j];
+        */
         /*saveData.power = [];
         var j = this.fsize;
         while(j--){
@@ -1788,8 +1817,42 @@ Micro.GameMap.prototype = {
         }*/
     },
 
-    load : function(saveData) {
-        for (var i = 0, l = Micro.GameMapProps.length; i < l; i++) this[Micro.GameMapProps[i]] = saveData[Micro.GameMapProps[i]];
+    load : function( saveData ) {
+
+
+
+        var x, y, lng, i = 0, map = saveData.map, tiles = saveData.tileValue;
+
+        // GAME PROPS
+        lng = Micro.GameMapProps.length;
+        while( i < lng ){
+            this[Micro.GameMapProps[i]] = saveData[Micro.GameMapProps[i]];
+            i++;
+        }
+
+        // MAP DATA
+
+        var isOld = map[0].value !== undefined ? true : false
+        i = 0;
+        lng = this.fsize;
+        while( i < lng ){
+            x = i % this.width;
+            y = Math.floor(i / this.width);
+            if( isOld ) this.setTileValue( x, y, map[i].value );
+            else this.setTileValue( x, y, map[i] );
+            i++;
+        }
+
+        // TILES VALUES
+        i = 0;
+        lng = this.fsize;
+        while( i < lng ){
+            this.tilesData[i] = tiles[i];
+            i++;
+        }
+
+
+        /*for (var i = 0, l = Micro.GameMapProps.length; i < l; i++) this[Micro.GameMapProps[i]] = saveData[Micro.GameMapProps[i]];
         var map = saveData.map, value;
         for (i = 0, l = map.length; i < l; i++){
             this.setTileValue(i % this.width, Math.floor(i / this.width), map[i].value);
@@ -1799,7 +1862,7 @@ Micro.GameMap.prototype = {
             //this.tilesData[i] = value;
         }
 
-        for (i = 0, l = saveData.tileValue.length; i < l; i++) this.tilesData[i] = saveData.tileValue[i];
+        for (i = 0, l = saveData.tileValue.length; i < l; i++) this.tilesData[i] = saveData.tileValue[i];*/
         /*
         var power = saveData.power;
         for (i = 0, l = power.length; i < l; i++) this.powerData[i] = power[i];
