@@ -814,7 +814,7 @@ V3D.Base.prototype = {
 
 	defineGeometry : function(){
 		var i;
-		var m = new THREE.Matrix4().makeScale(1, 1, -1);
+		//var m = new THREE.Matrix4().makeScale(1, 1, 1);
 		//var m2 = new THREE.Matrix4().makeTranslation(0.5, 0,0);
 
         var o = this.meshs;
@@ -849,46 +849,46 @@ V3D.Base.prototype = {
 		i = 9;
 		while(i--){
 			this.industrialGeo[i] = o['i_0'+i].geometry;
-			this.industrialGeo[i].applyMatrix(m);
+			//this.industrialGeo[i].applyMatrix(m);
 		}
 
 		i = 19;
 		while(i--){
 			if(i<10) this.residentialGeo[i] = o['r_0'+i].geometry;
 			else this.residentialGeo[i] = o['r_'+i].geometry;
-			this.residentialGeo[i].applyMatrix(m);
+			//this.residentialGeo[i].applyMatrix(m);
 		}
 
 		i = 21;
 		while(i--){
 			if(i<10) this.commercialGeo[i] = o['c_0'+i].geometry;
 			else this.commercialGeo[i] = o['c_'+i].geometry;
-			this.commercialGeo[i].applyMatrix(m);
+			//this.commercialGeo[i].applyMatrix(m);
 		}
 
 		i = 12;
 		while(i--){
 			if(i<10) this.houseGeo[i] = o['rh_0'+i].geometry;
 			else this.houseGeo[i] = o['rh_'+i].geometry;
-			this.houseGeo[i].applyMatrix(m);
+			//this.houseGeo[i].applyMatrix(m);
 		}
 
-		i = this.buildingGeo.length;
-		while(i--) {
-			if(this.buildingGeo[i] !== null) this.buildingGeo[i].applyMatrix(m);
-		}
+		//i = this.buildingGeo.length;
+		//while(i--) {
+		//	if(this.buildingGeo[i] !== null) this.buildingGeo[i].applyMatrix(m);
+		//}
 
 		// SPRITE
 
 		this.spriteGeo = [];
-		this.spriteGeo[0] = o['train'].geometry.clone();
+		this.spriteGeo[0] = o['train'].geometry;//.clone();
 		this.spriteGeo[1] = o['elico'].geometry.clone();
-		this.spriteGeo[2] = o['plane'].geometry.clone();;
+		this.spriteGeo[2] = o['plane'].geometry.clone();
 
-		i = this.spriteGeo.length;
-		while(i--) {
-			this.spriteGeo[i].applyMatrix( m );
-		}
+		//i = this.spriteGeo.length;
+		//while(i--) {
+		//	this.spriteGeo[i].applyMatrix( m );
+		//}
 
 		// THREE
 
@@ -904,12 +904,12 @@ V3D.Base.prototype = {
 		this.treeGeo[6] = o['ttt2'].geometry;
 		this.treeGeo[7] = o['ttt5'].geometry;
 
-		i = this.treeGeo.length;
+		//i = this.treeGeo.length;
 		
-		while(i--) {
-			this.treeGeo[i].applyMatrix( m );
+		//while(i--) {
+		//	this.treeGeo[i].applyMatrix( m );
 			//this.treeGeo[i].applyMatrix( m2.makeRotationY( (Math.random()*360)*this.ToRad ) );
-		}
+		//}
 
 		// finish loading start render
 		this.init();
@@ -1040,17 +1040,20 @@ V3D.Base.prototype = {
                         n = j * 3;
                         v.push( t[n] + ar[0]  );
                         v.push( t[n+1] + ar[1] );
-                        v.push( t[n+2] + ar[2] + decal );
+                        v.push( -t[n+2] + ar[2] + decal );
 
                     }
 
                     // normal
 
                     t = _g.attributes.normal.array;
-                    lng = t.length;
+                    lng = t.length/3;
 
                     for( j = 0; j < lng; j++){
-                        nr.push( t[j] );
+                        n = j * 3;
+                        nr.push( t[n] );
+                        nr.push( t[n+1] );
+                        nr.push( -t[n+2] );
                     }
 
                     // uv
@@ -1085,6 +1088,7 @@ V3D.Base.prototype = {
                 g.addAttribute( 'position', new THREE.BufferAttribute( new Float32Array( v ), 3 ) );
                 g.addAttribute( 'normal', new THREE.BufferAttribute( new Float32Array( nr ), 3 ) );
                 g.addAttribute( 'uv', new THREE.BufferAttribute( new Float32Array( uv ), 2 ) );
+                
                 //g.computeVertexNormals();
 
                 // final mesh
@@ -2403,6 +2407,7 @@ this.industrials = [616, 625, 634, 643, 652, 661, 670, 679, 688];*/
 		var m;
 		if(v===1){// train
 			m = new THREE.Mesh(this.spriteGeo[0], this.townMaterial );
+            //m.scale.set(1, 1, -1 )
 			m.position.copy(p);
 		    this.scene.add(m);
 		    //this.spriteMeshs[i] = m;
