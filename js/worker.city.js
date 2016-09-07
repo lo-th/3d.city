@@ -127,12 +127,13 @@ CITY.Game = function(url, timestep) {
 
 CITY.Game.prototype = {
     constructor: CITY.Game,
-    newMap : function(){
-        this.map = this.mapGen.construct(this.mapSize[0], this.mapSize[1]);
+    newMap: function () {
+
+        this.map = this.mapGen.construct( this.mapSize[0], this.mapSize[1] );
         transMessage({ tell:"NEWMAP", tilesData:this.map.tilesData, mapSize:this.mapSize, island:this.map.isIsland, trans:trans });
         //transMessage({ tell:"NEWMAP", tilesData:this.map.data, mapSize:this.mapSize, island:this.map.isIsland, trans:trans });
     },
-    playMap : function(loading){
+    playMap: function( loading ){
         var messageMgr = new Micro.MessageManager();
         var money = 20000;
         if(this.difficulty == 1) money = 10000;

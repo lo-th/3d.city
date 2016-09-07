@@ -11,7 +11,7 @@ Micro.NUMPROBLEMS = Micro.PROBLEMS.length;
 Micro.NUM_COMPLAINTS = 4;
 Micro.EvalProps = ['cityClass', 'cityScore'];
 
-Micro.getTrafficAverage = function(blockMaps) {
+Micro.getTrafficAverage = function( blockMaps ) {
     var trafficDensityMap = blockMaps.trafficDensityMap;
     var landValueMap = blockMaps.landValueMap;
     var trafficTotal = 0;
@@ -111,7 +111,7 @@ Micro.Evaluation.prototype = {
         for (var i = 0; i < Micro.NUMPROBLEMS; i++) this.problemVotes[i] = 0;
         for (i = 0; i < Micro.NUM_COMPLAINTS; i++) this.problemOrder[i] = Micro.NUMPROBLEMS;
     },
-    getAssessedValue : function(census) {
+    getAssessedValue: function( census ) {
         var value;
 
         value = census.roadTotal * 5;
@@ -127,7 +127,7 @@ Micro.Evaluation.prototype = {
 
         this.cityAssessedValue = value * 1000;
     },
-    getPopulation : function(census) {
+    getPopulation : function( census ) {
         var population = (census.resPop + (census.comPop + census.indPop) * 8) * 20;
         return population;
     },

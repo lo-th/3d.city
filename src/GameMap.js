@@ -66,13 +66,14 @@ Micro.GameMap = function( width, height, defaultValue ){
     this.cityCentreY = Math.floor(this.height * 0.5);
     this.pollutionMaxX = this.cityCentreX;
     this.pollutionMaxY = this.cityCentreY;
+
 }
 
 Micro.GameMap.prototype = {
 
     constructor: Micro.GameMap,
 
-    save : function( saveData ) {
+    save: function( saveData ) {
 
         var i=0, lng;
 
@@ -120,7 +121,7 @@ Micro.GameMap.prototype = {
         }*/
     },
 
-    load : function( saveData ) {
+    load: function( saveData ) {
 
 
 
@@ -184,9 +185,11 @@ Micro.GameMap.prototype = {
     _calculateIndex : function(x, y) {
         return x + y * this.width;
     },
+
     testBounds : function(x, y) {
         return x >= 0 && y >= 0 && x < this.width && y < this.height;
     },
+
     getTile : function(x, y, newTile) {
         //var e = new Error('Invalid parameter');
         //if (arguments.length < 1) throw e;
@@ -214,7 +217,8 @@ Micro.GameMap.prototype = {
         //if (!(tileIndex in this.data)) this.data[tileIndex] = new Micro.Tile(this.defaultValue);
         //return this.data[tileIndex];
     },
-    getTileValue : function(x, y) {
+
+    getTileValue: function( x, y ) {
         var e = new Error('Invalid parameter');
         if (arguments.length < 1) throw e;
         // Argument-shuffling
@@ -226,7 +230,8 @@ Micro.GameMap.prototype = {
         if (!(tileIndex in this.data)) this.data[tileIndex] = new Micro.Tile(this.defaultValue);
         return this.data[tileIndex].getValue();
     },
-    getTileFlags : function(x, y) {
+
+    getTileFlags: function( x, y ) {
         var e = new Error('Invalid parameter');
         if (arguments.length < 1) throw e;
         // Argument-shuffling
@@ -238,7 +243,8 @@ Micro.GameMap.prototype = {
         if (!(tileIndex in this.data)) this.data[tileIndex] = new Micro.Tile(this.defaultValue);
         return this.data[tileIndex].getFlags();
     },
-    getTiles : function(x, y, w, h) {
+
+    getTiles: function( x, y, w, h ) {
         var e = new Error('Invalid parameter');
         if (arguments.length < 3) throw e;
         // Argument-shuffling
@@ -256,7 +262,8 @@ Micro.GameMap.prototype = {
         }
         return res;
     },
-    getTileValues : function(x, y, w, h, result) {
+
+    getTileValues: function(x, y, w, h, result) {
         result = result || [];
         var e = new Error('Invalid parameter');
         if (arguments.length < 3) throw e;
@@ -290,7 +297,8 @@ Micro.GameMap.prototype = {
         }*/
         return result;
     },
-    getTileFromMapOrDefault : function(pos, dir, defaultTile) {
+
+    getTileFromMapOrDefault: function(pos, dir, defaultTile) {
         switch (dir) {
             case this.Direction.NORTH: 
                 if (pos.y > 0) return this.getTileValue(pos.x, pos.y - 1);
@@ -309,7 +317,7 @@ Micro.GameMap.prototype = {
         }
     },
 
-    setTile : function(x, y, value, flags) {
+    setTile: function(x, y, value, flags) {
 
         //var e = new Error('Invalid parameter');
         //if (arguments.length < 3) throw e;
@@ -324,7 +332,7 @@ Micro.GameMap.prototype = {
 
     },
 
-    setTo : function( x, y, tile ) {
+    setTo: function( x, y, tile ) {
 
         //var e = new Error('Invalid parameter');
         //if (arguments.length < 2) throw e;
@@ -339,7 +347,7 @@ Micro.GameMap.prototype = {
 
     },
 
-    setTileValue : function( x, y, value ) {
+    setTileValue: function( x, y, value ) {
         //var e = new Error('Invalid parameter');
         //if (arguments.length < 2) throw e;
         // Argument-shuffling
@@ -353,7 +361,7 @@ Micro.GameMap.prototype = {
         this.tilesData[ id ] = value;
     },
 
-    setTileFlags : function(x, y, flags) {
+    setTileFlags: function(x, y, flags) {
         var e = new Error('Invalid parameter');
         if (arguments.length < 2) throw e;
         // Argument-shuffling
@@ -365,7 +373,7 @@ Micro.GameMap.prototype = {
         this.data[tileIndex].setFlags(flags);
     },
 
-    addTileFlags : function(x, y, flags) {
+    addTileFlags: function(x, y, flags) {
         var e = new Error('Invalid parameter');
         if (arguments.length < 2) throw e;
         // Argument-shuffling
@@ -377,7 +385,7 @@ Micro.GameMap.prototype = {
         this.data[tileIndex].addFlags(flags);
     },
 
-    removeTileFlags : function(x, y, flags) {
+    removeTileFlags: function(x, y, flags) {
         var e = new Error('Invalid parameter');
         if (arguments.length < 2) throw e;
         // Argument-shuffling
@@ -389,7 +397,8 @@ Micro.GameMap.prototype = {
         this.data[tileIndex].removeFlags(flags);
     },
 
-    putZone : function(centreX, centreY, centreTile, size) {
+    putZone: function(centreX, centreY, centreTile, size) {
+
         var e = new Error('Invalid parameter');
 
         if (!this.testBounds(centreX, centreY) || !this.testBounds(centreX - 1 + size, centreY - 1 + size)) throw e;
