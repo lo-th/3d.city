@@ -26,8 +26,7 @@ var storage;
 /**
  * Debug to console - requires more work to some nice debugging
  *
- * @todo add debug parameter
- *
+ * @todo add debgu
  * @param txt
  */
 function debug(txt){ console.log(txt); }
@@ -218,7 +217,7 @@ function destroy(x,y) {
 
 function mapClick() {
     var p = view3d.pos;
-    if(p.x>0 && p.z>0) cityWorker.postMessage({tell:"MAPCLICK", x:p.x, y:p.z });
+    if(p.x>=0 && p.z>=0) cityWorker.postMessage({tell:"MAPCLICK", x:p.x, y:p.z });
 }
 
 function initCity() {
