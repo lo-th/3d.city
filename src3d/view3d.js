@@ -256,11 +256,12 @@ V3D.Base.prototype = {
         this.scene.add( this.land );
 
         if( this.isWithFog ){
-
+        	debug('Fog enabled');
         	this.fog = new THREE.Fog( 0xCC7F66, 1, 100 );
         	this.scene.fog = this.fog;
-        
-        }
+        } else {
+			debug('Fog disabled');
+		}
 
         this.center = new THREE.Vector3();
         this.center.x = this.mapSize[0]*0.5;
@@ -561,10 +562,10 @@ V3D.Base.prototype = {
 	},
 
 	startZoom : function(){
-		this.timer = setInterval(this.faddingZoom, 1000/60, this);
+		this.timer = setInterval(this.fadingZoom, 1000/60, this);
 	},
 
-	faddingZoom : function(t){
+	fadingZoom : function(t){
 		if(t.cam.distance>20){
 			t.cam.distance--;
 			t.moveCamera();

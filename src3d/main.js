@@ -20,7 +20,18 @@ var isWithMiniMap = false;
 var storage;
 
 
-function debug(txt){ d.innerHTML += "<br>"+txt; }
+
+//function debug(txt){ d.innerHTML += "<br>"+txt; }
+
+/**
+ * Debug to console - requires more work to some nice debugging
+ *
+ * @todo add debug parameter
+ *
+ * @param txt
+ */
+function debug(txt){ console.log(txt); }
+
 
 //window.onload = init;
  
