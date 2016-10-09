@@ -180,11 +180,11 @@ function setSpeed(n){
     cityWorker.postMessage({tell:"SPEED", n:n });
 }
 
-function getBudjet(){
+function getBudget(){
     cityWorker.postMessage({ tell:"BUDGET" });
 }
 
-function setBudjet(budgetData){
+function setBudget(budgetData){
     cityWorker.postMessage({ tell:"NEWBUDGET", budgetData:budgetData });
 }
 
