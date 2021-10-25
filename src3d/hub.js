@@ -210,7 +210,7 @@ HUB.Base.prototype = {
         this.addSelector("Speed", ['II', '>', '>>', '>>>', '>>>'], setSpeed, 2, [20,20,20,20,20]);
 
         var b1 = this.addButton(this.hub, 'Budget', [75,16,14], 'position:absolute; left:10px; top:-7px; font-weight:bold;', true);
-        b1.addEventListener('click',  function ( e ) { e.preventDefault(); getBudjet(); }, false);
+        b1.addEventListener('click',  function ( e ) { e.preventDefault(); getBudget(); }, false);
 
         var b2 = this.addButton(this.hub, 'Eval', [75,16,14], 'position:absolute; left:110px; top:-7px; font-weight:bold;', true);
         b2.addEventListener('click',  function ( e ) { e.preventDefault(); getEval(); }, false);
@@ -633,7 +633,7 @@ HUB.Base.prototype = {
         this.budgetWindow.style.display = 'none';
         this.budgetWindow.className = "close";
 
-        setBudjet([this.taxRate, this.roadRate, this.fireRate, this.policeRate ]);
+        setBudget([this.taxRate, this.roadRate, this.fireRate, this.policeRate ]);
     },
 
     closeBudget :function(){
