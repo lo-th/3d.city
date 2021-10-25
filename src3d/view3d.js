@@ -1699,7 +1699,7 @@ V3D.Base.prototype = {
         	this.mouse.dragView = false;
         	this.mouse.move = true;
 		} else if ( id === 16 ){
-			this.currentTool = null;
+			this.currentTool = this.toolSet[id];
         	this.mouse.move = false;
         	this.mouse.dragView = true;
 		} else {
@@ -1746,7 +1746,7 @@ V3D.Base.prototype = {
 
 	build : function(x,y){
 		
-		if(this.currentTool.tool==='query') return;
+		if(this.currentTool.tool==='query' || this.currentTool.id===16) return;
 
 		if(this.currentTool.build){
 			//var ntool = this.toolSet[id];
