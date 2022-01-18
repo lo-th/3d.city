@@ -229,7 +229,7 @@ export class TrafficBase extends THREE.Group {
 
 		let geo = this.car_geo
 	    let glbLoader = new GLTFLoader();
-		let dracoLoader = new DRACOLoader().setDecoderPath( '../src/draco/' )
+		let dracoLoader = new DRACOLoader().setDecoderPath( './build/draco/' )
 		glbLoader.setDRACOLoader( dracoLoader )
 
 		glbLoader.load( this.modelPath + 'cars.glb', function ( gltf ) {
