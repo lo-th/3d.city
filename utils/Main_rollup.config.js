@@ -104,55 +104,14 @@ const babelrc = {
 
 export default [
     {
-		input: 'src/micro/CityGame.js',
+		input: 'src/Main.js',
 		plugins: [
 			header()
 		],
 		output: [
 			{
 				format: 'esm',
-				file: 'build/citygame.module.js'
-			}
-		]
-	},
-	{
-		input: 'src/micro/CityGame.js',
-		plugins: [
-			babel( {
-				babelHelpers: 'bundled',
-				compact: false,
-				babelrc: false,
-				...babelrc
-			} ),
-			babelCleanup(),
-			header()
-		],
-		output: [
-			{
-				format: 'umd',
-				name: 'UIL',
-				file: 'build/citygame.js',
-				indent: '\t'
-			}
-		]
-	},
-	{
-		input: 'src/micro/CityGame.js',
-		plugins: [
-			babel( {
-				babelHelpers: 'bundled',
-				babelrc: false,
-				...babelrc
-			} ),
-			babelCleanup(),
-			terser(),
-			header()
-		],
-		output: [
-			{
-				format: 'umd',
-				name: 'UIL',
-				file: 'build/citygame.min.js'
+				file: 'build/MainGame.module.js'
 			}
 		]
 	}

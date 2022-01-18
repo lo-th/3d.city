@@ -1,6 +1,6 @@
 import * as UIL from '../../build/uil.module.js'
 
-import { Main } from '../main.js';
+import { Main } from '../Main.js';
 import { Base } from './Base.js';
 
 

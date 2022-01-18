@@ -6,7 +6,7 @@ import { RGBELoader } from '../jsm/loaders/RGBELoader.js';
 import { ImprovedNoise } from '../jsm/math/ImprovedNoise.js';
 //import { BufferGeometryUtils } from './jsm/utils/BufferGeometryUtils.js';
 
-import { Main } from '../main.js';
+import { Main } from '../Main.js';
 
 import { Base } from './Base.js';
 import { BuildTool } from './BuildTool.js';

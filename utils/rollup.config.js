@@ -130,7 +130,7 @@ export default [
 		output: [
 			{
 				format: 'umd',
-				name: 'UIL',
+				name: 'city',
 				file: 'build/citygame.js',
 				indent: '\t'
 			}
@@ -151,7 +151,7 @@ export default [
 		output: [
 			{
 				format: 'umd',
-				name: 'UIL',
+				name: 'city',
 				file: 'build/citygame.min.js'
 			}
 		]

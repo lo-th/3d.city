@@ -23,6 +23,7 @@
   },
   "scripts": {
     "build": "rollup -c utils/rollup.config.js",
+    "buildm": "rollup -c utils/Main_rollup.config.js",
     "dev": "concurrently --names \"ROLLUP,HTTP\" -c \"bgBlue.bold,bgGreen.bold\" \"rollup -c utils/rollup.config.js -w -m inline\" \"servez -p 8111 --index\"",
     "start": "concurrently --names \"ROLLUP,HTTP\" -c \"bgBlue.bold,bgGreen.bold\" \"rollup -c utils/rollup.config.js -w -m inline\" \"http-server -c-1 -p 8111 -o index.html\""
   },
