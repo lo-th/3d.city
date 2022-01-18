@@ -103,12 +103,24 @@ export class Hub {
         this.loader.style.cssText = 'pointer-events:none; position:absolute; left:calc(50% - 100px); top:calc(50% - 100px); width:200px; height:200px;';
 
         
-        
+        /*this.link = document.createElement('div');
+        this.link.style.cssText = 'position:absolute;  left:10px; bottom:10px; width:50px; height:50px; pointer-events:auto; display:block;';
+        this.link.innerHTML = '<a href="https://github.com/lo-th/3d.city" target="_blank">' + UIL.Tools.icon('github', '#DEDEDE', 50) + '</a>';
+        this.hub.appendChild( this.link )*/
+
+        this.link = UIL.add('button', { 
+            target:this.hub, w:64, h:64, pos:{left:'10px', bottom:'10px'}, simple:true, 
+            button:'#8397ac' 
+        }).icon( UIL.Tools.icon('github', '#DEDEDE', 50) ).onChange( function(v){ let w = window.open('https://github.com/lo-th/3d.city','_blank'); } )
+
+
 
         this.version = document.createElement('div');
         this.version.style.cssText = 'position:absolute; font-size:14px; right:10px; bottom:10px; text-align:right; width:100px; pointer-events:none; display:block;';
         this.version.innerHTML = "v " + Base.version;
         this.hub.appendChild( this.version )
+
+
 
         /*this.fullMid.appendChild( this.logo );
         this.fullMid.appendChild( this.title );
@@ -169,6 +181,9 @@ export class Hub {
             t.hub.removeChild(t.loader);
             t.hub.removeChild(t.text);
     		t.hub.removeChild(t.full);
+
+            console.log('done')
+
     		//t.initPrevHub();
             t.isIntro = false;
     	}
@@ -257,6 +272,9 @@ export class Hub {
     //--------------------------------------game hub
 
     initGameHub  (){
+
+        this.link.dispose()
+
         var _this = this;
         //this.removeSelector("DIFFICULTY");
         //this.clearElement('fullStart');

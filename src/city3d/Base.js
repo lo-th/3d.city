@@ -1,6 +1,6 @@
 export const Base = {
 
-	version: 0.8,
+	version: '0.8.0',
 
     toolSet: [
         {id:0,  tool:'none',        geo:0,    name:'',  build:0, size:0, sy:0,    price:0,     color:'none'       ,drag:0  },
