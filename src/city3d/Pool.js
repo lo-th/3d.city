@@ -17,7 +17,7 @@ export class Pool {
 		this.isPixelStyle = pixel
 
 		this.loaderGLB = new GLTFLoader();
-    	let dracoLoader = new DRACOLoader().setDecoderPath( '../../src/draco/' )
+    	let dracoLoader = new DRACOLoader().setDecoderPath( './build/draco/' )
     	this.loaderGLB.setDRACOLoader( dracoLoader )
 
 		this.mapPath = './assets/textures/'
