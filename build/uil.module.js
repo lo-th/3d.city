@@ -1653,6 +1653,9 @@ const T = {
             case 'logo':
             t[1]="<path id='logoin' fill='"+color+"' stroke='none' d='"+T.logoFill_d+"'/>";
             break;
+            case 'donate':
+            t[1]="<path id='logoin' fill='"+color+"' stroke='none' d='"+T.logo_donate+"'/>";
+            break;
             case 'neo':
             t[1]="<path id='logoin' fill='"+color+"' stroke='none' d='"+T.logo_neo+"'/>";
             break;
@@ -1692,11 +1695,260 @@ const T = {
     134 166 Q 134 178.4 142.85 187.15 151.6 196 164 196 176.45 196 185.25 187.15 194 178.4 194 166 L 194 52 Z
     `,
 
+    logo_donate:`
+    M 171.3 80.3 Q 179.5 62.15 171.3 45.8 164.1 32.5 141.35 30.1 L 94.35 30.1 Q 89.35 30.4 88.3 35.15 L 70.5 148.05 Q 70.2 152.5 73.7 152.6 L 100.95 152.6 107 111.6 Q 108.75 
+    106.55 112.6 106.45 130.45 108.05 145.3 103.9 163.35 98.75 171.3 80.3 M 179.8 71.5 Q 178.6 79.75 174.9 87.85 168.45 102.9 151.9 109.15 140.65 113.95 117.55 113 113.15 
+    112.75 111 117.45 L 102.7 169.95 Q 102.45 173.8 105.5 173.85 L 128.95 173.85 Q 132.2 174.2 133.35 169.65 L 138.3 139.95 Q 139.75 135.6 143.1 135.5 146.6 135.75 150.6 135.65 
+    154.55 135.5 157.35 135.1 160.15 134.7 166.75 132.35 181.35 127.4 187.9 111.2 194.25 95.75 189.5 81.95 186.75 74.85 179.8 71.5 M 103.5 209.9 Q 103.5 202.85 99.7 198.85 95.95 
+    194.75 89.4 194.75 82.8 194.75 79.05 198.85 75.3 202.9 75.3 209.9 75.3 216.85 79.05 220.95 82.8 225.05 89.4 225.05 95.95 225.05 99.7 221 103.5 216.95 103.5 209.9 M 95.45 205.5 
+    Q 95.95 207.3 95.95 209.9 95.95 212.65 95.45 214.35 94.95 216 94 217.3 93.1 218.45 91.9 219 90.7 219.55 89.4 219.55 88.15 219.55 86.95 219.05 85.75 218.55 84.8 217.3 83.9 216.15 
+    83.4 214.35 82.85 212.6 82.85 209.9 82.85 207.3 83.4 205.45 83.95 203.55 84.85 202.45 85.9 201.2 86.95 200.75 88.05 200.25 89.4 200.25 90.7 200.25 91.85 200.8 93.05 201.3 94 202.5 
+    94.9 203.65 95.45 205.5 M 153.3 195.35 L 145.3 195.35 135.5 224.45 142.8 224.45 144.6 218.5 153.75 218.5 155.6 224.45 163.1 224.45 153.3 195.35 M 152.15 213.25 L 146.25 213.25 
+    149.2 203.65 152.15 213.25 M 116.75 195.35 L 107.8 195.35 107.8 224.45 114.5 224.45 114.5 204.2 125.7 224.45 132.75 224.45 132.75 195.35 126.05 195.35 126.05 212.05 116.75 195.35 M 
+    66.5 197.65 Q 64.15 196.15 61.45 195.75 58.8 195.35 55.75 195.35 L 46.7 195.35 46.7 224.45 55.8 224.45 Q 58.8 224.45 61.5 224.05 64.15 223.6 66.4 222.15 69.15 220.45 70.9 217.2 
+    72.7 214 72.7 209.95 72.7 205.7 71 202.6 69.35 199.5 66.5 197.65 M 64.2 205 Q 65.2 207 65.2 209.9 65.2 212.75 64.25 214.75 63.3 216.75 61.5 217.85 60 218.85 58.3 218.9 56.6 219 
+    54.15 219 L 54 219 54 200.8 54.15 200.8 Q 56.4 200.8 58.05 200.9 59.7 200.95 61.15 201.75 63.2 202.95 64.2 205 M 210.2 195.35 L 190.5 195.35 190.5 224.45 210.2 224.45 210.2 218.9 
+    197.75 218.9 197.75 211.55 209.2 211.55 209.2 206 197.75 206 197.75 200.9 210.2 200.9 210.2 195.35 M 187.5 195.35 L 163 195.35 163 200.9 171.6 200.9 171.6 224.45 178.9 224.45 178.9 
+    200.9 187.5 200.9 187.5 195.35 Z
+    `,
+
 };
 
 T.setText();
 
 const Tools = T;
+
+///https://wicg.github.io/file-system-access/#api-filesystemfilehandle-getfile
+
+
+class Files {
+
+    //-----------------------------
+    //  FILE TYPE
+    //-----------------------------
+
+    static autoTypes( type ) {
+
+        let t = [];
+
+        switch( type ){
+            case 'json':
+            t = [ { accept: { 'image/svg+xml': '.svg'} }, ];
+            break;
+            case 'text':
+            t = [ { description: 'Text Files', accept: { 'text/plain': ['.txt', '.text'], 'text/html': ['.html', '.htm'] } }, ];
+            break;
+            case 'json':
+            t = [ { description: 'JSON Files', accept: { 'text/plain': ['.json'] } }, ];
+            break;
+            case 'image':
+            t = [ { description: 'Images', accept: { 'image/*': ['.png', '.gif', '.jpeg', '.jpg'] } }, ];
+            break;
+
+        }
+
+        return t
+
+    }
+
+
+    //-----------------------------
+    //  LOAD
+    //-----------------------------
+
+	static async load( o = {} ) {
+
+        if (typeof window.showOpenFilePicker !== 'function') {
+            window.showOpenFilePicker = this.showOpenFilePickerPolyfill;
+        }
+
+        try {
+
+        	let type = o.type || '';
+
+            const options = {
+                excludeAcceptAllOption: type ? true : false,
+                multiple: false,
+                //startIn:'./assets'
+            };
+
+            options.types = this.autoTypes( type );
+
+            // create a new handle
+            const handle = await window.showOpenFilePicker( options );
+            const file = await handle[0].getFile();
+            //let content = await file.text()
+
+            if( !file ) return null
+
+            let fname = file.name;
+            let ftype = fname.substring( fname.lastIndexOf('.')+1, fname.length );
+
+            const dataUrl = [ 'png', 'jpg', 'jpeg', 'mp4', 'webm', 'ogg', 'mp3' ];
+            const dataBuf = [ 'sea', 'z', 'hex', 'bvh', 'BVH', 'glb', 'gltf' ];
+            const reader = new FileReader();
+
+            if( dataUrl.indexOf( ftype ) !== -1 ) reader.readAsDataURL( file );
+            else if( dataBuf.indexOf( ftype ) !== -1 ) reader.readAsArrayBuffer( file );
+            else reader.readAsText( file );
+
+            reader.onload = function(e) {
+
+                let content = e.target.result;
+
+                if( type === 'image' ){
+                    var img = new Image;
+                    img.onload = function() {
+                        if( o.callback ) o.callback( img, fname );
+                    };
+                    img.src = content;
+                } else {
+                    if( o.callback ) o.callback( content, fname );
+                }
+
+            };
+
+        } catch(e) {
+
+            console.log(e);
+
+        }
+
+    }
+
+	static showOpenFilePickerPolyfill( options ) {
+        return new Promise((resolve) => {
+            const input = document.createElement("input");
+            input.type = "file";
+            input.multiple = options.multiple;
+            input.accept = options.types
+                .map((type) => type.accept)
+                .flatMap((inst) => Object.keys(inst).flatMap((key) => inst[key]))
+                .join(",");
+
+            input.addEventListener("change", () => {
+                resolve(
+                    [...input.files].map((file) => {
+                        return {
+                            getFile: async () =>
+                                new Promise((resolve) => {
+                                    resolve(file);
+                                }),
+                        };
+                    })
+                );
+            });
+
+            input.click();
+        })
+    }
+
+
+    //-----------------------------
+    //  SAVE
+    //-----------------------------
+
+    static async save( o = {} ) {
+
+        this.usePoly = false;
+
+        if (typeof window.showSaveFilePicker !== 'function') {
+            window.showSaveFilePicker = this.showSaveFilePickerPolyfill;
+            this.usePoly = true;
+        }
+
+        try {
+
+            let type = o.type || '';
+
+            const options = {
+                suggestedName: o.name || 'hello',
+                data: o.data || ''
+            };
+
+
+            options.types = this.autoTypes( type );
+            options.finalType = Object.keys(options.types[0].accept )[0];
+            options.suggestedName += options.types[0].accept[options.finalType][0];
+
+
+            // create a new handle
+            const handle = await window.showSaveFilePicker( options );
+
+            if( this.usePoly ) return
+
+            // create a FileSystemWritableFileStream to write to
+            const file = await handle.createWritable();
+
+            let blob = new Blob([ options.data ], { type: option.finalType });
+
+            // write our file
+            await file.write(blob);
+
+            // close the file and write the contents to disk.
+            await file.close();
+
+        } catch(e) {
+
+            console.log(e);
+
+        }
+
+    }
+
+    static showSaveFilePickerPolyfill( options ) {
+        return new Promise((resolve) => {
+            const a = document.createElement("a");
+            a.download = options.suggestedName || "my-file.txt";
+            let blob = new Blob([ options.data ], { type:options.finalType });
+            a.href = URL.createObjectURL( blob );
+
+            a.addEventListener("click", () => {
+                resolve(
+                    setTimeout( () => URL.revokeObjectURL(a.href), 1000 )
+                );
+            });
+            a.click();
+        })
+    }
+
+
+    //-----------------------------
+    //  FOLDER not possible in poly
+    //-----------------------------
+
+    static async getFolder() {
+
+        try {
+    
+            const handle = await window.showDirectoryPicker();
+            const files = [];
+            for await (const entry of handle.values()) {
+                const file = await entry.getFile();
+                files.push(file);
+            }
+
+            console.log(files);
+            return files;
+
+        } catch(e) {
+
+            console.log(e);
+
+        }
+    
+    }
+
+
+
+
+
+
+
+
+    
+
+}
 
 class V2 {
 
@@ -2398,6 +2650,8 @@ class Proto {
 
     handleEvent( e ) {
 
+        //if(!this.s) return false
+
         if( this.lock ) return
 
         if( this.neverlock ) Roots.lock = false;
@@ -2710,12 +2964,13 @@ class Button extends Proto {
 
         }
 
-        if( !o.value || !o.values ){
-            if( this.c[1] !== undefined ) this.c[1].textContent = '';
-            this.p = o.p !== undefined ? o.p : 0;
-        } else {
-            if( !this.txt ) this.p = 0; 
-        }
+        if( !o.value && !o.values ){
+            if( this.c[1] !== undefined ) { 
+                this.txt = '';
+                this.c[1].textContent = '';
+            }
+        } 
+        if( !this.txt ) this.p = 0; 
 
         //
 
@@ -2827,6 +3082,8 @@ class Button extends Proto {
 
     mode ( n, id ) {
 
+        //if(!this.s) return false
+ 
         let change = false;
         let cc = this.colors, s = this.s;
         let i = id+2;
@@ -7824,8 +8081,8 @@ const add = function () {
 
             ref = true;
             if( a[2] === undefined ) [].push.call(a, {});
-
-            type = a[2].type ? a[2].type : 'slide';//autoType.apply( this, a );
+                
+            type = a[2].type ? a[2].type : autoType( a[0][a[1]], a[2] );
 
             o = a[2];
             o.name = a[1];
@@ -7834,13 +8091,15 @@ const add = function () {
 
         }
 
+        
+
         let name = type.toLowerCase();
 
         if( name === 'group' ) o.add = add;
 
         switch( name ){
 
-            case 'bool': n = new Bool(o); break;
+            case 'bool': case 'boolean': n = new Bool(o); break;
             case 'button': n = new Button(o); break;
             case 'circular': n = new Circular(o); break;
             case 'color': n = new Color(o); break;
@@ -7869,6 +8128,37 @@ const add = function () {
             return n;
 
         }
+
+};
+
+const autoType = function ( v, o ) {
+
+    let type = 'slide';
+
+    if( typeof v === 'boolean' ) type = 'bool'; 
+    else if( typeof v === 'string' ){ 
+
+        if( v.substring(0,1) === '#' ) type = 'color';
+        else type = 'string'; 
+
+    } else if( typeof v === 'number' ){ 
+
+        if( o.ctype ) type = 'color';
+        else type = 'slide';
+
+    } else if( typeof v === 'array' && v instanceof Array ){
+
+        if( typeof v[0] === 'number' ) type = 'number';
+        else if( typeof v[0] === 'string' ) type = 'list';
+
+    } else if( typeof v === 'object' && v instanceof Object ){
+
+        if( v.x !== undefined ) type = 'number';
+        else type = 'list';
+
+    }
+
+    return type
 
 };
 
@@ -8188,9 +8478,12 @@ class Gui {
     clearTarget () {
 
     	if( this.current === -1 ) return false;
-        //if(!this.target) return;
-        this.target.uiout();
-        this.target.reset();
+        if( this.target.s ){
+            // if no s target is delete !!
+            this.target.uiout();
+            this.target.reset();
+        }
+        
         this.target = null;
         this.current = -1;
 
@@ -8376,8 +8669,8 @@ class Gui {
             else {
                 a[2].isUI = true;
                 a[2].main = this;
-
-                ontop = a[1].ontop ? a[1].ontop : false;
+                //ontop = a[1].ontop ? a[1].ontop : false;
+                ontop = a[2].ontop ? a[2].ontop : false;
             }
             
         } 
@@ -8671,6 +8964,6 @@ class Gui {
 
 }
 
-const REVISION = '4.0.5';
+const REVISION = '4.0.7';
 
-export { Gui, Proto, REVISION, Tools, add };
+export { Files, Gui, Proto, REVISION, Tools, add };

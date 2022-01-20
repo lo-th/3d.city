@@ -113,6 +113,11 @@ export class Hub {
             button:'#8397ac' 
         }).icon( UIL.Tools.icon('github', '#DEDEDE', 50) ).onChange( function(v){ let w = window.open('https://github.com/lo-th/3d.city','_blank'); } )
 
+        this.donate = UIL.add('button', { 
+            target:this.hub, w:64, h:64, pos:{left:'84px', bottom:'10px'}, simple:true, 
+            button:'#8397ac' 
+        }).icon( UIL.Tools.icon('donate', '#DEDEDE', 50) ).onChange( function(v){ let w = window.open('https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=8KTXA987XHYNQ','_blank'); } )
+
 
 
         this.version = document.createElement('div');
@@ -274,6 +279,7 @@ export class Hub {
     initGameHub  (){
 
         this.link.dispose()
+        this.donate.dispose()
 
         var _this = this;
         //this.removeSelector("DIFFICULTY");
