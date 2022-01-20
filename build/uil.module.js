@@ -2108,15 +2108,8 @@ class Proto {
 
         this.isListen = false;
 
-
-
-        
-        //this.parentGroup = null;
-
-        //if( o.select !== undefined ) o.selectable = o.select
         this.isSelectable = o.selectable !== undefined ? o.selectable : false;
         this.unselectable =  o.unselect !== undefined ? o.unselect : this.isSelectable;
-
 
         this.ontop = o.ontop ? o.ontop : false; // 'beforebegin' 'afterbegin' 'beforeend' 'afterend'
 
@@ -2146,12 +2139,7 @@ class Proto {
 
         // decale for canvas only
         this.fw = o.fw || 0;
-        /*this.dc = 0
-        if(this.isUI){
-            if( this.main.isCanvasOnly && this.fw) this.dc = (this.main.zone.w - this.w)*0.5
-        }*/
 
-        
         this.autoWidth = o.auto || true;// auto width or flex 
         this.isOpen = false;// open statu
 
@@ -2214,13 +2202,10 @@ class Proto {
         this.s = [];
 
 
-        //this.c[0] = Tools.dom( 'div', this.css.basic + this.css.button +'align-self:stretch; position:relative; height:20px; overflow:hidden;'); //float:left;
-        //this.c[0] = Tools.dom( 'div',  'order: 1;' ); //
         this.useFlex = this.isUI ? this.main.useFlex : false; 
-        let flexible = this.useFlex ? 'disply:flex; justify-content:center; align-items:center; text-align:center; flex: 1 100%;' : 'float:left;';
+        let flexible = this.useFlex ? 'display:flex; justify-content:center; align-items:center; text-align:center; flex: 1 100%;' : 'float:left;';
 
         this.c[0] = Tools.dom( 'div', this.css.basic + flexible + 'position:relative; height:20px;');
-        //this.c[0] = Tools.dom( 'div', this.css.basic +'position:relative; height:20px; align-self: auto;');
 
 
         this.s[0] = this.c[0].style;
@@ -2650,8 +2635,6 @@ class Proto {
 
     handleEvent( e ) {
 
-        //if(!this.s) return false
-
         if( this.lock ) return
 
         if( this.neverlock ) Roots.lock = false;
@@ -2663,24 +2646,11 @@ class Proto {
     }
 
     wheel( e ) { return false; }
-
     mousedown( e ) { return false; }
-
     mousemove( e ) { return false; }
-
     mouseup( e ) { return false; }
-
     keydown( e ) { return false; }
-
     keyup( e ) { return false; }
-
-
-    /*dragstart ( e ) { return false; }
-    dragover ( e ) { return false; }
-    dragenter ( e ) { return false; }
-    dragleave ( e ) { return false; }
-    dragend ( e ) { return false; }
-    drop ( e ) { return false; }*/
 
 
     // ----------------------
@@ -2694,12 +2664,8 @@ class Proto {
 
     }
 
-    display( v ) {
-        
-        v = v || false;
+    display( v = false ) {
         this.s[0].visibility = v ? 'visible' : 'hidden';
-        //this.s[0].display = v ? (this.useFlex? 'flex':'block') : 'none'
-
     }
 
     // ----------------------
@@ -2933,17 +2899,16 @@ class Button extends Proto {
 
         this.on = false;
 
-        this.customSize = o.forceWidth || -1;
+        // force button width
+        this.bw = o.forceWidth || 0;
+        if(o.bw) this.bw = o.bw;
+        this.space = o.space || 3;
 
         if( typeof this.values === 'string' ) this.values = [ this.values ];
 
         this.isDown = false;
         this.neverlock = true;
-        this.isLoadButton = o.loader || false;
-        this.isDragButton = o.drag || false;
         this.res = 0;
-        
-        if( this.isDragButton ) this.isLoadButton = true;
 
         this.lng = this.values.length;
         this.tmp = [];
@@ -2965,22 +2930,12 @@ class Button extends Proto {
         }
 
         if( !o.value && !o.values ){
-            if( this.c[1] !== undefined ) { 
-                this.txt = '';
+            if( this.c[1] !== undefined ) {
                 this.c[1].textContent = '';
+                this.txt = '';
             }
         } 
         if( !this.txt ) this.p = 0; 
-
-        //
-
-        if( this.isLoadButton ) this.initLoader();
-        if( this.isDragButton ){ 
-            this.lng ++;
-            this.initDrager();
-        }
-
-        //if( this.onName !== '' ) this.values[0] = this.on;
 
         this.init();
 
@@ -3022,7 +2977,7 @@ class Button extends Proto {
             if( this.value === this.values[this.res] && this.unselectable ) this.value = '';
             else this.value = this.values[this.res];
             if( this.onName !== null ) this.onOff();
-            if( !this.isLoadButton ) this.send();
+            this.send();
         }
 
         return this.mousemove( e )
@@ -3119,121 +3074,6 @@ class Button extends Proto {
 
     }
 
-    // ----------------------
-
-    dragover ( e ) {
-
-        e.preventDefault();
-
-        this.s[4].borderColor = this.colors.select;
-        this.s[4].color = this.colors.select;
-
-    }
-
-    dragend ( e ) {
-
-        e.preventDefault();
-
-        this.s[4].borderColor = this.color.text;
-        this.s[4].color = this.color.text;
-
-    }
-
-    drop ( e ) {
-
-        e.preventDefault();
-
-        this.dragend(e);
-        this.fileSelect( e.dataTransfer.files[0] );
-
-    }
-
-    initDrager () {
-
-        this.c[4] = this.dom( 'div', this.css.txt +' text-align:center; line-height:'+(this.h-8)+'px; border:1px dashed '+this.color.text+'; top:2px;  height:'+(this.h-4)+'px; border-radius:'+this.radius+'px; pointer-events:auto;' );// cursor:default;
-        this.c[4].textContent = 'DRAG';
-
-        this.c[4].addEventListener( 'dragover', function(e){ this.dragover(e); }.bind(this), false );
-        this.c[4].addEventListener( 'dragend', function(e){ this.dragend(e); }.bind(this), false );
-        this.c[4].addEventListener( 'dragleave', function(e){ this.dragend(e); }.bind(this), false );
-        this.c[4].addEventListener( 'drop', function(e){ this.drop(e); }.bind(this), false );
-
-        //this.c[2].events = [  ];
-        //this.c[4].events = [ 'dragover', 'dragend', 'dragleave', 'drop' ];
-
-
-    }
-
-    addLoader( n, callbackLoad ){
-
-        this.callbackLoad = callbackLoad;
-
-        let l = this.dom( 'input', this.css.basic +'top:0px; opacity:0; height:100%; width:100%; pointer-events:auto; cursor:pointer;' );//
-        l.name = 'loader';
-        l.type = "file";
-        l.addEventListener( 'change', function(e){ this.fileSelect( e.target.files[0] ); }.bind(this), false );
-
-        this.c[n].appendChild( l );
-
-        return this
-
-    }
-
-    initLoader () {
-
-        this.c[3] = this.dom( 'input', this.css.basic +'top:0px; opacity:0; height:'+(this.h)+'px; pointer-events:auto; cursor:pointer;' );//
-        this.c[3].name = 'loader';
-        this.c[3].type = "file";
-
-        this.c[3].addEventListener( 'change', function(e){ this.fileSelect( e.target.files[0] ); }.bind(this), false );
-        //this.c[3].addEventListener( 'mousedown', function(e){  }.bind(this), false );
-
-        //this.c[2].events = [  ];
-        //this.c[3].events = [ 'change', 'mouseover', 'mousedown', 'mouseup', 'mouseout' ];
-
-        //this.hide = document.createElement('input');
-
-    }
-
-    fileSelect ( file ) {
-
-        let dataUrl = [ 'png', 'jpg', 'mp4', 'webm', 'ogg' ];
-        let dataBuf = [ 'sea', 'z', 'hex', 'bvh', 'BVH', 'glb' ];
-
-        //if( ! e.target.files ) return;
-
-        //let file = e.target.files[0];
-       
-        //this.c[3].type = "null";
-        // console.log( this.c[4] )
-
-        if( file === undefined ) return;
-
-        let reader = new FileReader();
-        let fname = file.name;
-        let type = fname.substring(fname.lastIndexOf('.')+1, fname.length );
-
-        if( dataUrl.indexOf( type ) !== -1 ) reader.readAsDataURL( file );
-        else if( dataBuf.indexOf( type ) !== -1 ) reader.readAsArrayBuffer( file );//reader.readAsArrayBuffer( file );
-        else reader.readAsText( file );
-
-        // if( type === 'png' || type === 'jpg' || type === 'mp4' || type === 'webm' || type === 'ogg' ) reader.readAsDataURL( file );
-        //else if( type === 'z' ) reader.readAsBinaryString( file );
-        //else if( type === 'sea' || type === 'bvh' || type === 'BVH' || type === 'z') reader.readAsArrayBuffer( file );
-        //else if(  ) reader.readAsArrayBuffer( file );
-        //else reader.readAsText( file );
-
-        reader.onload = function (e) {
-
-            if( this.callbackLoad ) this.callbackLoad( e.target.result, fname, type );
-            
-            //if( this.callback ) this.callback( e.target.result, fname, type );
-            //this.c[3].type = "file";
-            //this.send( e.target.result ); 
-        }.bind(this);
-
-    }
-
     label ( string, n ) {
 
         n = n || 2;
@@ -3260,13 +3100,12 @@ class Button extends Proto {
         let d = this.sa;
 
         let i = this.lng;
-        let dc =  3;
+        let dc = this.space;
         let size = Math.floor( ( w-(dc*(i-1)) ) / i );
 
-        if( this.customSize !== -1 ){ 
-            size = this.customSize;
-           // d = (this.s-size)*0.5
-
+        if( this.bw ){ 
+            size = this.bw < size ? this.bw : size;
+            d = Math.floor((this.w-( (size * i) + (dc * (i-1)) ))*0.5);
         }
 
         while( i-- ){
@@ -3277,16 +3116,6 @@ class Button extends Proto {
             s[i+2].left = this.tmp[i][0] + 'px';
             s[i+2].width = this.tmp[i][1] + 'px';
 
-        }
-
-        if( this.isDragButton ){ 
-            s[4].left = (d+size+dc) + 'px';
-            s[4].width = size + 'px';
-        }
-
-        if( this.isLoadButton ){
-            s[3].left = d + 'px';
-            s[3].width = size + 'px';
         }
 
     }
@@ -4571,14 +4400,12 @@ class Group extends Proto {
 
         this.ADD = o.add;
 
-        this.uis = [];
-
-        this.isEmpty = true;
-
         this.autoHeight = true;
-        this.current = -1;
-        this.targetIn  = null;
 
+        this.uis = [];
+        this.current = -1;
+        this.proto = null;
+        this.isEmpty = true;
         this.decal = 0;
 
         this.baseH = this.h;
@@ -4604,9 +4431,6 @@ class Group extends Proto {
         if( this.isLine ) this.c[5] = this.dom( 'div', this.css.basic +  'background:rgba(255, 255, 255, 0.2); width:100%; left:0; height:1px; bottom:0px');
 
         let s = this.s;
-
-
-
         s[0].height = this.h + 'px';
         s[1].height = this.h + 'px';
         this.c[1].name = 'group';
@@ -4616,27 +4440,12 @@ class Group extends Proto {
         s[1].color = this.colors.text;
         s[1].fontWeight = 'bold';
 
-        if( this.radius !== 0 ) s[0].borderRadius = this.radius+'px'; 
-        //if( o.border ) s[0].border = '1px solid ' + o.border;
-
-
-        /*if(this.decal){
-            s[0].boxSizing = 'border-box';
-            s[0].backgroundClip = 'border-box';
-            s[0].border = (this.decal/3)+'px solid ' + o.group.colors.background;
-        }*/
-
-        
-
-        
+        if( this.radius !== 0 ) s[0].borderRadius = this.radius+'px';
         this.init();
 
         this.setBG( o.bg );
 
         if( o.open !== undefined ) this.open();
-
-
-        //s[0].background = this.bg;
 
     }
 
@@ -4659,12 +4468,13 @@ class Group extends Proto {
     clearTarget () {
 
         if( this.current === -1 ) return false;
-
-       // if(!this.targetIn ) return;
-        this.targetIn .uiout();
-        this.targetIn .reset();
+        if( this.proto.s ){
+            // if no s target is delete !!
+            this.proto.uiout();
+            this.proto.reset();
+        }
+        this.proto = null;
         this.current = -1;
-        this.targetIn  = null;
         this.cursor();
         return true;
 
@@ -4685,7 +4495,7 @@ class Group extends Proto {
         let type = e.type;
 
         let change = false;
-        let targetChange = false;
+        let protoChange = false;
 
         let name = this.testZone( e );
 
@@ -4698,9 +4508,7 @@ class Group extends Proto {
 
             if( Roots.isMobile && type === 'mousedown' ) this.getNext( e, change );
 
-            if( this.targetIn  ) targetChange = this.targetIn .handleEvent( e );
-
-            //if( type === 'mousemove' ) change = this.styles('def');
+            if( this.proto ) protoChange = this.proto.handleEvent( e );
 
             if( !Roots.lock ) this.getNext( e, change );
 
@@ -4717,7 +4525,7 @@ class Group extends Proto {
         }
 
         if( this.isDown ) change = true;
-        if( targetChange ) change = true;
+        if( protoChange ) change = true;
 
         return change;
 
@@ -4733,40 +4541,13 @@ class Group extends Proto {
         }
 
         if( next !== -1 ){ 
-            this.targetIn  = this.uis[ this.current ];
-            this.targetIn .uiover();
+            this.proto  = this.uis[ this.current ];
+            this.proto.uiover();
         }
 
     }
 
     // ----------------------
-
-    /*calcH () {
-
-        let lng = this.uis.length, i, u,  h=0, px=0, tmph=0;
-        for( i = 0; i < lng; i++){
-            u = this.uis[i];
-            if( !u.autoWidth ){
-
-                if(px===0) h += u.h+1;
-                else {
-                    if(tmph<u.h) h += u.h-tmph;
-                }
-                tmph = u.h;
-
-                //tmph = tmph < u.h ? u.h : tmph;
-                px += u.w;
-                if( px+u.w > this.w ) px = 0;
-
-            }
-            else h += u.h+1;
-        }
-
-        return h;
-    }*/
-
-    
-
 
     setBG ( bg ) {
 
@@ -4800,14 +4581,9 @@ class Group extends Proto {
             }
         }
 
-        //let n = add.apply( this, a );
         let u = this.ADD.apply( this, a );
 
         this.uis.push( u );
-
-        //this.calc()
-
-
 
         this.isEmpty = false;
 
@@ -4829,9 +4605,7 @@ class Group extends Proto {
 
         this.clear();
         if( this.isUI ) this.main.calc();
-
         super.dispose();
-        //Proto.prototype.clear.call( this );
 
     }
 
@@ -4915,12 +4689,6 @@ class Group extends Proto {
 
         this.s[0].height = this.h + 'px';
 
-        //console.log('G', this.h)
-
-        //if( !this.isOpen ) return;
-
-        //this.h = Roots.calcUis( this.uis, this.zone, this.zone.y + this.baseH )+this.baseH;
-
     }
 
     parentHeight ( t ) {
@@ -4932,22 +4700,9 @@ class Group extends Proto {
 
     calc ( y ) {
 
-        if( !this.isOpen ) return;
-
-        /*
-
-        if( y !== undefined ){ 
-            this.h += y;
-            if( this.isUI ) this.main.calc( y );
-        } else {
-            this.h = this.calcH() + this.baseH;
-        }
-        this.s[0].height = this.h + 'px';*/
-
-        // if(this.isOpen)
+        if( !this.isOpen ) return
         if( this.isUI ) this.main.calc();
         else this.calcUis();
-        
         this.s[0].height = this.h + 'px';
 
     }
@@ -4959,8 +4714,6 @@ class Group extends Proto {
             this.uis[i].setSize( this.w );
             this.uis[i].rSize();
         }
-
-        //this.calc()
 
     }
 
@@ -8179,7 +7932,7 @@ class Gui {
         this.screen = null;
         this.plane = o.plane || null;
 
-        this.isEmpty = true;
+        
 
         // color
         if( o.config ) o.colors = o.config;
@@ -8243,9 +7996,9 @@ class Gui {
         this.isScroll = false;
 
         this.uis = [];
-
         this.current = -1;
-        this.target = null;
+        this.proto = null;
+        this.isEmpty = true;
         this.decal = 0;
         this.ratio = 1;
         this.oy = 0;
@@ -8410,9 +8163,11 @@ class Gui {
     }
 
     hide ( b ) {
+        this.content.style.visibility = b ? 'hidden' : 'visible'; 
+    }
 
-        this.content.style.display = b ? 'none' : 'block';
-        
+    display( v = false ) {
+        this.content.style.visibility = v ? 'visible' : 'hidden';
     }
 
     onChange ( f ) {
@@ -8478,13 +8233,13 @@ class Gui {
     clearTarget () {
 
     	if( this.current === -1 ) return false;
-        if( this.target.s ){
+        if( this.proto.s ){
             // if no s target is delete !!
-            this.target.uiout();
-            this.target.reset();
+            this.proto.uiout();
+            this.proto.reset();
         }
         
-        this.target = null;
+        this.proto = null;
         this.current = -1;
 
         ///console.log(this.isDown)//if(this.isDown)Roots.clearInput();
@@ -8527,7 +8282,7 @@ class Gui {
     	let type = e.type;
 
     	let change = false;
-    	let targetChange = false;
+    	let protoChange = false;
 
     	let name = this.testZone( e );
 
@@ -8546,10 +8301,10 @@ class Gui {
 
                 if( Roots.isMobile && type === 'mousedown' ) this.getNext( e, change );
 
-	    		if( this.target ) targetChange = this.target.handleEvent( e );
+	    		if( this.proto ) protoChange = this.proto.handleEvent( e );
 
 	    		if( type === 'mousemove' ) change = this.mode('def');
-                if( type === 'wheel' && !targetChange && this.isScroll ) change = this.onWheel( e );
+                if( type === 'wheel' && !protoChange && this.isScroll ) change = this.onWheel( e );
                
 	    		if( !Roots.lock ) {
                     this.getNext( e, change );
@@ -8584,7 +8339,7 @@ class Gui {
     	}
 
     	if( this.isDown ) change = true;
-    	if( targetChange ) change = true;
+    	if( protoChange ) change = true;
 
         if( type === 'keyup' ) change = true;
         if( type === 'keydown' ) change = true;
@@ -8608,8 +8363,8 @@ class Gui {
         }
 
         if( next !== -1 ){ 
-            this.target = this.uis[ this.current ];
-            this.target.uiover();
+            this.proto = this.uis[ this.current ];
+            this.proto.uiover();
         }
 
     }
@@ -8682,17 +8437,6 @@ class Gui {
         if( ontop ) this.uis.unshift( u );
         else this.uis.push( u );
 
-        /*if( !u.autoWidth ){
-            let y = u.c[0].getBoundingClientRect().top;
-            if( this.prevY !== y ){
-                this.calc( u.h + 1 );
-                this.prevY = y;
-            }
-        }else{
-            this.prevY = 0;//-1;
-            this.calc( u.h + 1 );
-        }*/
-
         this.calc();
 
         this.isEmpty = false;
@@ -8700,18 +8444,6 @@ class Gui {
         return u
 
     }
-
-    /*applyCalc () {
-
-        //console.log(this.uis.length, this.tmpH )
-
-        this.calc( this.tmpH );
-        //this.tmpH = 0;
-        this.tmpAdd = null;
-
-    }*/
-
-    
 
     // remove one node
 
@@ -8747,18 +8479,11 @@ class Gui {
             item = this.uis.pop();
             this.inner.removeChild( item.c[0] );
             item.dispose();
-
-            //this.uis[i].clear()
         }
 
         this.uis = [];
         this.isEmpty = true;
-        //this.zone = { x:0, y:0, w:this.size.w, h:0 };
-        //this.setWidth()
-        //Roots.listens = [];
         this.calc();
-
-
 
     }
 
@@ -8776,10 +8501,10 @@ class Gui {
 
     }
 
+
     // ----------------------
     //   ITEMS SPECIAL
     // ----------------------
-
 
     resetItem () {
 
@@ -8795,12 +8520,11 @@ class Gui {
         if( !this.isItemMode ) return;
 
         name = name || '';
-
         this.resetItem();
 
         if( !name ){
             this.update(0);
-            return;
+            return
         } 
 
         let i = this.uis.length;
@@ -8833,8 +8557,6 @@ class Gui {
 
             this.ratio = this.maxView / this.total;
             this.sh = this.maxView * this.ratio;
-
-            //if( this.sh < 20 ) this.sh = 20;
 
             this.range = this.maxView - this.sh;
 
@@ -8894,7 +8616,7 @@ class Gui {
 
             let diff = this.h - this.maxHeight;
 
-            if( diff > 1 ){ //this.h > this.maxHeight ){
+            if( diff > 1 ){
 
                 this.isScroll = true;
                 this.zone.h = this.maxHeight + this.bh;
@@ -8907,8 +8629,6 @@ class Gui {
 
         }
 
-        //if( this.forceHeight ) this.zone.h = this.forceHeight
-
         this.upScroll( this.isScroll );
 
         this.innerContent.style.height = this.zone.h - this.bh + 'px';
@@ -8918,11 +8638,7 @@ class Gui {
 
         if( this.forceHeight && this.lockHeight ) this.content.style.height = this.forceHeight + 'px';
 
-        //console.log( this.zone, this.bh )
-
-        //if( this.isOpen ) this.calcUis()
         if( this.isCanvas ) this.draw( true );
-        //else if( !this.transition ) this.rezone()
 
     }
 
@@ -8936,19 +8652,11 @@ class Gui {
 
         this.zone.w = Math.floor( this.zone.w );
 
-        //console.log( this.zone.w )
-
         this.content.style.width = this.zone.w + 'px';
 
         if( this.isCenter ) this.content.style.marginLeft = -(Math.floor(this.zone.w*0.5)) + 'px';
 
         this.setItemWidth( this.zone.w - this.sw );
-
-        //this.setHeight();
-        //this.calc()
-
-        //if( this.isCanvasOnly ) Roots.needReZone = true;
-        //Roots.resize();
 
     }
 
@@ -8964,6 +8672,6 @@ class Gui {
 
 }
 
-const REVISION = '4.0.7';
+const REVISION = '4.0.8';
 
 export { Files, Gui, Proto, REVISION, Tools, add };
