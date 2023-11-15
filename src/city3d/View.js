@@ -1466,9 +1466,9 @@ export class View {
             }
                 	
             
-            geo.attributes.position.needUpdate = true;
-            geo.attributes.normal.needUpdate = true;
-            geo.attributes.color.needUpdate = true;
+            geo.attributes.position.needsUpdate = true;
+            geo.attributes.normal.needsUpdate = true;
+            geo.attributes.color.needsUpdate = true;
             //geo.computeVertexNormals();
 
         }
@@ -1583,7 +1583,7 @@ export class View {
 	}
 
 	findHeightId( x, y ) {
-    	return x+(y*(this.mapSize[1]+1))
+    	return x+(y*(this.mapSize[0]+1))
     }
 
 
