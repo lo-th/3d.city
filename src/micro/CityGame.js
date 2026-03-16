@@ -82,7 +82,7 @@ export class CityGame {
         if( p == "ACHIEVEMENTS") Game.getAchievements();
         if( p == "HISTORY") Game.getHistory();
 
-        if( p == "SAVEGAME") Game.saveGame(e.data.saveCity);
+        if( p == "SAVEGAME") Game.saveGame(e.data.saveCity, e.data.silent);
         if( p == "LOADGAME") Game.loadGame(e.data.isStart);
         if( p == "MAKELOADGAME") Game.makeLoadGame(e.data.savegame, e.data.isStart);
 
@@ -507,7 +507,7 @@ export class MainGame {
     //______________________________________ SAVE
 
 
-    saveGame (cityData){
+    saveGame (cityData, silent){
         //this.oldSpeed = this.speed;
         //this.changeSpeed(0);
 
@@ -519,8 +519,8 @@ export class MainGame {
         this.simulation.save(gameData);
 
         gameData = JSON.stringify(gameData);
-        
-        CityGame.post({ tell:"SAVEGAME", gameData:gameData, key:Micro.KEY });
+
+        CityGame.post({ tell:"SAVEGAME", gameData:gameData, key:Micro.KEY, silent:silent||false });
 
         //this.changeSpeed(this.oldSpeed);
     }

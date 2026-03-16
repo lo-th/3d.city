@@ -378,6 +378,8 @@ export class Hub {
                 case 's': case 'S': _this.openExit();        break;
                 case 'a': case 'A': Main.getAchievements(); break;
                 case 'h': case 'H': Main.getHistory();      break;
+                case '?':           _this.openAbout();       break;
+                case 'o': case 'O': _this.openOverlays();    break;
             }
         }, false);
     }
@@ -458,6 +460,28 @@ export class Hub {
         if (this.happinessIndicator) {
             this.happinessIndicator.innerHTML = '<span style="color:' + happyColor + ';">☺ ' + happiness + '%</span>';
         }
+    }
+
+    // Brief "Auto-saved" indicator that fades out
+    flashAutoSave () {
+        if(!this.autoSaveIndicator){
+            this.autoSaveIndicator = document.createElement('div');
+            this.autoSaveIndicator.style.cssText = 'position:absolute; bottom:44px; left:50%; transform:translateX(-50%);'
+                + ' background:rgba(20,30,48,0.88); color:rgba(74,200,140,0.9);'
+                + ' font-size:11px; font-weight:600; letter-spacing:0.06em;'
+                + ' padding:4px 12px; border-radius:20px; pointer-events:none;'
+                + ' border:1px solid rgba(74,200,140,0.35); opacity:0; transition:opacity 0.4s;';
+            this.autoSaveIndicator.textContent = '✔ Auto-saved';
+            this.hub.appendChild(this.autoSaveIndicator);
+        }
+        var el = this.autoSaveIndicator;
+        el.style.transition = 'none';
+        el.style.opacity = '1';
+        clearTimeout(this._autoSaveTimer);
+        this._autoSaveTimer = setTimeout(function(){
+            el.style.transition = 'opacity 1.5s';
+            el.style.opacity = '0';
+        }, 1500);
     }
 
     //-----------------------------------QUERY
@@ -572,6 +596,8 @@ export class Hub {
                              + '<span class="hub-kbd">S</span> Save/Load<br>'
                              + '<span class="hub-kbd">A</span> Awards &nbsp;'
                              + '<span class="hub-kbd">H</span> History<br>'
+                             + '<span class="hub-kbd">O</span> Overlays &nbsp;'
+                             + '<span class="hub-kbd">?</span> This panel<br>'
                              + '<span class="hub-kbd">Esc</span> Close window';
             body.appendChild( kbdDiv );
 

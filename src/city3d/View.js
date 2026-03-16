@@ -851,11 +851,10 @@ export class View {
 	
 
     winterSwitch() {
-    	/*if(!this.isWinter && this.winterMapLoaded) this.isWinter = true;
-    	else this.isWinter = false;
-
+    	this.isWinter = !this.isWinter;
 		this.updateBackground();
-		this.setTimeColors(this.dayTime);*/
+		// Re-apply current time-of-day after season change
+		if(this.dayTime !== 0) this.setTimeColors(this.dayTime);
     }
 
 	textureSwitch( type ) {
@@ -873,54 +872,64 @@ export class View {
 
 	setTimeColors( id ) {
 
-		/*this.dayTime = id;
-		if(this.dayTime==1)this.tcolor = {r:100, g: 15, b: 80, a: 0.3};
-		if(this.dayTime==2)this.tcolor = {r:10, g: 15, b: 80, a: 0.8};
-		if(this.dayTime==3)this.tcolor = {r:10, g: 15, b: 80, a: 0.6};
+		this.dayTime = id;
 
-		this.tint(this.skyCanvas);
+		// Adjust renderer exposure: bright day → dim night
+		const exposures = [0.85, 1.0, 0.25, 0.5];
+		if(this.renderer) this.renderer.toneMappingExposure = exposures[id];
 
-		if(!this.isWinter){
-			//this.tint(this.groundCanvas, this.imgs[0]);
-			this.tint(this.townCanvas, this.imgs[1], this.imgs[4]);
-			this.tint(this.buildingCanvas, this.imgs[2], this.imgs[3]);
-	    } else {
-			//this.tint(this.groundCanvas, this.imgs[5]);
-			this.tint(this.townCanvas, this.imgs[6], this.imgs[4]);
-			this.tint(this.buildingCanvas, this.imgs[7], this.imgs[3]);
-		}
-
-		if(this.isWithFog){
+		// Update fog colour
+		if(this.isWithFog && this.fog){
 			if(this.isIsland){
 				if(this.isWinter){
-					if(this.dayTime==0)this.fog.color.setHex(0xAFEEEE);
-					if(this.dayTime==1)this.fog.color.setHex(0x98ABBF);
-					if(this.dayTime==2)this.fog.color.setHex(0x2B3C70);
-					if(this.dayTime==3)this.fog.color.setHex(0x4C688F);
+					if(id==0)this.fog.color.setHex(0xAFEEEE);
+					if(id==1)this.fog.color.setHex(0x98ABBF);
+					if(id==2)this.fog.color.setHex(0x2B3C70);
+					if(id==3)this.fog.color.setHex(0x4C688F);
 				}else{
-					if(this.dayTime==0)this.fog.color.setHex(0x6666e6);
-					if(this.dayTime==1)this.fog.color.setHex(0x654CB9);
-					if(this.dayTime==2)this.fog.color.setHex(0x1C206E);
-					if(this.dayTime==3)this.fog.color.setHex(0x2F328C);
+					if(id==0)this.fog.color.setHex(0x6666e6);
+					if(id==1)this.fog.color.setHex(0x654CB9);
+					if(id==2)this.fog.color.setHex(0x1C206E);
+					if(id==3)this.fog.color.setHex(0x2F328C);
 				}
 			} else {
 				if(this.isWinter){
-					if(this.dayTime==0)this.fog.color.setHex(0xE6F0FF);
-					if(this.dayTime==1)this.fog.color.setHex(0xBFACCA);
-					if(this.dayTime==2)this.fog.color.setHex(0x363C73);
-					if(this.dayTime==3)this.fog.color.setHex(0x626996);
+					if(id==0)this.fog.color.setHex(0xE6F0FF);
+					if(id==1)this.fog.color.setHex(0xBFACCA);
+					if(id==2)this.fog.color.setHex(0x363C73);
+					if(id==3)this.fog.color.setHex(0x626996);
 				}else{
-					if(this.dayTime==0)this.fog.color.setHex(0xE2946D);
-					if(this.dayTime==1)this.fog.color.setHex(0xBC6C64);
-					if(this.dayTime==2)this.fog.color.setHex(0x352A56);
-					if(this.dayTime==3)this.fog.color.setHex(0x60445C);
+					if(id==0)this.fog.color.setHex(0xE2946D);
+					if(id==1)this.fog.color.setHex(0xBC6C64);
+					if(id==2)this.fog.color.setHex(0x352A56);
+					if(id==3)this.fog.color.setHex(0x60445C);
 				}
 			}
 		}
-		this.buildingTexture.needsUpdate = true;
-        this.townTexture.needsUpdate = true;
-        this.skyTexture.needsUpdate = true;
-        this.fullRedraw = true;*/
+
+		// Rebuild sky gradient for the new time of day
+		if(this.isWithBackground && this.back){
+			const skyGradients = {
+				island: {
+					normal:  [['#6666e6','#BFDDFF','#4A65FF'],['#654CB9','#C077EE','#9966CC'],['#0A0A2A','#1a1a5e','#0d0d3a'],['#1C206E','#4A4A8A','#2A2A6A']],
+					winter:  [['#AFEEEE','#BFDDFF','#4A65FF'],['#98ABBF','#8F7AAA','#6650AA'],['#1a1a4e','#1a1a4e','#0d0d3a'],['#2B3C70','#4A4A8A','#2A2A6A']]
+				},
+				normal: {
+					normal:  [['#E2946D','#BFDDFF','#4A65FF'],['#BC6C64','#FF9966','#9966CC'],['#0A0A1A','#1a1040','#0d0b30'],['#352A56','#6b4c8a','#2A2A6A']],
+					winter:  [['#E6F0FF','#BFDDFF','#4A65FF'],['#BFACCA','#8F7AAA','#6650AA'],['#1a1a3e','#1a1a4e','#0d0d3a'],['#363C73','#4A4A8A','#2A2A6A']]
+				}
+			};
+			const mapKey = this.isIsland ? 'island' : 'normal';
+			const seasonKey = this.isWinter ? 'winter' : 'normal';
+			const cols = skyGradients[mapKey][seasonKey][id];
+			this.skyCanvas = this.gradTexture([[0.51,0.49, 0.3], cols]);
+			this.skyTexture = new THREE.Texture(this.skyCanvas);
+			this.skyTexture.encoding = THREE.sRGBEncoding;
+			this.skyTexture.needsUpdate = true;
+			this.back.material.map = this.skyTexture;
+		}
+
+		this.fullRedraw = true;
 
 	}
 

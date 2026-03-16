@@ -31,11 +31,12 @@ Goal: make the existing game feel complete and bug-free before adding new system
 - [ ] Improve mobile / touch controls and responsive layout
 - [ ] Expand building model variety (more residential, commercial, and industrial LOD levels)
 - [ ] Animated building construction sequence (scaffold → finished)
-- [ ] Day / night cycle with dynamic lighting and street lights
+- [x] Day / night cycle with dynamic lighting — time-of-day wheel changes fog colour, sky gradient, and renderer exposure
+- [x] Winter / season visual toggle — snow mode now correctly switches sky and fog colours
 - [ ] Improved disaster visuals (fire spread, tornado, flood)
 - [ ] Smooth camera transitions and orbit controls refinement
-- [ ] Keyboard shortcut reference overlay
-- [ ] Persistent city auto-save (localStorage / IndexedDB)
+- [x] Keyboard shortcut reference overlay — press `?` to open; added `O` shortcut for Overlays panel
+- [x] Persistent city auto-save (localStorage) — silent background save every 2 minutes with on-screen indicator
 - [ ] Performance profiling pass — target 60 fps on mid-range hardware
 
 ---
