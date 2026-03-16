@@ -132,6 +132,7 @@ export const Micro = {
     DISASTER_CRASH:'Crash',
     DISASTER_MELTDOWN:'Meltdown',
     DISASTER_TORNADO:'Tornado',
+    DISASTER_EARTHQUAKE:'Earthquake',
 
     // storage
     CURRENT_VERSION : 3,

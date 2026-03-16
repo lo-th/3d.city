@@ -398,6 +398,7 @@ export class MainGame {
             case Micro.DISASTER_CRASH: this.simulation.disasterManager.makeCrash(m); break;
             case Micro.DISASTER_MELTDOWN: this.simulation.disasterManager.makeMeltdown(m); break;
             case Micro.DISASTER_TORNADO: this.simulation.spriteManager.makeTornado(m); break;
+            case Micro.DISASTER_EARTHQUAKE: this.simulation.disasterManager.makeEarthquake(); break;
         }
         this.processMessages(m.getMessages());
     }

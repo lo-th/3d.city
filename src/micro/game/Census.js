@@ -99,9 +99,9 @@ export class Census {
 
         var resPopScaled = this.resPop >> 8;
 
-        if (this.hospitalPop < this.resPopScaled) this.needHospital = 1;
-        else if (this.hospitalPop > this.resPopScaled) this.needHospital = -1;
-        else if (this.hospitalPop === this.resPopScaled) this.needHospital = 0;
+        if (this.hospitalPop < resPopScaled) this.needHospital = 1;
+        else if (this.hospitalPop > resPopScaled) this.needHospital = -1;
+        else this.needHospital = 0;
 
         this.changed = true;
 

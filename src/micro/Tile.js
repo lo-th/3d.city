@@ -108,6 +108,7 @@ export class ZoneUtils {
     }
 
     static HOSPITAL (tile) {
+        return tile.getValue() === Tile.HOSPITAL;
     }
 
     // ZoneUtils

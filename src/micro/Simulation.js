@@ -17,7 +17,7 @@ import { MessageManager } from './MessageManager.js';
 import { TXT } from './Text.js';
 import { SpriteManager } from './sprite/SpriteManager.js';
 
-import { Evaluation } from './game/Evaluation.js';
+import { Evaluation, EvaluationUtils } from './game/Evaluation.js';
 import { Valves } from './game/Valves.js';
 import { Budget } from './game/Budget.js';
 import { Census } from './game/Census.js';
@@ -217,7 +217,7 @@ export class Simulation {
 
         this.infos[0] = [TXT.months[ this._cityMonthLast ], this._cityYearLast].join(' ');
 
-        this.infos[1] = TXT.cityClass[this.evaluation.cityScore];
+        this.infos[1] = TXT.cityClass[this.evaluation.cityClass];
         this.infos[2] = this.evaluation.cityScore;
         this.infos[3] = this.evaluation.cityPop;
 
@@ -230,6 +230,11 @@ export class Simulation {
 
         this.infos[9] = this.map.powerChange;
         this.map.powerChange = false;
+
+        this.infos[10] = this.census.crimeAverage;
+        this.infos[11] = this.census.pollutionAverage;
+        this.infos[12] = EvaluationUtils.getTrafficAverage(this.blockMaps, this.census);
+        this.infos[13] = this.evaluation.cityYes;
 
         return this.infos
 
@@ -344,7 +349,7 @@ export class Simulation {
             case 22: if (totalZonePop > 10 && powerPop == 0) this.messageManager.sendMessage(Messages.NEED_ELECTRICITY); break;
             case 26: if (this.census.resPop > 500 && this.census.stadiumPop === 0) { this.messageManager.sendMessage(Messages.NEED_STADIUM); this.valves.resCap = true; } else { this.valves.resCap = false;}; break;
             case 28: if (this.census.indPop > 70 && this.census.seaportPop === 0) { this.messageManager.sendMessage(Messages.NEED_SEAPORT); this.valves.indCap = true; } else { this.valves.indCap = false; }; break;
-            case 30: if (this.census.comPop > 100 && this.census.airportPop === 0) { this.messageManager.sendMessage(Messages._NEED_AIRPORT); this.valves.comCap = true; } else { this.valves.comCap = false; }; break;
+            case 30: if (this.census.comPop > 100 && this.census.airportPop === 0) { this.messageManager.sendMessage(Messages.NEED_AIRPORT); this.valves.comCap = true; } else { this.valves.comCap = false; }; break;
             case 32: let zoneCount = this.census.unpoweredZoneCount + this.census.poweredZoneCount; if (zoneCount > 0) { if (this.census.poweredZoneCount / zoneCount < 0.7) this.messageManager.sendMessage(Messages.BLACKOUTS_REPORTED);}; break;
             case 35: if (this.census.pollutionAverage > 60) this.messageManager.sendMessage(Messages.HIGH_POLLUTION); break;
             case 42: if (this.census.crimeAverage > 100) this.messageManager.sendMessage(Messages.HIGH_CRIME); break;
@@ -354,7 +359,7 @@ export class Simulation {
             case 54: if (this.budget.roadEffect < Math.floor(5 * Micro.MAX_ROAD_EFFECT / 8) && this.census.roadTotal > 30) this.messageManager.sendMessage(Messages.ROAD_NEEDS_FUNDING); break;
             case 57: if (this.budget.fireEffect < Math.floor(7 * Micro.MAX_FIRESTATION_EFFECT / 10) && this.census.totalPop > 20) this.messageManager.sendMessage(Messages.FIRE_STATION_NEEDS_FUNDING); break;
             case 60: if (this.budget.policeEffect < Math.floor(7 * Micro.MAX_POLICESTATION_EFFECT / 10) && this.census.totalPop > 20) this.messageManager.sendMessage(Messages.POLICE_NEEDS_FUNDING); break;
-            case 63: if (this.census.trafficAverage > 60) this.messageManager.sendMessage(Messages.TRAFFIC_JAMS, -1, -1, true); break;
+            case 63: if (EvaluationUtils.getTrafficAverage(this.blockMaps, this.census) > 60) this.messageManager.sendMessage(Messages.TRAFFIC_JAMS, -1, -1, true); break;
         }
     }
 
