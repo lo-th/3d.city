@@ -6,18 +6,320 @@
 <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 <link rel="icon" href="favicon.ico" />
 <style>
-*{ padding:0; margin: 0; -o-user-select:none; -ms-user-select:none; -khtml-user-select:none; -webkit-user-select:none; -moz-user-select: none;}
-html { width:100%; height:100%; }
-body { background:#8397ac; font:10px sans-serif; width:100%; height:100%; color:#FFFFFF; overflow: hidden; }
-#container{ min-width:465px; min-height:465px; width:100%; height:100%; overflow:hidden; text-align:center; }
-#container canvas{ position:absolute;top:0;left:0;width:100%;height:100% }
-#debug{ }
-#hub{ position:absolute; top:0; left:0; height:100%; width:100%; pointer-events:none; display:block; text-align:center;}
+/* ── Design tokens ───────────────────────────────────────────── */
+:root {
+  --c-bg:          #1a2332;
+  --c-surface:     rgba(20, 30, 48, 0.82);
+  --c-surface-alt: rgba(30, 44, 66, 0.90);
+  --c-border:      rgba(100, 160, 220, 0.22);
+  --c-border-hi:   rgba(140, 200, 255, 0.55);
+  --c-text:        #dce8f5;
+  --c-text-dim:    rgba(180, 210, 240, 0.60);
+  --c-accent:      #4a9edd;
+  --c-accent-hi:   #74bfff;
+  --c-danger:      #e05555;
+  --c-success:     #4bcc7a;
+  --c-warn:        #f0b84a;
+  --radius-sm:     6px;
+  --radius-md:     10px;
+  --radius-lg:     16px;
+  --shadow-panel:  0 8px 32px rgba(0,0,0,0.55), 0 2px 8px rgba(0,0,0,0.35);
+  --shadow-btn:    0 2px 6px rgba(0,0,0,0.4);
+  --blur:          blur(12px);
+  --transition:    150ms ease;
+  --font-ui:       'Segoe UI', system-ui, -apple-system, sans-serif;
+}
 
-a:link {text-decoration: none; color:#FFAA66;}
-a:visited {text-decoration: none; color:#FFAA66;}
-a:active {text-decoration: none; color:#FFAA66;}
-a:hover {text-decoration: underline; color: red;}
+/* ── Reset ───────────────────────────────────────────────────── */
+* { padding:0; margin:0;
+    -webkit-user-select:none; -moz-user-select:none; user-select:none;
+    box-sizing: border-box; }
+
+html { width:100%; height:100%; }
+body { background: var(--c-bg); font: 12px/1.4 var(--font-ui);
+       width:100%; height:100%; color: var(--c-text); overflow:hidden; }
+
+/* ── Containers ──────────────────────────────────────────────── */
+#container { min-width:465px; min-height:465px; width:100%; height:100%;
+             overflow:hidden; text-align:center; }
+#container canvas { position:absolute; top:0; left:0; width:100%; height:100%; }
+#hub { position:absolute; top:0; left:0; height:100%; width:100%;
+       pointer-events:none; display:block; text-align:center; }
+
+/* ── Hub panels / windows ────────────────────────────────────── */
+.hub-panel {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-panel);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
+  color: var(--c-text);
+}
+
+/* ── Buttons ─────────────────────────────────────────────────── */
+.hub-btn {
+  display: inline-block;
+  background: var(--c-surface-alt);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-sm);
+  color: var(--c-text);
+  font: 600 12px/1 var(--font-ui);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: background var(--transition), border-color var(--transition),
+              color var(--transition), transform var(--transition);
+  box-shadow: var(--shadow-btn);
+}
+.hub-btn:hover {
+  background: var(--c-accent);
+  border-color: var(--c-accent-hi);
+  color: #fff;
+  transform: translateY(-1px);
+}
+.hub-btn:active { transform: translateY(0); }
+
+/* ── Top menu strip ──────────────────────────────────────────── */
+.hub-topmenu {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 36px;
+  background: var(--c-surface);
+  border-bottom: 1px solid var(--c-border);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  gap: 6px;
+  pointer-events: auto;
+  z-index: 10;
+}
+.hub-topmenu .hub-btn {
+  height: 26px;
+  padding: 0 14px;
+  font-size: 11px;
+  border-radius: 4px;
+}
+
+/* ── Status bar ──────────────────────────────────────────────── */
+.hub-statusbar {
+  position: absolute;
+  bottom: 0; left: 0;
+  height: 44px;
+  background: var(--c-surface);
+  border-top: 1px solid var(--c-border);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  gap: 0;
+  pointer-events: none;
+  z-index: 10;
+}
+.hub-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 16px;
+  border-right: 1px solid var(--c-border);
+}
+.hub-stat:last-child { border-right: none; }
+.hub-stat-label {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--c-text-dim);
+  line-height: 1;
+  margin-bottom: 2px;
+}
+.hub-stat-value {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--c-text);
+  line-height: 1;
+}
+
+/* ── Speed selector ──────────────────────────────────────────── */
+.hub-speed {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 10px;
+  border-right: 1px solid var(--c-border);
+}
+.hub-speed-btn {
+  width: 28px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--c-surface-alt);
+  border: 1px solid var(--c-border);
+  border-radius: 4px;
+  color: var(--c-text-dim);
+  font-size: 11px;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: background var(--transition), color var(--transition);
+}
+.hub-speed-btn:hover, .hub-speed-btn.select {
+  background: var(--c-accent);
+  border-color: var(--c-accent-hi);
+  color: #fff;
+}
+
+/* ── Tool info strip ──────────────────────────────────────────── */
+.hub-toolinfo {
+  position: absolute;
+  top: 40px; right: 12px;
+  width: 198px;
+  height: 44px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--c-text);
+  text-align: right;
+  letter-spacing: 0.03em;
+  pointer-events: none;
+}
+
+/* ── RCI indicator ───────────────────────────────────────────── */
+#RCI {
+  position: absolute;
+  bottom: 54px; right: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.rci-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  height: 32px;
+}
+.rci-bar {
+  width: 10px;
+  border-radius: 2px 2px 0 0;
+  min-height: 2px;
+}
+.rci-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: var(--c-text-dim);
+  margin-top: 3px;
+}
+
+/* ── Slider ──────────────────────────────────────────────────── */
+.hub-slider-track {
+  border-radius: var(--radius-sm);
+  background: rgba(255,255,255,0.08);
+  border: 1px solid var(--c-border);
+  cursor: w-resize;
+  pointer-events: auto;
+}
+.hub-slider-track:hover { border-color: var(--c-border-hi); }
+.hub-slider-fill { border-radius: var(--radius-sm); }
+
+/* ── Notification message ────────────────────────────────────── */
+.hub-msg {
+  position: absolute;
+  bottom: 54px; left: 12px;
+  width: 420px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--c-warn);
+  pointer-events: none;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+}
+
+/* ── Loading overlay ─────────────────────────────────────────── */
+#hub-loading {
+  position: absolute; inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(160deg, #0f1923 0%, #1a2d45 50%, #0d1e2e 100%);
+  pointer-events: none;
+}
+.loading-title {
+  font-size: 52px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  color: var(--c-text);
+  text-shadow: 0 0 40px rgba(74,158,221,0.6), 0 2px 8px rgba(0,0,0,0.8);
+  margin-bottom: 8px;
+}
+.loading-subtitle {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.25em;
+  color: var(--c-text-dim);
+  text-transform: uppercase;
+  margin-bottom: 56px;
+}
+.loading-status {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--c-text-dim);
+  margin-top: 32px;
+  letter-spacing: 0.06em;
+}
+.loading-spinner {
+  width: 52px; height: 52px;
+  border: 3px solid rgba(74,158,221,0.15);
+  border-top-color: var(--c-accent);
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Season / time wheel ─────────────────────────────────────── */
+.hub-timewheel {
+  position: absolute;
+  bottom: 54px; left: 12px;
+  width: 54px; height: 54px;
+  border-radius: 50%;
+  background: var(--c-surface-alt);
+  border: 1px solid var(--c-border);
+  overflow: hidden;
+  transform: rotate(45deg);
+  pointer-events: auto;
+}
+.hub-timewheel-cell {
+  position: absolute;
+  width: 27px; height: 27px;
+  cursor: pointer;
+  transition: background var(--transition);
+}
+.hub-timewheel-cell:hover { filter: brightness(1.35); }
+
+/* ── Winter toggle ────────────────────────────────────────────── */
+.hub-winter {
+  position: absolute;
+  bottom: 116px; left: 25px;
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: transparent;
+  border: 1.5px solid var(--c-border);
+  cursor: pointer;
+  pointer-events: auto;
+  transition: background var(--transition), border-color var(--transition);
+}
+.hub-winter.on {
+  background: rgba(180,220,255,0.35);
+  border-color: var(--c-accent-hi);
+}
+
+/* ── Links ───────────────────────────────────────────────────── */
+a:link, a:visited { text-decoration:none; color: var(--c-accent); }
+a:hover { text-decoration:underline; color: var(--c-accent-hi); }
 </style>
 </head>
 
@@ -31,7 +333,6 @@ a:hover {text-decoration: underline; color: red;}
 
 <div id="container"></div>
 <div id="hub"></div>
-<object id="loader" type="image/svg+xml" data="assets/loader.svg"></object>
 
 
 
