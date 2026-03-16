@@ -295,17 +295,17 @@ export class View {
 	    this.scene.add( this.plane )
 
 	    UIL.Tools.setStyle({
-			fontFamily: 'sans-serif',
+			fontFamily: "'Segoe UI', system-ui, -apple-system, sans-serif",
 			fontWeight:'bold',
 			fontShadow: 'none',
-			button : '#c1cbd7',
-			overoff : '#223143',
-			over : '#6c819a',
-			select : '#45586f',
-			text : '#223143',
+			button : '#1a2d45',
+			overoff : '#0f1923',
+			over : '#2a4060',
+			select : '#4a9edd',
+			text : '#dce8f5',
 			textOver : '#FFFFFF',
-			border: '#6c819a',
-			borderSize: 3,
+			border: '#4a9edd',
+			borderSize: 2,
 			fontSize: 20,
 		})
 
