@@ -2,7 +2,7 @@
 
 > A **3D, browser-playable** city-building game powered by [micropolisJS](https://github.com/graememcc/micropolisJS) simulation and [Three.js](https://github.com/mrdoob/three.js) rendering — no download, no install, just open a tab and build.
 
-[![Launch Game](https://img.shields.io/badge/Play%20Now-Launch%20Game-4a9edd?style=for-the-badge)](http://lo-th.github.io/3d.city/index.html)
+[![Launch Game](https://img.shields.io/badge/Play%20Now-Launch%20Game-4a9edd?style=for-the-badge)](https://awest813.github.io/OpenPublica/index.html)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
 ---
@@ -20,9 +20,9 @@ The long-term vision is to grow this into a feature-rich city builder that rival
 
 ## Screenshots
 
-<a target='_blank' href='http://lo-th.github.io/3d.city/index.html'><img src="http://lo-th.github.io/3d.city/assets/img/preview01.jpg" alt="OpenPublica city view 1"/></a>
-<a target='_blank' href='http://lo-th.github.io/3d.city/index.html'><img src="http://lo-th.github.io/3d.city/assets/img/preview02.jpg" alt="OpenPublica city view 2"/></a>
-<a target='_blank' href='http://lo-th.github.io/3d.city/index.html'><img src="http://lo-th.github.io/3d.city/assets/img/preview03.jpg" alt="OpenPublica city view 3"/></a>
+<a target='_blank' href='https://awest813.github.io/OpenPublica/index.html'><img src="assets/img/preview01.jpg" alt="OpenPublica city view 1"/></a>
+<a target='_blank' href='https://awest813.github.io/OpenPublica/index.html'><img src="assets/img/preview02.jpg" alt="OpenPublica city view 2"/></a>
+<a target='_blank' href='https://awest813.github.io/OpenPublica/index.html'><img src="assets/img/preview03.jpg" alt="OpenPublica city view 3"/></a>
 
 ---
 
@@ -58,7 +58,7 @@ The long-term vision is to grow this into a feature-rich city builder that rival
 
 ### Play instantly (no setup)
 
-Open [http://lo-th.github.io/3d.city/index.html](http://lo-th.github.io/3d.city/index.html) in any modern browser.
+Open [https://awest813.github.io/OpenPublica/index.html](https://awest813.github.io/OpenPublica/index.html) in any modern browser.
 
 ### Run locally
 
