@@ -77,6 +77,8 @@ const Text = function(){
     neutralMessages[Messages.POLICE_NEEDS_FUNDING] = 'Police departments need funding';
     neutralMessages[Messages.WELCOME] = 'Welcome to 3D City';
     neutralMessages[Messages.WELCOMEBACK] = 'Welcome to 3D City';
+    neutralMessages[Messages.SEASON_CHANGED] = 'A new season has arrived';
+    neutralMessages[Messages.NEED_SCHOOLS] = 'Citizens demand more schools';
 
     var badMessages = {};
     badMessages[Messages.BLACKOUTS_REPORTED] = 'Brownouts, build another Power Plant';
@@ -98,6 +100,9 @@ const Text = function(){
     badMessages[Messages.TORNADO_SIGHTED] = 'Tornado reported !';
     badMessages[Messages.TRAFFIC_JAMS] = 'Frequent traffic jams reported';
     badMessages[Messages.TRAIN_CRASHED] = 'A train crashed ';
+    badMessages[Messages.HEAT_WAVE] = 'Heat wave! Increased fire risk';
+    badMessages[Messages.BLIZZARD] = 'Blizzard! Roads deteriorating faster';
+    badMessages[Messages.LOW_EDUCATION] = 'Education levels critically low';
 
     var goodMessages = {};
     goodMessages[Messages.REACHED_CAPITAL] = 'Population has reached 50,000';
@@ -105,20 +110,31 @@ const Text = function(){
     goodMessages[Messages.REACHED_MEGALOPOLIS] = 'Population has reached 500,000';
     goodMessages[Messages.REACHED_METROPOLIS] = 'Population has reached 100,000';
     goodMessages[Messages.REACHED_TOWN] = 'Population has reached 2,000';
+    goodMessages[Messages.ACHIEVEMENT_UNLOCKED] = 'Achievement Unlocked!';
+
+    var seasons = ['Spring', 'Summer', 'Autumn', 'Winter'];
+
+    var educationStrings = ['None', 'Poor', 'Basic', 'Good', 'Excellent'];
+    var healthStrings = ['Critical', 'Poor', 'Fair', 'Good', 'Excellent'];
+    var happinessStrings = ['Miserable', 'Unhappy', 'Content', 'Happy', 'Thriving'];
 
     return {
         badMessages: badMessages,
         cityClass: cityClass,
         crimeStrings: crimeStrings,
         densityStrings: densityStrings,
+        educationStrings: educationStrings,
         gameLevel: gameLevel,
         goodMessages: goodMessages,
+        happinessStrings: happinessStrings,
+        healthStrings: healthStrings,
         landValueStrings: landValueStrings,
         months: months,
         neutralMessages: neutralMessages,
         problems: problems,
         pollutionStrings: pollutionStrings,
         rateStrings: rateStrings,
+        seasons: seasons,
         toolMessages: toolMessages,
         zoneTypes: zoneTypes
     }

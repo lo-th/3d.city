@@ -79,6 +79,8 @@ export class CityGame {
         if( p == "DISASTER") Game.setDisaster(e.data.disaster);
 
         if( p == "EVAL") Game.getEvaluation();
+        if( p == "ACHIEVEMENTS") Game.getAchievements();
+        if( p == "HISTORY") Game.getHistory();
 
         if( p == "SAVEGAME") Game.saveGame(e.data.saveCity);
         if( p == "LOADGAME") Game.loadGame(e.data.isStart);
@@ -400,6 +402,10 @@ export class MainGame {
             case Micro.DISASTER_TORNADO: this.simulation.spriteManager.makeTornado(m); break;
             case Micro.DISASTER_EARTHQUAKE: this.simulation.disasterManager.makeEarthquake(); break;
         }
+        // Log disaster to city history
+        this.simulation.cityHistory.addEvent('disaster', disaster + ' struck the city!', this.simulation.cityTime, this.simulation.startingYear);
+        // Trigger "survive disaster" achievement after a delay (checked next cycle)
+        this.simulation.achievements.trigger('survive_disaster');
         this.processMessages(m.getMessages());
     }
 
@@ -453,14 +459,48 @@ export class MainGame {
             problemes += text+"<br>";
         }
 
-        let crimeAvg = this.simulation.census.crimeAverage;
-        let pollutionAvg = this.simulation.census.pollutionAverage;
+        let census = this.simulation.census;
+        let crimeAvg = census.crimeAverage;
+        let pollutionAvg = census.pollutionAverage;
         let trafficAvg = this.infos[12] || 0;
 
-        let evalData = [ evaluation.cityYes, problemes, crimeAvg, pollutionAvg, Math.round(trafficAvg)];
+        // Enhanced eval data with education, health, happiness, unemployment, season
+        let unemployment = Math.round(this._getUnemploymentPct());
+        let season = this.simulation.seasonManager.getSeasonName();
+
+        let evalData = [
+            evaluation.cityYes,   // 0
+            problemes,            // 1
+            crimeAvg,             // 2
+            pollutionAvg,         // 3
+            Math.round(trafficAvg), // 4
+            census.educationLevel,  // 5
+            census.healthLevel,     // 6
+            census.happinessLevel,  // 7
+            unemployment,           // 8
+            season                  // 9
+        ];
 
         CityGame.post({ tell:"EVAL", evalData:evalData});
+    }
 
+    _getUnemploymentPct () {
+        let census = this.simulation.census;
+        let jobs = (census.comPop + census.indPop) * 8;
+        if (jobs === 0) return 0;
+        let ratio = census.resPop / jobs;
+        return Math.min(Math.max((ratio - 1) * 100, 0), 100);
+    }
+
+    getAchievements () {
+        let data = this.simulation.achievements.getAll();
+        let progress = this.simulation.achievements.getProgress();
+        CityGame.post({ tell:"ACHIEVEMENTS", achData: data, progress: progress });
+    }
+
+    getHistory () {
+        let events = this.simulation.cityHistory.getRecent(20);
+        CityGame.post({ tell:"HISTORY", historyData: events });
     }
 
 

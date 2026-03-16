@@ -91,7 +91,22 @@ var messageData = {
   TRAIN_CRASHED: MiscUtils.mcd('Train crashed'),
   VALVES_UPDATED: MiscUtils.mcd('Valves updated'),
   WELCOME: MiscUtils.mcd('Welcome to micropolisJS'),
-  WELCOMEBACK: MiscUtils.mcd('Welcome back to your 3D city')
+  WELCOMEBACK: MiscUtils.mcd('Welcome back to your 3D city'),
+
+  // Achievements
+  ACHIEVEMENT_UNLOCKED: MiscUtils.mcd('Achievement unlocked'),
+
+  // Seasons
+  SEASON_CHANGED: MiscUtils.mcd('Season changed'),
+  HEAT_WAVE: MiscUtils.mcd('Heat wave warning'),
+  BLIZZARD: MiscUtils.mcd('Blizzard warning'),
+
+  // Education
+  LOW_EDUCATION: MiscUtils.mcd('Education levels are low'),
+  NEED_SCHOOLS: MiscUtils.mcd('Citizens demand schools'),
+
+  // History
+  HISTORY_EVENT: MiscUtils.mcd('Historic event recorded')
 };
 
 export const Messages = Object.defineProperties({}, messageData);
