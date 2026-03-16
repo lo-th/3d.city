@@ -129,10 +129,6 @@ export class Main {
 
     }
 
-    static selectTool( id ) {
-        view3d.selectTool(id);
-    }
-
     static setDifficulty( t ) {
 
         //console.log( t )
@@ -159,7 +155,6 @@ export class Main {
     }
 
     static setDisaster(disaster){
-        console.log(disaster);
         post({ tell:"DISASTER", disaster:disaster });
     }
 
@@ -185,9 +180,7 @@ export class Main {
     }
 
     static newGameMap() {
-        console.log("new map");
 
-        //saveTextAsFile('test', 'game is saved');
     }
 
     static showStats() {
@@ -220,7 +213,6 @@ function testMobile() {
 
 function makeGameSave( gameData, key ) {
     window.localStorage.setItem(key, gameData);
-    console.log("game is save", key);
 
     if( !view3d.isMobile ){
         var blob = new Blob([gameData], {type: "text/plain;charset=utf-8"});
@@ -245,12 +237,11 @@ function makeLoadGame( key, atStart ) {
     }
 
     if(savegame){ 
-        console.log("game is load");
         post({tell:"MAKELOADGAME", savegame:savegame, isStart:isStart});
         view3d.tmpGameData = null
         
     } else {
-        console.log("No loading game found");
+        // no saved game found in storage
     }
 }
 
@@ -270,8 +261,6 @@ function message( e ) {
 
     var phase = e.data.tell;
     if( phase == "READY"){
-
-        console.log(isWorker ? 'is Worker !!' : 'is Direct !!')
 
     }
     if( phase == "NEWMAP"){
