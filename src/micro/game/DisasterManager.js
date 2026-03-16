@@ -30,7 +30,7 @@ export class DisasterManager {
         this._gameLevel = gameLevel;
 
         this._floodCount = 0;
-        this.disastersEnabled = false;
+        this.disastersEnabled = true;
 
         this.Dx = [ 0, 1, 0, -1];
         this.Dy = [-1, 0, 1, 0];
@@ -47,7 +47,7 @@ export class DisasterManager {
 
         if (!this.disastersEnabled) return;
 
-        if (math.getRandom(Micro.DisChance[this._gameLevel])) {
+        if (!math.getRandom(Micro.DisChance[this._gameLevel])) {
             switch (math.getRandom(8)) {
                 case 0:
                 case 1: this.setFire(); break;
@@ -61,8 +61,7 @@ export class DisasterManager {
                 case 5: this._spriteManager.makeTornado(); break;
 
                 case 6:
-                    // TODO Earthquakes
-                    //this.makeEarthquake();
+                    this.makeEarthquake();
                 break;
 
                 case 7:
@@ -93,9 +92,8 @@ export class DisasterManager {
     makeEarthquake () {
 
         let strength = math.getRandom(700) + 300;
-        this.doEarthquake(strength);
 
-        EventEmitter.emitEvent(Messages.EARTHQUAKE, {x: this._map.cityCenterX, y: this._map.cityCenterY});
+        EventEmitter.emitEvent(Messages.EARTHQUAKE, {showable: true, x: this._map.cityCentreX, y: this._map.cityCentreY});
 
         let i, x, y;
 

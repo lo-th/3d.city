@@ -137,6 +137,7 @@ const Micro = {
     DISASTER_CRASH:'Crash',
     DISASTER_MELTDOWN:'Meltdown',
     DISASTER_TORNADO:'Tornado',
+    DISASTER_EARTHQUAKE:'Earthquake',
 
     // storage
     CURRENT_VERSION : 3,
@@ -379,6 +380,7 @@ class ZoneUtils {
     }
 
     static HOSPITAL (tile) {
+        return tile.getValue() === Tile.HOSPITAL;
     }
 
     // ZoneUtils
@@ -3080,7 +3082,7 @@ class Budget {
     }
 
     shouldDegradeRoad () {
-        return this.roadEffect < Math.floor(15 * this.MAX_ROAD_EFFECT / 16);
+        return this.roadEffect < Math.floor(15 * Micro.MAX_ROAD_EFFECT / 16);
     }
 
 }
@@ -3181,11 +3183,11 @@ class Census {
         var x = Math.floor(budget.cashFlow / 20) + 128;
         this.moneyHist10[0] = math.clamp(x, 0, 255);
 
-        this.resPop >> 8;
+        var resPopScaled = this.resPop >> 8;
 
-        if (this.hospitalPop < this.resPopScaled) this.needHospital = 1;
-        else if (this.hospitalPop > this.resPopScaled) this.needHospital = -1;
-        else if (this.hospitalPop === this.resPopScaled) this.needHospital = 0;
+        if (this.hospitalPop < resPopScaled) this.needHospital = 1;
+        else if (this.hospitalPop > resPopScaled) this.needHospital = -1;
+        else this.needHospital = 0;
 
         this.changed = true;
 
@@ -3908,7 +3910,7 @@ class DisasterManager {
         this._gameLevel = gameLevel;
 
         this._floodCount = 0;
-        this.disastersEnabled = false;
+        this.disastersEnabled = true;
 
         this.Dx = [ 0, 1, 0, -1];
         this.Dy = [-1, 0, 1, 0];
@@ -3925,7 +3927,7 @@ class DisasterManager {
 
         if (!this.disastersEnabled) return;
 
-        if (math.getRandom(Micro.DisChance[this._gameLevel])) {
+        if (!math.getRandom(Micro.DisChance[this._gameLevel])) {
             switch (math.getRandom(8)) {
                 case 0:
                 case 1: this.setFire(); break;
@@ -3939,8 +3941,7 @@ class DisasterManager {
                 case 5: this._spriteManager.makeTornado(); break;
 
                 case 6:
-                    // TODO Earthquakes
-                    //this.makeEarthquake();
+                    this.makeEarthquake();
                 break;
 
                 case 7:
@@ -3971,9 +3972,8 @@ class DisasterManager {
     makeEarthquake () {
 
         let strength = math.getRandom(700) + 300;
-        this.doEarthquake(strength);
 
-        EventEmitter.emitEvent(Messages.EARTHQUAKE, {x: this._map.cityCenterX, y: this._map.cityCenterY});
+        EventEmitter.emitEvent(Messages.EARTHQUAKE, {showable: true, x: this._map.cityCentreX, y: this._map.cityCentreY});
 
         let i, x, y;
 
@@ -4053,7 +4053,7 @@ class DisasterManager {
                     tile = this._map.getTile(xx, yy);
                     tileValue = tile.getValue();
 
-                    if (tile === Tile.DIRT || (tile.isBulldozable() && tile.isCombustible)) {
+                    if (tile === Tile.DIRT || (tile.isBulldozable() && tile.isCombustible())) {
                         this._map.setTo(xx, yy, new Tiles(Tile.FLOOD));
                         this._floodCount = 30;
                         EventEmitter.emitEvent(Messages.FLOODING_REPORTED, {showable: true, x: xx, y: yy});
@@ -4565,8 +4565,8 @@ const Commercial = {
  */
 
 const animated = [true, false, true, true, false, false, true, true];
-const xDelta = [-1, 0, 1, 0, 0, 0, 0, 1];
-const yDelta = [-1, 0, -1, -1, 0, 0, -1, -1];
+const xDelta$1 = [-1, 0, 1, 0, 0, 0, 0, 1];
+const yDelta$1 = [-1, 0, -1, -1, 0, 0, -1, -1];
 
 const Industrial = {
 
@@ -4621,10 +4621,10 @@ const Industrial = {
         var i = (tileValue - Tile.IZB) >> 3;
 
         if (animated[i] && isPowered) {
-            map.addTileFlags(x + xDelta[i], y + yDelta[i], Tile.ASCBIT);
+            map.addTileFlags(x + xDelta$1[i], y + yDelta$1[i], Tile.ASCBIT);
         } else {
-            map.addTileFlags(x + xDelta[i], y + yDelta[i], Tile.BNCNBIT);
-            map.removeTileFlags(x + xDelta[i], y + yDelta[i], Tile.ANIMBIT);
+            map.addTileFlags(x + xDelta$1[i], y + yDelta$1[i], Tile.BNCNBIT);
+            map.removeTileFlags(x + xDelta$1[i], y + yDelta$1[i], Tile.ANIMBIT);
         }
     },
 
@@ -5012,8 +5012,8 @@ const EmergencyServices = {
 *
 */
 
-const xDelta$1 = [-1,  0,  1,  0 ];
-const yDelta$1 = [ 0, -1,  0,  1 ];
+const xDelta = [-1,  0,  1,  0 ];
+const yDelta = [ 0, -1,  0,  1 ];
 
 
 
@@ -5039,8 +5039,8 @@ const MiscTiles = {
         // Try to set neighbouring tiles on fire as well
         for ( i = 0; i < 4; i++) {
             if (math.getChance(7)) {
-                xTem = x + xDelta$1[i];
-                yTem = y + yDelta$1[i];
+                xTem = x + xDelta[i];
+                yTem = y + yDelta[i];
                 if (map.testBounds(xTem, yTem)) {
                     tile = map.getTile(x, y);
                     if (!tile.isCombustible()) continue;
@@ -5433,7 +5433,8 @@ class MapUtils {
         let totalCrime = 0;
         let crimeZoneCount = 0;
 
-        let x, y, width = crimeRateMap.mapWidth, height = crimeRateMap.mapHeight, value;
+        let blockSize = crimeRateMap.blockSize;
+        let x, y, width = crimeRateMap.gameMapWidth, height = crimeRateMap.gameMapHeight, value;
 
         // Scan the map, looking for developed land, as it can attract crime.
         for ( x = 0; x < width; x += blockSize ) {
@@ -5771,7 +5772,7 @@ class Simulation {
 
         this.infos[0] = [TXT.months[ this._cityMonthLast ], this._cityYearLast].join(' ');
 
-        this.infos[1] = TXT.cityClass[this.evaluation.cityScore];
+        this.infos[1] = TXT.cityClass[this.evaluation.cityClass];
         this.infos[2] = this.evaluation.cityScore;
         this.infos[3] = this.evaluation.cityPop;
 
@@ -5784,6 +5785,11 @@ class Simulation {
 
         this.infos[9] = this.map.powerChange;
         this.map.powerChange = false;
+
+        this.infos[10] = this.census.crimeAverage;
+        this.infos[11] = this.census.pollutionAverage;
+        this.infos[12] = EvaluationUtils.getTrafficAverage(this.blockMaps, this.census);
+        this.infos[13] = this.evaluation.cityYes;
 
         return this.infos
 
@@ -5897,17 +5903,17 @@ class Simulation {
             case 22: if (totalZonePop > 10 && powerPop == 0) this.messageManager.sendMessage(Messages.NEED_ELECTRICITY); break;
             case 26: if (this.census.resPop > 500 && this.census.stadiumPop === 0) { this.messageManager.sendMessage(Messages.NEED_STADIUM); this.valves.resCap = true; } else { this.valves.resCap = false;} break;
             case 28: if (this.census.indPop > 70 && this.census.seaportPop === 0) { this.messageManager.sendMessage(Messages.NEED_SEAPORT); this.valves.indCap = true; } else { this.valves.indCap = false; } break;
-            case 30: if (this.census.comPop > 100 && this.census.airportPop === 0) { this.messageManager.sendMessage(Messages._NEED_AIRPORT); this.valves.comCap = true; } else { this.valves.comCap = false; } break;
+            case 30: if (this.census.comPop > 100 && this.census.airportPop === 0) { this.messageManager.sendMessage(Messages.NEED_AIRPORT); this.valves.comCap = true; } else { this.valves.comCap = false; } break;
             case 32: let zoneCount = this.census.unpoweredZoneCount + this.census.poweredZoneCount; if (zoneCount > 0) { if (this.census.poweredZoneCount / zoneCount < 0.7) this.messageManager.sendMessage(Messages.BLACKOUTS_REPORTED);} break;
             case 35: if (this.census.pollutionAverage > 60) this.messageManager.sendMessage(Messages.HIGH_POLLUTION); break;
             case 42: if (this.census.crimeAverage > 100) this.messageManager.sendMessage(Messages.HIGH_CRIME); break;
             case 45: if (this.census.totalPop > 60 && this.census.fireStationPop === 0) this.messageManager.sendMessage(Messages.NEED_FIRE_STATION); break;
             case 48: if (this.census.totalPop > 60 && this.census.policeStationPop === 0) this.messageManager.sendMessage(Messages.NEED_POLICE_STATION); break;
             case 51: if (this.budget.cityTax > 12) this.messageManager.sendMessage(Messages.TAX_TOO_HIGH); break;
-            case 54: if (this.budget.roadEffect < Math.floor(5 * this.budget.MAX_ROAD_EFFECT / 8) && this.census.roadTotal > 30) this.messageManager.sendMessage(Messages.ROAD_NEEDS_FUNDING); break;
-            case 57: if (this.budget.fireEffect < Math.floor(7 * this.budget.MAX_FIRE_STATION_EFFECT / 10) && this.census.totalPop > 20) this.messageManager.sendMessage(Messages.FIRE_STATION_NEEDS_FUNDING); break;
-            case 60: if (this.budget.policeEffect < Math.floor(7 * this.budget.MAX_POLICE_STATION_EFFECT / 10) && this.census.totalPop > 20) this.messageManager.sendMessage(Messages.POLICE_NEEDS_FUNDING); break;
-            case 63: if (this.census.trafficAverage > 60) this.messageManager.sendMessage(Messages.TRAFFIC_JAMS, -1, -1, true); break;
+            case 54: if (this.budget.roadEffect < Math.floor(5 * Micro.MAX_ROAD_EFFECT / 8) && this.census.roadTotal > 30) this.messageManager.sendMessage(Messages.ROAD_NEEDS_FUNDING); break;
+            case 57: if (this.budget.fireEffect < Math.floor(7 * Micro.MAX_FIRESTATION_EFFECT / 10) && this.census.totalPop > 20) this.messageManager.sendMessage(Messages.FIRE_STATION_NEEDS_FUNDING); break;
+            case 60: if (this.budget.policeEffect < Math.floor(7 * Micro.MAX_POLICESTATION_EFFECT / 10) && this.census.totalPop > 20) this.messageManager.sendMessage(Messages.POLICE_NEEDS_FUNDING); break;
+            case 63: if (EvaluationUtils.getTrafficAverage(this.blockMaps, this.census) > 60) this.messageManager.sendMessage(Messages.TRAFFIC_JAMS, -1, -1, true); break;
         }
     }
 
@@ -8305,7 +8311,7 @@ class MainGame {
     stop (){
 
         if( this.timer === null ) return;
-        clearInterval( this.timer );
+        clearTimeout( this.timer );
         this.timer = null;
 
     }
@@ -8512,16 +8518,6 @@ class MainGame {
 
     destroy (x,y){
 
-        console.log('isDestroy');
-
-        //console.log( 'destuct ', x, y )
-
-       //this.mapClick(x,y);
-        //this.map.powerData[this.findId(x,y)] = 1;
-
-       // this.simulation.powerManager.setTilePower(x,y);
-      //  var messageMgr = new Micro.MessageManager();
-       // this.gameTools["bulldozer"].doTool(x, y, messageMgr, this.simulation.blockMaps );
     }
 
     findId (x, y){
@@ -8561,6 +8557,7 @@ class MainGame {
             case Micro.DISASTER_CRASH: this.simulation.disasterManager.makeCrash(m); break;
             case Micro.DISASTER_MELTDOWN: this.simulation.disasterManager.makeMeltdown(m); break;
             case Micro.DISASTER_TORNADO: this.simulation.spriteManager.makeTornado(m); break;
+            case Micro.DISASTER_EARTHQUAKE: this.simulation.disasterManager.makeEarthquake(); break;
         }
         this.processMessages(m.getMessages());
     }
@@ -8659,7 +8656,7 @@ class MainGame {
 
 
         let isStart = atStart || false;
-        clearInterval(this.timer);
+        clearTimeout(this.timer);
         this.savedGame = JSON.parse(gameData);
 
 
