@@ -348,12 +348,28 @@ export class Hub {
         }, false);
 
         this.initCITYinfo();
+        this.initKeyboard();
     }
 
     hideoldSel  (){
         for(var i = 0; i<4; i++){
             this.H[i].style.outline = 'none';
         }
+    }
+
+    initKeyboard  (){
+        var _this = this;
+        document.addEventListener('keydown', function(e){
+            // Only handle shortcuts when not focused in a text input
+            if(e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
+            switch(e.key){
+                case 'Escape': _this.testOpen(); break;
+                case 'b': case 'B': Main.getBudjet();        break;
+                case 'e': case 'E': Main.getEval();          break;
+                case 'd': case 'D': _this.openDisaster();    break;
+                case 's': case 'S': _this.openExit();        break;
+            }
+        }, false);
     }
 
     //-----------------------------------CITY INFO
@@ -411,33 +427,55 @@ export class Hub {
 
     //-----------------------------------ALL WINDOW
 
+    // ── Helper: build a titled window header with optional close button ──
+
+    makeWindowHeader ( title, closeFn ) {
+        var h = document.createElement('div');
+        h.className = 'hub-win-header';
+
+        var t = document.createElement('span');
+        t.className = 'hub-win-title';
+        t.textContent = title;
+        h.appendChild(t);
+
+        if (closeFn) {
+            var c = document.createElement('button');
+            c.className = 'hub-win-close';
+            c.innerHTML = '✕';
+            c.title = 'Close (Esc)';
+            c.addEventListener('click', function(e){ e.preventDefault(); closeFn(); }, false);
+            h.appendChild(c);
+        }
+        return h;
+    }
+
     testOpen  (){
         var t = "";
-        if(this.budgetWindow !== null && this.budgetWindow.className == "open"){
+        if(this.budgetWindow !== null && this.budgetWindow.dataset.state === 'open'){
             this.closeBudget();
             t = 'budget';
         }
-        if(this.evaluationWindow !== null && this.evaluationWindow.className == "open"){
+        if(this.evaluationWindow !== null && this.evaluationWindow.dataset.state === 'open'){
             this.closeEval();
             t = 'evaluation';
         }
-        if(this.disasterWindow !== null && this.disasterWindow.className == "open"){
+        if(this.disasterWindow !== null && this.disasterWindow.dataset.state === 'open'){
             this.closeDisaster();
             t = 'disaster';
         }
-        if(this.exitWindow !== null && this.exitWindow.className == "open"){
+        if(this.exitWindow !== null && this.exitWindow.dataset.state === 'open'){
             this.closeExit();
             t = 'exit';
         }
-        if(this.queryWindow !== null && this.queryWindow.className == "open"){
+        if(this.queryWindow !== null && this.queryWindow.dataset.state === 'open'){
             this.closeQuery();
             t = 'query';
         }
-        if(this.overlaysWindow !== null && this.overlaysWindow.className == "open"){
+        if(this.overlaysWindow !== null && this.overlaysWindow.dataset.state === 'open'){
             this.closeOverlays();
             t = 'overlays';
         }
-        if(this.aboutWindow !== null && this.aboutWindow.className == "open"){
+        if(this.aboutWindow !== null && this.aboutWindow.dataset.state === 'open'){
             this.closeAbout();
             t = 'about';
         }
@@ -456,45 +494,64 @@ export class Hub {
 
         if(this.aboutWindow == null){
             this.aboutWindow = document.createElement('div');
-            this.aboutWindow.style.cssText = this.radius+ 'position:absolute; width:200px; height:210px; pointer-events:none; display:block;'+ this.windowsStyle;
+            this.aboutWindow.className = 'hub-panel';
+            this.aboutWindow.style.cssText = 'position:absolute; top:44px; left:10px; width:228px;'
+                                           + ' pointer-events:none; display:flex; flex-direction:column; border-radius:10px;';
             this.hub.appendChild( this.aboutWindow );
-            var bg1 = this.addButton(this.aboutWindow, 'X', [16,16,14], 'position:absolute; left:10px; top:10px;');
-            bg1.addEventListener('click',  function(e){ e.preventDefault(); _this.closeAbout(); }, false);
+
+            this.aboutWindow.appendChild( this.makeWindowHeader('About', function(){ _this.closeAbout(); }) );
+
+            var body = document.createElement('div');
+            body.style.cssText = 'padding:10px 12px; pointer-events:none;';
+            this.aboutWindow.appendChild( body );
 
             this.fps = document.createElement('div');
-            this.fps.style.cssText ='position:absolute; top:20px; left:60px; width:120px; height:20px; pointer-events:none; font-size:12px; text-align:center; color:'+this.colors[0]+';';
-            this.aboutWindow.appendChild( this.fps );
-            this.abb = document.createElement('div');
-            this.abb.style.cssText ='position:absolute; top:60px; left:10px; width:180px; height:180px; pointer-events:none; font-size:12px; text-align:center; color:'+this.colors[0]+';';
-            this.aboutWindow.appendChild( this.abb );
+            this.fps.style.cssText = 'font-size:11px; color:rgba(180,210,240,0.6); margin-bottom:10px;';
+            body.appendChild( this.fps );
+
+            var desc = document.createElement('div');
+            desc.style.cssText = 'font-size:12px; color:#dce8f5; line-height:1.6; margin-bottom:10px;';
+            desc.innerHTML = '<b>3D CITY</b> v' + Base.version + '<br>'
+                           + '3D rendering by <a href="https://github.com/lo-th" target="_blank">Lo.th</a><br>'
+                           + 'Simulation: MicropolisJS';
+            body.appendChild( desc );
+
+            var kbdDiv = document.createElement('div');
+            kbdDiv.style.cssText = 'font-size:11px; color:rgba(180,210,240,0.6);'
+                                 + ' border-top:1px solid rgba(100,160,220,0.22);'
+                                 + ' padding-top:8px; margin-bottom:10px; line-height:1.8;';
+            kbdDiv.innerHTML = '<b style="color:#dce8f5; letter-spacing:0.05em;">KEYBOARD SHORTCUTS</b><br>'
+                             + '<span class="hub-kbd">B</span> Budget &nbsp;'
+                             + '<span class="hub-kbd">E</span> Eval<br>'
+                             + '<span class="hub-kbd">D</span> Disaster &nbsp;'
+                             + '<span class="hub-kbd">S</span> Save/Load<br>'
+                             + '<span class="hub-kbd">Esc</span> Close window';
+            body.appendChild( kbdDiv );
+
             this.linke = document.createElement('div');
-            this.linke.style.cssText ='position:absolute; top:160px; left:10px; width:180px; height:20px; pointer-events:auto; font-size:12px; text-align:center; color:'+this.colors[0]+';';
-            this.aboutWindow.appendChild( this.linke );
-
-            this.abb.innerHTML = "3D CITY<br><br>All 3d side made by Lo.th<br>Simulation from MicropolisJS<br><br><br>More info and source<br>";
-            this.linke.innerHTML = "<a href='https://github.com/lo-th/3d.city' target='_blank'>https://github.com/lo-th/3d.city";
-
-
+            this.linke.style.cssText = 'pointer-events:auto; font-size:11px;';
+            this.linke.innerHTML = "<a href='https://github.com/lo-th/3d.city' target='_blank'>Source Code on GitHub ↗</a>";
+            body.appendChild( this.linke );
 
         } else {
-            this.aboutWindow.style.display = 'block';
+            this.aboutWindow.style.display = 'flex';
         }
 
         Main.showStats();
 
-        this.aboutWindow.className = "open";
+        this.aboutWindow.dataset.state = 'open';
 
     }
 
     upStats  (fps, memory){
-        this.fps.innerHTML = 'Fps: '+ fps + ' <br> geometry: ' + memory;
+        this.fps.innerHTML = 'FPS: '+ fps + ' &nbsp;·&nbsp; geometry: ' + memory;
     }
 
     closeAbout  (){
         Main.hideStats();
 
         this.aboutWindow.style.display = 'none';
-        this.aboutWindow.className = "close";
+        this.aboutWindow.dataset.state = 'close';
     }
 
 
@@ -508,26 +565,31 @@ export class Hub {
 
         if(this.overlaysWindow == null){
             this.overlaysWindow = document.createElement('div');
-            this.overlaysWindow.style.cssText = this.radius+ 'position:absolute; width:140px; height:420px; pointer-events:none; display:block;'+ this.windowsStyle;;
+            this.overlaysWindow.className = 'hub-panel';
+            this.overlaysWindow.style.cssText = 'position:absolute; top:44px; left:10px; width:160px;'
+                                              + ' pointer-events:none; display:flex; flex-direction:column; border-radius:10px;';
             this.hub.appendChild( this.overlaysWindow );
 
-            //var bg1 = this.addButton(this.overlaysWindow, 'X', [16,16,14], 'position:absolute; left:50px; top:10px;');
-            //bg1.addEventListener('click',  function(e){ e.preventDefault(); _this.closeQuery(); }, false);
+            this.overlaysWindow.appendChild( this.makeWindowHeader('Overlays', function(){ _this.closeOverlays(); }) );
+
+            var body = document.createElement('div');
+            body.style.cssText = 'padding:8px 10px; pointer-events:none;';
+            this.overlaysWindow.appendChild( body );
 
             for(var i=0; i<this.overlaysTypes.length; i++){
-                this.overlaysButtons[i] = this.addButton(this.overlaysWindow, this.overlaysTypes[i].toUpperCase(), [96,16,14],'position:absolute; left:10px; top:'+(10+(i*40))+'px;');
+                this.overlaysButtons[i] = this.addButton(body, this.overlaysTypes[i].toUpperCase(), [118,20,11], 'display:block; margin-bottom:4px;');
                 this.overlaysButtons[i].name = this.overlaysTypes[i];
                 this.overlaysButtons[i].addEventListener('click',  function(e){ e.preventDefault(); setOverlays(this.name); }, false);
             }
         } else {
-            this.overlaysWindow.style.display = 'block';
+            this.overlaysWindow.style.display = 'flex';
         }
-        this.overlaysWindow.className = "open";
+        this.overlaysWindow.dataset.state = 'open';
     }
 
     closeOverlays  (){
         this.overlaysWindow.style.display = 'none';
-        this.overlaysWindow.className = "close";
+        this.overlaysWindow.dataset.state = 'close';
     }
 
 
@@ -541,26 +603,32 @@ export class Hub {
 
         if(this.queryWindow == null){
             this.queryWindow = document.createElement('div');
-            this.queryWindow.style.cssText =this.radius+ 'position:absolute; width:140px; height:180px; pointer-events:none; display:block;'+ this.windowsStyle;;
+            this.queryWindow.className = 'hub-panel';
+            this.queryWindow.style.cssText = 'position:absolute; top:44px; left:10px; width:180px;'
+                                           + ' pointer-events:none; display:flex; flex-direction:column; border-radius:10px;';
             this.hub.appendChild( this.queryWindow );
 
-            var bg1 = this.addButton(this.queryWindow, 'X', [16,16,14], 'position:absolute; left:50px; top:10px;');
-            bg1.addEventListener('click',  function(e){ e.preventDefault(); _this.closeQuery(); }, false);
+            this.queryWindow.appendChild( this.makeWindowHeader('Query', function(){ _this.closeQuery(); }) );
+
+            var body = document.createElement('div');
+            body.style.cssText = 'padding:10px 12px; pointer-events:none;';
+            this.queryWindow.appendChild( body );
 
             this.queryResult = document.createElement('div');
-            this.queryResult.style.cssText ='position:absolute; top:60px; left:10px; width:110px; height:100px; pointer-events:none; font-size:12px; text-align:center; color:'+this.colors[0]+';';
-            this.queryWindow.appendChild( this.queryResult );
+            this.queryResult.style.cssText = 'font-size:12px; color:' + this.colors[0] + '; line-height:1.6;';
+            body.appendChild( this.queryResult );
+
         } else {
-            this.queryWindow.style.display = 'block';
+            this.queryWindow.style.display = 'flex';
         }
 
         this.queryResult.innerHTML = data;
-        this.queryWindow.className = "open";
+        this.queryWindow.dataset.state = 'open';
     }
 
     closeQuery  (){
         this.queryWindow.style.display = 'none';
-        this.queryWindow.className = "close";
+        this.queryWindow.dataset.state = 'close';
     }
 
     //-----------------------------------BUDGET WINDOW
@@ -573,54 +641,64 @@ export class Hub {
 
         if(this.evaluationWindow == null){
             this.evaluationWindow = document.createElement('div');
-            this.evaluationWindow.style.cssText =this.radius+ 'position:absolute; width:200px; height:300px; pointer-events:none; display:block;'+ this.windowsStyle;
+            this.evaluationWindow.className = 'hub-panel';
+            this.evaluationWindow.style.cssText = 'position:absolute; top:44px; left:10px; width:220px;'
+                                                + ' pointer-events:none; display:flex; flex-direction:column; border-radius:10px;';
             this.hub.appendChild( this.evaluationWindow );
 
-            var bg1 = this.addButton(this.evaluationWindow, 'X', [16,16,14], 'position:absolute; right:10px; top:10px;');
-            bg1.addEventListener('click',  function(e){ e.preventDefault(); _this.closeEval(); }, false);
+            this.evaluationWindow.appendChild( this.makeWindowHeader('City Evaluation', function(){ _this.closeEval(); }) );
+
+            var body = document.createElement('div');
+            body.style.cssText = 'position:relative; height:268px; pointer-events:none;';
+            this.evaluationWindow.appendChild( body );
 
             this.evaltOpinion = document.createElement('div');
-            this.evaltOpinion.style.cssText ='position:absolute; top:10px; left:10px; width:180px; height:100px; pointer-events:none; color:'+this.colors[0]+';';
-            this.evaluationWindow.appendChild( this.evaltOpinion );
+            this.evaltOpinion.style.cssText = 'position:absolute; top:10px; left:10px; width:200px; height:30px;'
+                                            + ' pointer-events:none; color:' + this.colors[0] + '; font-size:12px; font-weight:600;';
+            body.appendChild( this.evaltOpinion );
 
             this.evaltYes = document.createElement('div');
-            this.evaltYes.style.cssText ='position:absolute; top:46px; left:26px; width:60px; height:20px; pointer-events:none; color:#33FF33; font-size:16px; font-weight:bold;';
-            this.evaluationWindow.appendChild( this.evaltYes );
+            this.evaltYes.style.cssText = 'position:absolute; top:46px; left:26px; width:80px; height:20px;'
+                                        + ' pointer-events:none; color:#4bcc7a; font-size:16px; font-weight:bold;';
+            body.appendChild( this.evaltYes );
 
             this.evaltNo = document.createElement('div');
-            this.evaltNo.style.cssText ='position:absolute; top:46px; right:26px; width:60px; height:20px; pointer-events:none; color:#FF3300;  font-size:16px; font-weight:bold;';
-            this.evaluationWindow.appendChild( this.evaltNo );
+            this.evaltNo.style.cssText = 'position:absolute; top:46px; right:26px; width:80px; height:20px;'
+                                       + ' pointer-events:none; color:#e05555; font-size:16px; font-weight:bold;';
+            body.appendChild( this.evaltNo );
 
             this.evaltProb = document.createElement('div');
-            this.evaltProb.style.cssText ='position:absolute; top:100px; left:10px; width:180px; height:60px; pointer-events:none; color:'+this.colors[0]+'; font-size:16px; ';
-            this.evaluationWindow.appendChild( this.evaltProb );
+            this.evaltProb.style.cssText = 'position:absolute; top:95px; left:10px; width:200px; height:60px;'
+                                         + ' pointer-events:none; color:' + this.colors[0] + '; font-size:13px; line-height:1.5;';
+            body.appendChild( this.evaltProb );
 
             this.evaltStats = document.createElement('div');
-            this.evaltStats.style.cssText ='position:absolute; top:175px; left:10px; width:180px; height:120px; pointer-events:none; color:'+this.colors[0]+'; font-size:12px; ';
-            this.evaluationWindow.appendChild( this.evaltStats );
+            this.evaltStats.style.cssText = 'position:absolute; top:168px; left:10px; width:200px; height:100px;'
+                                          + ' pointer-events:none; color:' + this.colors[0] + '; font-size:12px; line-height:1.6;';
+            body.appendChild( this.evaltStats );
 
-            this.evaltOpinion.innerHTML = "<b>Public opinion</b><br>Is the mayor doing a good job ?<br> <br> <br> <br>What are the worst problems ?<br>"
+            this.evaltOpinion.innerHTML = '<b>Public Opinion</b><br><span style="font-size:11px; color:rgba(180,210,240,0.6);">Is the mayor doing a good job?</span>';
 
         } else {
-            this.evaluationWindow.style.display = 'block';
+            this.evaluationWindow.style.display = 'flex';
         }
 
-        this.evaltYes.innerHTML = 'YES:' + data[0] + '%';
-        this.evaltNo.innerHTML = 'NO:' +(100-data[0] )+ '%';
+        this.evaltYes.innerHTML = 'YES: ' + data[0] + '%';
+        this.evaltNo.innerHTML  = 'NO: ' + (100 - data[0]) + '%';
 
-        this.evaltProb.innerHTML = data[1];
+        this.evaltProb.innerHTML = '<b style="font-size:10px; letter-spacing:0.08em; color:rgba(180,210,240,0.6);">WORST PROBLEMS</b><br>' + data[1];
 
-        this.evaltStats.innerHTML = '<b>City Statistics</b><br>'
-            + '<span style="display:inline-block;width:70px">Crime:</span>' + data[2] + '<br>'
-            + '<span style="display:inline-block;width:70px">Pollution:</span>' + data[3] + '<br>'
-            + '<span style="display:inline-block;width:70px">Traffic:</span>' + data[4] + '<br>';
+        this.evaltStats.innerHTML = '<b style="font-size:10px; letter-spacing:0.08em; color:rgba(180,210,240,0.6);">CITY STATISTICS</b><br>'
+            + '<span style="display:inline-block;width:80px">Crime:</span>'     + data[2] + '<br>'
+            + '<span style="display:inline-block;width:80px">Pollution:</span>' + data[3] + '<br>'
+            + '<span style="display:inline-block;width:80px">Traffic:</span>'   + data[4] + '<br>';
 
-        this.evaluationWindow.className = "open";
+        this.evaluationWindow.dataset.state = 'open';
     }
 
     closeEval  (){
         this.evaluationWindow.style.display = 'none';
-        this.evaluationWindow.className = "close";
+        this.evaluationWindow.dataset.state = 'close';
     }
 
     //-----------------------------------EXIT WINDOW
@@ -633,48 +711,35 @@ export class Hub {
 
         if(this.exitWindow == null){
             this.exitWindow = document.createElement('div');
-            this.exitWindow.style.cssText =this.radius+ 'position:absolute; width:140px; height:180px; pointer-events:none; display:block;'+ this.windowsStyle;;
+            this.exitWindow.className = 'hub-panel';
+            this.exitWindow.style.cssText = 'position:absolute; top:44px; left:10px; width:180px;'
+                                          + ' pointer-events:none; display:flex; flex-direction:column; border-radius:10px;';
             this.hub.appendChild( this.exitWindow );
 
-            var bg1 = this.addButton(this.exitWindow, 'X', [16,16,14], 'position:absolute; left:50px; top:10px;');
-            var bg2 = this.addButton(this.exitWindow, 'NEW MAP', [96,16,14], 'position:absolute; left:10px; top:50px;');
-            var bg3 = this.addButton(this.exitWindow, 'SAVE', [96,16,14], 'position:absolute; left:10px; top:90px;');
-            var bg4 = this.addButton(this.exitWindow, 'LOAD', [96,16,14], 'position:absolute; left:10px; top:130px;');
+            this.exitWindow.appendChild( this.makeWindowHeader('Save / Load', function(){ _this.closeExit(); }) );
 
-            bg1.addEventListener('click',  function(e){ e.preventDefault(); _this.closeExit(); }, false);
-            bg2.addEventListener('click',  function(e){ e.preventDefault(); Main.newGameMap(); }, false);
-            bg3.addEventListener('click',  function(e){ e.preventDefault(); Main.saveGame(); }, false);
-            bg4.addEventListener('click',  function(e){ e.preventDefault(); Main.loadGame(); }, false);
+            var body = document.createElement('div');
+            body.style.cssText = 'padding:10px 12px; pointer-events:none; display:flex; flex-direction:column; gap:8px;';
+            this.exitWindow.appendChild( body );
 
-            /*var x = document.createElement("INPUT");
-            x.setAttribute("id", "fileToLoad");
-            x.setAttribute("type", "file");
-            x.style.cssText = "pointer-events:auto; opacity:0; position:absolute; left:10px; top:130px; width:120px; height:40px; overflow:hidden;";
-            */
-           // x.addEventListener( 'mouseover', function ( e ) { e.preventDefault(); bg4.style.border = '4px solid '+_this.colors[0];  bg4.style.backgroundColor = _this.colors[0]; bg4.style.color = _this.colors[1]; }, false );
+            var bg2 = this.addButton(body, 'NEW MAP',  [138, 26, 11], null);
+            var bg3 = this.addButton(body, 'SAVE',     [138, 26, 11], null);
+            var bg4 = this.addButton(body, 'LOAD',     [138, 26, 11], null);
 
-           // x.addEventListener( 'mouseout', function ( e ) { e.preventDefault(); bg4.style.border = '4px solid '+_this.colors[1]; bg4.style.backgroundColor = _this.colors[1]; bg4.style.color = _this.colors[0];  }, false );
-
-           // x.addEventListener( 'mouseover', function ( e ) { e.preventDefault();  bg4.style.backgroundColor = _this.colors[2]; }, false );
-           // x.addEventListener( 'mouseout', function ( e ) { e.preventDefault();  bg4.style.backgroundColor = _this.colors[1];  }, false );
-
-            //x.addEventListener('change', loadGame, false);
-
-
-            //"fileToLoad"
-            //this.exitWindow.appendChild( x );
+            bg2.addEventListener('click', function(e){ e.preventDefault(); Main.newGameMap(); }, false);
+            bg3.addEventListener('click', function(e){ e.preventDefault(); Main.saveGame();   }, false);
+            bg4.addEventListener('click', function(e){ e.preventDefault(); Main.loadGame();   }, false);
 
         } else {
-            this.exitWindow.style.display = 'block';
-            //this.setBudgetValue();
+            this.exitWindow.style.display = 'flex';
         }
 
-        this.exitWindow.className = "open";
+        this.exitWindow.dataset.state = 'open';
     }
 
     closeExit  (){
         this.exitWindow.style.display = 'none';
-        this.exitWindow.className = "close";
+        this.exitWindow.dataset.state = 'close';
     }
 
 
@@ -685,11 +750,6 @@ export class Hub {
 
         var test = this.testOpen();
         if(test == 'budget') return;
-
-        /*if(this.budgetWindow !== null && this.budgetWindow.className == "open"){
-            this.closeBudget(); 
-            return;
-        }*/
 
         this.dataKeys = ['roadFund', 'roadRate', 'fireFund', 'fireRate','policeFund', 'policeRate', 'taxRate', 'totalFunds', 'taxesCollected'];
 
@@ -707,46 +767,55 @@ export class Hub {
 
         if(this.budgetWindow == null){
             this.budgetWindow = document.createElement('div');
-            this.budgetWindow.style.cssText =this.radius+ 'position:absolute; width:200px; height:300px; pointer-events:none; display:block;'+ this.windowsStyle;;
+            this.budgetWindow.className = 'hub-panel';
+            this.budgetWindow.style.cssText = 'position:absolute; top:44px; left:10px; width:220px;'
+                                            + ' pointer-events:none; display:flex; flex-direction:column; border-radius:10px;';
             this.hub.appendChild( this.budgetWindow );
 
-            this.addSlider(this.budgetWindow, 10, 'Tax', this.taxRate, null, 'green', 20);
-            this.addSlider(this.budgetWindow, 70, 'Roads', this.roadRate, this.roadFund, 'red', 100);
-            this.addSlider(this.budgetWindow, 110, 'Fire', this.fireRate, this.fireFund, 'red', 100);
-            this.addSlider(this.budgetWindow, 150, 'Police', this.policeRate, this.policeFund, 'red', 100);
+            this.budgetWindow.appendChild( this.makeWindowHeader('Budget', function(){ _this.closeBudget(); }) );
+
+            var body = document.createElement('div');
+            body.style.cssText = 'position:relative; height:264px; pointer-events:none;';
+            this.budgetWindow.appendChild( body );
+
+            this.addSlider(body, 10,  'Tax',    this.taxRate,    null,           '#4bcc7a', 20);
+            this.addSlider(body, 70,  'Roads',  this.roadRate,   this.roadFund,  '#e05555', 100);
+            this.addSlider(body, 110, 'Fire',   this.fireRate,   this.fireFund,  '#e05555', 100);
+            this.addSlider(body, 150, 'Police', this.policeRate, this.policeFund,'#e05555', 100);
 
             this.budgetResult = document.createElement('div');
-            this.budgetResult.style.cssText ='position:absolute; top:200px; left:10px; width:180px; height:300px; pointer-events:none; color:'+this.colors[0]+';';
-            
-            this.budgetWindow.appendChild( this.budgetResult );
+            this.budgetResult.style.cssText = 'position:absolute; top:200px; left:10px; width:200px;'
+                                            + ' pointer-events:none; color:' + this.colors[0] + '; font-size:12px; line-height:1.6;';
+            body.appendChild( this.budgetResult );
 
-            var bg1 = this.addButton(this.budgetWindow, 'CLOSE', [70,16,14], 'position:absolute; left:10px; bottom:10px;');
-            var bg2 = this.addButton(this.budgetWindow, 'APPLY', [70,16,14], 'position:absolute; rigth:10px; bottom:10px;');
+            var bg1 = this.addButton(body, 'CLOSE', [88, 22, 11], 'position:absolute; left:10px; bottom:10px;');
+            var bg2 = this.addButton(body, 'APPLY', [88, 22, 11], 'position:absolute; right:10px; bottom:10px;');
 
-            bg1.addEventListener('click',  function(e){ e.preventDefault(); _this.closeBudget(); }, false);
-            bg2.addEventListener('click',  function(e){ e.preventDefault(); _this.applyBudget(); }, false);
+            bg1.addEventListener('click', function(e){ e.preventDefault(); _this.closeBudget(); }, false);
+            bg2.addEventListener('click', function(e){ e.preventDefault(); _this.applyBudget(); }, false);
 
         } else {
-            this.budgetWindow.style.display = 'block';
+            this.budgetWindow.style.display = 'flex';
             this.setBudgetValue();
         }
 
-        this.budgetResult.innerHTML = "Annual receipts:" + cashFlow+"$"+"<br>Taxes collected:" + taxesCollected+"$";
+        this.budgetResult.innerHTML = '<span style="color:rgba(180,210,240,0.6)">Annual receipts:</span> ' + cashFlow + '$'
+                                    + '<br><span style="color:rgba(180,210,240,0.6)">Taxes collected:</span> ' + taxesCollected + '$';
 
-        this.budgetWindow.className = "open";
+        this.budgetWindow.dataset.state = 'open';
 
     }
 
     applyBudget  (){
         this.budgetWindow.style.display = 'none';
-        this.budgetWindow.className = "close";
+        this.budgetWindow.dataset.state = 'close';
 
         Main.setBudjet([this.taxRate, this.roadRate, this.fireRate, this.policeRate ]);
     }
 
     closeBudget  (){
         this.budgetWindow.style.display = 'none';
-        this.budgetWindow.className = "close";
+        this.budgetWindow.dataset.state = 'close';
     }
 
     setBudgetValue (){
@@ -764,26 +833,33 @@ export class Hub {
         if(test == 'disaster') return;
         if(this.disasterWindow == null){
             this.disasterWindow = document.createElement('div');
-            this.disasterWindow.style.cssText =this.radius+ 'position:absolute; width:140px; height:300px; pointer-events:none; display:block;'+ this.windowsStyle;;
+            this.disasterWindow.className = 'hub-panel';
+            this.disasterWindow.style.cssText = 'position:absolute; top:44px; left:10px; width:180px;'
+                                              + ' pointer-events:none; display:flex; flex-direction:column; border-radius:10px;';
             this.hub.appendChild( this.disasterWindow );
 
+            this.disasterWindow.appendChild( this.makeWindowHeader('Disasters', function(){ _this.closeDisaster(); }) );
+
+            var body = document.createElement('div');
+            body.style.cssText = 'padding:10px 12px; pointer-events:none; display:flex; flex-direction:column; gap:6px;';
+            this.disasterWindow.appendChild( body );
+
             for(var i=0; i<this.disasterTypes.length; i++){
-                this.disasterButtons[i] = this.addButton(this.disasterWindow, this.disasterTypes[i].toUpperCase(), [96,16,14],'position:absolute; left:10px; top:'+(10+(i*40))+'px;');
+                this.disasterButtons[i] = this.addButton(body, this.disasterTypes[i].toUpperCase(), [138, 24, 11], null);
                 this.disasterButtons[i].name = this.disasterTypes[i];
-                this.disasterButtons[i].addEventListener('click',  function(e){ e.preventDefault(); Main.setDisaster(this.name); }, false);
+                this.disasterButtons[i].addEventListener('click', function(e){ e.preventDefault(); Main.setDisaster(this.name); }, false);
             }
         } else {
-            this.disasterWindow.style.display = 'block';
-            //this.setBudgetValue();
+            this.disasterWindow.style.display = 'flex';
         }
 
-        this.disasterWindow.className = "open";
+        this.disasterWindow.dataset.state = 'open';
 
     }
 
     closeDisaster  (){
         this.disasterWindow.style.display = 'none';
-        this.disasterWindow.className = "close";
+        this.disasterWindow.dataset.state = 'close';
     }
 
 
