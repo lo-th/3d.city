@@ -175,7 +175,7 @@ export class DisasterManager {
                     tile = this._map.getTile(xx, yy);
                     tileValue = tile.getValue();
 
-                    if (tile === Tile.DIRT || (tile.isBulldozable() && tile.isCombustible)) {
+                    if (tile === Tile.DIRT || (tile.isBulldozable() && tile.isCombustible())) {
                         this._map.setTo(xx, yy, new Tiles(Tile.FLOOD));
                         this._floodCount = 30;
                         EventEmitter.emitEvent(Messages.FLOODING_REPORTED, {showable: true, x: xx, y: yy});

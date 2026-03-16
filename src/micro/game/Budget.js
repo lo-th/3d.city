@@ -224,7 +224,7 @@ export class Budget {
     }
 
     shouldDegradeRoad () {
-        return this.roadEffect < Math.floor(15 * this.MAX_ROAD_EFFECT / 16);
+        return this.roadEffect < Math.floor(15 * Micro.MAX_ROAD_EFFECT / 16);
     }
 
 }

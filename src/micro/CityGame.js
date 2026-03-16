@@ -150,8 +150,8 @@ export class MainGame {
     stop (){
 
         if( this.timer === null ) return;
-        clearInterval( this.timer );
-        this.timer = null
+        clearTimeout( this.timer );
+        this.timer = null;
 
     }
 
@@ -357,16 +357,6 @@ export class MainGame {
 
     destroy (x,y){
 
-        console.log('isDestroy')
-
-        //console.log( 'destuct ', x, y )
-
-       //this.mapClick(x,y);
-        //this.map.powerData[this.findId(x,y)] = 1;
-
-       // this.simulation.powerManager.setTilePower(x,y);
-      //  var messageMgr = new Micro.MessageManager();
-       // this.gameTools["bulldozer"].doTool(x, y, messageMgr, this.simulation.blockMaps );
     }
 
     findId (x, y){
@@ -506,7 +496,7 @@ export class MainGame {
 
 
         let isStart = atStart || false;
-        clearInterval(this.timer);
+        clearTimeout(this.timer);
         this.savedGame = JSON.parse(gameData);
 
 
