@@ -7668,7 +7668,7 @@
 			if (p == "EVAL") Game.getEvaluation();
 			if (p == "ACHIEVEMENTS") Game.getAchievements();
 			if (p == "HISTORY") Game.getHistory();
-			if (p == "SAVEGAME") Game.saveGame(e.data.saveCity);
+			if (p == "SAVEGAME") Game.saveGame(e.data.saveCity, e.data.silent);
 			if (p == "LOADGAME") Game.loadGame(e.data.isStart);
 			if (p == "MAKELOADGAME") Game.makeLoadGame(e.data.savegame, e.data.isStart);
 		}
@@ -8062,7 +8062,7 @@
 
 		//______________________________________ SAVE
 
-		saveGame(cityData) {
+		saveGame(cityData, silent) {
 			//this.oldSpeed = this.speed;
 			//this.changeSpeed(0);
 
@@ -8079,7 +8079,8 @@
 			CityGame.post({
 				tell: "SAVEGAME",
 				gameData: gameData,
-				key: Micro.KEY
+				key: Micro.KEY,
+				silent: silent || false
 			});
 
 			//this.changeSpeed(this.oldSpeed);

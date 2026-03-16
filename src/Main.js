@@ -178,6 +178,19 @@ export class Main {
         post({ tell:"SAVEGAME", saveCity:saveCity });
     }
 
+    // Silent background save — writes to localStorage only, no file download
+    static autoSave() {
+        var saveCity = [];
+        view3d.saveCityBuild(saveCity);
+        saveCity = JSON.stringify(saveCity);
+        post({ tell:"SAVEGAME", saveCity:saveCity, silent:true });
+    }
+
+    static startAutoSave( intervalMs ) {
+        var ms = intervalMs || 120000; // default 2 minutes
+        setInterval(function(){ Main.autoSave(); }, ms);
+    }
+
     static loadGame( atStart ) {
         var isStart = atStart || false;
         if( isStart ){ 
@@ -219,14 +232,15 @@ function testMobile() {
 //  SAVE LOAD
 //=======================================
 
-function makeGameSave( gameData, key ) {
+function makeGameSave( gameData, key, silent ) {
     window.localStorage.setItem(key, gameData);
 
-    if( !view3d.isMobile ){
+    if( !silent && !view3d.isMobile ){
         var blob = new Blob([gameData], {type: "text/plain;charset=utf-8"});
         saveAs(blob, "city3d.json");
     }
-    
+
+    if( silent && hub ) hub.flashAutoSave();
 }
 
 function makeLoadGame( key, atStart ) {
@@ -291,7 +305,10 @@ function message( e ) {
         view3d.paintMap( e.data.mapSize, e.data.island, withHeight );
         view3d.loadCityBuild( e.data.cityData );
 
-        if( e.data.isStart ) view3d.startPlay()
+        if( e.data.isStart ){
+            view3d.startPlay();
+            Main.startAutoSave();
+        }
     }
     if( phase == "BUILD"){
         view3d.build(e.data.x, e.data.y);
@@ -329,9 +346,7 @@ function message( e ) {
         hub.openHistory(e.data.historyData);
     }
     if( phase == "SAVEGAME"){
-        makeGameSave(e.data.gameData, e.data.key);
-
-
+        makeGameSave(e.data.gameData, e.data.key, e.data.silent);
     }
     if( phase == "LOADGAME"){
         makeLoadGame(e.data.key, e.data.isStart);
