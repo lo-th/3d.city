@@ -381,8 +381,7 @@ export class View {
 
 			}
 
-			let eventMouse = document.createEvent("MouseEvents")
-			eventMouse.initMouseEvent("click", true, false, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null)
+			let eventMouse = new MouseEvent('click', { bubbles: true, cancelable: true, view: window });
 			this.fileInput.dispatchEvent(eventMouse)
 
 			return
@@ -629,7 +628,7 @@ export class View {
 
 
          //this.renderer = new THREE.WebGLRenderer({ canvas:this.canvas, antialias:false });
-    	let renderer = new THREE.WebGLRenderer({ antialias:false });
+    	let renderer = new THREE.WebGLRenderer({ antialias: !this.isMobile });
         renderer.setSize( this.vsize.x, this.vsize.y );
         renderer.setPixelRatio( this.pix )
     	//renderer.sortObjects = false;
@@ -638,8 +637,7 @@ export class View {
 
     	renderer.outputEncoding = THREE.sRGBEncoding
     	renderer.toneMapping = THREE.ACESFilmicToneMapping
-    	//renderer.physicallyCorrectLights = true
-    	renderer.toneMappingExposure = 1.0
+    	renderer.toneMappingExposure = 1.2
 
     	this.anisotropy = renderer.capabilities.getMaxAnisotropy();
 
@@ -715,6 +713,8 @@ export class View {
         // disable context menu
         document.addEventListener("contextmenu", function(e){ e.preventDefault(); }, false);
 
+        // 'wheel' is the modern standard; 'mousewheel' retained for older browser compatibility
+        document.addEventListener( 'wheel', this, false );
         document.addEventListener( 'mousewheel', this, false );
 
         this.container.addEventListener( 'mousemove', this, false );
@@ -787,7 +787,7 @@ export class View {
             case 'mouseup': case 'mouseout': case 'touchend':this.onMouseUp( e ); break;
             case 'mousedown': case 'touchstart': this.onMouseDown( e ); break;
             case 'mousemove': case 'touchmove': this.onMouseMove( e ); break;
-            case 'mousewheel': this.onMouseWheel( e ); break;
+            case 'mousewheel': case 'wheel': this.onMouseWheel( e ); break;
         }
 
     }
@@ -874,8 +874,8 @@ export class View {
 
 		this.dayTime = id;
 
-		// Adjust renderer exposure: bright day → dim night
-		const exposures = [0.85, 1.0, 0.25, 0.5];
+		// Adjust renderer exposure: dawn(0) → day(1) → night(2) → dusk(3)
+		const exposures = [0.9, 1.2, 0.3, 0.65];
 		if(this.renderer) this.renderer.toneMappingExposure = exposures[id];
 
 		// Update fog colour
@@ -1276,7 +1276,7 @@ export class View {
         	for( i=0; i<8; i++){
         		for( j=0; j<8; j++){
         		
-                    geo = new THREE.PlaneBufferGeometry( 16, 16, divid, divid );
+                    geo = new THREE.PlaneGeometry( 16, 16, divid, divid );
                     geo.rotateX( -Math.PI * 0.5 );
                     geo.translate( (8+j*16)-0.5, 0, (8+i*16)-0.5 );
 
@@ -1552,8 +1552,6 @@ export class View {
         //g.computeBoundingSphere();
         //g.computeVertexNormals();
 
-        console.log('updated !!')
-
     }
 
 
@@ -1714,12 +1712,14 @@ export class View {
 			// standard building
 			if(v<4 && v!==0){
 				this.addBaseBuilding(x, py, y, v, zone);
-				this.snd_layzone.play();
+				// Autoplay may be blocked by browser policy; silently ignore that rejection
+				this.snd_layzone.play().catch(function(){});
 			}
 			// town building
 			if(v==8 || v==9 || v==4 || v==5 || v==7 || v==10 || v==11 || v==12){
 				this.addBaseTown(x,py,y,v,zone);
-			    this.snd_layzone.play();
+				// Autoplay may be blocked by browser policy; silently ignore that rejection
+			    this.snd_layzone.play().catch(function(){});
 			}
 
 		} else {
@@ -2072,9 +2072,10 @@ export class View {
 	onMouseWheel  (e) { 
 		//e.preventDefault();   
 	    let delta = 0;
-	    if(e.wheelDelta){delta=e.wheelDelta*-1;}
-	    else if(e.detail){delta=e.detail*20;}
-	    this.cam.distance+=(delta/80);
+	    if(e.deltaY !== undefined){ delta = e.deltaY; }
+	    else if(e.wheelDelta){ delta = e.wheelDelta * -1; }
+	    else if(e.detail){ delta = e.detail * 20; }
+	    this.cam.distance += (delta / 80);
 	    if(this.cam.distance<1)this.cam.distance = 1;
 	    if(this.cam.distance>150)this.cam.distance = 150;
 	    this.moveCamera();
@@ -2554,30 +2555,22 @@ export class View {
 
 		let _this = this;
 
-		document.onkeydown = function(e) {
-		    e = e || window.event;
-			switch ( e.keyCode ) {
-			    case 38: case 87: case 90: _this.key[0] = 1; break; // up, W, Z
-				case 40: case 83:          _this.key[1] = 1; break; // down, S
-				case 37: case 65: case 81: _this.key[2] = 1; break; // left, A, Q
-				case 39: case 68:          _this.key[3] = 1; break; // right, D
-				//case 17: case 67:          _this.key[4] = 1; break; // ctrl, C
-				//case 69:                   _this.key[5] = 1; break; // E
-				//case 32:                   _this.key[6] = 1; break; // space
+		document.addEventListener('keydown', function(e) {
+			switch ( e.code ) {
+			    case 'ArrowUp':    case 'KeyW': case 'KeyZ': _this.key[0] = 1; break; // up, W, Z
+				case 'ArrowDown':  case 'KeyS':              _this.key[1] = 1; break; // down, S
+				case 'ArrowLeft':  case 'KeyA': case 'KeyQ': _this.key[2] = 1; break; // left, A, Q
+				case 'ArrowRight': case 'KeyD':              _this.key[3] = 1; break; // right, D
 			}
-		}
-		document.onkeyup = function(e) {
-		    e = e || window.event;
-			switch( e.keyCode ) {
-				case 38: case 87: case 90: _this.key[0] = 0; break; // up, W, Z
-				case 40: case 83:          _this.key[1] = 0; break; // down, S
-				case 37: case 65: case 81: _this.key[2] = 0; break; // left, A, Q
-				case 39: case 68:          _this.key[3] = 0; break; // right, D
-				//case 17: case 67:          _this.key[4] = 0; break; // ctrl, C
-				//case 69:                   _this.key[5] = 0; break; // E
-				//case 32:                   _this.key[6] = 0; break; // space
+		}, false);
+		document.addEventListener('keyup', function(e) {
+			switch ( e.code ) {
+				case 'ArrowUp':    case 'KeyW': case 'KeyZ': _this.key[0] = 0; break; // up, W, Z
+				case 'ArrowDown':  case 'KeyS':              _this.key[1] = 0; break; // down, S
+				case 'ArrowLeft':  case 'KeyA': case 'KeyQ': _this.key[2] = 0; break; // left, A, Q
+				case 'ArrowRight': case 'KeyD':              _this.key[3] = 0; break; // right, D
 			}
-		}
+		}, false);
 	    self.focus();
 
 	}

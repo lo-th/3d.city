@@ -8447,7 +8447,7 @@ class Gui {
 
 const Base = {
 
-	version: '0.8.0',
+	version: '0.9.0',
 
     toolSet: [
         {id:0,  tool:'none',        geo:0,    name:'',  build:0, size:0, sy:0,    price:0,     color:'none'       ,drag:0  },
@@ -8857,6 +8857,8 @@ class Hub {
                 case 's': case 'S': _this.openExit();        break;
                 case 'a': case 'A': Main.getAchievements(); break;
                 case 'h': case 'H': Main.getHistory();      break;
+                case '?':           _this.openAbout();       break;
+                case 'o': case 'O': _this.openOverlays();    break;
             }
         }, false);
     }
@@ -8937,6 +8939,28 @@ class Hub {
         if (this.happinessIndicator) {
             this.happinessIndicator.innerHTML = '<span style="color:' + happyColor + ';">☺ ' + happiness + '%</span>';
         }
+    }
+
+    // Brief "Auto-saved" indicator that fades out
+    flashAutoSave () {
+        if(!this.autoSaveIndicator){
+            this.autoSaveIndicator = document.createElement('div');
+            this.autoSaveIndicator.style.cssText = 'position:absolute; bottom:44px; left:50%; transform:translateX(-50%);'
+                + ' background:rgba(20,30,48,0.88); color:rgba(74,200,140,0.9);'
+                + ' font-size:11px; font-weight:600; letter-spacing:0.06em;'
+                + ' padding:4px 12px; border-radius:20px; pointer-events:none;'
+                + ' border:1px solid rgba(74,200,140,0.35); opacity:0; transition:opacity 0.4s;';
+            this.autoSaveIndicator.textContent = '✔ Auto-saved';
+            this.hub.appendChild(this.autoSaveIndicator);
+        }
+        var el = this.autoSaveIndicator;
+        el.style.transition = 'none';
+        el.style.opacity = '1';
+        clearTimeout(this._autoSaveTimer);
+        this._autoSaveTimer = setTimeout(function(){
+            el.style.transition = 'opacity 1.5s';
+            el.style.opacity = '0';
+        }, 1500);
     }
 
     //-----------------------------------QUERY
@@ -9051,6 +9075,8 @@ class Hub {
                              + '<span class="hub-kbd">S</span> Save/Load<br>'
                              + '<span class="hub-kbd">A</span> Awards &nbsp;'
                              + '<span class="hub-kbd">H</span> History<br>'
+                             + '<span class="hub-kbd">O</span> Overlays &nbsp;'
+                             + '<span class="hub-kbd">?</span> This panel<br>'
                              + '<span class="hub-kbd">Esc</span> Close window';
             body.appendChild( kbdDiv );
 
@@ -62322,8 +62348,7 @@ class View {
 
 			}
 
-			let eventMouse = document.createEvent("MouseEvents");
-			eventMouse.initMouseEvent("click", true, false, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
+			let eventMouse = new MouseEvent('click', { bubbles: true, cancelable: true, view: window });
 			this.fileInput.dispatchEvent(eventMouse);
 
 			return
@@ -62570,7 +62595,7 @@ class View {
 
 
          //this.renderer = new THREE.WebGLRenderer({ canvas:this.canvas, antialias:false });
-    	let renderer = new WebGLRenderer({ antialias:false });
+    	let renderer = new WebGLRenderer({ antialias: !this.isMobile });
         renderer.setSize( this.vsize.x, this.vsize.y );
         renderer.setPixelRatio( this.pix );
     	//renderer.sortObjects = false;
@@ -62579,8 +62604,7 @@ class View {
 
     	renderer.outputEncoding = sRGBEncoding;
     	renderer.toneMapping = ACESFilmicToneMapping;
-    	//renderer.physicallyCorrectLights = true
-    	renderer.toneMappingExposure = 1.0;
+    	renderer.toneMappingExposure = 1.2;
 
     	this.anisotropy = renderer.capabilities.getMaxAnisotropy();
 
@@ -62630,6 +62654,8 @@ class View {
         // disable context menu
         document.addEventListener("contextmenu", function(e){ e.preventDefault(); }, false);
 
+        // 'wheel' is the modern standard; 'mousewheel' retained for older browser compatibility
+        document.addEventListener( 'wheel', this, false );
         document.addEventListener( 'mousewheel', this, false );
 
         this.container.addEventListener( 'mousemove', this, false );
@@ -62702,7 +62728,7 @@ class View {
             case 'mouseup': case 'mouseout': case 'touchend':this.onMouseUp( e ); break;
             case 'mousedown': case 'touchstart': this.onMouseDown( e ); break;
             case 'mousemove': case 'touchmove': this.onMouseMove( e ); break;
-            case 'mousewheel': this.onMouseWheel( e ); break;
+            case 'mousewheel': case 'wheel': this.onMouseWheel( e ); break;
         }
 
     }
@@ -62766,11 +62792,10 @@ class View {
 	
 
     winterSwitch() {
-    	/*if(!this.isWinter && this.winterMapLoaded) this.isWinter = true;
-    	else this.isWinter = false;
-
+    	this.isWinter = !this.isWinter;
 		this.updateBackground();
-		this.setTimeColors(this.dayTime);*/
+		// Re-apply current time-of-day after season change
+		if(this.dayTime !== 0) this.setTimeColors(this.dayTime);
     }
 
 	textureSwitch( type ) {
@@ -62788,54 +62813,64 @@ class View {
 
 	setTimeColors( id ) {
 
-		/*this.dayTime = id;
-		if(this.dayTime==1)this.tcolor = {r:100, g: 15, b: 80, a: 0.3};
-		if(this.dayTime==2)this.tcolor = {r:10, g: 15, b: 80, a: 0.8};
-		if(this.dayTime==3)this.tcolor = {r:10, g: 15, b: 80, a: 0.6};
+		this.dayTime = id;
 
-		this.tint(this.skyCanvas);
+		// Adjust renderer exposure: dawn(0) → day(1) → night(2) → dusk(3)
+		const exposures = [0.9, 1.2, 0.3, 0.65];
+		if(this.renderer) this.renderer.toneMappingExposure = exposures[id];
 
-		if(!this.isWinter){
-			//this.tint(this.groundCanvas, this.imgs[0]);
-			this.tint(this.townCanvas, this.imgs[1], this.imgs[4]);
-			this.tint(this.buildingCanvas, this.imgs[2], this.imgs[3]);
-	    } else {
-			//this.tint(this.groundCanvas, this.imgs[5]);
-			this.tint(this.townCanvas, this.imgs[6], this.imgs[4]);
-			this.tint(this.buildingCanvas, this.imgs[7], this.imgs[3]);
-		}
-
-		if(this.isWithFog){
+		// Update fog colour
+		if(this.isWithFog && this.fog){
 			if(this.isIsland){
 				if(this.isWinter){
-					if(this.dayTime==0)this.fog.color.setHex(0xAFEEEE);
-					if(this.dayTime==1)this.fog.color.setHex(0x98ABBF);
-					if(this.dayTime==2)this.fog.color.setHex(0x2B3C70);
-					if(this.dayTime==3)this.fog.color.setHex(0x4C688F);
-				}else{
-					if(this.dayTime==0)this.fog.color.setHex(0x6666e6);
-					if(this.dayTime==1)this.fog.color.setHex(0x654CB9);
-					if(this.dayTime==2)this.fog.color.setHex(0x1C206E);
-					if(this.dayTime==3)this.fog.color.setHex(0x2F328C);
+					if(id==0)this.fog.color.setHex(0xAFEEEE);
+					if(id==1)this.fog.color.setHex(0x98ABBF);
+					if(id==2)this.fog.color.setHex(0x2B3C70);
+					if(id==3)this.fog.color.setHex(0x4C688F);
+				}else {
+					if(id==0)this.fog.color.setHex(0x6666e6);
+					if(id==1)this.fog.color.setHex(0x654CB9);
+					if(id==2)this.fog.color.setHex(0x1C206E);
+					if(id==3)this.fog.color.setHex(0x2F328C);
 				}
 			} else {
 				if(this.isWinter){
-					if(this.dayTime==0)this.fog.color.setHex(0xE6F0FF);
-					if(this.dayTime==1)this.fog.color.setHex(0xBFACCA);
-					if(this.dayTime==2)this.fog.color.setHex(0x363C73);
-					if(this.dayTime==3)this.fog.color.setHex(0x626996);
-				}else{
-					if(this.dayTime==0)this.fog.color.setHex(0xE2946D);
-					if(this.dayTime==1)this.fog.color.setHex(0xBC6C64);
-					if(this.dayTime==2)this.fog.color.setHex(0x352A56);
-					if(this.dayTime==3)this.fog.color.setHex(0x60445C);
+					if(id==0)this.fog.color.setHex(0xE6F0FF);
+					if(id==1)this.fog.color.setHex(0xBFACCA);
+					if(id==2)this.fog.color.setHex(0x363C73);
+					if(id==3)this.fog.color.setHex(0x626996);
+				}else {
+					if(id==0)this.fog.color.setHex(0xE2946D);
+					if(id==1)this.fog.color.setHex(0xBC6C64);
+					if(id==2)this.fog.color.setHex(0x352A56);
+					if(id==3)this.fog.color.setHex(0x60445C);
 				}
 			}
 		}
-		this.buildingTexture.needsUpdate = true;
-        this.townTexture.needsUpdate = true;
-        this.skyTexture.needsUpdate = true;
-        this.fullRedraw = true;*/
+
+		// Rebuild sky gradient for the new time of day
+		if(this.isWithBackground && this.back){
+			const skyGradients = {
+				island: {
+					normal:  [['#6666e6','#BFDDFF','#4A65FF'],['#654CB9','#C077EE','#9966CC'],['#0A0A2A','#1a1a5e','#0d0d3a'],['#1C206E','#4A4A8A','#2A2A6A']],
+					winter:  [['#AFEEEE','#BFDDFF','#4A65FF'],['#98ABBF','#8F7AAA','#6650AA'],['#1a1a4e','#1a1a4e','#0d0d3a'],['#2B3C70','#4A4A8A','#2A2A6A']]
+				},
+				normal: {
+					normal:  [['#E2946D','#BFDDFF','#4A65FF'],['#BC6C64','#FF9966','#9966CC'],['#0A0A1A','#1a1040','#0d0b30'],['#352A56','#6b4c8a','#2A2A6A']],
+					winter:  [['#E6F0FF','#BFDDFF','#4A65FF'],['#BFACCA','#8F7AAA','#6650AA'],['#1a1a3e','#1a1a4e','#0d0d3a'],['#363C73','#4A4A8A','#2A2A6A']]
+				}
+			};
+			const mapKey = this.isIsland ? 'island' : 'normal';
+			const seasonKey = this.isWinter ? 'winter' : 'normal';
+			const cols = skyGradients[mapKey][seasonKey][id];
+			this.skyCanvas = this.gradTexture([[0.51,0.49, 0.3], cols]);
+			this.skyTexture = new Texture(this.skyCanvas);
+			this.skyTexture.encoding = sRGBEncoding;
+			this.skyTexture.needsUpdate = true;
+			this.back.material.map = this.skyTexture;
+		}
+
+		this.fullRedraw = true;
 
 	}
 
@@ -63448,8 +63483,6 @@ class View {
         //g.computeBoundingSphere();
         //g.computeVertexNormals();
 
-        console.log('updated !!');
-
     }
 
 
@@ -63610,12 +63643,14 @@ class View {
 			// standard building
 			if(v<4 && v!==0){
 				this.addBaseBuilding(x, py, y, v, zone);
-				this.snd_layzone.play();
+				// Autoplay may be blocked by browser policy; silently ignore that rejection
+				this.snd_layzone.play().catch(function(){});
 			}
 			// town building
 			if(v==8 || v==9 || v==4 || v==5 || v==7 || v==10 || v==11 || v==12){
 				this.addBaseTown(x,py,y,v,zone);
-			    this.snd_layzone.play();
+				// Autoplay may be blocked by browser policy; silently ignore that rejection
+			    this.snd_layzone.play().catch(function(){});
 			}
 
 		} else {
@@ -63968,9 +64003,10 @@ class View {
 	onMouseWheel  (e) { 
 		//e.preventDefault();   
 	    let delta = 0;
-	    if(e.wheelDelta){delta=e.wheelDelta*-1;}
-	    else if(e.detail){delta=e.detail*20;}
-	    this.cam.distance+=(delta/80);
+	    if(e.deltaY !== undefined){ delta = e.deltaY; }
+	    else if(e.wheelDelta){ delta = e.wheelDelta * -1; }
+	    else if(e.detail){ delta = e.detail * 20; }
+	    this.cam.distance += (delta / 80);
 	    if(this.cam.distance<1)this.cam.distance = 1;
 	    if(this.cam.distance>150)this.cam.distance = 150;
 	    this.moveCamera();
@@ -64450,30 +64486,22 @@ class View {
 
 		let _this = this;
 
-		document.onkeydown = function(e) {
-		    e = e || window.event;
-			switch ( e.keyCode ) {
-			    case 38: case 87: case 90: _this.key[0] = 1; break; // up, W, Z
-				case 40: case 83:          _this.key[1] = 1; break; // down, S
-				case 37: case 65: case 81: _this.key[2] = 1; break; // left, A, Q
-				case 39: case 68:          _this.key[3] = 1; break; // right, D
-				//case 17: case 67:          _this.key[4] = 1; break; // ctrl, C
-				//case 69:                   _this.key[5] = 1; break; // E
-				//case 32:                   _this.key[6] = 1; break; // space
+		document.addEventListener('keydown', function(e) {
+			switch ( e.code ) {
+			    case 'ArrowUp':    case 'KeyW': case 'KeyZ': _this.key[0] = 1; break; // up, W, Z
+				case 'ArrowDown':  case 'KeyS':              _this.key[1] = 1; break; // down, S
+				case 'ArrowLeft':  case 'KeyA': case 'KeyQ': _this.key[2] = 1; break; // left, A, Q
+				case 'ArrowRight': case 'KeyD':              _this.key[3] = 1; break; // right, D
 			}
-		};
-		document.onkeyup = function(e) {
-		    e = e || window.event;
-			switch( e.keyCode ) {
-				case 38: case 87: case 90: _this.key[0] = 0; break; // up, W, Z
-				case 40: case 83:          _this.key[1] = 0; break; // down, S
-				case 37: case 65: case 81: _this.key[2] = 0; break; // left, A, Q
-				case 39: case 68:          _this.key[3] = 0; break; // right, D
-				//case 17: case 67:          _this.key[4] = 0; break; // ctrl, C
-				//case 69:                   _this.key[5] = 0; break; // E
-				//case 32:                   _this.key[6] = 0; break; // space
+		}, false);
+		document.addEventListener('keyup', function(e) {
+			switch ( e.code ) {
+				case 'ArrowUp':    case 'KeyW': case 'KeyZ': _this.key[0] = 0; break; // up, W, Z
+				case 'ArrowDown':  case 'KeyS':              _this.key[1] = 0; break; // down, S
+				case 'ArrowLeft':  case 'KeyA': case 'KeyQ': _this.key[2] = 0; break; // left, A, Q
+				case 'ArrowRight': case 'KeyD':              _this.key[3] = 0; break; // right, D
 			}
-		};
+		}, false);
 	    self.focus();
 
 	}
@@ -64787,6 +64815,19 @@ class Main {
         post({ tell:"SAVEGAME", saveCity:saveCity });
     }
 
+    // Silent background save — writes to localStorage only, no file download
+    static autoSave() {
+        var saveCity = [];
+        view3d.saveCityBuild(saveCity);
+        saveCity = JSON.stringify(saveCity);
+        post({ tell:"SAVEGAME", saveCity:saveCity, silent:true });
+    }
+
+    static startAutoSave( intervalMs ) {
+        var ms = intervalMs || 120000; // default 2 minutes
+        setInterval(function(){ Main.autoSave(); }, ms);
+    }
+
     static loadGame( atStart ) {
         var isStart = atStart || false;
         if( isStart ){ 
@@ -64826,14 +64867,15 @@ function testMobile() {
 //  SAVE LOAD
 //=======================================
 
-function makeGameSave( gameData, key ) {
+function makeGameSave( gameData, key, silent ) {
     window.localStorage.setItem(key, gameData);
 
-    if( !view3d.isMobile ){
+    if( !silent && !view3d.isMobile ){
         var blob = new Blob([gameData], {type: "text/plain;charset=utf-8"});
         saveAs(blob, "city3d.json");
     }
-    
+
+    if( silent && hub ) hub.flashAutoSave();
 }
 
 function makeLoadGame( key, atStart ) {
@@ -64889,7 +64931,10 @@ function message( e ) {
         view3d.paintMap( e.data.mapSize, e.data.island, withHeight );
         view3d.loadCityBuild( e.data.cityData );
 
-        if( e.data.isStart ) view3d.startPlay();
+        if( e.data.isStart ){
+            view3d.startPlay();
+            Main.startAutoSave();
+        }
     }
     if( phase == "BUILD"){
         view3d.build(e.data.x, e.data.y);
@@ -64927,9 +64972,7 @@ function message( e ) {
         hub.openHistory(e.data.historyData);
     }
     if( phase == "SAVEGAME"){
-        makeGameSave(e.data.gameData, e.data.key);
-
-
+        makeGameSave(e.data.gameData, e.data.key, e.data.silent);
     }
     if( phase == "LOADGAME"){
         makeLoadGame(e.data.key, e.data.isStart);
