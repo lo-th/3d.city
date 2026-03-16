@@ -8599,7 +8599,7 @@ class Hub {
         this.link = add('button', {
             target:this.hub, w:64, h:64, pos:{left:'10px', bottom:'10px'}, simple:true,
             button:'#1a2d45'
-        }).icon( Tools.icon('github', '#74bfff', 50) ).onChange( function(v){ window.open('https://github.com/lo-th/3d.city','_blank'); } );
+        }).icon( Tools.icon('github', '#74bfff', 50) ).onChange( function(v){ window.open('https://github.com/awest813/OpenPublica','_blank'); } );
 
         this.donate = add('button', {
             target:this.hub, w:64, h:64, pos:{left:'84px', bottom:'10px'}, simple:true,
@@ -9059,8 +9059,8 @@ class Hub {
 
             var desc = document.createElement('div');
             desc.style.cssText = 'font-size:12px; color:#dce8f5; line-height:1.6; margin-bottom:10px;';
-            desc.innerHTML = '<b>3D CITY</b> v' + Base.version + '<br>'
-                           + '3D rendering by <a href="https://github.com/lo-th" target="_blank">Lo.th</a><br>'
+            desc.innerHTML = '<b>OpenPublica</b> v' + Base.version + '<br>'
+                           + '3D engine base by <a href="https://github.com/lo-th/3d.city" target="_blank">lo-th/3d.city</a><br>'
                            + 'Simulation: MicropolisJS';
             body.appendChild( desc );
 
@@ -9082,7 +9082,7 @@ class Hub {
 
             this.linke = document.createElement('div');
             this.linke.style.cssText = 'pointer-events:auto; font-size:11px;';
-            this.linke.innerHTML = "<a href='https://github.com/lo-th/3d.city' target='_blank'>Source Code on GitHub ↗</a>";
+            this.linke.innerHTML = "<a href='https://github.com/awest813/OpenPublica' target='_blank'>Source Code on GitHub ↗</a>";
             body.appendChild( this.linke );
 
         } else {

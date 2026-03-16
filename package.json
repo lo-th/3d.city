@@ -1,9 +1,9 @@
 {
-  "name": "3d.city",
+  "name": "openpublica",
   "version": "0.9.0",
   "description": "JavaScript city builder game",
   "main": "build/Main.js",
-  "repository": "lo-th/3d.city",
+  "repository": "awest813/OpenPublica",
   "jsnext:main": "build/citygame.module.js",
   "module": "build/citygame.module.js",
   "files": [
@@ -28,16 +28,16 @@
     "start": "concurrently --names \"ROLLUP,HTTP\" -c \"bgBlue.bold,bgGreen.bold\" \"rollup -c utils/rollup.config.js -w -m inline\" \"http-server -c-1 -p 8111 -o index.html\""
   },
   "keywords": [
-    "3d.city",
+    "openpublica",
     "city",
     "builder"
   ],
-  "author": "lo-th",
+  "author": "awest813",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/lo-th/3d.city/issues"
+    "url": "https://github.com/awest813/OpenPublica/issues"
   },
-  "homepage": "http://lo-th.github.io/uil/",
+  "homepage": "https://github.com/awest813/OpenPublica",
   "devDependencies": {
     "@babel/core": "^7.12.16",
     "@babel/plugin-proposal-class-properties": "^7.12.13",
