@@ -154,6 +154,14 @@ export class Main {
         post({ tell:"EVAL" });
     }
 
+    static getAchievements() {
+        post({ tell:"ACHIEVEMENTS" });
+    }
+
+    static getHistory() {
+        post({ tell:"HISTORY" });
+    }
+
     static setDisaster(disaster){
         post({ tell:"DISASTER", disaster:disaster });
     }
@@ -313,6 +321,12 @@ function message( e ) {
     }
     if( phase == "EVAL"){
         hub.openEval(e.data.evalData);
+    }
+    if( phase == "ACHIEVEMENTS"){
+        hub.openAchievements(e.data.achData, e.data.progress);
+    }
+    if( phase == "HISTORY"){
+        hub.openHistory(e.data.historyData);
     }
     if( phase == "SAVEGAME"){
         makeGameSave(e.data.gameData, e.data.key);

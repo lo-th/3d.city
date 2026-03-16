@@ -8547,13 +8547,15 @@ class Hub {
                           + ' background:rgba(14,22,38,0.90); box-shadow:0 8px 32px rgba(0,0,0,0.55);'
                           + ' backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);';
 
-        this.budgetWindow     = null;
-        this.evaluationWindow = null;
-        this.disasterWindow   = null;
-        this.exitWindow       = null;
-        this.queryWindow      = null;
-        this.overlaysWindow   = null;
-        this.aboutWindow      = null;
+        this.budgetWindow       = null;
+        this.evaluationWindow   = null;
+        this.disasterWindow     = null;
+        this.exitWindow         = null;
+        this.queryWindow        = null;
+        this.overlaysWindow     = null;
+        this.aboutWindow        = null;
+        this.achievementsWindow = null;
+        this.historyWindow      = null;
 
         this.selector = null;
         this.select   = null;
@@ -8727,6 +8729,12 @@ class Hub {
         var b5 = this.addButton(topBar, 'About',   [60,22,11], null, true);
         b5.addEventListener('click', function(e){ e.preventDefault(); _this.openAbout(); }, false);
 
+        var b6 = this.addButton(topBar, 'Awards', [60,22,11], null, true);
+        b6.addEventListener('click', function(e){ e.preventDefault(); Main.getAchievements(); }, false);
+
+        var b7 = this.addButton(topBar, 'History', [65,22,11], null, true);
+        b7.addEventListener('click', function(e){ e.preventDefault(); Main.getHistory(); }, false);
+
         // Speed selector is appended to the topBar in addSelector below
 
         // ── Tool panel ────────────────────────────────────────────────
@@ -8827,12 +8835,30 @@ class Hub {
         }, false);
 
         this.initCITYinfo();
+        this.initKeyboard();
     }
 
     hideoldSel  (){
         for(var i = 0; i<4; i++){
             this.H[i].style.outline = 'none';
         }
+    }
+
+    initKeyboard  (){
+        var _this = this;
+        document.addEventListener('keydown', function(e){
+            // Only handle shortcuts when not focused in a text input
+            if(e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
+            switch(e.key){
+                case 'Escape': _this.testOpen(); break;
+                case 'b': case 'B': Main.getBudjet();        break;
+                case 'e': case 'E': Main.getEval();          break;
+                case 'd': case 'D': _this.openDisaster();    break;
+                case 's': case 'S': _this.openExit();        break;
+                case 'a': case 'A': Main.getAchievements(); break;
+                case 'h': case 'H': Main.getHistory();      break;
+            }
+        }, false);
     }
 
     //-----------------------------------CITY INFO
@@ -8867,6 +8893,18 @@ class Hub {
                                      + ' color:rgba(74,158,221,0.85); padding: 0 12px; border-right:1px solid rgba(100,160,220,0.22);';
         this.statusBar.appendChild( this.cityClass );
 
+        // Season indicator
+        this.seasonIndicator = document.createElement('div');
+        this.seasonIndicator.style.cssText = 'font-size:10px; font-weight:600; letter-spacing:0.06em;'
+                                           + ' color:rgba(176,136,224,0.85); padding: 0 8px; border-right:1px solid rgba(100,160,220,0.22);';
+        this.statusBar.appendChild( this.seasonIndicator );
+
+        // Happiness indicator
+        this.happinessIndicator = document.createElement('div');
+        this.happinessIndicator.style.cssText = 'font-size:10px; font-weight:600; letter-spacing:0.06em;'
+                                              + ' padding: 0 8px; border-right:1px solid rgba(100,160,220,0.22);';
+        this.statusBar.appendChild( this.happinessIndicator );
+
         // RCI block (inline in status bar)
         this.initRCI();
 
@@ -8884,41 +8922,86 @@ class Hub {
         this.cityClass.textContent  = infos[1];
         this.msg.textContent        = infos[8];
         this.updateRCI( infos[5], infos[6], infos[7] );
+
+        // Season display
+        var seasonNames = ['Spring', 'Summer', 'Autumn', 'Winter'];
+        var seasonIcons = ['🌱', '☀', '🍂', '❄'];
+        var seasonIdx = infos[17] || 0;
+        if (this.seasonIndicator) {
+            this.seasonIndicator.textContent = seasonIcons[seasonIdx] + ' ' + seasonNames[seasonIdx];
+        }
+
+        // Happiness display
+        var happiness = infos[16] || 50;
+        var happyColor = happiness >= 70 ? '#4bcc7a' : happiness >= 40 ? '#f0b84a' : '#e05555';
+        if (this.happinessIndicator) {
+            this.happinessIndicator.innerHTML = '<span style="color:' + happyColor + ';">☺ ' + happiness + '%</span>';
+        }
     }
 
     //-----------------------------------QUERY
 
     //-----------------------------------ALL WINDOW
 
+    // ── Helper: build a titled window header with optional close button ──
+
+    makeWindowHeader ( title, closeFn ) {
+        var h = document.createElement('div');
+        h.className = 'hub-win-header';
+
+        var t = document.createElement('span');
+        t.className = 'hub-win-title';
+        t.textContent = title;
+        h.appendChild(t);
+
+        if (closeFn) {
+            var c = document.createElement('button');
+            c.className = 'hub-win-close';
+            c.innerHTML = '✕';
+            c.title = 'Close (Esc)';
+            c.addEventListener('click', function(e){ e.preventDefault(); closeFn(); }, false);
+            h.appendChild(c);
+        }
+        return h;
+    }
+
     testOpen  (){
         var t = "";
-        if(this.budgetWindow !== null && this.budgetWindow.className == "open"){
+        if(this.budgetWindow !== null && this.budgetWindow.dataset.state === 'open'){
             this.closeBudget();
             t = 'budget';
         }
-        if(this.evaluationWindow !== null && this.evaluationWindow.className == "open"){
+        if(this.evaluationWindow !== null && this.evaluationWindow.dataset.state === 'open'){
             this.closeEval();
             t = 'evaluation';
         }
-        if(this.disasterWindow !== null && this.disasterWindow.className == "open"){
+        if(this.disasterWindow !== null && this.disasterWindow.dataset.state === 'open'){
             this.closeDisaster();
             t = 'disaster';
         }
-        if(this.exitWindow !== null && this.exitWindow.className == "open"){
+        if(this.exitWindow !== null && this.exitWindow.dataset.state === 'open'){
             this.closeExit();
             t = 'exit';
         }
-        if(this.queryWindow !== null && this.queryWindow.className == "open"){
+        if(this.queryWindow !== null && this.queryWindow.dataset.state === 'open'){
             this.closeQuery();
             t = 'query';
         }
-        if(this.overlaysWindow !== null && this.overlaysWindow.className == "open"){
+        if(this.overlaysWindow !== null && this.overlaysWindow.dataset.state === 'open'){
             this.closeOverlays();
             t = 'overlays';
         }
-        if(this.aboutWindow !== null && this.aboutWindow.className == "open"){
+        if(this.aboutWindow !== null && this.aboutWindow.dataset.state === 'open'){
             this.closeAbout();
             t = 'about';
+        }
+        if(this.achievementsWindow !== null && this.achievementsWindow.dataset.state === 'open'){
+            this.closeAchievements();
+            t = 'achievements';
+        }
+        if(this.historyWindow !== null && this.historyWindow.dataset.state === 'open'){
+            this.closeHistory();
+            t = 'history';
         }
 
         return t;
@@ -8935,76 +9018,104 @@ class Hub {
 
         if(this.aboutWindow == null){
             this.aboutWindow = document.createElement('div');
-            this.aboutWindow.style.cssText = this.radius+ 'position:absolute; width:200px; height:210px; pointer-events:none; display:block;'+ this.windowsStyle;
+            this.aboutWindow.className = 'hub-panel';
+            this.aboutWindow.style.cssText = 'position:absolute; top:44px; left:10px; width:228px;'
+                                           + ' pointer-events:none; display:flex; flex-direction:column; border-radius:10px;';
             this.hub.appendChild( this.aboutWindow );
-            var bg1 = this.addButton(this.aboutWindow, 'X', [16,16,14], 'position:absolute; left:10px; top:10px;');
-            bg1.addEventListener('click',  function(e){ e.preventDefault(); _this.closeAbout(); }, false);
+
+            this.aboutWindow.appendChild( this.makeWindowHeader('About', function(){ _this.closeAbout(); }) );
+
+            var body = document.createElement('div');
+            body.style.cssText = 'padding:10px 12px; pointer-events:none;';
+            this.aboutWindow.appendChild( body );
 
             this.fps = document.createElement('div');
-            this.fps.style.cssText ='position:absolute; top:20px; left:60px; width:120px; height:20px; pointer-events:none; font-size:12px; text-align:center; color:'+this.colors[0]+';';
-            this.aboutWindow.appendChild( this.fps );
-            this.abb = document.createElement('div');
-            this.abb.style.cssText ='position:absolute; top:60px; left:10px; width:180px; height:180px; pointer-events:none; font-size:12px; text-align:center; color:'+this.colors[0]+';';
-            this.aboutWindow.appendChild( this.abb );
+            this.fps.style.cssText = 'font-size:11px; color:rgba(180,210,240,0.6); margin-bottom:10px;';
+            body.appendChild( this.fps );
+
+            var desc = document.createElement('div');
+            desc.style.cssText = 'font-size:12px; color:#dce8f5; line-height:1.6; margin-bottom:10px;';
+            desc.innerHTML = '<b>3D CITY</b> v' + Base.version + '<br>'
+                           + '3D rendering by <a href="https://github.com/lo-th" target="_blank">Lo.th</a><br>'
+                           + 'Simulation: MicropolisJS';
+            body.appendChild( desc );
+
+            var kbdDiv = document.createElement('div');
+            kbdDiv.style.cssText = 'font-size:11px; color:rgba(180,210,240,0.6);'
+                                 + ' border-top:1px solid rgba(100,160,220,0.22);'
+                                 + ' padding-top:8px; margin-bottom:10px; line-height:1.8;';
+            kbdDiv.innerHTML = '<b style="color:#dce8f5; letter-spacing:0.05em;">KEYBOARD SHORTCUTS</b><br>'
+                             + '<span class="hub-kbd">B</span> Budget &nbsp;'
+                             + '<span class="hub-kbd">E</span> Eval<br>'
+                             + '<span class="hub-kbd">D</span> Disaster &nbsp;'
+                             + '<span class="hub-kbd">S</span> Save/Load<br>'
+                             + '<span class="hub-kbd">A</span> Awards &nbsp;'
+                             + '<span class="hub-kbd">H</span> History<br>'
+                             + '<span class="hub-kbd">Esc</span> Close window';
+            body.appendChild( kbdDiv );
+
             this.linke = document.createElement('div');
-            this.linke.style.cssText ='position:absolute; top:160px; left:10px; width:180px; height:20px; pointer-events:auto; font-size:12px; text-align:center; color:'+this.colors[0]+';';
-            this.aboutWindow.appendChild( this.linke );
-
-            this.abb.innerHTML = "3D CITY<br><br>All 3d side made by Lo.th<br>Simulation from MicropolisJS<br><br><br>More info and source<br>";
-            this.linke.innerHTML = "<a href='https://github.com/lo-th/3d.city' target='_blank'>https://github.com/lo-th/3d.city";
-
-
+            this.linke.style.cssText = 'pointer-events:auto; font-size:11px;';
+            this.linke.innerHTML = "<a href='https://github.com/lo-th/3d.city' target='_blank'>Source Code on GitHub ↗</a>";
+            body.appendChild( this.linke );
 
         } else {
-            this.aboutWindow.style.display = 'block';
+            this.aboutWindow.style.display = 'flex';
         }
 
         Main.showStats();
 
-        this.aboutWindow.className = "open";
+        this.aboutWindow.dataset.state = 'open';
 
     }
 
     upStats  (fps, memory){
-        this.fps.innerHTML = 'Fps: '+ fps + ' <br> geometry: ' + memory;
+        this.fps.innerHTML = 'FPS: '+ fps + ' &nbsp;·&nbsp; geometry: ' + memory;
     }
 
     closeAbout  (){
         Main.hideStats();
 
         this.aboutWindow.style.display = 'none';
-        this.aboutWindow.className = "close";
+        this.aboutWindow.dataset.state = 'close';
     }
 
 
     //-----------------------------------OVERLAYS WINDOW  
 
     openOverlays  (data){
+        var _this = this;     
 
         var test = this.testOpen();
         if(test == 'overlays') return;
 
         if(this.overlaysWindow == null){
             this.overlaysWindow = document.createElement('div');
-            this.overlaysWindow.style.cssText = this.radius+ 'position:absolute; width:140px; height:420px; pointer-events:none; display:block;'+ this.windowsStyle;            this.hub.appendChild( this.overlaysWindow );
+            this.overlaysWindow.className = 'hub-panel';
+            this.overlaysWindow.style.cssText = 'position:absolute; top:44px; left:10px; width:160px;'
+                                              + ' pointer-events:none; display:flex; flex-direction:column; border-radius:10px;';
+            this.hub.appendChild( this.overlaysWindow );
 
-            //var bg1 = this.addButton(this.overlaysWindow, 'X', [16,16,14], 'position:absolute; left:50px; top:10px;');
-            //bg1.addEventListener('click',  function(e){ e.preventDefault(); _this.closeQuery(); }, false);
+            this.overlaysWindow.appendChild( this.makeWindowHeader('Overlays', function(){ _this.closeOverlays(); }) );
+
+            var body = document.createElement('div');
+            body.style.cssText = 'padding:8px 10px; pointer-events:none;';
+            this.overlaysWindow.appendChild( body );
 
             for(var i=0; i<this.overlaysTypes.length; i++){
-                this.overlaysButtons[i] = this.addButton(this.overlaysWindow, this.overlaysTypes[i].toUpperCase(), [96,16,14],'position:absolute; left:10px; top:'+(10+(i*40))+'px;');
+                this.overlaysButtons[i] = this.addButton(body, this.overlaysTypes[i].toUpperCase(), [118,20,11], 'display:block; margin-bottom:4px;');
                 this.overlaysButtons[i].name = this.overlaysTypes[i];
                 this.overlaysButtons[i].addEventListener('click',  function(e){ e.preventDefault(); setOverlays(this.name); }, false);
             }
         } else {
-            this.overlaysWindow.style.display = 'block';
+            this.overlaysWindow.style.display = 'flex';
         }
-        this.overlaysWindow.className = "open";
+        this.overlaysWindow.dataset.state = 'open';
     }
 
     closeOverlays  (){
         this.overlaysWindow.style.display = 'none';
-        this.overlaysWindow.className = "close";
+        this.overlaysWindow.dataset.state = 'close';
     }
 
 
@@ -9018,25 +9129,32 @@ class Hub {
 
         if(this.queryWindow == null){
             this.queryWindow = document.createElement('div');
-            this.queryWindow.style.cssText =this.radius+ 'position:absolute; width:140px; height:180px; pointer-events:none; display:block;'+ this.windowsStyle;            this.hub.appendChild( this.queryWindow );
+            this.queryWindow.className = 'hub-panel';
+            this.queryWindow.style.cssText = 'position:absolute; top:44px; left:10px; width:180px;'
+                                           + ' pointer-events:none; display:flex; flex-direction:column; border-radius:10px;';
+            this.hub.appendChild( this.queryWindow );
 
-            var bg1 = this.addButton(this.queryWindow, 'X', [16,16,14], 'position:absolute; left:50px; top:10px;');
-            bg1.addEventListener('click',  function(e){ e.preventDefault(); _this.closeQuery(); }, false);
+            this.queryWindow.appendChild( this.makeWindowHeader('Query', function(){ _this.closeQuery(); }) );
+
+            var body = document.createElement('div');
+            body.style.cssText = 'padding:10px 12px; pointer-events:none;';
+            this.queryWindow.appendChild( body );
 
             this.queryResult = document.createElement('div');
-            this.queryResult.style.cssText ='position:absolute; top:60px; left:10px; width:110px; height:100px; pointer-events:none; font-size:12px; text-align:center; color:'+this.colors[0]+';';
-            this.queryWindow.appendChild( this.queryResult );
+            this.queryResult.style.cssText = 'font-size:12px; color:' + this.colors[0] + '; line-height:1.6;';
+            body.appendChild( this.queryResult );
+
         } else {
-            this.queryWindow.style.display = 'block';
+            this.queryWindow.style.display = 'flex';
         }
 
         this.queryResult.innerHTML = data;
-        this.queryWindow.className = "open";
+        this.queryWindow.dataset.state = 'open';
     }
 
     closeQuery  (){
         this.queryWindow.style.display = 'none';
-        this.queryWindow.className = "close";
+        this.queryWindow.dataset.state = 'close';
     }
 
     //-----------------------------------BUDGET WINDOW
@@ -9049,54 +9167,87 @@ class Hub {
 
         if(this.evaluationWindow == null){
             this.evaluationWindow = document.createElement('div');
-            this.evaluationWindow.style.cssText =this.radius+ 'position:absolute; width:200px; height:300px; pointer-events:none; display:block;'+ this.windowsStyle;
+            this.evaluationWindow.className = 'hub-panel';
+            this.evaluationWindow.style.cssText = 'position:absolute; top:44px; left:10px; width:240px;'
+                                                + ' pointer-events:none; display:flex; flex-direction:column; border-radius:10px;';
             this.hub.appendChild( this.evaluationWindow );
 
-            var bg1 = this.addButton(this.evaluationWindow, 'X', [16,16,14], 'position:absolute; right:10px; top:10px;');
-            bg1.addEventListener('click',  function(e){ e.preventDefault(); _this.closeEval(); }, false);
+            this.evaluationWindow.appendChild( this.makeWindowHeader('City Evaluation', function(){ _this.closeEval(); }) );
+
+            var body = document.createElement('div');
+            body.style.cssText = 'padding:10px 12px; pointer-events:none;';
+            this.evaluationWindow.appendChild( body );
 
             this.evaltOpinion = document.createElement('div');
-            this.evaltOpinion.style.cssText ='position:absolute; top:10px; left:10px; width:180px; height:100px; pointer-events:none; color:'+this.colors[0]+';';
-            this.evaluationWindow.appendChild( this.evaltOpinion );
+            this.evaltOpinion.style.cssText = 'pointer-events:none; color:' + this.colors[0] + '; font-size:12px; font-weight:600; margin-bottom:6px;';
+            body.appendChild( this.evaltOpinion );
 
-            this.evaltYes = document.createElement('div');
-            this.evaltYes.style.cssText ='position:absolute; top:46px; left:26px; width:60px; height:20px; pointer-events:none; color:#33FF33; font-size:16px; font-weight:bold;';
-            this.evaluationWindow.appendChild( this.evaltYes );
+            this.evaltYes = document.createElement('span');
+            this.evaltYes.style.cssText = 'color:#4bcc7a; font-size:16px; font-weight:bold; margin-right:20px;';
 
-            this.evaltNo = document.createElement('div');
-            this.evaltNo.style.cssText ='position:absolute; top:46px; right:26px; width:60px; height:20px; pointer-events:none; color:#FF3300;  font-size:16px; font-weight:bold;';
-            this.evaluationWindow.appendChild( this.evaltNo );
+            this.evaltNo = document.createElement('span');
+            this.evaltNo.style.cssText = 'color:#e05555; font-size:16px; font-weight:bold;';
+
+            var voteRow = document.createElement('div');
+            voteRow.style.cssText = 'margin-bottom:12px;';
+            voteRow.appendChild(this.evaltYes);
+            voteRow.appendChild(this.evaltNo);
+            body.appendChild(voteRow);
 
             this.evaltProb = document.createElement('div');
-            this.evaltProb.style.cssText ='position:absolute; top:100px; left:10px; width:180px; height:60px; pointer-events:none; color:'+this.colors[0]+'; font-size:16px; ';
-            this.evaluationWindow.appendChild( this.evaltProb );
+            this.evaltProb.style.cssText = 'pointer-events:none; color:' + this.colors[0] + '; font-size:13px; line-height:1.5; margin-bottom:10px;';
+            body.appendChild( this.evaltProb );
 
             this.evaltStats = document.createElement('div');
-            this.evaltStats.style.cssText ='position:absolute; top:175px; left:10px; width:180px; height:120px; pointer-events:none; color:'+this.colors[0]+'; font-size:12px; ';
-            this.evaluationWindow.appendChild( this.evaltStats );
+            this.evaltStats.style.cssText = 'pointer-events:none; color:' + this.colors[0] + '; font-size:12px; line-height:1.6; margin-bottom:10px;';
+            body.appendChild( this.evaltStats );
 
-            this.evaltOpinion.innerHTML = "<b>Public opinion</b><br>Is the mayor doing a good job ?<br> <br> <br> <br>What are the worst problems ?<br>";
+            this.evaltExtended = document.createElement('div');
+            this.evaltExtended.style.cssText = 'pointer-events:none; color:' + this.colors[0] + '; font-size:12px; line-height:1.6;'
+                                              + ' border-top:1px solid rgba(100,160,220,0.22); padding-top:8px;';
+            body.appendChild( this.evaltExtended );
+
+            this.evaltOpinion.innerHTML = '<b>Public Opinion</b><br><span style="font-size:11px; color:rgba(180,210,240,0.6);">Is the mayor doing a good job?</span>';
 
         } else {
-            this.evaluationWindow.style.display = 'block';
+            this.evaluationWindow.style.display = 'flex';
         }
 
-        this.evaltYes.innerHTML = 'YES:' + data[0] + '%';
-        this.evaltNo.innerHTML = 'NO:' +(100-data[0] )+ '%';
+        this.evaltYes.innerHTML = 'YES: ' + data[0] + '%';
+        this.evaltNo.innerHTML  = 'NO: ' + (100 - data[0]) + '%';
 
-        this.evaltProb.innerHTML = data[1];
+        this.evaltProb.innerHTML = '<b style="font-size:10px; letter-spacing:0.08em; color:rgba(180,210,240,0.6);">WORST PROBLEMS</b><br>' + data[1];
 
-        this.evaltStats.innerHTML = '<b>City Statistics</b><br>'
-            + '<span style="display:inline-block;width:70px">Crime:</span>' + data[2] + '<br>'
-            + '<span style="display:inline-block;width:70px">Pollution:</span>' + data[3] + '<br>'
-            + '<span style="display:inline-block;width:70px">Traffic:</span>' + data[4] + '<br>';
+        var lblStyle = 'display:inline-block;width:90px;color:rgba(180,210,240,0.6);';
+        this.evaltStats.innerHTML = '<b style="font-size:10px; letter-spacing:0.08em; color:rgba(180,210,240,0.6);">CITY STATISTICS</b><br>'
+            + '<span style="' + lblStyle + '">Crime:</span>'     + data[2] + '<br>'
+            + '<span style="' + lblStyle + '">Pollution:</span>' + data[3] + '<br>'
+            + '<span style="' + lblStyle + '">Traffic:</span>'   + data[4] + '<br>';
 
-        this.evaluationWindow.className = "open";
+        // Extended statistics
+        var eduLevel = data[5] || 0;
+        var healthLevel = data[6] || 0;
+        var happiness = data[7] || 50;
+        var unemployment = data[8] || 0;
+        var season = data[9] || 'Spring';
+
+        var happyColor = happiness >= 70 ? '#4bcc7a' : happiness >= 40 ? '#f0b84a' : '#e05555';
+        var eduStr = this._getLevelString(eduLevel, 200, ['None', 'Poor', 'Basic', 'Good', 'Excellent']);
+        var healthStr = this._getLevelString(healthLevel, 200, ['Critical', 'Poor', 'Fair', 'Good', 'Excellent']);
+
+        this.evaltExtended.innerHTML = '<b style="font-size:10px; letter-spacing:0.08em; color:rgba(180,210,240,0.6);">CITY WELL-BEING</b><br>'
+            + '<span style="' + lblStyle + '">Season:</span><span style="color:#4a9edd;">' + season + '</span><br>'
+            + '<span style="' + lblStyle + '">Education:</span>' + eduStr + '<br>'
+            + '<span style="' + lblStyle + '">Health:</span>' + healthStr + '<br>'
+            + '<span style="' + lblStyle + '">Unemployment:</span>' + unemployment + '%<br>'
+            + '<span style="' + lblStyle + '">Happiness:</span><span style="color:' + happyColor + '; font-weight:bold;">' + happiness + '%</span>';
+
+        this.evaluationWindow.dataset.state = 'open';
     }
 
     closeEval  (){
         this.evaluationWindow.style.display = 'none';
-        this.evaluationWindow.className = "close";
+        this.evaluationWindow.dataset.state = 'close';
     }
 
     //-----------------------------------EXIT WINDOW
@@ -9109,47 +9260,35 @@ class Hub {
 
         if(this.exitWindow == null){
             this.exitWindow = document.createElement('div');
-            this.exitWindow.style.cssText =this.radius+ 'position:absolute; width:140px; height:180px; pointer-events:none; display:block;'+ this.windowsStyle;            this.hub.appendChild( this.exitWindow );
+            this.exitWindow.className = 'hub-panel';
+            this.exitWindow.style.cssText = 'position:absolute; top:44px; left:10px; width:180px;'
+                                          + ' pointer-events:none; display:flex; flex-direction:column; border-radius:10px;';
+            this.hub.appendChild( this.exitWindow );
 
-            var bg1 = this.addButton(this.exitWindow, 'X', [16,16,14], 'position:absolute; left:50px; top:10px;');
-            var bg2 = this.addButton(this.exitWindow, 'NEW MAP', [96,16,14], 'position:absolute; left:10px; top:50px;');
-            var bg3 = this.addButton(this.exitWindow, 'SAVE', [96,16,14], 'position:absolute; left:10px; top:90px;');
-            var bg4 = this.addButton(this.exitWindow, 'LOAD', [96,16,14], 'position:absolute; left:10px; top:130px;');
+            this.exitWindow.appendChild( this.makeWindowHeader('Save / Load', function(){ _this.closeExit(); }) );
 
-            bg1.addEventListener('click',  function(e){ e.preventDefault(); _this.closeExit(); }, false);
-            bg2.addEventListener('click',  function(e){ e.preventDefault(); Main.newGameMap(); }, false);
-            bg3.addEventListener('click',  function(e){ e.preventDefault(); Main.saveGame(); }, false);
-            bg4.addEventListener('click',  function(e){ e.preventDefault(); Main.loadGame(); }, false);
+            var body = document.createElement('div');
+            body.style.cssText = 'padding:10px 12px; pointer-events:none; display:flex; flex-direction:column; gap:8px;';
+            this.exitWindow.appendChild( body );
 
-            /*var x = document.createElement("INPUT");
-            x.setAttribute("id", "fileToLoad");
-            x.setAttribute("type", "file");
-            x.style.cssText = "pointer-events:auto; opacity:0; position:absolute; left:10px; top:130px; width:120px; height:40px; overflow:hidden;";
-            */
-           // x.addEventListener( 'mouseover', function ( e ) { e.preventDefault(); bg4.style.border = '4px solid '+_this.colors[0];  bg4.style.backgroundColor = _this.colors[0]; bg4.style.color = _this.colors[1]; }, false );
+            var bg2 = this.addButton(body, 'NEW MAP',  [138, 26, 11], null);
+            var bg3 = this.addButton(body, 'SAVE',     [138, 26, 11], null);
+            var bg4 = this.addButton(body, 'LOAD',     [138, 26, 11], null);
 
-           // x.addEventListener( 'mouseout', function ( e ) { e.preventDefault(); bg4.style.border = '4px solid '+_this.colors[1]; bg4.style.backgroundColor = _this.colors[1]; bg4.style.color = _this.colors[0];  }, false );
-
-           // x.addEventListener( 'mouseover', function ( e ) { e.preventDefault();  bg4.style.backgroundColor = _this.colors[2]; }, false );
-           // x.addEventListener( 'mouseout', function ( e ) { e.preventDefault();  bg4.style.backgroundColor = _this.colors[1];  }, false );
-
-            //x.addEventListener('change', loadGame, false);
-
-
-            //"fileToLoad"
-            //this.exitWindow.appendChild( x );
+            bg2.addEventListener('click', function(e){ e.preventDefault(); Main.newGameMap(); }, false);
+            bg3.addEventListener('click', function(e){ e.preventDefault(); Main.saveGame();   }, false);
+            bg4.addEventListener('click', function(e){ e.preventDefault(); Main.loadGame();   }, false);
 
         } else {
-            this.exitWindow.style.display = 'block';
-            //this.setBudgetValue();
+            this.exitWindow.style.display = 'flex';
         }
 
-        this.exitWindow.className = "open";
+        this.exitWindow.dataset.state = 'open';
     }
 
     closeExit  (){
         this.exitWindow.style.display = 'none';
-        this.exitWindow.className = "close";
+        this.exitWindow.dataset.state = 'close';
     }
 
 
@@ -9160,11 +9299,6 @@ class Hub {
 
         var test = this.testOpen();
         if(test == 'budget') return;
-
-        /*if(this.budgetWindow !== null && this.budgetWindow.className == "open"){
-            this.closeBudget(); 
-            return;
-        }*/
 
         this.dataKeys = ['roadFund', 'roadRate', 'fireFund', 'fireRate','policeFund', 'policeRate', 'taxRate', 'totalFunds', 'taxesCollected'];
 
@@ -9179,45 +9313,55 @@ class Hub {
 
         if(this.budgetWindow == null){
             this.budgetWindow = document.createElement('div');
-            this.budgetWindow.style.cssText =this.radius+ 'position:absolute; width:200px; height:300px; pointer-events:none; display:block;'+ this.windowsStyle;            this.hub.appendChild( this.budgetWindow );
+            this.budgetWindow.className = 'hub-panel';
+            this.budgetWindow.style.cssText = 'position:absolute; top:44px; left:10px; width:220px;'
+                                            + ' pointer-events:none; display:flex; flex-direction:column; border-radius:10px;';
+            this.hub.appendChild( this.budgetWindow );
 
-            this.addSlider(this.budgetWindow, 10, 'Tax', this.taxRate, null, 'green', 20);
-            this.addSlider(this.budgetWindow, 70, 'Roads', this.roadRate, this.roadFund, 'red', 100);
-            this.addSlider(this.budgetWindow, 110, 'Fire', this.fireRate, this.fireFund, 'red', 100);
-            this.addSlider(this.budgetWindow, 150, 'Police', this.policeRate, this.policeFund, 'red', 100);
+            this.budgetWindow.appendChild( this.makeWindowHeader('Budget', function(){ _this.closeBudget(); }) );
+
+            var body = document.createElement('div');
+            body.style.cssText = 'position:relative; height:264px; pointer-events:none;';
+            this.budgetWindow.appendChild( body );
+
+            this.addSlider(body, 10,  'Tax',    this.taxRate,    null,           '#4bcc7a', 20);
+            this.addSlider(body, 70,  'Roads',  this.roadRate,   this.roadFund,  '#e05555', 100);
+            this.addSlider(body, 110, 'Fire',   this.fireRate,   this.fireFund,  '#e05555', 100);
+            this.addSlider(body, 150, 'Police', this.policeRate, this.policeFund,'#e05555', 100);
 
             this.budgetResult = document.createElement('div');
-            this.budgetResult.style.cssText ='position:absolute; top:200px; left:10px; width:180px; height:300px; pointer-events:none; color:'+this.colors[0]+';';
-            
-            this.budgetWindow.appendChild( this.budgetResult );
+            this.budgetResult.style.cssText = 'position:absolute; top:200px; left:10px; width:200px;'
+                                            + ' pointer-events:none; color:' + this.colors[0] + '; font-size:12px; line-height:1.6;';
+            body.appendChild( this.budgetResult );
 
-            var bg1 = this.addButton(this.budgetWindow, 'CLOSE', [70,16,14], 'position:absolute; left:10px; bottom:10px;');
-            var bg2 = this.addButton(this.budgetWindow, 'APPLY', [70,16,14], 'position:absolute; rigth:10px; bottom:10px;');
+            var bg1 = this.addButton(body, 'CLOSE', [88, 22, 11], 'position:absolute; left:10px; bottom:10px;');
+            var bg2 = this.addButton(body, 'APPLY', [88, 22, 11], 'position:absolute; right:10px; bottom:10px;');
 
-            bg1.addEventListener('click',  function(e){ e.preventDefault(); _this.closeBudget(); }, false);
-            bg2.addEventListener('click',  function(e){ e.preventDefault(); _this.applyBudget(); }, false);
+            bg1.addEventListener('click', function(e){ e.preventDefault(); _this.closeBudget(); }, false);
+            bg2.addEventListener('click', function(e){ e.preventDefault(); _this.applyBudget(); }, false);
 
         } else {
-            this.budgetWindow.style.display = 'block';
+            this.budgetWindow.style.display = 'flex';
             this.setBudgetValue();
         }
 
-        this.budgetResult.innerHTML = "Annual receipts:" + cashFlow+"$"+"<br>Taxes collected:" + taxesCollected+"$";
+        this.budgetResult.innerHTML = '<span style="color:rgba(180,210,240,0.6)">Annual receipts:</span> ' + cashFlow + '$'
+                                    + '<br><span style="color:rgba(180,210,240,0.6)">Taxes collected:</span> ' + taxesCollected + '$';
 
-        this.budgetWindow.className = "open";
+        this.budgetWindow.dataset.state = 'open';
 
     }
 
     applyBudget  (){
         this.budgetWindow.style.display = 'none';
-        this.budgetWindow.className = "close";
+        this.budgetWindow.dataset.state = 'close';
 
         Main.setBudjet([this.taxRate, this.roadRate, this.fireRate, this.policeRate ]);
     }
 
     closeBudget  (){
         this.budgetWindow.style.display = 'none';
-        this.budgetWindow.className = "close";
+        this.budgetWindow.dataset.state = 'close';
     }
 
     setBudgetValue (){
@@ -9230,29 +9374,38 @@ class Hub {
     //-----------------------------------DISASTER WINDOW
 
     openDisaster  (){
+        var _this = this;
         var test = this.testOpen();
         if(test == 'disaster') return;
         if(this.disasterWindow == null){
             this.disasterWindow = document.createElement('div');
-            this.disasterWindow.style.cssText =this.radius+ 'position:absolute; width:140px; height:300px; pointer-events:none; display:block;'+ this.windowsStyle;            this.hub.appendChild( this.disasterWindow );
+            this.disasterWindow.className = 'hub-panel';
+            this.disasterWindow.style.cssText = 'position:absolute; top:44px; left:10px; width:180px;'
+                                              + ' pointer-events:none; display:flex; flex-direction:column; border-radius:10px;';
+            this.hub.appendChild( this.disasterWindow );
+
+            this.disasterWindow.appendChild( this.makeWindowHeader('Disasters', function(){ _this.closeDisaster(); }) );
+
+            var body = document.createElement('div');
+            body.style.cssText = 'padding:10px 12px; pointer-events:none; display:flex; flex-direction:column; gap:6px;';
+            this.disasterWindow.appendChild( body );
 
             for(var i=0; i<this.disasterTypes.length; i++){
-                this.disasterButtons[i] = this.addButton(this.disasterWindow, this.disasterTypes[i].toUpperCase(), [96,16,14],'position:absolute; left:10px; top:'+(10+(i*40))+'px;');
+                this.disasterButtons[i] = this.addButton(body, this.disasterTypes[i].toUpperCase(), [138, 24, 11], null);
                 this.disasterButtons[i].name = this.disasterTypes[i];
-                this.disasterButtons[i].addEventListener('click',  function(e){ e.preventDefault(); Main.setDisaster(this.name); }, false);
+                this.disasterButtons[i].addEventListener('click', function(e){ e.preventDefault(); Main.setDisaster(this.name); }, false);
             }
         } else {
-            this.disasterWindow.style.display = 'block';
-            //this.setBudgetValue();
+            this.disasterWindow.style.display = 'flex';
         }
 
-        this.disasterWindow.className = "open";
+        this.disasterWindow.dataset.state = 'open';
 
     }
 
     closeDisaster  (){
         this.disasterWindow.style.display = 'none';
-        this.disasterWindow.className = "close";
+        this.disasterWindow.dataset.state = 'close';
     }
 
 
@@ -9546,6 +9699,142 @@ class Hub {
 
         target.appendChild( b );
         return b;
+    }
+
+    //-----------------------------------HELPER
+
+    _getLevelString  (value, maxValue, strings) {
+        var idx = Math.floor((value / maxValue) * (strings.length - 1));
+        idx = Math.max(0, Math.min(idx, strings.length - 1));
+        var colors = ['#e05555', '#e07744', '#f0b84a', '#8bcc5a', '#4bcc7a'];
+        return '<span style="color:' + colors[idx] + ';">' + strings[idx] + '</span>';
+    }
+
+    //-----------------------------------ACHIEVEMENTS WINDOW
+
+    openAchievements  (data, progress){
+        var _this = this;
+
+        var test = this.testOpen();
+        if(test == 'achievements') return;
+
+        if(this.achievementsWindow == null){
+            this.achievementsWindow = document.createElement('div');
+            this.achievementsWindow.className = 'hub-panel';
+            this.achievementsWindow.style.cssText = 'position:absolute; top:44px; left:10px; width:260px; max-height:400px;'
+                                                   + ' pointer-events:none; display:flex; flex-direction:column; border-radius:10px;';
+            this.hub.appendChild( this.achievementsWindow );
+
+            this.achievementsWindow.appendChild( this.makeWindowHeader('Awards', function(){ _this.closeAchievements(); }) );
+
+            this.achBody = document.createElement('div');
+            this.achBody.style.cssText = 'padding:10px 12px; pointer-events:auto; overflow-y:auto; max-height:340px;';
+            this.achievementsWindow.appendChild( this.achBody );
+
+        } else {
+            this.achievementsWindow.style.display = 'flex';
+        }
+
+        // Populate achievements
+        var html = '<div style="font-size:11px; color:rgba(180,210,240,0.6); margin-bottom:8px;">'
+                 + 'Progress: <span style="color:#4a9edd; font-weight:bold;">' + progress.unlocked + '</span> / ' + progress.total + '</div>';
+
+        for (var i = 0; i < data.length; i++) {
+            var ach = data[i];
+            var unlocked = ach.unlocked;
+            var bgColor = unlocked ? 'rgba(74,158,221,0.15)' : 'rgba(20,30,48,0.5)';
+            var borderColor = unlocked ? 'rgba(74,158,221,0.4)' : 'rgba(100,160,220,0.15)';
+            var iconColor = unlocked ? '#f0b84a' : 'rgba(180,210,240,0.3)';
+            var nameColor = unlocked ? '#dce8f5' : 'rgba(180,210,240,0.4)';
+            var descColor = unlocked ? 'rgba(180,210,240,0.7)' : 'rgba(180,210,240,0.25)';
+            var icon = unlocked ? '★' : '☆';
+
+            html += '<div style="display:flex; align-items:center; gap:8px; padding:6px 8px; margin-bottom:4px;'
+                  + ' background:' + bgColor + '; border:1px solid ' + borderColor + '; border-radius:6px;">'
+                  + '<span style="font-size:18px; color:' + iconColor + ';">' + icon + '</span>'
+                  + '<div><div style="font-size:12px; font-weight:600; color:' + nameColor + ';">' + ach.name + '</div>'
+                  + '<div style="font-size:10px; color:' + descColor + ';">' + ach.desc + '</div></div></div>';
+        }
+
+        this.achBody.innerHTML = html;
+        this.achievementsWindow.dataset.state = 'open';
+    }
+
+    closeAchievements  (){
+        this.achievementsWindow.style.display = 'none';
+        this.achievementsWindow.dataset.state = 'close';
+    }
+
+    //-----------------------------------HISTORY WINDOW
+
+    openHistory  (data){
+        var _this = this;
+
+        var test = this.testOpen();
+        if(test == 'history') return;
+
+        if(this.historyWindow == null){
+            this.historyWindow = document.createElement('div');
+            this.historyWindow.className = 'hub-panel';
+            this.historyWindow.style.cssText = 'position:absolute; top:44px; left:10px; width:280px; max-height:400px;'
+                                              + ' pointer-events:none; display:flex; flex-direction:column; border-radius:10px;';
+            this.hub.appendChild( this.historyWindow );
+
+            this.historyWindow.appendChild( this.makeWindowHeader('City History', function(){ _this.closeHistory(); }) );
+
+            this.histBody = document.createElement('div');
+            this.histBody.style.cssText = 'padding:10px 12px; pointer-events:auto; overflow-y:auto; max-height:340px;';
+            this.historyWindow.appendChild( this.histBody );
+
+        } else {
+            this.historyWindow.style.display = 'flex';
+        }
+
+        var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+        var html = '';
+        if (!data || data.length === 0) {
+            html = '<div style="font-size:12px; color:rgba(180,210,240,0.5); text-align:center; padding:20px;">No events recorded yet</div>';
+        } else {
+            for (var i = 0; i < data.length; i++) {
+                var evt = data[i];
+                var typeColors = {
+                    milestone: '#4bcc7a',
+                    disaster: '#e05555',
+                    achievement: '#f0b84a',
+                    economic: '#4a9edd',
+                    growth: '#8bcc5a',
+                    season: '#b088e0'
+                };
+                var typeIcons = {
+                    milestone: '◆',
+                    disaster: '⚠',
+                    achievement: '★',
+                    economic: '$',
+                    growth: '▲',
+                    season: '◐'
+                };
+                var color = typeColors[evt.type] || '#dce8f5';
+                var icon = typeIcons[evt.type] || '•';
+                var monthStr = months[evt.month] || '???';
+                var dateStr = monthStr + ' ' + evt.year;
+
+                html += '<div style="display:flex; gap:8px; padding:5px 0; border-bottom:1px solid rgba(100,160,220,0.1);">'
+                      + '<span style="color:' + color + '; font-size:14px; min-width:16px; text-align:center;">' + icon + '</span>'
+                      + '<div style="flex:1;">'
+                      + '<div style="font-size:11px; color:rgba(180,210,240,0.5);">' + dateStr + '</div>'
+                      + '<div style="font-size:12px; color:#dce8f5;">' + evt.desc + '</div>'
+                      + '</div></div>';
+            }
+        }
+
+        this.histBody.innerHTML = html;
+        this.historyWindow.dataset.state = 'open';
+    }
+
+    closeHistory  (){
+        this.historyWindow.style.display = 'none';
+        this.historyWindow.dataset.state = 'close';
     }
 
     clearElement  (id){
@@ -64474,6 +64763,14 @@ class Main {
         post({ tell:"EVAL" });
     }
 
+    static getAchievements() {
+        post({ tell:"ACHIEVEMENTS" });
+    }
+
+    static getHistory() {
+        post({ tell:"HISTORY" });
+    }
+
     static setDisaster(disaster){
         post({ tell:"DISASTER", disaster:disaster });
     }
@@ -64622,6 +64919,12 @@ function message( e ) {
     }
     if( phase == "EVAL"){
         hub.openEval(e.data.evalData);
+    }
+    if( phase == "ACHIEVEMENTS"){
+        hub.openAchievements(e.data.achData, e.data.progress);
+    }
+    if( phase == "HISTORY"){
+        hub.openHistory(e.data.historyData);
     }
     if( phase == "SAVEGAME"){
         makeGameSave(e.data.gameData, e.data.key);

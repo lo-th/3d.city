@@ -77,6 +77,13 @@ export class Census {
         this.seaportPop = 0;
         this.airportPop = 0;
 
+        // Education is derived from hospitals + churches + land value
+        this.educationLevel = 0;
+        // Health is derived from hospitals + pollution (inverse)
+        this.healthLevel = 0;
+        // Happiness combines many factors
+        this.happinessLevel = 50;
+
     }
 
     take10Census ( budget ) {

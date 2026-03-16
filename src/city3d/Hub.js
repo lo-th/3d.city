@@ -68,13 +68,15 @@ export class Hub {
                           + ' background:rgba(14,22,38,0.90); box-shadow:0 8px 32px rgba(0,0,0,0.55);'
                           + ' backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);';
 
-        this.budgetWindow     = null;
-        this.evaluationWindow = null;
-        this.disasterWindow   = null;
-        this.exitWindow       = null;
-        this.queryWindow      = null;
-        this.overlaysWindow   = null;
-        this.aboutWindow      = null;
+        this.budgetWindow       = null;
+        this.evaluationWindow   = null;
+        this.disasterWindow     = null;
+        this.exitWindow         = null;
+        this.queryWindow        = null;
+        this.overlaysWindow     = null;
+        this.aboutWindow        = null;
+        this.achievementsWindow = null;
+        this.historyWindow      = null;
 
         this.selector = null;
         this.select   = null;
@@ -248,6 +250,12 @@ export class Hub {
         var b5 = this.addButton(topBar, 'About',   [60,22,11], null, true);
         b5.addEventListener('click', function(e){ e.preventDefault(); _this.openAbout(); }, false);
 
+        var b6 = this.addButton(topBar, 'Awards', [60,22,11], null, true);
+        b6.addEventListener('click', function(e){ e.preventDefault(); Main.getAchievements(); }, false);
+
+        var b7 = this.addButton(topBar, 'History', [65,22,11], null, true);
+        b7.addEventListener('click', function(e){ e.preventDefault(); Main.getHistory(); }, false);
+
         // Speed selector is appended to the topBar in addSelector below
 
         // ── Tool panel ────────────────────────────────────────────────
@@ -368,6 +376,8 @@ export class Hub {
                 case 'e': case 'E': Main.getEval();          break;
                 case 'd': case 'D': _this.openDisaster();    break;
                 case 's': case 'S': _this.openExit();        break;
+                case 'a': case 'A': Main.getAchievements(); break;
+                case 'h': case 'H': Main.getHistory();      break;
             }
         }, false);
     }
@@ -404,6 +414,18 @@ export class Hub {
                                      + ' color:rgba(74,158,221,0.85); padding: 0 12px; border-right:1px solid rgba(100,160,220,0.22);';
         this.statusBar.appendChild( this.cityClass );
 
+        // Season indicator
+        this.seasonIndicator = document.createElement('div');
+        this.seasonIndicator.style.cssText = 'font-size:10px; font-weight:600; letter-spacing:0.06em;'
+                                           + ' color:rgba(176,136,224,0.85); padding: 0 8px; border-right:1px solid rgba(100,160,220,0.22);';
+        this.statusBar.appendChild( this.seasonIndicator );
+
+        // Happiness indicator
+        this.happinessIndicator = document.createElement('div');
+        this.happinessIndicator.style.cssText = 'font-size:10px; font-weight:600; letter-spacing:0.06em;'
+                                              + ' padding: 0 8px; border-right:1px solid rgba(100,160,220,0.22);';
+        this.statusBar.appendChild( this.happinessIndicator );
+
         // RCI block (inline in status bar)
         this.initRCI();
 
@@ -421,6 +443,21 @@ export class Hub {
         this.cityClass.textContent  = infos[1];
         this.msg.textContent        = infos[8];
         this.updateRCI( infos[5], infos[6], infos[7] );
+
+        // Season display
+        var seasonNames = ['Spring', 'Summer', 'Autumn', 'Winter'];
+        var seasonIcons = ['🌱', '☀', '🍂', '❄'];
+        var seasonIdx = infos[17] || 0;
+        if (this.seasonIndicator) {
+            this.seasonIndicator.textContent = seasonIcons[seasonIdx] + ' ' + seasonNames[seasonIdx];
+        }
+
+        // Happiness display
+        var happiness = infos[16] || 50;
+        var happyColor = happiness >= 70 ? '#4bcc7a' : happiness >= 40 ? '#f0b84a' : '#e05555';
+        if (this.happinessIndicator) {
+            this.happinessIndicator.innerHTML = '<span style="color:' + happyColor + ';">☺ ' + happiness + '%</span>';
+        }
     }
 
     //-----------------------------------QUERY
@@ -479,6 +516,14 @@ export class Hub {
             this.closeAbout();
             t = 'about';
         }
+        if(this.achievementsWindow !== null && this.achievementsWindow.dataset.state === 'open'){
+            this.closeAchievements();
+            t = 'achievements';
+        }
+        if(this.historyWindow !== null && this.historyWindow.dataset.state === 'open'){
+            this.closeHistory();
+            t = 'history';
+        }
 
         return t;
 
@@ -525,6 +570,8 @@ export class Hub {
                              + '<span class="hub-kbd">E</span> Eval<br>'
                              + '<span class="hub-kbd">D</span> Disaster &nbsp;'
                              + '<span class="hub-kbd">S</span> Save/Load<br>'
+                             + '<span class="hub-kbd">A</span> Awards &nbsp;'
+                             + '<span class="hub-kbd">H</span> History<br>'
                              + '<span class="hub-kbd">Esc</span> Close window';
             body.appendChild( kbdDiv );
 
@@ -642,40 +689,44 @@ export class Hub {
         if(this.evaluationWindow == null){
             this.evaluationWindow = document.createElement('div');
             this.evaluationWindow.className = 'hub-panel';
-            this.evaluationWindow.style.cssText = 'position:absolute; top:44px; left:10px; width:220px;'
+            this.evaluationWindow.style.cssText = 'position:absolute; top:44px; left:10px; width:240px;'
                                                 + ' pointer-events:none; display:flex; flex-direction:column; border-radius:10px;';
             this.hub.appendChild( this.evaluationWindow );
 
             this.evaluationWindow.appendChild( this.makeWindowHeader('City Evaluation', function(){ _this.closeEval(); }) );
 
             var body = document.createElement('div');
-            body.style.cssText = 'position:relative; height:268px; pointer-events:none;';
+            body.style.cssText = 'padding:10px 12px; pointer-events:none;';
             this.evaluationWindow.appendChild( body );
 
             this.evaltOpinion = document.createElement('div');
-            this.evaltOpinion.style.cssText = 'position:absolute; top:10px; left:10px; width:200px; height:30px;'
-                                            + ' pointer-events:none; color:' + this.colors[0] + '; font-size:12px; font-weight:600;';
+            this.evaltOpinion.style.cssText = 'pointer-events:none; color:' + this.colors[0] + '; font-size:12px; font-weight:600; margin-bottom:6px;';
             body.appendChild( this.evaltOpinion );
 
-            this.evaltYes = document.createElement('div');
-            this.evaltYes.style.cssText = 'position:absolute; top:46px; left:26px; width:80px; height:20px;'
-                                        + ' pointer-events:none; color:#4bcc7a; font-size:16px; font-weight:bold;';
-            body.appendChild( this.evaltYes );
+            this.evaltYes = document.createElement('span');
+            this.evaltYes.style.cssText = 'color:#4bcc7a; font-size:16px; font-weight:bold; margin-right:20px;';
 
-            this.evaltNo = document.createElement('div');
-            this.evaltNo.style.cssText = 'position:absolute; top:46px; right:26px; width:80px; height:20px;'
-                                       + ' pointer-events:none; color:#e05555; font-size:16px; font-weight:bold;';
-            body.appendChild( this.evaltNo );
+            this.evaltNo = document.createElement('span');
+            this.evaltNo.style.cssText = 'color:#e05555; font-size:16px; font-weight:bold;';
+
+            var voteRow = document.createElement('div');
+            voteRow.style.cssText = 'margin-bottom:12px;';
+            voteRow.appendChild(this.evaltYes);
+            voteRow.appendChild(this.evaltNo);
+            body.appendChild(voteRow);
 
             this.evaltProb = document.createElement('div');
-            this.evaltProb.style.cssText = 'position:absolute; top:95px; left:10px; width:200px; height:60px;'
-                                         + ' pointer-events:none; color:' + this.colors[0] + '; font-size:13px; line-height:1.5;';
+            this.evaltProb.style.cssText = 'pointer-events:none; color:' + this.colors[0] + '; font-size:13px; line-height:1.5; margin-bottom:10px;';
             body.appendChild( this.evaltProb );
 
             this.evaltStats = document.createElement('div');
-            this.evaltStats.style.cssText = 'position:absolute; top:168px; left:10px; width:200px; height:100px;'
-                                          + ' pointer-events:none; color:' + this.colors[0] + '; font-size:12px; line-height:1.6;';
+            this.evaltStats.style.cssText = 'pointer-events:none; color:' + this.colors[0] + '; font-size:12px; line-height:1.6; margin-bottom:10px;';
             body.appendChild( this.evaltStats );
+
+            this.evaltExtended = document.createElement('div');
+            this.evaltExtended.style.cssText = 'pointer-events:none; color:' + this.colors[0] + '; font-size:12px; line-height:1.6;'
+                                              + ' border-top:1px solid rgba(100,160,220,0.22); padding-top:8px;';
+            body.appendChild( this.evaltExtended );
 
             this.evaltOpinion.innerHTML = '<b>Public Opinion</b><br><span style="font-size:11px; color:rgba(180,210,240,0.6);">Is the mayor doing a good job?</span>';
 
@@ -688,10 +739,29 @@ export class Hub {
 
         this.evaltProb.innerHTML = '<b style="font-size:10px; letter-spacing:0.08em; color:rgba(180,210,240,0.6);">WORST PROBLEMS</b><br>' + data[1];
 
+        var lblStyle = 'display:inline-block;width:90px;color:rgba(180,210,240,0.6);';
         this.evaltStats.innerHTML = '<b style="font-size:10px; letter-spacing:0.08em; color:rgba(180,210,240,0.6);">CITY STATISTICS</b><br>'
-            + '<span style="display:inline-block;width:80px">Crime:</span>'     + data[2] + '<br>'
-            + '<span style="display:inline-block;width:80px">Pollution:</span>' + data[3] + '<br>'
-            + '<span style="display:inline-block;width:80px">Traffic:</span>'   + data[4] + '<br>';
+            + '<span style="' + lblStyle + '">Crime:</span>'     + data[2] + '<br>'
+            + '<span style="' + lblStyle + '">Pollution:</span>' + data[3] + '<br>'
+            + '<span style="' + lblStyle + '">Traffic:</span>'   + data[4] + '<br>';
+
+        // Extended statistics
+        var eduLevel = data[5] || 0;
+        var healthLevel = data[6] || 0;
+        var happiness = data[7] || 50;
+        var unemployment = data[8] || 0;
+        var season = data[9] || 'Spring';
+
+        var happyColor = happiness >= 70 ? '#4bcc7a' : happiness >= 40 ? '#f0b84a' : '#e05555';
+        var eduStr = this._getLevelString(eduLevel, 200, ['None', 'Poor', 'Basic', 'Good', 'Excellent']);
+        var healthStr = this._getLevelString(healthLevel, 200, ['Critical', 'Poor', 'Fair', 'Good', 'Excellent']);
+
+        this.evaltExtended.innerHTML = '<b style="font-size:10px; letter-spacing:0.08em; color:rgba(180,210,240,0.6);">CITY WELL-BEING</b><br>'
+            + '<span style="' + lblStyle + '">Season:</span><span style="color:#4a9edd;">' + season + '</span><br>'
+            + '<span style="' + lblStyle + '">Education:</span>' + eduStr + '<br>'
+            + '<span style="' + lblStyle + '">Health:</span>' + healthStr + '<br>'
+            + '<span style="' + lblStyle + '">Unemployment:</span>' + unemployment + '%<br>'
+            + '<span style="' + lblStyle + '">Happiness:</span><span style="color:' + happyColor + '; font-weight:bold;">' + happiness + '%</span>';
 
         this.evaluationWindow.dataset.state = 'open';
     }
@@ -1153,6 +1223,142 @@ export class Hub {
 
         target.appendChild( b );
         return b;
+    }
+
+    //-----------------------------------HELPER
+
+    _getLevelString  (value, maxValue, strings) {
+        var idx = Math.floor((value / maxValue) * (strings.length - 1));
+        idx = Math.max(0, Math.min(idx, strings.length - 1));
+        var colors = ['#e05555', '#e07744', '#f0b84a', '#8bcc5a', '#4bcc7a'];
+        return '<span style="color:' + colors[idx] + ';">' + strings[idx] + '</span>';
+    }
+
+    //-----------------------------------ACHIEVEMENTS WINDOW
+
+    openAchievements  (data, progress){
+        var _this = this;
+
+        var test = this.testOpen();
+        if(test == 'achievements') return;
+
+        if(this.achievementsWindow == null){
+            this.achievementsWindow = document.createElement('div');
+            this.achievementsWindow.className = 'hub-panel';
+            this.achievementsWindow.style.cssText = 'position:absolute; top:44px; left:10px; width:260px; max-height:400px;'
+                                                   + ' pointer-events:none; display:flex; flex-direction:column; border-radius:10px;';
+            this.hub.appendChild( this.achievementsWindow );
+
+            this.achievementsWindow.appendChild( this.makeWindowHeader('Awards', function(){ _this.closeAchievements(); }) );
+
+            this.achBody = document.createElement('div');
+            this.achBody.style.cssText = 'padding:10px 12px; pointer-events:auto; overflow-y:auto; max-height:340px;';
+            this.achievementsWindow.appendChild( this.achBody );
+
+        } else {
+            this.achievementsWindow.style.display = 'flex';
+        }
+
+        // Populate achievements
+        var html = '<div style="font-size:11px; color:rgba(180,210,240,0.6); margin-bottom:8px;">'
+                 + 'Progress: <span style="color:#4a9edd; font-weight:bold;">' + progress.unlocked + '</span> / ' + progress.total + '</div>';
+
+        for (var i = 0; i < data.length; i++) {
+            var ach = data[i];
+            var unlocked = ach.unlocked;
+            var bgColor = unlocked ? 'rgba(74,158,221,0.15)' : 'rgba(20,30,48,0.5)';
+            var borderColor = unlocked ? 'rgba(74,158,221,0.4)' : 'rgba(100,160,220,0.15)';
+            var iconColor = unlocked ? '#f0b84a' : 'rgba(180,210,240,0.3)';
+            var nameColor = unlocked ? '#dce8f5' : 'rgba(180,210,240,0.4)';
+            var descColor = unlocked ? 'rgba(180,210,240,0.7)' : 'rgba(180,210,240,0.25)';
+            var icon = unlocked ? '★' : '☆';
+
+            html += '<div style="display:flex; align-items:center; gap:8px; padding:6px 8px; margin-bottom:4px;'
+                  + ' background:' + bgColor + '; border:1px solid ' + borderColor + '; border-radius:6px;">'
+                  + '<span style="font-size:18px; color:' + iconColor + ';">' + icon + '</span>'
+                  + '<div><div style="font-size:12px; font-weight:600; color:' + nameColor + ';">' + ach.name + '</div>'
+                  + '<div style="font-size:10px; color:' + descColor + ';">' + ach.desc + '</div></div></div>';
+        }
+
+        this.achBody.innerHTML = html;
+        this.achievementsWindow.dataset.state = 'open';
+    }
+
+    closeAchievements  (){
+        this.achievementsWindow.style.display = 'none';
+        this.achievementsWindow.dataset.state = 'close';
+    }
+
+    //-----------------------------------HISTORY WINDOW
+
+    openHistory  (data){
+        var _this = this;
+
+        var test = this.testOpen();
+        if(test == 'history') return;
+
+        if(this.historyWindow == null){
+            this.historyWindow = document.createElement('div');
+            this.historyWindow.className = 'hub-panel';
+            this.historyWindow.style.cssText = 'position:absolute; top:44px; left:10px; width:280px; max-height:400px;'
+                                              + ' pointer-events:none; display:flex; flex-direction:column; border-radius:10px;';
+            this.hub.appendChild( this.historyWindow );
+
+            this.historyWindow.appendChild( this.makeWindowHeader('City History', function(){ _this.closeHistory(); }) );
+
+            this.histBody = document.createElement('div');
+            this.histBody.style.cssText = 'padding:10px 12px; pointer-events:auto; overflow-y:auto; max-height:340px;';
+            this.historyWindow.appendChild( this.histBody );
+
+        } else {
+            this.historyWindow.style.display = 'flex';
+        }
+
+        var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+        var html = '';
+        if (!data || data.length === 0) {
+            html = '<div style="font-size:12px; color:rgba(180,210,240,0.5); text-align:center; padding:20px;">No events recorded yet</div>';
+        } else {
+            for (var i = 0; i < data.length; i++) {
+                var evt = data[i];
+                var typeColors = {
+                    milestone: '#4bcc7a',
+                    disaster: '#e05555',
+                    achievement: '#f0b84a',
+                    economic: '#4a9edd',
+                    growth: '#8bcc5a',
+                    season: '#b088e0'
+                };
+                var typeIcons = {
+                    milestone: '◆',
+                    disaster: '⚠',
+                    achievement: '★',
+                    economic: '$',
+                    growth: '▲',
+                    season: '◐'
+                };
+                var color = typeColors[evt.type] || '#dce8f5';
+                var icon = typeIcons[evt.type] || '•';
+                var monthStr = months[evt.month] || '???';
+                var dateStr = monthStr + ' ' + evt.year;
+
+                html += '<div style="display:flex; gap:8px; padding:5px 0; border-bottom:1px solid rgba(100,160,220,0.1);">'
+                      + '<span style="color:' + color + '; font-size:14px; min-width:16px; text-align:center;">' + icon + '</span>'
+                      + '<div style="flex:1;">'
+                      + '<div style="font-size:11px; color:rgba(180,210,240,0.5);">' + dateStr + '</div>'
+                      + '<div style="font-size:12px; color:#dce8f5;">' + evt.desc + '</div>'
+                      + '</div></div>';
+            }
+        }
+
+        this.histBody.innerHTML = html;
+        this.historyWindow.dataset.state = 'open';
+    }
+
+    closeHistory  (){
+        this.historyWindow.style.display = 'none';
+        this.historyWindow.dataset.state = 'close';
     }
 
     clearElement  (id){

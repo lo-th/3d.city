@@ -39,7 +39,7 @@ export class DisasterManager {
         //Object.defineProperty(this, 'disastersEnabled', MiscUtils.mcd(false));
     }
 
-    doDisasters ( census ) {
+    doDisasters ( census, fireRiskMod ) {
 
         if (this._floodCount) this._floodCount--;
 
@@ -47,7 +47,11 @@ export class DisasterManager {
 
         if (!this.disastersEnabled) return;
 
-        if (!math.getRandom(Micro.DisChance[this._gameLevel])) {
+        let disasterChance = Micro.DisChance[this._gameLevel];
+        // Season modifier makes disasters more/less likely
+        if (fireRiskMod && fireRiskMod > 1) disasterChance = Math.floor(disasterChance / fireRiskMod);
+
+        if (!math.getRandom(disasterChance)) {
             switch (math.getRandom(8)) {
                 case 0:
                 case 1: this.setFire(); break;

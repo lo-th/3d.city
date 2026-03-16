@@ -144,6 +144,14 @@
 		directionTable: [0, 3, 2, 1, 3, 4, 5, 7, 6, 5, 7, 8, 1],
 		SMOOTH_NEIGHBOURS_THEN_BLOCK: 0,
 		SMOOTH_ALL_THEN_CLAMP: 1,
+		// Seasons
+		SEASON_SPRING: 0,
+		SEASON_SUMMER: 1,
+		SEASON_AUTUMN: 2,
+		SEASON_WINTER: 3,
+		// Education & Health thresholds
+		EDUCATION_EFFECT_RANGE: 200,
+		HEALTH_EFFECT_RANGE: 200,
 		simData: null,
 		messageManager: null
 	};
@@ -1089,6 +1097,7 @@
 		NEED_AIRPORT: MiscUtils.mcd('Airport needed'),
 		NEED_ELECTRICITY: MiscUtils.mcd('More power needed'),
 		NEED_FIRE_STATION: MiscUtils.mcd('Fire station needed'),
+		NEED_HOSPITAL: MiscUtils.mcd('Hospital needed'),
 		NEED_MORE_COMMERCIAL: MiscUtils.mcd('More commercial zones needed'),
 		NEED_MORE_INDUSTRIAL: MiscUtils.mcd('More industrial zones needed'),
 		NEED_MORE_RAILS: MiscUtils.mcd('More railways needed'),
@@ -1137,7 +1146,18 @@
 		TRAIN_CRASHED: MiscUtils.mcd('Train crashed'),
 		VALVES_UPDATED: MiscUtils.mcd('Valves updated'),
 		WELCOME: MiscUtils.mcd('Welcome to micropolisJS'),
-		WELCOMEBACK: MiscUtils.mcd('Welcome back to your 3D city')
+		WELCOMEBACK: MiscUtils.mcd('Welcome back to your 3D city'),
+		// Achievements
+		ACHIEVEMENT_UNLOCKED: MiscUtils.mcd('Achievement unlocked'),
+		// Seasons
+		SEASON_CHANGED: MiscUtils.mcd('Season changed'),
+		HEAT_WAVE: MiscUtils.mcd('Heat wave warning'),
+		BLIZZARD: MiscUtils.mcd('Blizzard warning'),
+		// Education
+		LOW_EDUCATION: MiscUtils.mcd('Education levels are low'),
+		NEED_SCHOOLS: MiscUtils.mcd('Citizens demand schools'),
+		// History
+		HISTORY_EVENT: MiscUtils.mcd('Historic event recorded')
 	};
 	const Messages = Object.defineProperties({}, messageData);
 	//var Messages = Object.defineProperties({}, messageData);
@@ -1203,6 +1223,7 @@
 		neutralMessages[Messages.FIRE_STATION_NEEDS_FUNDING] = 'Fire departments need funding';
 		neutralMessages[Messages.NEED_AIRPORT] = 'Commerce requires an Airport';
 		neutralMessages[Messages.NEED_FIRE_STATION] = 'Citizens demand a Fire Department';
+		neutralMessages[Messages.NEED_HOSPITAL] = 'Citizens demand a Hospital';
 		neutralMessages[Messages.NEED_ELECTRICITY] = 'Build a Power Plant';
 		neutralMessages[Messages.NEED_MORE_INDUSTRIAL] = 'More industrial zones needed';
 		neutralMessages[Messages.NEED_MORE_COMMERCIAL] = 'More commercial zones needed';
@@ -1216,6 +1237,8 @@
 		neutralMessages[Messages.POLICE_NEEDS_FUNDING] = 'Police departments need funding';
 		neutralMessages[Messages.WELCOME] = 'Welcome to 3D City';
 		neutralMessages[Messages.WELCOMEBACK] = 'Welcome to 3D City';
+		neutralMessages[Messages.SEASON_CHANGED] = 'A new season has arrived';
+		neutralMessages[Messages.NEED_SCHOOLS] = 'Citizens demand more schools';
 		var badMessages = {};
 		badMessages[Messages.BLACKOUTS_REPORTED] = 'Brownouts, build another Power Plant';
 		badMessages[Messages.COPTER_CRASHED] = 'A helicopter crashed ';
@@ -1236,25 +1259,37 @@
 		badMessages[Messages.TORNADO_SIGHTED] = 'Tornado reported !';
 		badMessages[Messages.TRAFFIC_JAMS] = 'Frequent traffic jams reported';
 		badMessages[Messages.TRAIN_CRASHED] = 'A train crashed ';
+		badMessages[Messages.HEAT_WAVE] = 'Heat wave! Increased fire risk';
+		badMessages[Messages.BLIZZARD] = 'Blizzard! Roads deteriorating faster';
+		badMessages[Messages.LOW_EDUCATION] = 'Education levels critically low';
 		var goodMessages = {};
 		goodMessages[Messages.REACHED_CAPITAL] = 'Population has reached 50,000';
 		goodMessages[Messages.REACHED_CITY] = 'Population has reached 10,000';
 		goodMessages[Messages.REACHED_MEGALOPOLIS] = 'Population has reached 500,000';
 		goodMessages[Messages.REACHED_METROPOLIS] = 'Population has reached 100,000';
 		goodMessages[Messages.REACHED_TOWN] = 'Population has reached 2,000';
+		goodMessages[Messages.ACHIEVEMENT_UNLOCKED] = 'Achievement Unlocked!';
+		var seasons = ['Spring', 'Summer', 'Autumn', 'Winter'];
+		var educationStrings = ['None', 'Poor', 'Basic', 'Good', 'Excellent'];
+		var healthStrings = ['Critical', 'Poor', 'Fair', 'Good', 'Excellent'];
+		var happinessStrings = ['Miserable', 'Unhappy', 'Content', 'Happy', 'Thriving'];
 		return {
 			badMessages: badMessages,
 			cityClass: cityClass,
 			crimeStrings: crimeStrings,
 			densityStrings: densityStrings,
+			educationStrings: educationStrings,
 			gameLevel: gameLevel,
 			goodMessages: goodMessages,
+			happinessStrings: happinessStrings,
+			healthStrings: healthStrings,
 			landValueStrings: landValueStrings,
 			months: months,
 			neutralMessages: neutralMessages,
 			problems: problems,
 			pollutionStrings: pollutionStrings,
 			rateStrings: rateStrings,
+			seasons: seasons,
 			toolMessages: toolMessages,
 			zoneTypes: zoneTypes
 		};
@@ -2805,6 +2840,13 @@
 			this.nuclearPowerPop = 0;
 			this.seaportPop = 0;
 			this.airportPop = 0;
+
+			// Education is derived from hospitals + churches + land value
+			this.educationLevel = 0;
+			// Health is derived from hospitals + pollution (inverse)
+			this.healthLevel = 0;
+			// Happiness combines many factors
+			this.happinessLevel = 50;
 		}
 		take10Census(budget) {
 			var resPopDenom = 8;
@@ -3472,13 +3514,16 @@
 			// TODO enable disasters
 			//Object.defineProperty(this, 'disastersEnabled', MiscUtils.mcd(false));
 		}
-		doDisasters(census) {
+		doDisasters(census, fireRiskMod) {
 			if (this._floodCount) this._floodCount--;
 
 			// TODO Scenarios
 
 			if (!this.disastersEnabled) return;
-			if (!math.getRandom(Micro.DisChance[this._gameLevel])) {
+			let disasterChance = Micro.DisChance[this._gameLevel];
+			// Season modifier makes disasters more/less likely
+			if (fireRiskMod && fireRiskMod > 1) disasterChance = Math.floor(disasterChance / fireRiskMod);
+			if (!math.getRandom(disasterChance)) {
 				switch (math.getRandom(8)) {
 					case 0:
 					case 1:
@@ -4893,6 +4938,332 @@
 		}
 	}
 
+	/*
+	 * Achievement system for 3D City
+	 * Tracks player milestones and unlocks
+	 */
+
+	// Achievement definitions
+	const ACHIEVEMENTS = [{
+		id: 'first_zone',
+		name: 'Founder',
+		desc: 'Place your first zone',
+		check: s => s.census.totalPop > 0
+	}, {
+		id: 'pop_500',
+		name: 'Small Settlement',
+		desc: 'Reach 500 population',
+		check: s => s.evaluation.cityPop >= 500
+	}, {
+		id: 'pop_2000',
+		name: 'Growing Town',
+		desc: 'Reach 2,000 population',
+		check: s => s.evaluation.cityPop >= 2000
+	}, {
+		id: 'pop_10000',
+		name: 'City Founder',
+		desc: 'Reach 10,000 population',
+		check: s => s.evaluation.cityPop >= 10000
+	}, {
+		id: 'pop_50000',
+		name: 'Capital Builder',
+		desc: 'Reach 50,000 population',
+		check: s => s.evaluation.cityPop >= 50000
+	}, {
+		id: 'pop_100000',
+		name: 'Metropolis Master',
+		desc: 'Reach 100,000 population',
+		check: s => s.evaluation.cityPop >= 100000
+	}, {
+		id: 'pop_500000',
+		name: 'Megalopolis',
+		desc: 'Reach 500,000 population',
+		check: s => s.evaluation.cityPop >= 500000
+	}, {
+		id: 'rich_100k',
+		name: 'Prosperous',
+		desc: 'Accumulate $100,000',
+		check: s => s.budget.totalFunds >= 100000
+	}, {
+		id: 'rich_1m',
+		name: 'Tycoon',
+		desc: 'Accumulate $1,000,000',
+		check: s => s.budget.totalFunds >= 1000000
+	}, {
+		id: 'low_crime',
+		name: 'Safe Streets',
+		desc: 'Keep crime average below 10',
+		check: s => s.census.crimeAverage < 10 && s.census.totalPop > 100
+	}, {
+		id: 'no_pollution',
+		name: 'Green City',
+		desc: 'Keep pollution average below 15',
+		check: s => s.census.pollutionAverage < 15 && s.census.totalPop > 100
+	}, {
+		id: 'high_approval',
+		name: 'Beloved Mayor',
+		desc: 'Get 90%+ approval rating',
+		check: s => s.evaluation.cityYes >= 90
+	}, {
+		id: 'high_score',
+		name: 'Perfect City',
+		desc: 'Achieve city score of 900+',
+		check: s => s.evaluation.cityScore >= 900
+	}, {
+		id: 'nuclear_power',
+		name: 'Nuclear Age',
+		desc: 'Build a nuclear power plant',
+		check: s => s.census.nuclearPowerPop > 0
+	}, {
+		id: 'airport_built',
+		name: 'Sky\'s the Limit',
+		desc: 'Build an airport',
+		check: s => s.census.airportPop > 0
+	}, {
+		id: 'seaport_built',
+		name: 'Harbor Master',
+		desc: 'Build a seaport',
+		check: s => s.census.seaportPop > 0
+	}, {
+		id: 'stadium_built',
+		name: 'Sports Fan',
+		desc: 'Build a stadium',
+		check: s => s.census.stadiumPop > 0
+	}, {
+		id: 'full_services',
+		name: 'Full Coverage',
+		desc: 'Have police, fire, and hospital',
+		check: s => s.census.policeStationPop > 0 && s.census.fireStationPop > 0 && s.census.hospitalPop > 0
+	}, {
+		id: 'survive_disaster',
+		name: 'Resilient',
+		desc: 'Survive a disaster',
+		check: null
+	},
+	// Triggered manually
+	{
+		id: 'year_2000',
+		name: 'Millennium',
+		desc: 'Reach the year 2000',
+		check: s => {
+			let yr = Math.floor(s.cityTime / 48) + s.startingYear;
+			return yr >= 2000;
+		}
+	}, {
+		id: 'high_education',
+		name: 'Educated City',
+		desc: 'Reach education level 150+',
+		check: s => s.census.educationLevel >= 150
+	}, {
+		id: 'high_health',
+		name: 'Healthy City',
+		desc: 'Reach health level 150+',
+		check: s => s.census.healthLevel >= 150
+	}, {
+		id: 'happy_city',
+		name: 'Utopia',
+		desc: 'Reach happiness level 85+',
+		check: s => s.census.happinessLevel >= 85
+	}];
+	class Achievements {
+		constructor() {
+			this.unlocked = {};
+			this.recentUnlock = null;
+			this.totalUnlocked = 0;
+		}
+		save(saveData) {
+			saveData.achievements = this.unlocked;
+		}
+		load(saveData) {
+			if (saveData.achievements) {
+				this.unlocked = saveData.achievements;
+				this.totalUnlocked = Object.keys(this.unlocked).length;
+			}
+		}
+
+		// Check all achievements against current simulation state
+		checkAll(simData) {
+			let newUnlocks = [];
+			for (let i = 0; i < ACHIEVEMENTS.length; i++) {
+				let ach = ACHIEVEMENTS[i];
+				if (this.unlocked[ach.id]) continue;
+				if (ach.check === null) continue;
+				if (ach.check(simData)) {
+					this.unlock(ach.id);
+					newUnlocks.push(ach);
+				}
+			}
+			return newUnlocks;
+		}
+
+		// Manually trigger an achievement
+		trigger(id) {
+			if (this.unlocked[id]) return null;
+			this.unlock(id);
+			let ach = ACHIEVEMENTS.find(a => a.id === id);
+			return ach || null;
+		}
+		unlock(id) {
+			if (this.unlocked[id]) return;
+			this.unlocked[id] = true;
+			this.totalUnlocked++;
+			this.recentUnlock = id;
+		}
+		getRecentUnlock() {
+			if (!this.recentUnlock) return null;
+			let ach = ACHIEVEMENTS.find(a => a.id === this.recentUnlock);
+			this.recentUnlock = null;
+			return ach;
+		}
+		getAll() {
+			return ACHIEVEMENTS.map(ach => ({
+				...ach,
+				unlocked: !!this.unlocked[ach.id],
+				check: undefined
+			}));
+		}
+		getProgress() {
+			return {
+				unlocked: this.totalUnlocked,
+				total: ACHIEVEMENTS.length
+			};
+		}
+	}
+
+	/*
+	 * City History Timeline for 3D City
+	 * Records major events and milestones
+	 */
+
+	const MAX_HISTORY = 50;
+	class CityHistory {
+		constructor() {
+			this.events = [];
+		}
+		save(saveData) {
+			saveData.cityHistory = this.events;
+		}
+		load(saveData) {
+			if (saveData.cityHistory) {
+				this.events = saveData.cityHistory;
+			}
+		}
+		addEvent(type, description, cityTime, startingYear) {
+			let year = Math.floor(cityTime / 48) + startingYear;
+			let monthIdx = Math.floor(cityTime % 48) >> 2;
+			let event = {
+				type: type,
+				desc: description,
+				year: year,
+				month: monthIdx,
+				cityTime: cityTime
+			};
+			this.events.push(event);
+
+			// Keep history bounded
+			if (this.events.length > MAX_HISTORY) {
+				this.events.shift();
+			}
+			return event;
+		}
+		getRecent(count) {
+			count = count || 10;
+			return this.events.slice(-count).reverse();
+		}
+		getAll() {
+			return this.events.slice().reverse();
+		}
+		clear() {
+			this.events = [];
+		}
+	}
+
+	/*
+	 * Season Manager for 3D City
+	 * Manages seasonal effects on the simulation
+	 */
+	class SeasonManager {
+		constructor() {
+			this.currentSeason = Micro.SEASON_SPRING;
+			this.seasonChanged = false;
+
+			// Seasonal modifiers
+			this.fireRiskMod = 1.0; // Multiplier for fire risk
+			this.growthMod = 1.0; // Multiplier for zone growth
+			this.roadDecayMod = 1.0; // Multiplier for road deterioration
+			this.pollutionMod = 1.0; // Multiplier for pollution
+			this.happinessMod = 0; // Additive modifier for happiness
+
+			// Weather events
+			this.heatWave = false;
+			this.blizzard = false;
+		}
+
+		// Derive season from the simulation month (0-11)
+		update(cityMonth) {
+			let newSeason;
+			if (cityMonth >= 2 && cityMonth <= 4) newSeason = Micro.SEASON_SPRING;else if (cityMonth >= 5 && cityMonth <= 7) newSeason = Micro.SEASON_SUMMER;else if (cityMonth >= 8 && cityMonth <= 10) newSeason = Micro.SEASON_AUTUMN;else newSeason = Micro.SEASON_WINTER;
+			this.seasonChanged = newSeason !== this.currentSeason;
+			this.currentSeason = newSeason;
+			this._applySeasonalEffects();
+			this._checkWeatherEvents();
+			return this.seasonChanged;
+		}
+		_applySeasonalEffects() {
+			switch (this.currentSeason) {
+				case Micro.SEASON_SPRING:
+					this.fireRiskMod = 0.8;
+					this.growthMod = 1.2;
+					this.roadDecayMod = 1.0;
+					this.pollutionMod = 0.9;
+					this.happinessMod = 5;
+					break;
+				case Micro.SEASON_SUMMER:
+					this.fireRiskMod = 1.5;
+					this.growthMod = 1.0;
+					this.roadDecayMod = 0.8;
+					this.pollutionMod = 1.2;
+					this.happinessMod = 3;
+					break;
+				case Micro.SEASON_AUTUMN:
+					this.fireRiskMod = 1.0;
+					this.growthMod = 0.9;
+					this.roadDecayMod = 1.1;
+					this.pollutionMod = 1.0;
+					this.happinessMod = 0;
+					break;
+				case Micro.SEASON_WINTER:
+					this.fireRiskMod = 0.5;
+					this.growthMod = 0.7;
+					this.roadDecayMod = 1.4;
+					this.pollutionMod = 1.1;
+					this.happinessMod = -5;
+					break;
+			}
+		}
+		_checkWeatherEvents() {
+			this.heatWave = false;
+			this.blizzard = false;
+			if (this.currentSeason === Micro.SEASON_SUMMER && math.getRandom(100) < 3) {
+				this.heatWave = true;
+				this.fireRiskMod = 2.5;
+				this.happinessMod = -5;
+			}
+			if (this.currentSeason === Micro.SEASON_WINTER && math.getRandom(100) < 5) {
+				this.blizzard = true;
+				this.roadDecayMod = 2.0;
+				this.happinessMod = -10;
+			}
+		}
+		getSeason() {
+			return this.currentSeason;
+		}
+		getSeasonName() {
+			let names = ['Spring', 'Summer', 'Autumn', 'Winter'];
+			return names[this.currentSeason];
+		}
+	}
+
 	/* micropolisJS. Adapted by Graeme McCutcheon from Micropolis.
 	 *
 	 * This code is released under the GNU GPL v3, with some additional terms.
@@ -4947,6 +5318,9 @@
 			this.repairManager = new RepairManager(this.map);
 			this.traffic = new Traffic(this.map, this.spriteManager);
 			this.disasterManager = new DisasterManager(this.map, this.spriteManager, this.gameLevel);
+			this.achievements = new Achievements();
+			this.cityHistory = new CityHistory();
+			this.seasonManager = new SeasonManager();
 			this.messageManager = new MessageManager();
 			Micro.messageManager = this.messageManager;
 			let w = this.map.width,
@@ -4999,6 +5373,8 @@
 			this.valves.save(saveData);
 			this.budget.save(saveData);
 			this.census.save(saveData);
+			this.achievements.save(saveData);
+			this.cityHistory.save(saveData);
 		}
 		load(saveData) {
 			//console.log(saveData)
@@ -5010,6 +5386,8 @@
 			this.valves.load(saveData);
 			this.budget.load(saveData);
 			this.census.load(saveData);
+			this.achievements.load(saveData);
+			this.cityHistory.load(saveData);
 		}
 		setSpeed(s) {
 			this.speed = s;
@@ -5048,7 +5426,48 @@
 			this.infos[11] = this.census.pollutionAverage;
 			this.infos[12] = EvaluationUtils.getTrafficAverage(this.blockMaps, this.census);
 			this.infos[13] = this.evaluation.cityYes;
+
+			// New info slots
+			this.infos[14] = this.census.educationLevel;
+			this.infos[15] = this.census.healthLevel;
+			this.infos[16] = this.census.happinessLevel;
+			this.infos[17] = this.seasonManager.getSeason();
 			return this.infos;
+		}
+
+		// Compute education level from infrastructure
+		updateEducationHealth() {
+			let census = this.census;
+
+			// Education: derived from hospitals (which also serve as schools in this sim),
+			// churches (community centers), and land value
+			let educationBase = census.hospitalPop * 40 + census.churchPop * 20;
+			let landValueFactor = Math.min(census.landValueAverage, 150);
+			let popFactor = census.totalPop > 0 ? Math.min(census.totalPop / 100, 50) : 0;
+			census.educationLevel = Math.min(Math.floor(educationBase + landValueFactor * 0.3 + popFactor * 0.2), Micro.EDUCATION_EFFECT_RANGE);
+
+			// Health: derived from hospital coverage minus pollution
+			let healthBase = census.hospitalPop * 50;
+			let pollutionPenalty = census.pollutionAverage * 0.8;
+			let crimeHealthPenalty = census.crimeAverage * 0.3;
+			census.healthLevel = Math.min(Math.max(Math.floor(healthBase - pollutionPenalty - crimeHealthPenalty + 20), 0), Micro.HEALTH_EFFECT_RANGE);
+
+			// Happiness: composite score (0-100)
+			let happyScore = 50; // baseline
+			happyScore += (this.evaluation.cityScore - 500) * 0.02; // score factor
+			happyScore -= census.crimeAverage * 0.1; // crime hurts
+			happyScore -= census.pollutionAverage * 0.08; // pollution hurts
+			happyScore += census.educationLevel / Micro.EDUCATION_EFFECT_RANGE * 15; // education helps
+			happyScore += census.healthLevel / Micro.HEALTH_EFFECT_RANGE * 10; // health helps
+			happyScore += this.seasonManager.happinessMod; // season effect
+
+			// Unemployment penalty
+			let unemployment = EvaluationUtils.getUnemployment(census);
+			happyScore -= unemployment * 0.05;
+
+			// Tax penalty
+			if (this.budget.cityTax > 10) happyScore -= (this.budget.cityTax - 10) * 2;
+			census.happinessLevel = Math.round(Math.max(0, Math.min(100, happyScore)));
 		}
 		simFrame() {
 			if (this.budget.awaitingValues) return false;
@@ -5130,6 +5549,31 @@
 						this.budget.collectTax(this.gameLevel, this.census);
 						this.evaluation.cityEvaluation();
 					}
+
+					// Update season based on current month
+					if (this.seasonManager.update(this._cityMonthLast)) {
+						this.messageManager.sendMessage(Messages.SEASON_CHANGED);
+						this.cityHistory.addEvent('season', 'Season changed to ' + this.seasonManager.getSeasonName(), this.cityTime, this.startingYear);
+					}
+					if (this.seasonManager.heatWave) {
+						this.messageManager.sendMessage(Messages.HEAT_WAVE);
+						this.disasterManager.setFire(3, false);
+					}
+					if (this.seasonManager.blizzard) {
+						this.messageManager.sendMessage(Messages.BLIZZARD);
+					}
+
+					// Update education, health, happiness
+					this.updateEducationHealth();
+
+					// Check achievements
+					if ((this.simCycle & 15) === 0) {
+						let newAchs = this.achievements.checkAll(this);
+						for (let a = 0; a < newAchs.length; a++) {
+							this.messageManager.sendMessage(Messages.ACHIEVEMENT_UNLOCKED);
+							this.cityHistory.addEvent('achievement', newAchs[a].name + ': ' + newAchs[a].desc, this.cityTime, this.startingYear);
+						}
+					}
 					break;
 				case 10:
 					if (this.simCycle % 5 === 0) {
@@ -5152,7 +5596,7 @@
 					break;
 				case 15:
 					if (this.simCycle % Micro.speedFireAnalysis[speedIndex] === 0) MapUtils.fireAnalysis(this.blockMaps);
-					this.disasterManager.doDisasters(this.census);
+					this.disasterManager.doDisasters(this.census, this.seasonManager.fireRiskMod);
 					break;
 			}
 			// Go on the the next phase.
@@ -5220,8 +5664,14 @@
 				case 45:
 					if (this.census.totalPop > 60 && this.census.fireStationPop === 0) this.messageManager.sendMessage(Messages.NEED_FIRE_STATION);
 					break;
+				case 47:
+					if (this.census.needHospital > 0) this.messageManager.sendMessage(Messages.NEED_HOSPITAL);
+					break;
 				case 48:
 					if (this.census.totalPop > 60 && this.census.policeStationPop === 0) this.messageManager.sendMessage(Messages.NEED_POLICE_STATION);
+					break;
+				case 50:
+					if (this.census.totalPop > 200 && this.census.educationLevel < 30) this.messageManager.sendMessage(Messages.NEED_SCHOOLS);
 					break;
 				case 51:
 					if (this.budget.cityTax > 12) this.messageManager.sendMessage(Messages.TAX_TOO_HIGH);
@@ -5273,6 +5723,8 @@
 			if (message !== '' && message !== this.messageLast) {
 				this.messageManager.sendMessage(message);
 				this.messageLast = message;
+				// Log growth milestone to history
+				this.cityHistory.addEvent('growth', 'City reached population ' + cityPop, this.cityTime, this.startingYear);
 			}
 			this.cityPopLast = cityPop;
 		}
@@ -7214,6 +7666,8 @@
 			if (p == "NEWBUDGET") Game.setBudget(e.data.budgetData);
 			if (p == "DISASTER") Game.setDisaster(e.data.disaster);
 			if (p == "EVAL") Game.getEvaluation();
+			if (p == "ACHIEVEMENTS") Game.getAchievements();
+			if (p == "HISTORY") Game.getHistory();
 			if (p == "SAVEGAME") Game.saveGame(e.data.saveCity);
 			if (p == "LOADGAME") Game.loadGame(e.data.isStart);
 			if (p == "MAKELOADGAME") Game.makeLoadGame(e.data.savegame, e.data.isStart);
@@ -7500,6 +7954,10 @@
 					this.simulation.disasterManager.makeEarthquake();
 					break;
 			}
+			// Log disaster to city history
+			this.simulation.cityHistory.addEvent('disaster', disaster + ' struck the city!', this.simulation.cityTime, this.simulation.startingYear);
+			// Trigger "survive disaster" achievement after a delay (checked next cycle)
+			this.simulation.achievements.trigger('survive_disaster');
 			this.processMessages(m.getMessages());
 		}
 		setBudget(budgetData) {
@@ -7545,10 +8003,60 @@
 				if (problemNo !== -1) text = TXT.problems[problemNo];
 				problemes += text + "<br>";
 			}
-			let evalData = [evaluation.cityYes, problemes];
+			let census = this.simulation.census;
+			let crimeAvg = census.crimeAverage;
+			let pollutionAvg = census.pollutionAverage;
+			let trafficAvg = this.infos[12] || 0;
+
+			// Enhanced eval data with education, health, happiness, unemployment, season
+			let unemployment = Math.round(this._getUnemploymentPct());
+			let season = this.simulation.seasonManager.getSeasonName();
+			let evalData = [evaluation.cityYes,
+			// 0
+			problemes,
+			// 1
+			crimeAvg,
+			// 2
+			pollutionAvg,
+			// 3
+			Math.round(trafficAvg),
+			// 4
+			census.educationLevel,
+			// 5
+			census.healthLevel,
+			// 6
+			census.happinessLevel,
+			// 7
+			unemployment,
+			// 8
+			season // 9
+			];
 			CityGame.post({
 				tell: "EVAL",
 				evalData: evalData
+			});
+		}
+		_getUnemploymentPct() {
+			let census = this.simulation.census;
+			let jobs = (census.comPop + census.indPop) * 8;
+			if (jobs === 0) return 0;
+			let ratio = census.resPop / jobs;
+			return Math.min(Math.max((ratio - 1) * 100, 0), 100);
+		}
+		getAchievements() {
+			let data = this.simulation.achievements.getAll();
+			let progress = this.simulation.achievements.getProgress();
+			CityGame.post({
+				tell: "ACHIEVEMENTS",
+				achData: data,
+				progress: progress
+			});
+		}
+		getHistory() {
+			let events = this.simulation.cityHistory.getRecent(20);
+			CityGame.post({
+				tell: "HISTORY",
+				historyData: events
 			});
 		}
 

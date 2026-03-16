@@ -159,6 +159,16 @@ export const Micro = {
     SMOOTH_NEIGHBOURS_THEN_BLOCK: 0,
     SMOOTH_ALL_THEN_CLAMP : 1,
 
+    // Seasons
+    SEASON_SPRING: 0,
+    SEASON_SUMMER: 1,
+    SEASON_AUTUMN: 2,
+    SEASON_WINTER: 3,
+
+    // Education & Health thresholds
+    EDUCATION_EFFECT_RANGE: 200,
+    HEALTH_EFFECT_RANGE: 200,
+
     simData:null,
     messageManager:null,
 

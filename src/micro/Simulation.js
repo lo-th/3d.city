@@ -38,6 +38,9 @@ import { MiscTiles } from './zone/MiscTiles.js';
 import { Stadia } from './zone/Stadia.js';
 
 import { MapUtils } from './map/MapUtils.js';
+import { Achievements } from './game/Achievements.js';
+import { CityHistory, HistoryEventType } from './game/CityHistory.js';
+import { SeasonManager } from './game/SeasonManager.js';
 
 export class Simulation {
 
@@ -90,6 +93,9 @@ export class Simulation {
         this.repairManager = new RepairManager(this.map);
         this.traffic = new Traffic(this.map, this.spriteManager);
         this.disasterManager = new DisasterManager(this.map, this.spriteManager, this.gameLevel);
+        this.achievements = new Achievements();
+        this.cityHistory = new CityHistory();
+        this.seasonManager = new SeasonManager();
 
         this.messageManager = new MessageManager();
         Micro.messageManager = this.messageManager;
@@ -165,6 +171,8 @@ export class Simulation {
         this.valves.save(saveData);
         this.budget.save(saveData);
         this.census.save(saveData);
+        this.achievements.save(saveData);
+        this.cityHistory.save(saveData);
 
     }
 
@@ -179,6 +187,8 @@ export class Simulation {
         this.valves.load(saveData);
         this.budget.load(saveData);
         this.census.load(saveData);
+        this.achievements.load(saveData);
+        this.cityHistory.load(saveData);
 
     }
 
@@ -236,8 +246,52 @@ export class Simulation {
         this.infos[12] = EvaluationUtils.getTrafficAverage(this.blockMaps, this.census);
         this.infos[13] = this.evaluation.cityYes;
 
+        // New info slots
+        this.infos[14] = this.census.educationLevel;
+        this.infos[15] = this.census.healthLevel;
+        this.infos[16] = this.census.happinessLevel;
+        this.infos[17] = this.seasonManager.getSeason();
+
         return this.infos
 
+    }
+
+    // Compute education level from infrastructure
+    updateEducationHealth () {
+        let census = this.census;
+
+        // Education: derived from hospitals (which also serve as schools in this sim),
+        // churches (community centers), and land value
+        let educationBase = (census.hospitalPop * 40) + (census.churchPop * 20);
+        let landValueFactor = Math.min(census.landValueAverage, 150);
+        let popFactor = census.totalPop > 0 ? Math.min(census.totalPop / 100, 50) : 0;
+
+        census.educationLevel = Math.min(Math.floor(educationBase + landValueFactor * 0.3 + popFactor * 0.2), Micro.EDUCATION_EFFECT_RANGE);
+
+        // Health: derived from hospital coverage minus pollution
+        let healthBase = census.hospitalPop * 50;
+        let pollutionPenalty = census.pollutionAverage * 0.8;
+        let crimeHealthPenalty = census.crimeAverage * 0.3;
+
+        census.healthLevel = Math.min(Math.max(Math.floor(healthBase - pollutionPenalty - crimeHealthPenalty + 20), 0), Micro.HEALTH_EFFECT_RANGE);
+
+        // Happiness: composite score (0-100)
+        let happyScore = 50; // baseline
+        happyScore += (this.evaluation.cityScore - 500) * 0.02;  // score factor
+        happyScore -= census.crimeAverage * 0.1;                  // crime hurts
+        happyScore -= census.pollutionAverage * 0.08;             // pollution hurts
+        happyScore += (census.educationLevel / Micro.EDUCATION_EFFECT_RANGE) * 15; // education helps
+        happyScore += (census.healthLevel / Micro.HEALTH_EFFECT_RANGE) * 10;       // health helps
+        happyScore += this.seasonManager.happinessMod;            // season effect
+
+        // Unemployment penalty
+        let unemployment = EvaluationUtils.getUnemployment(census);
+        happyScore -= unemployment * 0.05;
+
+        // Tax penalty
+        if (this.budget.cityTax > 10) happyScore -= (this.budget.cityTax - 10) * 2;
+
+        census.happinessLevel = Math.round(Math.max(0, Math.min(100, happyScore)));
     }
 
     simFrame () {
@@ -323,13 +377,41 @@ export class Simulation {
                 if (this.cityTime % Micro.CENSUS_FREQUENCY_10 === 0) this.census.take10Census(this.budget);
                 if (this.cityTime % Micro.CENSUS_FREQUENCY_120 === 0) this.census.take120Census(this.budget);
                 if (this.cityTime % Micro.TAX_FREQUENCY === 0) { this.budget.collectTax( this.gameLevel, this.census ); this.evaluation.cityEvaluation(); };
+
+                // Update season based on current month
+                if (this.seasonManager.update(this._cityMonthLast)) {
+                    this.messageManager.sendMessage(Messages.SEASON_CHANGED);
+                    this.cityHistory.addEvent('season', 'Season changed to ' + this.seasonManager.getSeasonName(), this.cityTime, this.startingYear);
+                }
+                if (this.seasonManager.heatWave) {
+                    this.messageManager.sendMessage(Messages.HEAT_WAVE);
+                    this.disasterManager.setFire(3, false);
+                }
+                if (this.seasonManager.blizzard) {
+                    this.messageManager.sendMessage(Messages.BLIZZARD);
+                }
+
+                // Update education, health, happiness
+                this.updateEducationHealth();
+
+                // Check achievements
+                if ((this.simCycle & 15) === 0) {
+                    let newAchs = this.achievements.checkAll(this);
+                    for (let a = 0; a < newAchs.length; a++) {
+                        this.messageManager.sendMessage(Messages.ACHIEVEMENT_UNLOCKED);
+                        this.cityHistory.addEvent('achievement', newAchs[a].name + ': ' + newAchs[a].desc, this.cityTime, this.startingYear);
+                    }
+                }
             break;
             case 10: if ((this.simCycle % 5) === 0){ MapUtils.neutraliseRateOfGrowthMap(this.blockMaps);};  MapUtils.neutraliseTrafficMap(this.blockMaps); this.sendMessages(); break;
             case 11: if ((this.simCycle % Micro.speedPowerScan[speedIndex]) === 0) this.powerManager.doPowerScan(this.census); break;
             case 12: if ((this.simCycle % Micro.speedPollutionTerrainLandValueScan[speedIndex]) === 0) MapUtils.pollutionTerrainLandValueScan(this.map, this.census, this.blockMaps); break;
             case 13: if ((this.simCycle % Micro.speedCrimeScan[speedIndex]) === 0) MapUtils.crimeScan(this.census, this.blockMaps); break;
             case 14: if ((this.simCycle % Micro.speedPopulationDensityScan[speedIndex]) === 0) MapUtils.populationDensityScan(this.map, this.blockMaps); break;
-            case 15: if ((this.simCycle % Micro.speedFireAnalysis[speedIndex]) === 0) MapUtils.fireAnalysis(this.blockMaps); this.disasterManager.doDisasters(this.census ); break;
+            case 15:
+                if ((this.simCycle % Micro.speedFireAnalysis[speedIndex]) === 0) MapUtils.fireAnalysis(this.blockMaps);
+                this.disasterManager.doDisasters(this.census, this.seasonManager.fireRiskMod);
+            break;
         }
         // Go on the the next phase.
         this.phaseCycle = (this.phaseCycle + 1) & 15;
@@ -356,6 +438,7 @@ export class Simulation {
             case 45: if (this.census.totalPop > 60 && this.census.fireStationPop === 0) this.messageManager.sendMessage(Messages.NEED_FIRE_STATION); break;
             case 47: if (this.census.needHospital > 0) this.messageManager.sendMessage(Messages.NEED_HOSPITAL); break;
             case 48: if (this.census.totalPop > 60 && this.census.policeStationPop === 0) this.messageManager.sendMessage(Messages.NEED_POLICE_STATION); break;
+            case 50: if (this.census.totalPop > 200 && this.census.educationLevel < 30) this.messageManager.sendMessage(Messages.NEED_SCHOOLS); break;
             case 51: if (this.budget.cityTax > 12) this.messageManager.sendMessage(Messages.TAX_TOO_HIGH); break;
             case 54: if (this.budget.roadEffect < Math.floor(5 * Micro.MAX_ROAD_EFFECT / 8) && this.census.roadTotal > 30) this.messageManager.sendMessage(Messages.ROAD_NEEDS_FUNDING); break;
             case 57: if (this.budget.fireEffect < Math.floor(7 * Micro.MAX_FIRESTATION_EFFECT / 10) && this.census.totalPop > 20) this.messageManager.sendMessage(Messages.FIRE_STATION_NEEDS_FUNDING); break;
@@ -391,9 +474,11 @@ export class Simulation {
         if (message !== '' && message !== this.messageLast) {
             this.messageManager.sendMessage(message);
             this.messageLast = message;
+            // Log growth milestone to history
+            this.cityHistory.addEvent('growth', 'City reached population ' + cityPop, this.cityTime, this.startingYear);
         }
         this.cityPopLast = cityPop;
-    
+
     }
 
     // update date 
