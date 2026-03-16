@@ -322,8 +322,8 @@ export class Hub {
         var b2 = this.addButton(this.hub, 'Eval', [75,16,14], 'position:absolute; left:110px; top:-7px; font-weight:bold;', true);
         b2.addEventListener('click',  function ( e ) { e.preventDefault(); Main.getEval(); }, false);
 
-        /*var b3 = this.addButton(this.hub, 'Disaster', [75,16,14], 'position:absolute; left:210px; top:-7px; font-weight:bold;', true);
-        b3.addEventListener('click',  function ( e ) { e.preventDefault();  _this.openDisaster(); }, false);*/
+        var b3 = this.addButton(this.hub, 'Disaster', [75,16,14], 'position:absolute; left:210px; top:-7px; font-weight:bold;', true);
+        b3.addEventListener('click',  function ( e ) { e.preventDefault();  _this.openDisaster(); }, false);
 
         var b4 = this.addButton(this.hub, 'Exit', [75,16,14], 'position:absolute; left:310px; top:-7px; font-weight:bold;', true);
         b4.addEventListener('click',  function ( e ) { e.preventDefault();  _this.openExit();  }, false);
@@ -400,6 +400,9 @@ export class Hub {
         this.score = document.createElement('div');
         this.score.style.cssText = 'font-size:14px; position:absolute; width:70px; height:19px; bottom:15px; left:410px; text-align:right; font-weight:bold;';
 
+        this.cityClass = document.createElement('div');
+        this.cityClass.style.cssText = 'font-size:11px; position:absolute; width:70px; height:14px; bottom:34px; left:410px; text-align:right; color:'+this.colors[5]+'; font-weight:bold;';
+
         this.msg = document.createElement('div');
         this.msg.style.cssText = 'font-size:14px; letter-spacing:0.02em; position:absolute; width:420px; height:20px; bottom:44px; left:76px; text-align:left; color:'+this.colors[4]+'; font-weight:bold;';
 
@@ -407,6 +410,7 @@ export class Hub {
         this.hub.appendChild( this.money );
         this.hub.appendChild( this.population );
         this.hub.appendChild( this.score );
+        this.hub.appendChild( this.cityClass );
         this.hub.appendChild( this.msg );
 
         this.initRCI();
@@ -417,6 +421,7 @@ export class Hub {
         this.money.innerHTML = infos[4];
         this.population.innerHTML = infos[3];
         this.score.innerHTML =  infos[2];
+        this.cityClass.innerHTML = infos[1];
 
         this.msg.innerHTML = infos[8];
 
@@ -592,6 +597,9 @@ export class Hub {
             this.evaluationWindow.style.cssText =this.radius+ 'position:absolute; width:200px; height:300px; pointer-events:none; display:block;'+ this.windowsStyle;
             this.hub.appendChild( this.evaluationWindow );
 
+            var bg1 = this.addButton(this.evaluationWindow, 'X', [16,16,14], 'position:absolute; right:10px; top:10px;');
+            bg1.addEventListener('click',  function(e){ e.preventDefault(); _this.closeEval(); }, false);
+
             this.evaltOpinion = document.createElement('div');
             this.evaltOpinion.style.cssText ='position:absolute; top:10px; left:10px; width:180px; height:100px; pointer-events:none; color:'+this.colors[0]+';';
             this.evaluationWindow.appendChild( this.evaltOpinion );
@@ -608,6 +616,10 @@ export class Hub {
             this.evaltProb.style.cssText ='position:absolute; top:100px; left:10px; width:180px; height:60px; pointer-events:none; color:'+this.colors[0]+'; font-size:16px; ';
             this.evaluationWindow.appendChild( this.evaltProb );
 
+            this.evaltStats = document.createElement('div');
+            this.evaltStats.style.cssText ='position:absolute; top:175px; left:10px; width:180px; height:120px; pointer-events:none; color:'+this.colors[0]+'; font-size:12px; ';
+            this.evaluationWindow.appendChild( this.evaltStats );
+
             this.evaltOpinion.innerHTML = "<b>Public opinion</b><br>Is the mayor doing a good job ?<br> <br> <br> <br>What are the worst problems ?<br>"
 
         } else {
@@ -618,6 +630,11 @@ export class Hub {
         this.evaltNo.innerHTML = 'NO:' +(100-data[0] )+ '%';
 
         this.evaltProb.innerHTML = data[1];
+
+        this.evaltStats.innerHTML = '<b>City Statistics</b><br>'
+            + '<span style="display:inline-block;width:70px">Crime:</span>' + data[2] + '<br>'
+            + '<span style="display:inline-block;width:70px">Pollution:</span>' + data[3] + '<br>'
+            + '<span style="display:inline-block;width:70px">Traffic:</span>' + data[4] + '<br>';
 
         this.evaluationWindow.className = "open";
     }

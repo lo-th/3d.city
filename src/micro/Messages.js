@@ -42,6 +42,7 @@ var messageData = {
   NEED_AIRPORT: MiscUtils.mcd('Airport needed'),
   NEED_ELECTRICITY: MiscUtils.mcd('More power needed'),
   NEED_FIRE_STATION: MiscUtils.mcd('Fire station needed'),
+  NEED_HOSPITAL: MiscUtils.mcd('Hospital needed'),
   NEED_MORE_COMMERCIAL: MiscUtils.mcd('More commercial zones needed'),
   NEED_MORE_INDUSTRIAL: MiscUtils.mcd('More industrial zones needed'),
   NEED_MORE_RAILS: MiscUtils.mcd('More railways needed'),

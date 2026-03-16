@@ -453,7 +453,11 @@ export class MainGame {
             problemes += text+"<br>";
         }
 
-        let evalData = [ evaluation.cityYes, problemes];
+        let crimeAvg = this.simulation.census.crimeAverage;
+        let pollutionAvg = this.simulation.census.pollutionAverage;
+        let trafficAvg = this.infos[12] || 0;
+
+        let evalData = [ evaluation.cityYes, problemes, crimeAvg, pollutionAvg, Math.round(trafficAvg)];
 
         CityGame.post({ tell:"EVAL", evalData:evalData});
 

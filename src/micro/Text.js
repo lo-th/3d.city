@@ -63,6 +63,7 @@ const Text = function(){
     neutralMessages[Messages.FIRE_STATION_NEEDS_FUNDING] = 'Fire departments need funding';
     neutralMessages[Messages.NEED_AIRPORT] = 'Commerce requires an Airport';
     neutralMessages[Messages.NEED_FIRE_STATION] = 'Citizens demand a Fire Department';
+    neutralMessages[Messages.NEED_HOSPITAL] = 'Citizens demand a Hospital';
     neutralMessages[Messages.NEED_ELECTRICITY] = 'Build a Power Plant';
     neutralMessages[Messages.NEED_MORE_INDUSTRIAL] = 'More industrial zones needed';
     neutralMessages[Messages.NEED_MORE_COMMERCIAL] = 'More commercial zones needed';
