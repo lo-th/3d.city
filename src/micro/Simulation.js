@@ -41,6 +41,7 @@ import { MapUtils } from './map/MapUtils.js';
 import { Achievements } from './game/Achievements.js';
 import { CityHistory, HistoryEventType } from './game/CityHistory.js';
 import { SeasonManager } from './game/SeasonManager.js';
+import { Ordinances } from './game/Ordinances.js';
 
 export class Simulation {
 
@@ -96,6 +97,7 @@ export class Simulation {
         this.achievements = new Achievements();
         this.cityHistory = new CityHistory();
         this.seasonManager = new SeasonManager();
+        this.ordinances = new Ordinances();
 
         this.messageManager = new MessageManager();
         Micro.messageManager = this.messageManager;
@@ -173,22 +175,22 @@ export class Simulation {
         this.census.save(saveData);
         this.achievements.save(saveData);
         this.cityHistory.save(saveData);
+        this.ordinances.save(saveData);
 
     }
 
     load (saveData) {
-        //console.log(saveData)
         this.messageManager.clear();
         for (let i = 0, l = Micro.savePropsVar.length; i < l; i++)
             this[Micro.savePropsVar[i]] = saveData[Micro.savePropsVar[i]];
 
-        //this.map.load(saveData);
         this.evaluation.load(saveData);
         this.valves.load(saveData);
         this.budget.load(saveData);
         this.census.load(saveData);
         this.achievements.load(saveData);
         this.cityHistory.load(saveData);
+        this.ordinances.load(saveData);
 
     }
 
@@ -259,6 +261,7 @@ export class Simulation {
     // Compute education level from infrastructure
     updateEducationHealth () {
         let census = this.census;
+        let fx = this.ordinances.getEffects();
 
         // Education: derived from hospitals (which also serve as schools in this sim),
         // churches (community centers), and land value
@@ -266,11 +269,15 @@ export class Simulation {
         let landValueFactor = Math.min(census.landValueAverage, 150);
         let popFactor = census.totalPop > 0 ? Math.min(census.totalPop / 100, 50) : 0;
 
-        census.educationLevel = Math.min(Math.floor(educationBase + landValueFactor * 0.3 + popFactor * 0.2), Micro.EDUCATION_EFFECT_RANGE);
+        census.educationLevel = Math.min(
+            Math.floor(educationBase + landValueFactor * 0.3 + popFactor * 0.2 + fx.educationBonus),
+            Micro.EDUCATION_EFFECT_RANGE
+        );
 
-        // Health: derived from hospital coverage minus pollution
-        let healthBase = census.hospitalPop * 50;
-        let pollutionPenalty = census.pollutionAverage * 0.8;
+        // Health: derived from hospital coverage minus pollution (with ordinance bonuses)
+        let healthBase = census.hospitalPop * 50 + fx.healthBonus;
+        let effectivePollution = Math.max(0, census.pollutionAverage + fx.pollutionMod);
+        let pollutionPenalty = effectivePollution * 0.8;
         let crimeHealthPenalty = census.crimeAverage * 0.3;
 
         census.healthLevel = Math.min(Math.max(Math.floor(healthBase - pollutionPenalty - crimeHealthPenalty + 20), 0), Micro.HEALTH_EFFECT_RANGE);
@@ -279,7 +286,7 @@ export class Simulation {
         let happyScore = 50; // baseline
         happyScore += (this.evaluation.cityScore - 500) * 0.02;  // score factor
         happyScore -= census.crimeAverage * 0.1;                  // crime hurts
-        happyScore -= census.pollutionAverage * 0.08;             // pollution hurts
+        happyScore -= effectivePollution * 0.08;                  // pollution hurts
         happyScore += (census.educationLevel / Micro.EDUCATION_EFFECT_RANGE) * 15; // education helps
         happyScore += (census.healthLevel / Micro.HEALTH_EFFECT_RANGE) * 10;       // health helps
         happyScore += this.seasonManager.happinessMod;            // season effect
@@ -376,7 +383,14 @@ export class Simulation {
             case 9:
                 if (this.cityTime % Micro.CENSUS_FREQUENCY_10 === 0) this.census.take10Census(this.budget);
                 if (this.cityTime % Micro.CENSUS_FREQUENCY_120 === 0) this.census.take120Census(this.budget);
-                if (this.cityTime % Micro.TAX_FREQUENCY === 0) { this.budget.collectTax( this.gameLevel, this.census ); this.evaluation.cityEvaluation(); };
+                if (this.cityTime % Micro.TAX_FREQUENCY === 0) {
+                    let ordFx = this.ordinances.getEffects();
+                    this.budget.collectTax( this.gameLevel, this.census, ordFx.comTaxMod );
+                    // Deduct annual ordinance costs from city funds
+                    let ordCost = this.ordinances.getAnnualCost();
+                    if (ordCost > 0) this.budget.spend(ordCost);
+                    this.evaluation.cityEvaluation();
+                };
 
                 // Update season based on current month
                 if (this.seasonManager.update(this._cityMonthLast)) {

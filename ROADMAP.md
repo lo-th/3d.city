@@ -30,12 +30,12 @@ Goal: make the existing game feel complete and bug-free before adding new system
 - [ ] Fix all known simulation edge-cases (power grid, traffic jams, budget crashes)
 - [x] Improve mobile / touch controls and responsive layout — CSS media queries for small screens; two-finger pan + pinch zoom on touch devices; proportional scroll-zoom sensitivity
 - [ ] Expand building model variety (more residential, commercial, and industrial LOD levels)
-- [ ] Animated building construction sequence (scaffold → finished)
+- [x] Animated building construction sequence — pulsing ring effect (scale + opacity animation) appears on newly placed buildings for ~2 seconds
 - [x] Day / night cycle with dynamic lighting — time-of-day wheel changes fog colour, sky gradient, and renderer exposure
 - [x] Winter / season visual toggle — snow mode now correctly switches sky and fog colours
 - [ ] Improved disaster visuals (fire spread, tornado, flood)
 - [x] Smooth camera transitions and orbit controls refinement — proportional zoom sensitivity, vertical-angle clamping prevents camera flip, two-finger midpoint pan on mobile
-- [x] Keyboard shortcut reference overlay — press `?` to open; added `O` shortcut for Overlays panel
+- [x] Keyboard shortcut reference overlay — press `?` to open; added `O` shortcut for Overlays panel; `N` shortcut for Ordinances
 - [x] Persistent city auto-save (localStorage) — silent background save every 2 minutes with on-screen indicator
 - [ ] Performance profiling pass — target 60 fps on mid-range hardware
 
@@ -54,10 +54,10 @@ Goal: expand the Micropolis engine with richer gameplay mechanics.
   - [ ] Bike lanes and pedestrian paths
   - [ ] Airports and seaports (cargo & passenger)
 - [ ] **Economic system**
-  - [ ] Taxes per zone type (adjustable tax rate panel)
+  - [x] Taxes per zone type — residential, commercial, and industrial tax rates are now independently adjustable in the Budget panel; tax yield computed per-zone
   - [ ] City bonds and debt
   - [ ] Industry specialization (tech, manufacturing, tourism, farming)
-  - [ ] City budget breakdown by department
+  - [x] City budget breakdown by department — Budget panel now shows per-zone tax rates (Res/Com/Ind) plus service spending sliders for Roads, Fire, Police with live dollar amounts; fixed previously-undefined maintenance budget values
 - [ ] **Education & Health**
   - [ ] Schools, universities, and literacy rating
   - [ ] Hospitals, clinics, and city health rating
@@ -65,7 +65,7 @@ Goal: expand the Micropolis engine with richer gameplay mechanics.
   - [ ] Police stations with coverage radius
   - [ ] Fire stations with response time simulation
 - [ ] **Parks & recreation** — variety of park and landmark tiles
-- [ ] **City ordinances / policies** — tax incentives, noise ordinances, recycling programs
+- [x] **City ordinances / policies** — six toggleable ordinances (Free Clinics, Recycling Program, Education Subsidies, Noise Ordinance, Small Business Incentive, Public Transit Subsidy); each has gameplay effects on health, pollution, education, traffic, and tax yield; annual costs deducted from city budget; accessible via Ordinances button (`N`) in top bar
 
 ---
 

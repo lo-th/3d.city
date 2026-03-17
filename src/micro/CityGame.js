@@ -83,6 +83,9 @@ export class CityGame {
         if( p == "ACHIEVEMENTS") Game.getAchievements();
         if( p == "HISTORY") Game.getHistory();
 
+        if( p == "GETORDINANCES") Game.getOrdinances();
+        if( p == "SETORDINANCE")  Game.setOrdinance(e.data.id);
+
         if( p == "SAVEGAME") Game.saveGame(e.data.saveCity, e.data.silent);
         if( p == "LOADGAME") Game.loadGame(e.data.isStart);
         if( p == "MAKELOADGAME") Game.makeLoadGame(e.data.savegame, e.data.isStart);
@@ -425,26 +428,38 @@ export class MainGame {
     }
 
     setBudget (budgetData){
-        this.simulation.budget.cityTax = budgetData[0];
-        this.simulation.budget.roadPercent = budgetData[1]/100;
-        this.simulation.budget.firePercent = budgetData[2]/100;
-        this.simulation.budget.policePercent = budgetData[3]/100;
+        // Support new format: [resTax, comTax, indTax, roadRate, fireRate, policeRate]
+        // as well as old format: [taxRate, roadRate, fireRate, policeRate]
+        if (Array.isArray(budgetData) && budgetData.length >= 6) {
+            this.simulation.budget.setZoneTax(budgetData[0], budgetData[1], budgetData[2]);
+            this.simulation.budget.roadPercent   = budgetData[3] / 100;
+            this.simulation.budget.firePercent   = budgetData[4] / 100;
+            this.simulation.budget.policePercent = budgetData[5] / 100;
+        } else {
+            this.simulation.budget.setTax(budgetData[0]);
+            this.simulation.budget.roadPercent   = budgetData[1] / 100;
+            this.simulation.budget.firePercent   = budgetData[2] / 100;
+            this.simulation.budget.policePercent = budgetData[3] / 100;
+        }
     }
 
     handleBudgetRequest () {
 
         this.budgetShowing = true;
 
+        let b = this.simulation.budget;
         let budgetData = {
-            roadFund: this.simulation.budget.roadFund,
-            roadRate: Math.floor(this.simulation.budget.roadPercent * 100),
-            fireFund: this.simulation.budget.fireFund,
-            fireRate: Math.floor(this.simulation.budget.firePercent * 100),
-            policeFund: this.simulation.budget.policeFund,
-            policeRate: Math.floor(this.simulation.budget.policePercent * 100),
-            taxRate: this.simulation.budget.cityTax,
-            totalFunds: this.simulation.budget.totalFunds,
-            taxesCollected: this.simulation.budget.taxFund
+            roadFund:       b.roadFund,
+            roadRate:       Math.floor(b.roadPercent * 100),
+            fireFund:       b.fireFund,
+            fireRate:       Math.floor(b.firePercent * 100),
+            policeFund:     b.policeFund,
+            policeRate:     Math.floor(b.policePercent * 100),
+            resTaxRate:     b.resTaxRate,
+            comTaxRate:     b.comTaxRate,
+            indTaxRate:     b.indTaxRate,
+            totalFunds:     b.totalFunds,
+            taxesCollected: b.taxFund
         };
 
         CityGame.post({ tell:"BUDGET", budgetData:budgetData});
@@ -456,9 +471,6 @@ export class MainGame {
             this.simulation.budget.updateFundEffects();
         }
 
-
-
-        
         //this.budgetWindow.open(this.handleBudgetClosed.bind(this), budgetData);
         // Let the input know we handled this request
         //this.inputStatus.budgetHandled();
@@ -516,6 +528,18 @@ export class MainGame {
     getHistory () {
         let events = this.simulation.cityHistory.getRecent(20);
         CityGame.post({ tell:"HISTORY", historyData: events });
+    }
+
+    getOrdinances () {
+        let list = this.simulation.ordinances.getList();
+        let annualCost = this.simulation.ordinances.getAnnualCost();
+        CityGame.post({ tell:"ORDINANCES", ordinances: list, annualCost: annualCost });
+    }
+
+    setOrdinance (id) {
+        let active = this.simulation.ordinances.toggle(id);
+        // Re-send the full updated list so the UI stays in sync
+        this.getOrdinances();
     }
 
 

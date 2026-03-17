@@ -28,7 +28,8 @@ const Micro = {
                ],
     BudgetProps : ['autoBudget', 'totalFunds', 'policePercent', 'roadPercent', 'firePercent', 'roadSpend',
                    'policeSpend', 'fireSpend', 'roadMaintenanceBudget', 'policeMaintenanceBudget',
-                   'fireMaintenanceBudget', 'cityTax', 'roadEffect', 'policeEffect', 'fireEffect'
+                   'fireMaintenanceBudget', 'cityTax', 'roadEffect', 'policeEffect', 'fireEffect',
+                   'resTaxRate', 'comTaxRate', 'indTaxRate'
                    ],
     // eval
     PROBLEMS : ['CVP_CRIME', 'CVP_POLLUTION', 'CVP_HOUSING', 'CVP_TAXES', 'CVP_TRAFFIC', 'CVP_UNEMPLOYMENT', 'CVP_FIRE'],
@@ -2921,6 +2922,10 @@ class Budget {
         this.fireEffect = Micro.MAX_FIRESTATION_EFFECT;
         this.totalFunds = 0;
         this.cityTax = 7;
+        // Per-zone tax rates (default to cityTax)
+        this.resTaxRate = 7;
+        this.comTaxRate = 7;
+        this.indTaxRate = 7;
         this.cashFlow = 0;
         this.taxFund = 0;
 
@@ -2957,9 +2962,23 @@ class Budget {
         EventEmitter.emitEvent(Messages.FUNDS_CHANGED, this.totalFunds);
     } 
 
+    // Convenience aliases used by the UI (budget panel)
+    get roadFund () { return this.roadMaintenanceBudget; }
+    get fireFund () { return this.fireMaintenanceBudget; }
+    get policeFund () { return this.policeMaintenanceBudget; }
+
     setAutoBudget (value) {
         this.autoBudget = value;
         EventEmitter.emitEvent(Messages.AUTOBUDGET_CHANGED, this.autoBudget);
+    }
+
+    // Set per-zone tax rates independently (0–20 each)
+    setZoneTax (resTax, comTax, indTax) {
+        this.resTaxRate = Math.max(0, Math.min(20, Math.round(resTax)));
+        this.comTaxRate = Math.max(0, Math.min(20, Math.round(comTax)));
+        this.indTaxRate = Math.max(0, Math.min(20, Math.round(indTax)));
+        // cityTax is kept as the weighted average for backward-compat checks
+        this.cityTax = Math.round((this.resTaxRate + this.comTaxRate + this.indTaxRate) / 3);
     }
 
     // Calculates the best possible outcome in terms of funding the various services
@@ -3084,7 +3103,7 @@ class Budget {
 
     }
 
-    collectTax ( gameLevel, census ) {
+    collectTax ( gameLevel, census, comTaxMod ) {
 
         this.cashFlow = 0;
         // How much would it cost to fully fund every service?
@@ -3095,7 +3114,17 @@ class Budget {
         var railCost = census.railTotal * Micro.railMaintenanceCost;
         this.roadMaintenanceBudget = Math.floor((roadCost + railCost) * Micro.RLevels[gameLevel]);
 
-        this.taxFund = Math.floor( Math.floor( census.totalPop * census.landValueAverage / 120) * this.cityTax * Micro.FLevels[gameLevel]);
+        // Compute per-zone tax contributions using individual zone tax rates.
+        // comTaxMod (e.g. -0.10 from small business incentive) reduces commercial yield.
+        // Residential population is normalised by 8 (one unit ≈ 8 residents) to match Valves.js.
+        // The divisor 120 is a per-capita land-value scaling factor carried over from Micropolis.
+        var mod = (comTaxMod !== undefined) ? comTaxMod : 0;
+        var normalizedResPop = Math.floor(census.resPop / 8);
+        var lva = census.landValueAverage;
+        var resTaxContrib = Math.floor(normalizedResPop * lva / 120) * this.resTaxRate;
+        var comTaxContrib = Math.floor(census.comPop    * lva / 120) * Math.round(this.comTaxRate * (1 + mod));
+        var indTaxContrib = Math.floor(census.indPop    * lva / 120) * this.indTaxRate;
+        this.taxFund = Math.floor((resTaxContrib + comTaxContrib + indTaxContrib) * Micro.FLevels[gameLevel]);
 
         if (census.totalPop > 0) {
             this.cashFlow = this.taxFund - (this.policeMaintenanceBudget + this.fireMaintenanceBudget + this.roadMaintenanceBudget);
@@ -3112,6 +3141,10 @@ class Budget {
     setTax ( amount ) {
         if (amount === this.cityTax) return;
         this.cityTax = amount;
+        // Keep per-zone rates in sync when a global rate is set
+        this.resTaxRate = amount;
+        this.comTaxRate = amount;
+        this.indTaxRate = amount;
     }
 
     setFunds ( amount ) {
@@ -5905,6 +5938,146 @@ class SeasonManager {
     }
 }
 
+/* OpenPublica — City Ordinances / Policies
+ *
+ * A set of toggleable city ordinances that the player can enact.
+ * Each ordinance has an annual cost, and modifiers that are applied
+ * to the simulation each year while the ordinance is active.
+ *
+ * Effects are expressed as deltas applied inside Simulation.updateEducationHealth()
+ * and Simulation.simulate() — the Simulation consults this.ordinances.getEffects().
+ */
+
+const ORDINANCE_DEFS = [
+    {
+        id: 'FREE_CLINICS',
+        name: 'Free Clinics',
+        description: 'Fund public health clinics. Improves city health rating.',
+        annualCost: 200,
+        effects: { healthBonus: 20, pollutionMod: 0, educationBonus: 0, trafficMod: 0, comTaxMod: 0 }
+    },
+    {
+        id: 'RECYCLING_PROGRAM',
+        name: 'Recycling Program',
+        description: 'Mandatory recycling reduces city-wide pollution.',
+        annualCost: 150,
+        effects: { healthBonus: 5, pollutionMod: -15, educationBonus: 0, trafficMod: 0, comTaxMod: 0 }
+    },
+    {
+        id: 'EDUCATION_SUBSIDIES',
+        name: 'Education Subsidies',
+        description: 'Subsidise schools and libraries. Improves education and attracts residents.',
+        annualCost: 300,
+        effects: { healthBonus: 0, pollutionMod: 0, educationBonus: 25, trafficMod: 0, comTaxMod: 0 }
+    },
+    {
+        id: 'NOISE_ORDINANCE',
+        name: 'Noise Ordinance',
+        description: 'Restrict noise-generating activities. Small happiness boost at no cost.',
+        annualCost: 0,
+        effects: { healthBonus: 3, pollutionMod: -5, educationBonus: 0, trafficMod: 0, comTaxMod: 0 }
+    },
+    {
+        id: 'SMALL_BIZ_INCENTIVE',
+        name: 'Small Business Incentive',
+        description: 'Tax breaks encourage commercial growth, but reduce commercial tax yield by 10%.',
+        annualCost: 0,
+        effects: { healthBonus: 0, pollutionMod: 0, educationBonus: 0, trafficMod: 0, comTaxMod: -0.10 }
+    },
+    {
+        id: 'PUBLIC_TRANSIT_SUBSIDY',
+        name: 'Public Transit Subsidy',
+        description: 'Fund public buses and trams to reduce road congestion.',
+        annualCost: 250,
+        effects: { healthBonus: 5, pollutionMod: -8, educationBonus: 0, trafficMod: -10, comTaxMod: 0 }
+    }
+];
+
+class Ordinances {
+
+    constructor () {
+        // Map from ordinance id → boolean (active or not)
+        this._active = {};
+        for (var i = 0; i < ORDINANCE_DEFS.length; i++) {
+            this._active[ ORDINANCE_DEFS[i].id ] = false;
+        }
+    }
+
+    save (saveData) {
+        saveData.ordinances = Object.assign({}, this._active);
+    }
+
+    load (saveData) {
+        if (saveData && saveData.ordinances) {
+            var ids = Object.keys(saveData.ordinances);
+            for (var i = 0; i < ids.length; i++) {
+                if (this._active.hasOwnProperty(ids[i])) {
+                    this._active[ ids[i] ] = !!saveData.ordinances[ ids[i] ];
+                }
+            }
+        }
+    }
+
+    toggle (id) {
+        if (this._active.hasOwnProperty(id)) {
+            this._active[id] = !this._active[id];
+            return this._active[id];
+        }
+        return false;
+    }
+
+    isActive (id) {
+        return !!this._active[id];
+    }
+
+    // Returns combined effect object for all active ordinances
+    getEffects () {
+        var combined = {
+            healthBonus:    0,
+            pollutionMod:   0,
+            educationBonus: 0,
+            trafficMod:     0,
+            comTaxMod:      0
+        };
+        for (var i = 0; i < ORDINANCE_DEFS.length; i++) {
+            var def = ORDINANCE_DEFS[i];
+            if (!this._active[def.id]) continue;
+            var fx = def.effects;
+            combined.healthBonus    += fx.healthBonus;
+            combined.pollutionMod   += fx.pollutionMod;
+            combined.educationBonus += fx.educationBonus;
+            combined.trafficMod     += fx.trafficMod;
+            combined.comTaxMod      += fx.comTaxMod;
+        }
+        return combined;
+    }
+
+    // Annual cost (deducted from budget each year)
+    getAnnualCost () {
+        var total = 0;
+        for (var i = 0; i < ORDINANCE_DEFS.length; i++) {
+            if (this._active[ ORDINANCE_DEFS[i].id ]) {
+                total += ORDINANCE_DEFS[i].annualCost;
+            }
+        }
+        return total;
+    }
+
+    // Serialisable list of ordinances with their current state (for the UI)
+    getList () {
+        return ORDINANCE_DEFS.map(function(def) {
+            return {
+                id:          def.id,
+                name:        def.name,
+                description: def.description,
+                annualCost:  def.annualCost,
+                active:      !!this._active[def.id]
+            };
+        }, this);
+    }
+
+}
+
 /* micropolisJS. Adapted by Graeme McCutcheon from Micropolis.
  *
  * This code is released under the GNU GPL v3, with some additional terms.
@@ -5970,6 +6143,7 @@ class Simulation {
         this.achievements = new Achievements();
         this.cityHistory = new CityHistory();
         this.seasonManager = new SeasonManager();
+        this.ordinances = new Ordinances();
 
         this.messageManager = new MessageManager();
         Micro.messageManager = this.messageManager;
@@ -6047,22 +6221,22 @@ class Simulation {
         this.census.save(saveData);
         this.achievements.save(saveData);
         this.cityHistory.save(saveData);
+        this.ordinances.save(saveData);
 
     }
 
     load (saveData) {
-        //console.log(saveData)
         this.messageManager.clear();
         for (let i = 0, l = Micro.savePropsVar.length; i < l; i++)
             this[Micro.savePropsVar[i]] = saveData[Micro.savePropsVar[i]];
 
-        //this.map.load(saveData);
         this.evaluation.load(saveData);
         this.valves.load(saveData);
         this.budget.load(saveData);
         this.census.load(saveData);
         this.achievements.load(saveData);
         this.cityHistory.load(saveData);
+        this.ordinances.load(saveData);
 
     }
 
@@ -6133,6 +6307,7 @@ class Simulation {
     // Compute education level from infrastructure
     updateEducationHealth () {
         let census = this.census;
+        let fx = this.ordinances.getEffects();
 
         // Education: derived from hospitals (which also serve as schools in this sim),
         // churches (community centers), and land value
@@ -6140,11 +6315,15 @@ class Simulation {
         let landValueFactor = Math.min(census.landValueAverage, 150);
         let popFactor = census.totalPop > 0 ? Math.min(census.totalPop / 100, 50) : 0;
 
-        census.educationLevel = Math.min(Math.floor(educationBase + landValueFactor * 0.3 + popFactor * 0.2), Micro.EDUCATION_EFFECT_RANGE);
+        census.educationLevel = Math.min(
+            Math.floor(educationBase + landValueFactor * 0.3 + popFactor * 0.2 + fx.educationBonus),
+            Micro.EDUCATION_EFFECT_RANGE
+        );
 
-        // Health: derived from hospital coverage minus pollution
-        let healthBase = census.hospitalPop * 50;
-        let pollutionPenalty = census.pollutionAverage * 0.8;
+        // Health: derived from hospital coverage minus pollution (with ordinance bonuses)
+        let healthBase = census.hospitalPop * 50 + fx.healthBonus;
+        let effectivePollution = Math.max(0, census.pollutionAverage + fx.pollutionMod);
+        let pollutionPenalty = effectivePollution * 0.8;
         let crimeHealthPenalty = census.crimeAverage * 0.3;
 
         census.healthLevel = Math.min(Math.max(Math.floor(healthBase - pollutionPenalty - crimeHealthPenalty + 20), 0), Micro.HEALTH_EFFECT_RANGE);
@@ -6153,7 +6332,7 @@ class Simulation {
         let happyScore = 50; // baseline
         happyScore += (this.evaluation.cityScore - 500) * 0.02;  // score factor
         happyScore -= census.crimeAverage * 0.1;                  // crime hurts
-        happyScore -= census.pollutionAverage * 0.08;             // pollution hurts
+        happyScore -= effectivePollution * 0.08;                  // pollution hurts
         happyScore += (census.educationLevel / Micro.EDUCATION_EFFECT_RANGE) * 15; // education helps
         happyScore += (census.healthLevel / Micro.HEALTH_EFFECT_RANGE) * 10;       // health helps
         happyScore += this.seasonManager.happinessMod;            // season effect
@@ -6250,7 +6429,14 @@ class Simulation {
             case 9:
                 if (this.cityTime % Micro.CENSUS_FREQUENCY_10 === 0) this.census.take10Census(this.budget);
                 if (this.cityTime % Micro.CENSUS_FREQUENCY_120 === 0) this.census.take120Census(this.budget);
-                if (this.cityTime % Micro.TAX_FREQUENCY === 0) { this.budget.collectTax( this.gameLevel, this.census ); this.evaluation.cityEvaluation(); }
+                if (this.cityTime % Micro.TAX_FREQUENCY === 0) {
+                    let ordFx = this.ordinances.getEffects();
+                    this.budget.collectTax( this.gameLevel, this.census, ordFx.comTaxMod );
+                    // Deduct annual ordinance costs from city funds
+                    let ordCost = this.ordinances.getAnnualCost();
+                    if (ordCost > 0) this.budget.spend(ordCost);
+                    this.evaluation.cityEvaluation();
+                }
                 // Update season based on current month
                 if (this.seasonManager.update(this._cityMonthLast)) {
                     this.messageManager.sendMessage(Messages.SEASON_CHANGED);
@@ -8707,6 +8893,9 @@ class CityGame {
         if( p == "ACHIEVEMENTS") Game.getAchievements();
         if( p == "HISTORY") Game.getHistory();
 
+        if( p == "GETORDINANCES") Game.getOrdinances();
+        if( p == "SETORDINANCE")  Game.setOrdinance(e.data.id);
+
         if( p == "SAVEGAME") Game.saveGame(e.data.saveCity, e.data.silent);
         if( p == "LOADGAME") Game.loadGame(e.data.isStart);
         if( p == "MAKELOADGAME") Game.makeLoadGame(e.data.savegame, e.data.isStart);
@@ -9047,26 +9236,38 @@ class MainGame {
     }
 
     setBudget (budgetData){
-        this.simulation.budget.cityTax = budgetData[0];
-        this.simulation.budget.roadPercent = budgetData[1]/100;
-        this.simulation.budget.firePercent = budgetData[2]/100;
-        this.simulation.budget.policePercent = budgetData[3]/100;
+        // Support new format: [resTax, comTax, indTax, roadRate, fireRate, policeRate]
+        // as well as old format: [taxRate, roadRate, fireRate, policeRate]
+        if (Array.isArray(budgetData) && budgetData.length >= 6) {
+            this.simulation.budget.setZoneTax(budgetData[0], budgetData[1], budgetData[2]);
+            this.simulation.budget.roadPercent   = budgetData[3] / 100;
+            this.simulation.budget.firePercent   = budgetData[4] / 100;
+            this.simulation.budget.policePercent = budgetData[5] / 100;
+        } else {
+            this.simulation.budget.setTax(budgetData[0]);
+            this.simulation.budget.roadPercent   = budgetData[1] / 100;
+            this.simulation.budget.firePercent   = budgetData[2] / 100;
+            this.simulation.budget.policePercent = budgetData[3] / 100;
+        }
     }
 
     handleBudgetRequest () {
 
         this.budgetShowing = true;
 
+        let b = this.simulation.budget;
         let budgetData = {
-            roadFund: this.simulation.budget.roadFund,
-            roadRate: Math.floor(this.simulation.budget.roadPercent * 100),
-            fireFund: this.simulation.budget.fireFund,
-            fireRate: Math.floor(this.simulation.budget.firePercent * 100),
-            policeFund: this.simulation.budget.policeFund,
-            policeRate: Math.floor(this.simulation.budget.policePercent * 100),
-            taxRate: this.simulation.budget.cityTax,
-            totalFunds: this.simulation.budget.totalFunds,
-            taxesCollected: this.simulation.budget.taxFund
+            roadFund:       b.roadFund,
+            roadRate:       Math.floor(b.roadPercent * 100),
+            fireFund:       b.fireFund,
+            fireRate:       Math.floor(b.firePercent * 100),
+            policeFund:     b.policeFund,
+            policeRate:     Math.floor(b.policePercent * 100),
+            resTaxRate:     b.resTaxRate,
+            comTaxRate:     b.comTaxRate,
+            indTaxRate:     b.indTaxRate,
+            totalFunds:     b.totalFunds,
+            taxesCollected: b.taxFund
         };
 
         CityGame.post({ tell:"BUDGET", budgetData:budgetData});
@@ -9078,9 +9279,6 @@ class MainGame {
             this.simulation.budget.updateFundEffects();
         }
 
-
-
-        
         //this.budgetWindow.open(this.handleBudgetClosed.bind(this), budgetData);
         // Let the input know we handled this request
         //this.inputStatus.budgetHandled();
@@ -9138,6 +9336,18 @@ class MainGame {
     getHistory () {
         let events = this.simulation.cityHistory.getRecent(20);
         CityGame.post({ tell:"HISTORY", historyData: events });
+    }
+
+    getOrdinances () {
+        let list = this.simulation.ordinances.getList();
+        let annualCost = this.simulation.ordinances.getAnnualCost();
+        CityGame.post({ tell:"ORDINANCES", ordinances: list, annualCost: annualCost });
+    }
+
+    setOrdinance (id) {
+        this.simulation.ordinances.toggle(id);
+        // Re-send the full updated list so the UI stays in sync
+        this.getOrdinances();
     }
 
 

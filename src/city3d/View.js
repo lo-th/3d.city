@@ -244,7 +244,10 @@ export class View {
 
 		this.ease_p = -1
 		this.onEase = null;
-		
+
+		// Construction animation markers
+		this.constructionGroup = null;
+		this.constructionQueue = [];
 
 		this.spriteLists = ['train', 'elico', 'plane', 'boat', 'monster', 'tornado', 'sparks'];
 		//this.spriteLists = [];
@@ -750,6 +753,10 @@ export class View {
         this.scene.add( this.tool );
         this.tool.visible = false;
 
+        // Construction animation group
+        this.constructionGroup = new THREE.Group();
+        this.scene.add( this.constructionGroup );
+
 
 
 
@@ -791,6 +798,7 @@ export class View {
     render( time ) {
 
     	this.doResize()
+    	this._updateConstructionMarkers();
     	this.renderer.render( this.scene, this.camera )
 
     	if( AppState.debugOverlay ) AppState.debugOverlay.onFrame( time );
@@ -1857,6 +1865,7 @@ export class View {
 		if(!this.townLists[layer]) this.townLists[layer]=[];
     	this.townLists[layer].push([x,y,z,v,zone]);
     	this.rebuildTownLayer(layer);
+    	this._spawnConstructionMarker(x, y, z);
 
 	}
 
@@ -1911,16 +1920,56 @@ export class View {
 		if(v==3) c = 616;
 
     	if(!this.buildingLists[layer]) this.buildingLists[layer]=[];
-    	//this.buildingLists[layer].push([x,y,z,c, 0, zone]);
     	this.buildingLists[layer].push([x,y,z,c, zone, 0 ]);
 
     	this.rebuildBuildingLayer(layer);
+    	this._spawnConstructionMarker(x, y, z);
     }
 
     rebuildBuildingLayer ( l ) {
 
         this.buildMeshLayer( l, 'building' );
 
+    }
+
+    //--------------------------------------------------CONSTRUCTION ANIMATION
+
+    _spawnConstructionMarker ( x, y, z ) {
+        if (!this.constructionGroup) return;
+        // Ring geometry: torus centred on the tile
+        const geo = new THREE.TorusGeometry(0.7, 0.06, 6, 24);
+        const mat = new THREE.MeshBasicMaterial({ color: 0xffcc44, transparent: true, opacity: 0.95 });
+        const ring = new THREE.Mesh(geo, mat);
+        ring.rotation.x = Math.PI / 2;
+        ring.position.set(x + 0.5, y + 0.15, z + 0.5);
+        ring._startTime = Date.now();
+        ring._mat = mat;
+        this.constructionGroup.add(ring);
+        this.constructionQueue.push(ring);
+    }
+
+    _updateConstructionMarkers () {
+        if (!this.constructionQueue.length) return;
+        const now = Date.now();
+        const DURATION = 2200; // ms
+        let i = this.constructionQueue.length;
+        while (i--) {
+            const ring = this.constructionQueue[i];
+            const age  = now - ring._startTime;
+            if (age >= DURATION) {
+                this.constructionGroup.remove(ring);
+                ring.geometry.dispose();
+                ring._mat.dispose();
+                this.constructionQueue.splice(i, 1);
+            } else {
+                const t = age / DURATION;
+                // Pulse scale
+                const scale = 1 + Math.sin(t * Math.PI * 6) * 0.2;
+                ring.scale.setScalar(scale);
+                // Fade out in last 40%
+                ring._mat.opacity = t < 0.6 ? 0.95 : 0.95 * (1 - (t - 0.6) / 0.4);
+            }
+        }
     }
 
     //---------------------------------------------------BUILDING LISTING
