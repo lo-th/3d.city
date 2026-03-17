@@ -1,6 +1,7 @@
 import * as UIL from '../../build/uil.module.js'
 
 import { Main } from '../Main.js';
+import { AppState } from '../AppState.js';
 import { Base } from './Base.js';
 
 
@@ -345,8 +346,8 @@ export class Hub {
         winter.title = 'Toggle winter';
         this.hub.appendChild(winter);
         winter.addEventListener('click', function(e){
-            view3d.winterSwitch();
-            if(view3d.isWinter){
+            AppState.view3d.winterSwitch();
+            if(AppState.view3d.isWinter){
                 this.style.background = 'rgba(140,200,255,0.35)';
                 this.style.borderColor = 'rgba(140,200,255,0.8)';
             } else {
@@ -380,7 +381,7 @@ export class Hub {
                 case 'h': case 'H': Main.getHistory();      break;
                 case '?':           _this.openAbout();       break;
                 case 'o': case 'O': _this.openOverlays();    break;
-                case '`':           if(window.debugOverlay) window.debugOverlay.toggle(); break;
+                case '`':           if(AppState.debugOverlay) AppState.debugOverlay.toggle(); break;
             }
         }, false);
     }

@@ -3,29 +3,13 @@ import { Hub } from './city3d/Hub.js'
 import { View } from './city3d/View.js'
 import { WorkerBridge } from './WorkerBridge.js';
 import { DebugOverlay } from './DebugOverlay.js';
+import { AppState } from './AppState.js';
 
 
 const simulation_timestep = 30;
 
-window.tilesData = null;
-window.spriteData = null;
-window.gameData = null;
-window.powerData = null;
-window.layerData = [];
-
-window.isMobile = false;
-
-window.trans = false;
-window.newup = false;
-window.powerup = false;
-
-window.directMessage = null
-window.isWorker = true
-
-window.withHeight = false
-
-window.workerBridge = new WorkerBridge();
-window.debugOverlay = new DebugOverlay();
+AppState.workerBridge = new WorkerBridge();
+AppState.debugOverlay = new DebugOverlay();
 
 export class Main {
 
@@ -33,19 +17,19 @@ export class Main {
 
         if( DirectMessage !== undefined ){ 
 
-            directMessage = DirectMessage;
-            isWorker = false
+            AppState.directMessage = DirectMessage;
+            AppState.isWorker = false;
 
         }
         
-        isMobile = testMobile();
+        AppState.isMobile = testMobile();
 
-        this.initWorker()
-        window.hub = new Hub()
-        window.view3d = new View( isMobile );
+        this.initWorker();
+        AppState.hub = new Hub();
+        AppState.view3d = new View( AppState.isMobile );
 
         // Mount the debug overlay once the hub element is available
-        debugOverlay.mount( document.getElementById('hub') );
+        AppState.debugOverlay.mount( document.getElementById('hub') );
 
     }
 
@@ -53,9 +37,9 @@ export class Main {
 
     static initWorker (){
 
-        workerBridge.boot(
-            isWorker,
-            directMessage,
+        AppState.workerBridge.boot(
+            AppState.isWorker,
+            AppState.directMessage,
             simulation_timestep,
             function () { Main.startAutoSave(); }
         );
@@ -64,7 +48,7 @@ export class Main {
 
     static start (){
 
-        hub.start();
+        AppState.hub.start();
 
         //hub.message('Generating world...')
         //post({ tell:"NEWMAP"})
@@ -72,51 +56,51 @@ export class Main {
     }
 
     static sendTool( name ) {
-        workerBridge.post({tell:"TOOL", name:name});
+        AppState.workerBridge.post({tell:"TOOL", name:name});
     }
 
     static destroy( x, y ) {
 
         // TODO SOUND EXPLOSION
 
-        workerBridge.post({tell:"MAPCLICK", x:x, y:y, single:true });
+        AppState.workerBridge.post({tell:"MAPCLICK", x:x, y:y, single:true });
     }
 
     static mapClick( tool ) {
-        var p = view3d.raypos;
+        var p = AppState.view3d.raypos;
 
         if( p.x<0 && p.z<0 ) return
 
         //if( tool === 'bulldozer' ) view3d.testDestruct( p.x, p.y )
-        workerBridge.post({tell:"MAPCLICK", x:p.x, y:p.z });
+        AppState.workerBridge.post({tell:"MAPCLICK", x:p.x, y:p.z });
     }
 
     // HUB
 
     static selectTool( id ) {
-        view3d.selectTool( id );
+        AppState.view3d.selectTool( id );
     }
 
     static setTimeColors( id ) {
-        view3d.setTimeColors(id);
+        AppState.view3d.setTimeColors(id);
     }
 
     static newMap( t ) {
 
-        if( view3d.inMapGenation ) return;
+        if( AppState.view3d.inMapGenation ) return;
 
-        hub.generate( true );
-        withHeight = t!=='NEW';
-        view3d.inMapGenation = true;
-        setTimeout( () => { workerBridge.post({tell:"NEWMAP"}); }, 1000);
+        AppState.hub.generate( true );
+        AppState.withHeight = t!=='NEW';
+        AppState.view3d.inMapGenation = true;
+        setTimeout( () => { AppState.workerBridge.post({tell:"NEWMAP"}); }, 1000);
     
     }
 
     static playMap() {
 
-        hub.initGameHub();
-        view3d.startZoom();
-        workerBridge.post({tell:"PLAYMAP"});
+        AppState.hub.initGameHub();
+        AppState.view3d.startZoom();
+        AppState.workerBridge.post({tell:"PLAYMAP"});
 
     }
 
@@ -126,36 +110,36 @@ export class Main {
         let n = 0;
         if(t === 'MEDIUM') n = 1
         if(t === 'HARD') n = 2
-        workerBridge.post({tell:"DIFFICULTY", n:n });
+        AppState.workerBridge.post({tell:"DIFFICULTY", n:n });
     }
 
     static setSpeed( n ) {
-        if( window.debugOverlay ) window.debugOverlay.setSpeed( n );
-        workerBridge.post({tell:"SPEED", n:n });
+        if( AppState.debugOverlay ) AppState.debugOverlay.setSpeed( n );
+        AppState.workerBridge.post({tell:"SPEED", n:n });
     }
 
     static getBudjet() {
-        workerBridge.post({ tell:"BUDGET" });
+        AppState.workerBridge.post({ tell:"BUDGET" });
     }
 
     static setBudjet( budgetData ) {
-        workerBridge.post({ tell:"NEWBUDGET", budgetData:budgetData });
+        AppState.workerBridge.post({ tell:"NEWBUDGET", budgetData:budgetData });
     }
 
     static getEval() {
-        workerBridge.post({ tell:"EVAL" });
+        AppState.workerBridge.post({ tell:"EVAL" });
     }
 
     static getAchievements() {
-        workerBridge.post({ tell:"ACHIEVEMENTS" });
+        AppState.workerBridge.post({ tell:"ACHIEVEMENTS" });
     }
 
     static getHistory() {
-        workerBridge.post({ tell:"HISTORY" });
+        AppState.workerBridge.post({ tell:"HISTORY" });
     }
 
     static setDisaster(disaster){
-        workerBridge.post({ tell:"DISASTER", disaster:disaster });
+        AppState.workerBridge.post({ tell:"DISASTER", disaster:disaster });
     }
 
     static setOverlays( type ) {
@@ -164,18 +148,18 @@ export class Main {
 
     static saveGame() {
         var saveCity = [];
-        view3d.saveCityBuild(saveCity);
+        AppState.view3d.saveCityBuild(saveCity);
         saveCity = JSON.stringify(saveCity);
        // var cityData = view3d.saveCityBuild();
-        workerBridge.post({ tell:"SAVEGAME", saveCity:saveCity });
+        AppState.workerBridge.post({ tell:"SAVEGAME", saveCity:saveCity });
     }
 
     // Silent background save — writes to localStorage only, no file download
     static autoSave() {
         var saveCity = [];
-        view3d.saveCityBuild(saveCity);
+        AppState.view3d.saveCityBuild(saveCity);
         saveCity = JSON.stringify(saveCity);
-        workerBridge.post({ tell:"SAVEGAME", saveCity:saveCity, silent:true });
+        AppState.workerBridge.post({ tell:"SAVEGAME", saveCity:saveCity, silent:true });
     }
 
     static startAutoSave( intervalMs ) {
@@ -186,10 +170,10 @@ export class Main {
     static loadGame( atStart ) {
         var isStart = atStart || false;
         if( isStart ){ 
-            hub.generate( true );
-            view3d.inMapGenation = true;
+            AppState.hub.generate( true );
+            AppState.view3d.inMapGenation = true;
         }
-        workerBridge.post({ tell:"LOADGAME", isStart:isStart });
+        AppState.workerBridge.post({ tell:"LOADGAME", isStart:isStart });
     }
 
     static newGameMap() {
@@ -197,15 +181,12 @@ export class Main {
     }
 
     static showStats() {
-        view3d.isWithStats = true;
+        AppState.view3d.isWithStats = true;
     }
 
     static hideStats() {
-        view3d.isWithStats = false;
+        AppState.view3d.isWithStats = false;
     }
-
-    
-
 
 }
 

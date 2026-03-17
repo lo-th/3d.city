@@ -7,6 +7,7 @@ import { ImprovedNoise } from '../jsm/math/ImprovedNoise.js';
 //import { BufferGeometryUtils } from './jsm/utils/BufferGeometryUtils.js';
 
 import { Main } from '../Main.js';
+import { AppState } from '../AppState.js';
 
 import { Base } from './Base.js';
 import { BuildTool } from './BuildTool.js';
@@ -340,7 +341,7 @@ export class View {
 
 	fileSelect( e ){
 
-		hub.generate( true );
+		AppState.hub.generate( true );
         this.inMapGenation = true;
 
 		const file = e.target.files[0]
@@ -776,7 +777,7 @@ export class View {
     	this.doResize()
     	this.renderer.render( this.scene, this.camera )
 
-    	if( window.debugOverlay ) window.debugOverlay.onFrame( time );
+    	if( AppState.debugOverlay ) AppState.debugOverlay.onFrame( time );
 
     }
 
@@ -2095,12 +2096,11 @@ export class View {
 
 		if( mapSize ) {
 			this.mapSize = mapSize;
-			if( window.debugOverlay ) window.debugOverlay.setMapSize( mapSize[0], mapSize[1] );
+			if( AppState.debugOverlay ) AppState.debugOverlay.setMapSize( mapSize[0], mapSize[1] );
 		}
 
 		if( this.basePlane ) this.scene.remove( this.basePlane )
 
-		//console.log(tilesData.length)
 		this.clearTerrain()
 		this.clearAllTrees()
 		this.clearHeight()
@@ -2110,7 +2110,7 @@ export class View {
 		//this.initTerrain();
 		
 		let y = this.mapSize[1];
-		let x, v, px, py, n = tilesData.length, cy, cx, layer, ar, r, ty = 0, id;
+		let x, v, px, py, n = AppState.tilesData.length, cy, cx, layer, ar, r, ty = 0, id;
 
 		while( y-- ){
 			x = this.mapSize[0];
@@ -2122,7 +2122,7 @@ export class View {
 				layer = cx+(cy*8);
 
 				n--;
-				v = tilesData[n];
+				v = AppState.tilesData[n];
 
 				if( this.isWithHeight ){
 
@@ -2131,11 +2131,11 @@ export class View {
 						this.heightData[ id ] *= -1;
 						if( x === this.mapSize[0]-1 ) this.heightData[ id+1 ] *= -1;
 						if( y === this.mapSize[1]-1 ) this.heightData[ id+this.mapSize[1] ] *= -1;
-						tilesData[n] = 0 
+						AppState.tilesData[n] = 0 
 					}
 	                if( v > 4 && v < 21 ){ // water border
 	                    this.heightData[ this.findHeightId(x, y) ] *= 0.5;
-	                    tilesData[n] = 0 
+	                    AppState.tilesData[n] = 0 
 	                }
 	            }
 				if( v > 20 && v < 30 ){// tree 44
@@ -2194,7 +2194,7 @@ export class View {
 
 	    while(i--){ 
 
-	    	if( layerData[i] === 1 ) this.drawLayer( i )
+	    	if( AppState.layerData[i] === 1 ) this.drawLayer( i )
 	    	if(this.tempHouseLayers[i] === 1){ this.rebuildHouseLayer(i); this.tempHouseLayers[i] = 0 }
 	    	if(this.tempBuildingLayers[i] === 1){ this.rebuildBuildingLayer(i); this.tempBuildingLayers[i] = 0; }
 
@@ -2220,7 +2220,7 @@ export class View {
                 vy = (ly*16)+y
 
 				n = vx+(vy*this.mapSize[1])
-				v = tilesData[n];
+				v = AppState.tilesData[n];
 
 				g = v < 240 ? v : 0;
 
@@ -2284,14 +2284,14 @@ export class View {
 
 	moveSprite () {
 
-		if(!spriteData) return
+		if(!AppState.spriteData) return
 
-		let i = spriteData.length;
+		let i = AppState.spriteData.length;
 		let pos = new THREE.Vector3();
 		let v, frame, c;
 
 		while(i--){
-			c = spriteData[i]
+			c = AppState.spriteData[i]
 			frame = c[1]
 			v = c[0]
 			pos.x = Math.round((c[2]-8)/16);
@@ -2394,13 +2394,11 @@ export class View {
 
 	showPower (){
 
-		//if( !powerData ) return
-
-		let i = powerData.length, pos;
+		let i = AppState.powerData.length, pos;
 		while(i--){
-			if(powerData[i]===0) continue;//{ if( this.powerMeshs[i] !== null ) this.removePowerMesh(i); }
-			else if(powerData[i]===2){ if(this.powerMeshs[i] == null) this.addPowerMesh(i, this.findPosition(i)); }
-			else if(powerData[i]===1){ if(this.powerMeshs[i] !== null) this.removePowerMesh(i); }
+			if(AppState.powerData[i]===0) continue;//{ if( this.powerMeshs[i] !== null ) this.removePowerMesh(i); }
+			else if(AppState.powerData[i]===2){ if(this.powerMeshs[i] == null) this.addPowerMesh(i, this.findPosition(i)); }
+			else if(AppState.powerData[i]===1){ if(this.powerMeshs[i] !== null) this.removePowerMesh(i); }
 		}
 
 	}
