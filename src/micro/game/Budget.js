@@ -19,6 +19,10 @@ export class Budget {
         this.fireEffect = Micro.MAX_FIRESTATION_EFFECT;
         this.totalFunds = 0;
         this.cityTax = 7;
+        // Per-zone tax rates (default to cityTax)
+        this.resTaxRate = 7;
+        this.comTaxRate = 7;
+        this.indTaxRate = 7;
         this.cashFlow = 0;
         this.taxFund = 0;
 
@@ -55,9 +59,23 @@ export class Budget {
         EventEmitter.emitEvent(Messages.FUNDS_CHANGED, this.totalFunds);
     } 
 
+    // Convenience aliases used by the UI (budget panel)
+    get roadFund () { return this.roadMaintenanceBudget; }
+    get fireFund () { return this.fireMaintenanceBudget; }
+    get policeFund () { return this.policeMaintenanceBudget; }
+
     setAutoBudget (value) {
         this.autoBudget = value;
         EventEmitter.emitEvent(Messages.AUTOBUDGET_CHANGED, this.autoBudget);
+    }
+
+    // Set per-zone tax rates independently (0–20 each)
+    setZoneTax (resTax, comTax, indTax) {
+        this.resTaxRate = Math.max(0, Math.min(20, Math.round(resTax)));
+        this.comTaxRate = Math.max(0, Math.min(20, Math.round(comTax)));
+        this.indTaxRate = Math.max(0, Math.min(20, Math.round(indTax)));
+        // cityTax is kept as the weighted average for backward-compat checks
+        this.cityTax = Math.round((this.resTaxRate + this.comTaxRate + this.indTaxRate) / 3);
     }
 
     // Calculates the best possible outcome in terms of funding the various services
@@ -182,7 +200,7 @@ export class Budget {
 
     }
 
-    collectTax ( gameLevel, census ) {
+    collectTax ( gameLevel, census, comTaxMod ) {
 
         this.cashFlow = 0;
         // How much would it cost to fully fund every service?
@@ -193,7 +211,17 @@ export class Budget {
         var railCost = census.railTotal * Micro.railMaintenanceCost;
         this.roadMaintenanceBudget = Math.floor((roadCost + railCost) * Micro.RLevels[gameLevel])
 
-        this.taxFund = Math.floor( Math.floor( census.totalPop * census.landValueAverage / 120) * this.cityTax * Micro.FLevels[gameLevel]);
+        // Compute per-zone tax contributions using individual zone tax rates.
+        // comTaxMod (e.g. -0.10 from small business incentive) reduces commercial yield.
+        // Residential population is normalised by 8 (one unit ≈ 8 residents) to match Valves.js.
+        // The divisor 120 is a per-capita land-value scaling factor carried over from Micropolis.
+        var mod = (comTaxMod !== undefined) ? comTaxMod : 0;
+        var normalizedResPop = Math.floor(census.resPop / 8);
+        var lva = census.landValueAverage;
+        var resTaxContrib = Math.floor(normalizedResPop * lva / 120) * this.resTaxRate;
+        var comTaxContrib = Math.floor(census.comPop    * lva / 120) * Math.round(this.comTaxRate * (1 + mod));
+        var indTaxContrib = Math.floor(census.indPop    * lva / 120) * this.indTaxRate;
+        this.taxFund = Math.floor((resTaxContrib + comTaxContrib + indTaxContrib) * Micro.FLevels[gameLevel]);
 
         if (census.totalPop > 0) {
             this.cashFlow = this.taxFund - (this.policeMaintenanceBudget + this.fireMaintenanceBudget + this.roadMaintenanceBudget);
@@ -210,6 +238,10 @@ export class Budget {
     setTax ( amount ) {
         if (amount === this.cityTax) return;
         this.cityTax = amount;
+        // Keep per-zone rates in sync when a global rate is set
+        this.resTaxRate = amount;
+        this.comTaxRate = amount;
+        this.indTaxRate = amount;
     }
 
     setFunds ( amount ) {

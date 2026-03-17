@@ -139,6 +139,14 @@ export class Main {
         AppState.workerBridge.post({ tell:"HISTORY" });
     }
 
+    static getOrdinances() {
+        AppState.workerBridge.post({ tell:"GETORDINANCES" });
+    }
+
+    static setOrdinance(id) {
+        AppState.workerBridge.post({ tell:"SETORDINANCE", id:id });
+    }
+
     static setDisaster(disaster){
         AppState.workerBridge.post({ tell:"DISASTER", disaster:disaster });
     }

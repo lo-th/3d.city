@@ -8603,6 +8603,7 @@ class Hub {
         this.aboutWindow        = null;
         this.achievementsWindow = null;
         this.historyWindow      = null;
+        this.ordinancesWindow   = null;
 
         this.selector = null;
         this.select   = null;
@@ -8782,6 +8783,9 @@ class Hub {
         var b7 = this.addButton(topBar, 'History', [65,22,11], null, true);
         b7.addEventListener('click', function(e){ e.preventDefault(); Main.getHistory(); }, false);
 
+        var b8 = this.addButton(topBar, 'Ordinances', [88,22,11], null, true);
+        b8.addEventListener('click', function(e){ e.preventDefault(); Main.getOrdinances(); }, false);
+
         // Speed selector is appended to the topBar in addSelector below
 
         // ── Tool panel ────────────────────────────────────────────────
@@ -8898,14 +8902,15 @@ class Hub {
             if(e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
             switch(e.key){
                 case 'Escape': _this.testOpen(); break;
-                case 'b': case 'B': Main.getBudjet();        break;
-                case 'e': case 'E': Main.getEval();          break;
-                case 'd': case 'D': _this.openDisaster();    break;
-                case 's': case 'S': _this.openExit();        break;
-                case 'a': case 'A': Main.getAchievements(); break;
-                case 'h': case 'H': Main.getHistory();      break;
-                case '?':           _this.openAbout();       break;
-                case 'o': case 'O': _this.openOverlays();    break;
+                case 'b': case 'B': Main.getBudjet();          break;
+                case 'e': case 'E': Main.getEval();            break;
+                case 'd': case 'D': _this.openDisaster();      break;
+                case 's': case 'S': _this.openExit();          break;
+                case 'a': case 'A': Main.getAchievements();    break;
+                case 'h': case 'H': Main.getHistory();         break;
+                case '?':           _this.openAbout();         break;
+                case 'o': case 'O': _this.openOverlays();      break;
+                case 'n': case 'N': Main.getOrdinances();      break;
                 case '`':           if(AppState.debugOverlay) AppState.debugOverlay.toggle(); break;
             }
         }, false);
@@ -9106,6 +9111,10 @@ class Hub {
             this.closeHistory();
             t = 'history';
         }
+        if(this.ordinancesWindow !== null && this.ordinancesWindow.dataset.state === 'open'){
+            this.closeOrdinances();
+            t = 'ordinances';
+        }
 
         return t;
 
@@ -9155,6 +9164,7 @@ class Hub {
                              + '<span class="hub-kbd">A</span> Awards &nbsp;'
                              + '<span class="hub-kbd">H</span> History<br>'
                              + '<span class="hub-kbd">O</span> Overlays &nbsp;'
+                             + '<span class="hub-kbd">N</span> Ordinances<br>'
                              + '<span class="hub-kbd">?</span> This panel<br>'
                              + '<span class="hub-kbd">Esc</span> Close window';
             body.appendChild( kbdDiv );
@@ -9405,16 +9415,23 @@ class Hub {
         var test = this.testOpen();
         if(test == 'budget') return;
 
-        this.dataKeys = ['roadFund', 'roadRate', 'fireFund', 'fireRate','policeFund', 'policeRate', 'taxRate', 'totalFunds', 'taxesCollected'];
+        this.dataKeys = ['roadFund', 'roadRate', 'fireFund', 'fireRate', 'policeFund', 'policeRate',
+                         'resTaxRate', 'comTaxRate', 'indTaxRate', 'totalFunds', 'taxesCollected'];
 
         var i = this.dataKeys.length;
+
         while(i--){
             this[this.dataKeys[i]] = data[this.dataKeys[i]];
         }
 
+        // Fallback for saves that pre-date per-zone taxes
+        if (this.resTaxRate === undefined) this.resTaxRate = data.taxRate || 7;
+        if (this.comTaxRate === undefined) this.comTaxRate = data.taxRate || 7;
+        if (this.indTaxRate === undefined) this.indTaxRate = data.taxRate || 7;
+
         data.totalFunds;
-        var taxesCollected = data.taxesCollected;
-        var cashFlow = taxesCollected - this.roadFund - this.fireFund - this.policeFund;
+        var taxesCollected = data.taxesCollected || 0;
+        var cashFlow = taxesCollected - (this.roadFund || 0) - (this.fireFund || 0) - (this.policeFund || 0);
 
         if(this.budgetWindow == null){
             this.budgetWindow = document.createElement('div');
@@ -9426,16 +9443,31 @@ class Hub {
             this.budgetWindow.appendChild( this.makeWindowHeader('Budget', function(){ _this.closeBudget(); }) );
 
             var body = document.createElement('div');
-            body.style.cssText = 'position:relative; height:264px; pointer-events:none;';
+            body.style.cssText = 'position:relative; height:360px; pointer-events:none;';
             this.budgetWindow.appendChild( body );
 
-            this.addSlider(body, 10,  'Tax',    this.taxRate,    null,           '#4bcc7a', 20);
-            this.addSlider(body, 70,  'Roads',  this.roadRate,   this.roadFund,  '#e05555', 100);
-            this.addSlider(body, 110, 'Fire',   this.fireRate,   this.fireFund,  '#e05555', 100);
-            this.addSlider(body, 150, 'Police', this.policeRate, this.policeFund,'#e05555', 100);
+            var taxLabel = document.createElement('div');
+            taxLabel.style.cssText = 'position:absolute; left:10px; top:8px; font-size:10px; font-weight:700;'
+                                   + ' letter-spacing:0.08em; color:rgba(75,204,122,0.8); text-transform:uppercase;';
+            taxLabel.textContent = 'Tax Rates';
+            body.appendChild(taxLabel);
+
+            this.addSlider(body, 22, 'Res Tax', this.resTaxRate, null, '#4bcc7a', 20);
+            this.addSlider(body, 62, 'Com Tax', this.comTaxRate, null, '#4bcc7a', 20);
+            this.addSlider(body, 102,'Ind Tax', this.indTaxRate, null, '#4bcc7a', 20);
+
+            var svcLabel = document.createElement('div');
+            svcLabel.style.cssText = 'position:absolute; left:10px; top:148px; font-size:10px; font-weight:700;'
+                                   + ' letter-spacing:0.08em; color:rgba(224,85,85,0.8); text-transform:uppercase;';
+            svcLabel.textContent = 'Services';
+            body.appendChild(svcLabel);
+
+            this.addSlider(body, 162, 'Roads',  this.roadRate,   this.roadFund,   '#e05555', 100);
+            this.addSlider(body, 202, 'Fire',   this.fireRate,   this.fireFund,   '#e05555', 100);
+            this.addSlider(body, 242, 'Police', this.policeRate, this.policeFund, '#e05555', 100);
 
             this.budgetResult = document.createElement('div');
-            this.budgetResult.style.cssText = 'position:absolute; top:200px; left:10px; width:200px;'
+            this.budgetResult.style.cssText = 'position:absolute; top:296px; left:10px; width:200px;'
                                             + ' pointer-events:none; color:' + this.colors[0] + '; font-size:12px; line-height:1.6;';
             body.appendChild( this.budgetResult );
 
@@ -9461,7 +9493,7 @@ class Hub {
         this.budgetWindow.style.display = 'none';
         this.budgetWindow.dataset.state = 'close';
 
-        Main.setBudjet([this.taxRate, this.roadRate, this.fireRate, this.policeRate ]);
+        Main.setBudjet([this.resTaxRate, this.comTaxRate, this.indTaxRate, this.roadRate, this.fireRate, this.policeRate]);
     }
 
     closeBudget  (){
@@ -9470,10 +9502,12 @@ class Hub {
     }
 
     setBudgetValue (){
-        this.setSliderValue('Tax', this.taxRate, 20, null);
-        this.setSliderValue('Roads', this.roadRate, 100, this.roadFund);
-        this.setSliderValue('Fire', this.fireRate, 100, this.fireFund);
-        this.setSliderValue('Police', this.policeRate, 100, this.policeFund);
+        this.setSliderValue('Res Tax', this.resTaxRate, 20, null);
+        this.setSliderValue('Com Tax', this.comTaxRate, 20, null);
+        this.setSliderValue('Ind Tax', this.indTaxRate, 20, null);
+        this.setSliderValue('Roads',   this.roadRate,   100, this.roadFund);
+        this.setSliderValue('Fire',    this.fireRate,   100, this.fireFund);
+        this.setSliderValue('Police',  this.policeRate, 100, this.policeFund);
     }
 
     //-----------------------------------DISASTER WINDOW
@@ -9572,10 +9606,13 @@ class Hub {
             children[0].style.width = 170*(value/max)+'px';
 
             switch(t.name){
-                case 'Tax':    children[1].innerHTML = t.name+' '+value+'%'; this.taxRate=value; break;
-                case 'Roads':  children[1].innerHTML = t.name+' '+value+'% of '+this.roadFund+'$ = '+Math.floor(this.roadFund*(value/100))+'$'; this.roadRate=value; break;
-                case 'Fire':   children[1].innerHTML = t.name+' '+value+'% of '+this.fireFund+'$ = '+Math.floor(this.fireFund*(value/100))+'$'; this.fireRate=value; break;
-                case 'Police': children[1].innerHTML = t.name+' '+value+'% of '+this.policeFund+'$ = '+Math.floor(this.policeFund*(value/100))+'$'; this.policeRate=value; break;
+                case 'Res Tax': children[1].innerHTML = t.name+' '+value+'%'; this.resTaxRate=value; break;
+                case 'Com Tax': children[1].innerHTML = t.name+' '+value+'%'; this.comTaxRate=value; break;
+                case 'Ind Tax': children[1].innerHTML = t.name+' '+value+'%'; this.indTaxRate=value; break;
+                case 'Tax':     children[1].innerHTML = t.name+' '+value+'%'; this.taxRate=value; break;
+                case 'Roads':   children[1].innerHTML = t.name+' '+value+'% of '+(this.roadFund||0)+'$ = '+Math.floor((this.roadFund||0)*(value/100))+'$'; this.roadRate=value; break;
+                case 'Fire':    children[1].innerHTML = t.name+' '+value+'% of '+(this.fireFund||0)+'$ = '+Math.floor((this.fireFund||0)*(value/100))+'$'; this.fireRate=value; break;
+                case 'Police':  children[1].innerHTML = t.name+' '+value+'% of '+(this.policeFund||0)+'$ = '+Math.floor((this.policeFund||0)*(value/100))+'$'; this.policeRate=value; break;
             }
         }
     }
@@ -9940,6 +9977,83 @@ class Hub {
     closeHistory  (){
         this.historyWindow.style.display = 'none';
         this.historyWindow.dataset.state = 'close';
+    }
+
+    //-----------------------------------ORDINANCES WINDOW
+
+    openOrdinances (ordinances, annualCost) {
+        var _this = this;
+
+        var test = this.testOpen();
+        if(test == 'ordinances') return;
+
+        if(this.ordinancesWindow == null){
+            this.ordinancesWindow = document.createElement('div');
+            this.ordinancesWindow.className = 'hub-panel';
+            this.ordinancesWindow.style.cssText = 'position:absolute; top:44px; left:10px; width:280px;'
+                                                + ' pointer-events:none; display:flex; flex-direction:column; border-radius:10px;';
+            this.hub.appendChild( this.ordinancesWindow );
+
+            this.ordinancesWindow.appendChild( this.makeWindowHeader('City Ordinances', function(){ _this.closeOrdinances(); }) );
+
+            this.ordBody = document.createElement('div');
+            this.ordBody.style.cssText = 'padding:8px 12px; pointer-events:none; overflow-y:auto; max-height:420px;';
+            this.ordinancesWindow.appendChild( this.ordBody );
+
+        } else {
+            this.ordinancesWindow.style.display = 'flex';
+        }
+
+        // Rebuild the list each time (ordinances may have toggled)
+        this.ordBody.innerHTML = '';
+
+        var costLabel = document.createElement('div');
+        costLabel.style.cssText = 'font-size:11px; color:rgba(180,210,240,0.6); margin-bottom:8px; pointer-events:none;';
+        costLabel.textContent = 'Annual ordinance cost: ' + (annualCost || 0) + '$';
+        this.ordBody.appendChild(costLabel);
+
+        if (Array.isArray(ordinances)) {
+            for (var i = 0; i < ordinances.length; i++) {
+                this._addOrdinanceRow(this.ordBody, ordinances[i]);
+            }
+        }
+
+        this.ordinancesWindow.dataset.state = 'open';
+    }
+
+    _addOrdinanceRow (container, ord) {
+        var row = document.createElement('div');
+        row.style.cssText = 'display:flex; align-items:flex-start; gap:8px; margin-bottom:10px; pointer-events:auto; cursor:pointer;'
+                          + ' padding:8px; border-radius:6px; border:1px solid rgba(100,160,220,0.2);'
+                          + ' background:' + (ord.active ? 'rgba(75,204,122,0.12)' : 'rgba(255,255,255,0.03)') + ';'
+                          + ' transition:background 120ms;';
+        row.dataset.id = ord.id;
+
+        var toggle = document.createElement('div');
+        toggle.style.cssText = 'flex-shrink:0; width:16px; height:16px; border-radius:3px; border:1.5px solid '
+                             + (ord.active ? '#4bcc7a' : 'rgba(100,160,220,0.4)') + ';'
+                             + ' background:' + (ord.active ? '#4bcc7a' : 'transparent') + ';'
+                             + ' margin-top:2px;';
+        row.appendChild(toggle);
+
+        var info = document.createElement('div');
+        info.style.cssText = 'pointer-events:none;';
+        info.innerHTML = '<div style="font-size:13px; font-weight:600; color:#dce8f5;">' + ord.name + '</div>'
+                       + '<div style="font-size:11px; color:rgba(180,210,240,0.6); line-height:1.4;">' + ord.description + '</div>'
+                       + (ord.annualCost > 0 ? '<div style="font-size:11px; color:rgba(224,160,60,0.85); margin-top:2px;">Cost: ' + ord.annualCost + '$ / year</div>' : '<div style="font-size:11px; color:rgba(180,210,240,0.4); margin-top:2px;">No annual cost</div>');
+        row.appendChild(info);
+
+        row.addEventListener('click', function(e){
+            e.preventDefault();
+            Main.setOrdinance(this.dataset.id);
+        }, false);
+
+        container.appendChild(row);
+    }
+
+    closeOrdinances (){
+        this.ordinancesWindow.style.display = 'none';
+        this.ordinancesWindow.dataset.state = 'close';
     }
 
     clearElement  (id){
@@ -44053,6 +44167,110 @@ function toJSON( shapes, data ) {
 
 }
 
+class TorusGeometry extends BufferGeometry {
+
+	constructor( radius = 1, tube = 0.4, radialSegments = 8, tubularSegments = 6, arc = Math.PI * 2 ) {
+
+		super();
+		this.type = 'TorusGeometry';
+
+		this.parameters = {
+			radius: radius,
+			tube: tube,
+			radialSegments: radialSegments,
+			tubularSegments: tubularSegments,
+			arc: arc
+		};
+
+		radialSegments = Math.floor( radialSegments );
+		tubularSegments = Math.floor( tubularSegments );
+
+		// buffers
+
+		const indices = [];
+		const vertices = [];
+		const normals = [];
+		const uvs = [];
+
+		// helper variables
+
+		const center = new Vector3();
+		const vertex = new Vector3();
+		const normal = new Vector3();
+
+		// generate vertices, normals and uvs
+
+		for ( let j = 0; j <= radialSegments; j ++ ) {
+
+			for ( let i = 0; i <= tubularSegments; i ++ ) {
+
+				const u = i / tubularSegments * arc;
+				const v = j / radialSegments * Math.PI * 2;
+
+				// vertex
+
+				vertex.x = ( radius + tube * Math.cos( v ) ) * Math.cos( u );
+				vertex.y = ( radius + tube * Math.cos( v ) ) * Math.sin( u );
+				vertex.z = tube * Math.sin( v );
+
+				vertices.push( vertex.x, vertex.y, vertex.z );
+
+				// normal
+
+				center.x = radius * Math.cos( u );
+				center.y = radius * Math.sin( u );
+				normal.subVectors( vertex, center ).normalize();
+
+				normals.push( normal.x, normal.y, normal.z );
+
+				// uv
+
+				uvs.push( i / tubularSegments );
+				uvs.push( j / radialSegments );
+
+			}
+
+		}
+
+		// generate indices
+
+		for ( let j = 1; j <= radialSegments; j ++ ) {
+
+			for ( let i = 1; i <= tubularSegments; i ++ ) {
+
+				// indices
+
+				const a = ( tubularSegments + 1 ) * j + i - 1;
+				const b = ( tubularSegments + 1 ) * ( j - 1 ) + i - 1;
+				const c = ( tubularSegments + 1 ) * ( j - 1 ) + i;
+				const d = ( tubularSegments + 1 ) * j + i;
+
+				// faces
+
+				indices.push( a, b, d );
+				indices.push( b, c, d );
+
+			}
+
+		}
+
+		// build geometry
+
+		this.setIndex( indices );
+		this.setAttribute( 'position', new Float32BufferAttribute( vertices, 3 ) );
+		this.setAttribute( 'normal', new Float32BufferAttribute( normals, 3 ) );
+		this.setAttribute( 'uv', new Float32BufferAttribute( uvs, 2 ) );
+
+	}
+
+	static fromJSON( data ) {
+
+		return new TorusGeometry( data.radius, data.tube, data.radialSegments, data.tubularSegments, data.arc );
+
+	}
+
+}
+
 /**
  * parameters = {
  *  color: <THREE.Color>
@@ -62289,7 +62507,10 @@ class View {
 
 		this.ease_p = -1;
 		this.onEase = null;
-		
+
+		// Construction animation markers
+		this.constructionGroup = null;
+		this.constructionQueue = [];
 
 		this.spriteLists = ['train', 'elico', 'plane', 'boat', 'monster', 'tornado', 'sparks'];
 		//this.spriteLists = [];
@@ -62769,6 +62990,10 @@ class View {
         this.scene.add( this.tool );
         this.tool.visible = false;
 
+        // Construction animation group
+        this.constructionGroup = new Group();
+        this.scene.add( this.constructionGroup );
+
 
 
 
@@ -62810,6 +63035,7 @@ class View {
     render( time ) {
 
     	this.doResize();
+    	this._updateConstructionMarkers();
     	this.renderer.render( this.scene, this.camera );
 
     	if( AppState.debugOverlay ) AppState.debugOverlay.onFrame( time );
@@ -63866,6 +64092,7 @@ class View {
 		if(!this.townLists[layer]) this.townLists[layer]=[];
     	this.townLists[layer].push([x,y,z,v,zone]);
     	this.rebuildTownLayer(layer);
+    	this._spawnConstructionMarker(x, y, z);
 
 	}
 
@@ -63920,16 +64147,56 @@ class View {
 		if(v==3) c = 616;
 
     	if(!this.buildingLists[layer]) this.buildingLists[layer]=[];
-    	//this.buildingLists[layer].push([x,y,z,c, 0, zone]);
     	this.buildingLists[layer].push([x,y,z,c, zone, 0 ]);
 
     	this.rebuildBuildingLayer(layer);
+    	this._spawnConstructionMarker(x, y, z);
     }
 
     rebuildBuildingLayer ( l ) {
 
         this.buildMeshLayer( l, 'building' );
 
+    }
+
+    //--------------------------------------------------CONSTRUCTION ANIMATION
+
+    _spawnConstructionMarker ( x, y, z ) {
+        if (!this.constructionGroup) return;
+        // Ring geometry: torus centred on the tile
+        const geo = new TorusGeometry(0.7, 0.06, 6, 24);
+        const mat = new MeshBasicMaterial({ color: 0xffcc44, transparent: true, opacity: 0.95 });
+        const ring = new Mesh(geo, mat);
+        ring.rotation.x = Math.PI / 2;
+        ring.position.set(x + 0.5, y + 0.15, z + 0.5);
+        ring._startTime = Date.now();
+        ring._mat = mat;
+        this.constructionGroup.add(ring);
+        this.constructionQueue.push(ring);
+    }
+
+    _updateConstructionMarkers () {
+        if (!this.constructionQueue.length) return;
+        const now = Date.now();
+        const DURATION = 2200; // ms
+        let i = this.constructionQueue.length;
+        while (i--) {
+            const ring = this.constructionQueue[i];
+            const age  = now - ring._startTime;
+            if (age >= DURATION) {
+                this.constructionGroup.remove(ring);
+                ring.geometry.dispose();
+                ring._mat.dispose();
+                this.constructionQueue.splice(i, 1);
+            } else {
+                const t = age / DURATION;
+                // Pulse scale
+                const scale = 1 + Math.sin(t * Math.PI * 6) * 0.2;
+                ring.scale.setScalar(scale);
+                // Fade out in last 40%
+                ring._mat.opacity = t < 0.6 ? 0.95 : 0.95 * (1 - (t - 0.6) / 0.4);
+            }
+        }
     }
 
     //---------------------------------------------------BUILDING LISTING
@@ -64986,6 +65253,7 @@ class WorkerBridge {
         if ( phase === 'EVAL' )         AppState.hub.openEval( d.evalData );
         if ( phase === 'ACHIEVEMENTS' ) AppState.hub.openAchievements( d.achData, d.progress );
         if ( phase === 'HISTORY' )      AppState.hub.openHistory( d.historyData );
+        if ( phase === 'ORDINANCES' )   AppState.hub.openOrdinances( d.ordinances, d.annualCost );
 
         if ( phase === 'SAVEGAME' ) this._makeGameSave( d.gameData, d.key, d.silent );
         if ( phase === 'LOADGAME' ) this._makeLoadGame( d.key, d.isStart );
@@ -65326,6 +65594,14 @@ class Main {
 
     static getHistory() {
         AppState.workerBridge.post({ tell:"HISTORY" });
+    }
+
+    static getOrdinances() {
+        AppState.workerBridge.post({ tell:"GETORDINANCES" });
+    }
+
+    static setOrdinance(id) {
+        AppState.workerBridge.post({ tell:"SETORDINANCE", id:id });
     }
 
     static setDisaster(disaster){

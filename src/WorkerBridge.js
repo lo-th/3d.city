@@ -188,6 +188,7 @@ export class WorkerBridge {
         if ( phase === 'EVAL' )         AppState.hub.openEval( d.evalData );
         if ( phase === 'ACHIEVEMENTS' ) AppState.hub.openAchievements( d.achData, d.progress );
         if ( phase === 'HISTORY' )      AppState.hub.openHistory( d.historyData );
+        if ( phase === 'ORDINANCES' )   AppState.hub.openOrdinances( d.ordinances, d.annualCost );
 
         if ( phase === 'SAVEGAME' ) this._makeGameSave( d.gameData, d.key, d.silent );
         if ( phase === 'LOADGAME' ) this._makeLoadGame( d.key, d.isStart );
