@@ -152,6 +152,13 @@ export class View {
 	    this.cam = { horizontal:90, vertical:60, distance:120 };
 	    this.vsize = { x:window.innerWidth, y:window.innerHeight, z:window.innerWidth/window.innerHeight};
 	    this.mouse = { ox:0, oy:0, h:0, v:0, mx:0, my:0, dx:0, dy:0, down:false, over:false, drag:false, click:false, move:true, dragView:false, button:0 };
+
+	    // smooth camera state
+	    this.zoomVelocity = 0;
+	    this.orbitVelocityH = 0;
+	    this.orbitVelocityV = 0;
+	    this.pinchStartDist = 0;
+	    this.pinchStartCamDist = 0;
 	    this.raypos =  {x:-1, y:0, z:-1};
 
 	    this.select = '';
@@ -765,6 +772,9 @@ export class View {
 	        this.updateKey();
 	    }
 
+	    this.applyZoomInertia();
+	    this.applyOrbitMomentum();
+
 	    this.render( time );
 
     }
@@ -820,10 +830,15 @@ export class View {
 	}
 
 	faddingZoom( t ) {
-		if(t.cam.distance>20){
-			t.cam.distance--;
+		const target = 20;
+		if( Math.abs(t.cam.distance - target) > 0.2 ){
+			t.cam.distance += (target - t.cam.distance) * 0.07;
 			t.moveCamera();
-		}else clearInterval(t.timer);
+		} else {
+			t.cam.distance = target;
+			t.moveCamera();
+			clearInterval(t.timer);
+		}
 	}
 
 
@@ -1994,11 +2009,20 @@ export class View {
 
 	}
 
-	onMouseDown  (e) {   
+	onMouseDown  (e) {
 
 		e.preventDefault();
 	    let px, py;
 	    if(e.touches){
+	        // two-finger pinch start
+	        if(e.touches.length === 2){
+	            this.pinchStartDist = Math.hypot(
+	                e.touches[0].pageX - e.touches[1].pageX,
+	                e.touches[0].pageY - e.touches[1].pageY
+	            );
+	            this.pinchStartCamDist = this.cam.distance;
+	            return;
+	        }
 	        px = e.clientX || e.touches[ 0 ].pageX;
 	        py = e.clientY || e.touches[ 0 ].pageY;
 	    } else {
@@ -2017,13 +2041,13 @@ export class View {
 	    this.mouse.h = this.cam.horizontal;
 	    this.mouse.v = this.cam.vertical;
 	    this.mouse.down = true;
-	    
+
 	    if(this.currentTool && this.mouse.button<2){// only for tool
 	    	this.mouse.click = true;
 	        if(this.currentTool.drag){ this.mouse.drag = true;}
-	        
+
 	    }
-	   
+
 	}
 
 	onMouseUp  (e) {
@@ -2034,7 +2058,20 @@ export class View {
 	    if(this.currentTool==null)this.mouse.move = true;
 	    this.ease.x = 0;
 	    this.ease.z = 0;
+	    this.pinchStartDist = 0;
 	    document.body.style.cursor = 'auto';
+	}
+
+	applyOrbitMomentum() {
+	    if( this.orbitVelocityH === 0 && this.orbitVelocityV === 0 ) return;
+	    if( this.mouse.down ) { this.orbitVelocityH = 0; this.orbitVelocityV = 0; return; }
+	    this.cam.horizontal += this.orbitVelocityH;
+	    this.cam.vertical   += this.orbitVelocityV;
+	    this.orbitVelocityH *= 0.88;
+	    this.orbitVelocityV *= 0.88;
+	    if( Math.abs(this.orbitVelocityH) < 0.01 ) this.orbitVelocityH = 0;
+	    if( Math.abs(this.orbitVelocityV) < 0.01 ) this.orbitVelocityV = 0;
+	    this.moveCamera();
 	}
 
 	onMouseMove  (e) {
@@ -2042,19 +2079,33 @@ export class View {
 
 	    let px, py;
 	    if(e.touches){
+	        // two-finger pinch zoom
+	        if(e.touches.length === 2 && this.pinchStartDist > 0){
+	            const d = Math.hypot(
+	                e.touches[0].pageX - e.touches[1].pageX,
+	                e.touches[0].pageY - e.touches[1].pageY
+	            );
+	            this.cam.distance = this.clamp( this.pinchStartCamDist * (this.pinchStartDist / d), 1, 150 );
+	            this.moveCamera();
+	            return;
+	        }
 	        px = e.clientX || e.touches[ 0 ].pageX;
 	        py = e.clientY || e.touches[ 0 ].pageY;
 	    } else {
 	        px = e.clientX;
 	        py = e.clientY;
 	    }
-	    
+
 	    if (this.mouse.down) {
-	        if(this.mouse.move || this.mouse.button===2){  
+	        if(this.mouse.move || this.mouse.button===2){
 	        	this.mouse.dragView = false;
 		        document.body.style.cursor = 'crosshair';
-		        this.cam.horizontal = ((px - this.mouse.ox) * 0.3) + this.mouse.h;
-		        this.cam.vertical = (-(py -this. mouse.oy) * 0.3) + this.mouse.v;
+		        const newH = ((px - this.mouse.ox) * 0.3) + this.mouse.h;
+		        const newV = (-(py - this.mouse.oy) * 0.3) + this.mouse.v;
+		        this.orbitVelocityH = newH - this.cam.horizontal;
+		        this.orbitVelocityV = newV - this.cam.vertical;
+		        this.cam.horizontal = newH;
+		        this.cam.vertical = newV;
 		        this.moveCamera();
 		    }
 		    if(this.mouse.dragView || this.mouse.button===3){
@@ -2063,7 +2114,7 @@ export class View {
 		    	this.ease.x = (px - this.mouse.ox)/1000;
 		    	this.ease.z = (py - this. mouse.oy)/1000;
 		    }
-	    } 
+	    }
 
 	    if(this.currentTool !== null || this.isMenu ){
 			this.rayVector.x = ( px / this.vsize.x ) * 2 - 1;
@@ -2072,17 +2123,24 @@ export class View {
 		}
 	}
 
-	onMouseWheel  (e) { 
-		//e.preventDefault();   
+	onMouseWheel  (e) {
+		//e.preventDefault();
 	    let delta = 0;
 	    if(e.deltaY !== undefined){ delta = e.deltaY; }
 	    else if(e.wheelDelta){ delta = e.wheelDelta * -1; }
 	    else if(e.detail){ delta = e.detail * 20; }
-	    this.cam.distance += (delta / 80);
-	    if(this.cam.distance<1)this.cam.distance = 1;
-	    if(this.cam.distance>150)this.cam.distance = 150;
-	    this.moveCamera();
+	    this.zoomVelocity += delta / 80;
 
+	}
+
+	applyZoomInertia() {
+	    if( this.zoomVelocity === 0 ) return;
+	    this.cam.distance += this.zoomVelocity;
+	    this.zoomVelocity *= 0.82;
+	    if( Math.abs(this.zoomVelocity) < 0.05 ) this.zoomVelocity = 0;
+	    if( this.cam.distance < 1 ) { this.cam.distance = 1; this.zoomVelocity = 0; }
+	    if( this.cam.distance > 150 ) { this.cam.distance = 150; this.zoomVelocity = 0; }
+	    this.moveCamera();
 	}
 
 
