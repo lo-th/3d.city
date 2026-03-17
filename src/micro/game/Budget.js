@@ -52,6 +52,12 @@ export class Budget {
         this.bondInterestRate = 0.07;
         this.MAX_BOND_DEBT = 50000;
 
+        // ── Water supply & sewage ─────────────────────────────────────
+        this.waterMaintenanceBudget = 0;
+        this.waterPercent = 1;
+        this.waterSpend = 0;
+        this.waterEffect = Micro.MAX_WATER_EFFECT;
+
     }
 
     save (saveData) {
@@ -71,6 +77,7 @@ export class Budget {
     get roadFund () { return this.roadMaintenanceBudget; }
     get fireFund () { return this.fireMaintenanceBudget; }
     get policeFund () { return this.policeMaintenanceBudget; }
+    get waterFund () { return this.waterMaintenanceBudget; }
 
     // Returns the annual interest payment owed on outstanding bond debt.
     getBondAnnualPayment () {
@@ -111,27 +118,30 @@ export class Budget {
 
         // How much would we be spending based on current percentages?
         // Note: the *Budget items are updated every January by collectTax
-        this.roadSpend = Math.round(this.roadMaintenanceBudget * this.roadPercent);
-        this.fireSpend = Math.round(this.fireMaintenanceBudget * this.firePercent);
+        this.roadSpend   = Math.round(this.roadMaintenanceBudget   * this.roadPercent);
+        this.fireSpend   = Math.round(this.fireMaintenanceBudget   * this.firePercent);
         this.policeSpend = Math.round(this.policeMaintenanceBudget * this.policePercent);
-        var total = this.roadSpend + this.fireSpend + this.policeSpend;
+        this.waterSpend  = Math.round(this.waterMaintenanceBudget  * this.waterPercent);
+        var total = this.roadSpend + this.fireSpend + this.policeSpend + this.waterSpend;
 
         // If we don't have any services on the map, we can bail early
         if (total === 0) {
-            this.roadPercent = 1;
-            this.firePercent = 1;
+            this.roadPercent   = 1;
+            this.firePercent   = 1;
             this.policePercent = 1;
-            return {road: 1, fire: 1, police: 1};
+            this.waterPercent  = 1;
+            return {road: 1, fire: 1, police: 1, water: 1};
         }
 
         // How much are we actually going to spend?
-        var roadCost = 0;
-        var fireCost = 0;
+        var roadCost   = 0;
+        var fireCost   = 0;
         var policeCost = 0;
+        var waterCost  = 0;
 
         var cashRemaining = this.totalFunds + this.taxFund;
 
-        // Spending priorities: road, fire, police
+        // Spending priorities: road, fire, police, water
         if (cashRemaining >= this.roadSpend) roadCost = this.roadSpend;
         else roadCost = cashRemaining;
         cashRemaining -= roadCost;
@@ -144,16 +154,23 @@ export class Budget {
         else policeCost = cashRemaining;
         cashRemaining -= policeCost;
 
-        if (this.roadMaintenanceBudget > 0) this.roadPercent = (roadCost / this.roadMaintenanceBudget).toPrecision(2) - 0;
+        if (cashRemaining >= this.waterSpend) waterCost = this.waterSpend;
+        else waterCost = cashRemaining;
+        cashRemaining -= waterCost;
+
+        if (this.roadMaintenanceBudget > 0)   this.roadPercent   = (roadCost   / this.roadMaintenanceBudget).toPrecision(2)   - 0;
         else this.roadPercent = 1;
 
-        if (this.fireMaintenanceBudget > 0) this.firePercent = (fireCost / this.fireMaintenanceBudget).toPrecision(2) - 0;
+        if (this.fireMaintenanceBudget > 0)   this.firePercent   = (fireCost   / this.fireMaintenanceBudget).toPrecision(2)   - 0;
         else this.firePercent = 1;
 
         if (this.policeMaintenanceBudget > 0) this.policePercent = (policeCost / this.policeMaintenanceBudget).toPrecision(2) - 0;
         else this.policePercent = 1;
 
-        return { road: roadCost, police: policeCost, fire: fireCost };
+        if (this.waterMaintenanceBudget > 0)  this.waterPercent  = (waterCost  / this.waterMaintenanceBudget).toPrecision(2)  - 0;
+        else this.waterPercent = 1;
+
+        return { road: roadCost, police: policeCost, fire: fireCost, water: waterCost };
     }
 
     // User initiated budget
@@ -175,14 +192,15 @@ export class Budget {
         var roadCost = costs.road;
         var policeCost = costs.police;
         var fireCost = costs.fire;
-        var totalCost = roadCost + policeCost + fireCost;
+        var waterCost = costs.water || 0;
+        var totalCost = roadCost + policeCost + fireCost + waterCost;
         var cashRemaining = this.totalFunds + this.taxFund - totalCost;
 
         // Autobudget
         if ((cashRemaining > 0 && this.autoBudget) || fromWindow) {
             // Either we were able to fully fund services, or we have just normalised user input. Go ahead and spend.
             this.awaitingValues = false;
-            this.doBudgetSpend( roadCost, fireCost, policeCost );
+            this.doBudgetSpend( roadCost, fireCost, policeCost, waterCost );
             return;
         }
 
@@ -194,12 +212,13 @@ export class Budget {
         EventEmitter.emitEvent(Messages.NO_MONEY);
     }
 
-    doBudgetSpend ( roadValue, fireValue, policeValue  ) {
+    doBudgetSpend ( roadValue, fireValue, policeValue, waterValue ) {
 
-        this.roadSpend = roadValue;
-        this.fireSpend = fireValue;
+        this.roadSpend   = roadValue;
+        this.fireSpend   = fireValue;
         this.policeSpend = policeValue;
-        var total = this.roadSpend + this.fireSpend + this.policeSpend;
+        this.waterSpend  = waterValue || 0;
+        var total = this.roadSpend + this.fireSpend + this.policeSpend + this.waterSpend;
 
         this.spend(-(this.taxFund - total) );
         this.updateFundEffects();
@@ -213,22 +232,27 @@ export class Budget {
         this.policeSpend = Math.round(this.policeMaintenanceBudget * this.policePercent);
 
         // Update the effect this level of spending will have on infrastructure deterioration
-        this.roadEffect = Micro.MAX_ROAD_EFFECT;
+        this.roadEffect   = Micro.MAX_ROAD_EFFECT;
         this.policeEffect = Micro.MAX_POLICESTATION_EFFECT;
-        this.fireEffect = Micro.MAX_FIRESTATION_EFFECT;
+        this.fireEffect   = Micro.MAX_FIRESTATION_EFFECT;
+        this.waterEffect  = Micro.MAX_WATER_EFFECT;
 
-        if (this.roadMaintenanceBudget > 0) this.roadEffect = Math.floor(this.roadEffect * this.roadSpend / this.roadMaintenanceBudget);
-        if (this.fireMaintenanceBudget > 0) this.fireEffect = Math.floor(this.fireEffect * this.fireSpend / this.fireMaintenanceBudget);
+        if (this.roadMaintenanceBudget > 0)   this.roadEffect   = Math.floor(this.roadEffect   * this.roadSpend   / this.roadMaintenanceBudget);
+        if (this.fireMaintenanceBudget > 0)   this.fireEffect   = Math.floor(this.fireEffect   * this.fireSpend   / this.fireMaintenanceBudget);
         if (this.policeMaintenanceBudget > 0) this.policeEffect = Math.floor(this.policeEffect * this.policeSpend / this.policeMaintenanceBudget);
+        if (this.waterMaintenanceBudget > 0)  this.waterEffect  = Math.floor(this.waterEffect  * this.waterSpend  / this.waterMaintenanceBudget);
+        else this.waterEffect = Micro.MAX_WATER_EFFECT;
 
     }
 
-    collectTax ( gameLevel, census, comTaxMod ) {
+    collectTax ( gameLevel, census, comTaxMod, indFx ) {
 
         this.cashFlow = 0;
         // How much would it cost to fully fund every service?
         this.policeMaintenanceBudget = census.policeStationPop * Micro.policeMaintenanceCost;
-        this.fireMaintenanceBudget = census.fireStationPop * Micro.fireMaintenanceCost;
+        this.fireMaintenanceBudget   = census.fireStationPop   * Micro.fireMaintenanceCost;
+        // Water infrastructure: scales with total population (per 1000 residents)
+        this.waterMaintenanceBudget = Math.floor(census.totalPop / 1000) * Micro.waterMaintenanceCost;
 
         var roadCost = census.roadTotal * Micro.roadMaintenanceCost;
         var railCost = census.railTotal * Micro.railMaintenanceCost;
@@ -236,14 +260,24 @@ export class Budget {
 
         // Compute per-zone tax contributions using individual zone tax rates.
         // comTaxMod (e.g. -0.10 from small business incentive) reduces commercial yield.
+        // indFx contains additive tax-rate modifiers from the industry specialization.
         // Residential population is normalised by 8 (one unit ≈ 8 residents) to match Valves.js.
         // The divisor 120 is a per-capita land-value scaling factor carried over from Micropolis.
-        var mod = (comTaxMod !== undefined) ? comTaxMod : 0;
+        var comMod = (comTaxMod !== undefined) ? comTaxMod : 0;
+        var specResMod = indFx ? (indFx.resTaxMod || 0) : 0;
+        var specComMod = indFx ? (indFx.comTaxMod || 0) : 0;
+        var specIndMod = indFx ? (indFx.indTaxMod || 0) : 0;
+
         var normalizedResPop = Math.floor(census.resPop / 8);
         var lva = census.landValueAverage;
-        var resTaxContrib = Math.floor(normalizedResPop * lva / 120) * this.resTaxRate;
-        var comTaxContrib = Math.floor(census.comPop    * lva / 120) * Math.round(this.comTaxRate * (1 + mod));
-        var indTaxContrib = Math.floor(census.indPop    * lva / 120) * this.indTaxRate;
+        // Apply specialization modifiers as additive adjustments to effective tax rates (clamped to 0-20)
+        var effectiveResTax = Math.max(0, Math.min(20, this.resTaxRate + specResMod));
+        var effectiveComTax = Math.max(0, Math.min(20, Math.round(this.comTaxRate * (1 + comMod)) + specComMod));
+        var effectiveIndTax = Math.max(0, Math.min(20, this.indTaxRate + specIndMod));
+
+        var resTaxContrib = Math.floor(normalizedResPop * lva / 120) * effectiveResTax;
+        var comTaxContrib = Math.floor(census.comPop    * lva / 120) * effectiveComTax;
+        var indTaxContrib = Math.floor(census.indPop    * lva / 120) * effectiveIndTax;
         this.taxFund = Math.floor((resTaxContrib + comTaxContrib + indTaxContrib) * Micro.FLevels[gameLevel]);
 
         if (census.totalPop > 0) {
@@ -255,6 +289,7 @@ export class Budget {
             this.roadEffect   = Micro.MAX_ROAD_EFFECT;
             this.policeEffect = Micro.MAX_POLICESTATION_EFFECT;
             this.fireEffect   = Micro.MAX_FIRESTATION_EFFECT;
+            this.waterEffect  = Micro.MAX_WATER_EFFECT;
         }
     }
 

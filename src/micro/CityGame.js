@@ -88,6 +88,9 @@ export class CityGame {
 
         if( p == "ISSUEBOND")     Game.issueBond(e.data.amount);
 
+        if( p == "GETINDUSTRYSPEC") Game.getIndustrySpec();
+        if( p == "SETINDUSTRYSPEC") Game.setIndustrySpec(e.data.id);
+
         if( p == "SAVEGAME") Game.saveGame(e.data.saveCity, e.data.silent);
         if( p == "LOADGAME") Game.loadGame(e.data.isStart);
         if( p == "MAKELOADGAME") Game.makeLoadGame(e.data.savegame, e.data.isStart);
@@ -430,13 +433,17 @@ export class MainGame {
     }
 
     setBudget (budgetData){
-        // Support new format: [resTax, comTax, indTax, roadRate, fireRate, policeRate]
-        // as well as old format: [taxRate, roadRate, fireRate, policeRate]
+        // Format: [resTax, comTax, indTax, roadRate, fireRate, policeRate, waterRate]
+        // Legacy: [resTax, comTax, indTax, roadRate, fireRate, policeRate]
+        // Old:    [taxRate, roadRate, fireRate, policeRate]
         if (Array.isArray(budgetData) && budgetData.length >= 6) {
             this.simulation.budget.setZoneTax(budgetData[0], budgetData[1], budgetData[2]);
             this.simulation.budget.roadPercent   = budgetData[3] / 100;
             this.simulation.budget.firePercent   = budgetData[4] / 100;
             this.simulation.budget.policePercent = budgetData[5] / 100;
+            if (budgetData.length >= 7) {
+                this.simulation.budget.waterPercent = budgetData[6] / 100;
+            }
         } else {
             this.simulation.budget.setTax(budgetData[0]);
             this.simulation.budget.roadPercent   = budgetData[1] / 100;
@@ -464,7 +471,9 @@ export class MainGame {
             taxesCollected: b.taxFund,
             bondDebt:            b.bondDebt,
             bondAnnualPayment:   b.getBondAnnualPayment(),
-            bondMaxDebt:         b.MAX_BOND_DEBT
+            bondMaxDebt:         b.MAX_BOND_DEBT,
+            waterFund:      b.waterFund,
+            waterRate:      Math.floor(b.waterPercent * 100)
         };
 
         CityGame.post({ tell:"BUDGET", budgetData:budgetData});
@@ -501,6 +510,13 @@ export class MainGame {
         let season = this.simulation.seasonManager.getSeasonName();
         let coverage = this.simulation._computeCoverage();
 
+        let b = this.simulation.budget;
+        let waterCoverage = b.waterMaintenanceBudget > 0
+            ? Math.round((b.waterEffect / 32) * 100)
+            : 100;
+
+        let indDef = this.simulation.industrySpec.getCurrentDef();
+
         let evalData = [
             evaluation.cityYes,   // 0
             problemes,            // 1
@@ -514,7 +530,9 @@ export class MainGame {
             season,                 // 9
             coverage.police,        // 10
             coverage.fire,          // 11
-            census.parkCount        // 12
+            census.parkCount,       // 12
+            waterCoverage,          // 13
+            indDef                  // 14
         ];
 
         CityGame.post({ tell:"EVAL", evalData:evalData});
@@ -564,6 +582,26 @@ export class MainGame {
         }
         // Refresh budget panel so the UI shows updated debt
         this.handleBudgetRequest();
+    }
+
+    getIndustrySpec () {
+        let list = this.simulation.industrySpec.getList();
+        let current = this.simulation.industrySpec.getCurrentDef();
+        CityGame.post({ tell:"INDUSTRYSPEC", list: list, current: current });
+    }
+
+    setIndustrySpec (id) {
+        let changed = this.simulation.industrySpec.setSpecialization(id);
+        if (changed) {
+            this.simulation.cityHistory.addEvent(
+                'economic',
+                'City industry focus changed to ' + this.simulation.industrySpec.getCurrentDef().name,
+                this.simulation.cityTime,
+                this.simulation.startingYear
+            );
+        }
+        // Re-send updated list
+        this.getIndustrySpec();
     }
 
 

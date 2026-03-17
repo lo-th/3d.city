@@ -42,6 +42,7 @@ import { Achievements } from './game/Achievements.js';
 import { CityHistory, HistoryEventType } from './game/CityHistory.js';
 import { SeasonManager } from './game/SeasonManager.js';
 import { Ordinances } from './game/Ordinances.js';
+import { IndustrySpecialization } from './game/IndustrySpecialization.js';
 
 export class Simulation {
 
@@ -98,6 +99,7 @@ export class Simulation {
         this.cityHistory = new CityHistory();
         this.seasonManager = new SeasonManager();
         this.ordinances = new Ordinances();
+        this.industrySpec = new IndustrySpecialization();
 
         this.messageManager = new MessageManager();
         Micro.messageManager = this.messageManager;
@@ -176,6 +178,7 @@ export class Simulation {
         this.achievements.save(saveData);
         this.cityHistory.save(saveData);
         this.ordinances.save(saveData);
+        this.industrySpec.save(saveData);
 
     }
 
@@ -191,6 +194,7 @@ export class Simulation {
         this.achievements.load(saveData);
         this.cityHistory.load(saveData);
         this.ordinances.load(saveData);
+        this.industrySpec.load(saveData);
 
     }
 
@@ -258,6 +262,15 @@ export class Simulation {
         this.infos[18] = this.budget.bondDebt;
         this.infos[19] = this.budget.getBondAnnualPayment();
 
+        // Water supply coverage percentage (0–100)
+        var waterPct = this.budget.waterMaintenanceBudget > 0
+            ? Math.round((this.budget.waterEffect / Micro.MAX_WATER_EFFECT) * 100)
+            : 100; // no population yet → full coverage by default
+        this.infos[20] = waterPct;
+
+        // Industry specialization
+        this.infos[21] = this.industrySpec.getCurrentDef();
+
         return this.infos
 
     }
@@ -266,6 +279,7 @@ export class Simulation {
     updateEducationHealth () {
         let census = this.census;
         let fx = this.ordinances.getEffects();
+        let indFx = this.industrySpec.getEffects();
 
         // Count placed park tiles (WOODS2-WOODS5 = tile values 40–43; FOUNTAIN = 840).
         // These tiles have values below the MapScanner skip threshold (Tile.FLOOD = 48),
@@ -281,23 +295,31 @@ export class Simulation {
         census.parkCount = parkCount;
 
         // Education: derived from hospitals (which also serve as schools in this sim),
-        // churches (community centers), and land value
+        // churches (community centers), land value, and industry specialization
         let educationBase = (census.hospitalPop * 40) + (census.churchPop * 20);
         let landValueFactor = Math.min(census.landValueAverage, 150);
         let popFactor = census.totalPop > 0 ? Math.min(census.totalPop / 100, 50) : 0;
 
         census.educationLevel = Math.min(
-            Math.floor(educationBase + landValueFactor * 0.3 + popFactor * 0.2 + fx.educationBonus),
+            Math.floor(educationBase + landValueFactor * 0.3 + popFactor * 0.2 + fx.educationBonus + indFx.educationMod),
             Micro.EDUCATION_EFFECT_RANGE
         );
 
-        // Health: derived from hospital coverage minus pollution (with ordinance bonuses)
-        let healthBase = census.hospitalPop * 50 + fx.healthBonus;
-        let effectivePollution = Math.max(0, census.pollutionAverage + fx.pollutionMod);
+        // Health: hospitals + ordinances + water supply funding + industry effects
+        let healthBase = census.hospitalPop * 50 + fx.healthBonus + indFx.healthMod;
+        let effectivePollution = Math.max(0, census.pollutionAverage + fx.pollutionMod + indFx.pollutionMod);
         let pollutionPenalty = effectivePollution * 0.8;
         let crimeHealthPenalty = census.crimeAverage * 0.3;
 
-        census.healthLevel = Math.min(Math.max(Math.floor(healthBase - pollutionPenalty - crimeHealthPenalty + 20), 0), Micro.HEALTH_EFFECT_RANGE);
+        // Water supply: underfunded water infrastructure degrades health
+        let waterCoverage = this.budget.waterMaintenanceBudget > 0
+            ? (this.budget.waterEffect / Micro.MAX_WATER_EFFECT)
+            : 1.0;
+        let waterHealthBonus = Math.round(waterCoverage * 30); // up to +30 health from full water funding
+
+        census.healthLevel = Math.min(Math.max(
+            Math.floor(healthBase - pollutionPenalty - crimeHealthPenalty + 20 + waterHealthBonus),
+            0), Micro.HEALTH_EFFECT_RANGE);
 
         // Happiness: composite score (0-100)
         let happyScore = 50; // baseline
@@ -307,10 +329,13 @@ export class Simulation {
         happyScore += (census.educationLevel / Micro.EDUCATION_EFFECT_RANGE) * 15; // education helps
         happyScore += (census.healthLevel / Micro.HEALTH_EFFECT_RANGE) * 10;       // health helps
         happyScore += this.seasonManager.happinessMod;            // season effect
+        // Park bonus from specialization (tourism/farming value parks more)
+        if (indFx.parkBonus > 0) happyScore += Math.min(parkCount * indFx.parkBonus * 0.1, 10);
 
-        // Unemployment penalty
+        // Unemployment penalty (including specialization modifier)
         let unemployment = EvaluationUtils.getUnemployment(census);
-        happyScore -= unemployment * 0.05;
+        let effectiveUnemploy = Math.max(0, unemployment + indFx.unemployMod);
+        happyScore -= effectiveUnemploy * 0.05;
 
         // Tax penalty
         if (this.budget.cityTax > 10) happyScore -= (this.budget.cityTax - 10) * 2;
@@ -428,7 +453,8 @@ export class Simulation {
                 if (this.cityTime % Micro.CENSUS_FREQUENCY_120 === 0) this.census.take120Census(this.budget);
                 if (this.cityTime % Micro.TAX_FREQUENCY === 0) {
                     let ordFx = this.ordinances.getEffects();
-                    this.budget.collectTax( this.gameLevel, this.census, ordFx.comTaxMod );
+                    let indFx = this.industrySpec.getEffects();
+                    this.budget.collectTax( this.gameLevel, this.census, ordFx.comTaxMod, indFx );
                     // Deduct annual ordinance costs from city funds
                     let ordCost = this.ordinances.getAnnualCost();
                     if (ordCost > 0) this.budget.spend(ordCost);

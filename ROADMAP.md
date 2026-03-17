@@ -46,7 +46,7 @@ Goal: make the existing game feel complete and bug-free before adding new system
 Goal: expand the Micropolis engine with richer gameplay mechanics.
 
 - [ ] **Utility networks**
-  - [ ] Water supply & sewage system
+  - [x] Water supply & sewage system — water infrastructure budget slider added; funding level (0–100 %) controls water coverage; underfunded water degrades city health; coverage shown in Evaluation panel
   - [ ] Natural gas / district heating
 - [ ] **Transportation expansion**
   - [ ] Bus routes with ridership simulation
@@ -56,7 +56,7 @@ Goal: expand the Micropolis engine with richer gameplay mechanics.
 - [ ] **Economic system**
   - [x] Taxes per zone type — residential, commercial, and industrial tax rates are now independently adjustable in the Budget panel; tax yield computed per-zone
   - [x] City bonds and debt — players can issue municipal bonds ($5K / $10K / $20K) from the Budget panel; 7% annual interest is deducted each tax cycle; outstanding debt and interest are displayed; debt cap prevents runaway borrowing; bond events logged to City History
-  - [ ] Industry specialization (tech, manufacturing, tourism, farming)
+  - [x] Industry specialization — five city economic focuses: Mixed, Tech Hub, Manufacturing, Tourism, Farming/Agriculture; each modifies tax yields, pollution, unemployment, health, education and park bonus; accessible via Economy button (`I`) in top bar; selection persisted in save file
   - [x] City budget breakdown by department — Budget panel now shows per-zone tax rates (Res/Com/Ind) plus service spending sliders for Roads, Fire, Police with live dollar amounts; fixed previously-undefined maintenance budget values
 - [ ] **Education & Health**
   - [ ] Schools, universities, and literacy rating
