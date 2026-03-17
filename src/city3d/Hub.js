@@ -156,8 +156,10 @@ export class Hub {
         t.full.style.opacity = Math.max(0, t.bg);
     	if(t.bg <= 0){
     		clearInterval(t.timer);
-    		t.hub.removeChild(t.full);
+            // Only remove if not already removed by generate(false) during the fade
+            if (t.full.parentNode === t.hub) t.hub.removeChild(t.full);
             t.isIntro = false;
+            t.isGen = false;
     	}
     }
 
@@ -166,17 +168,18 @@ export class Hub {
         if( b ){
             if(!this.isGen) {
                 this.full.style.opacity = '1';
-                this.hub.appendChild( this.full );
+                // Guard: only append when not already in the DOM (intro may still be fading)
+                if (this.full.parentNode !== this.hub) this.hub.appendChild( this.full );
                 this.text.textContent = 'Generating map…';
                 this.isGen = true;
             }
         } else {
             if( this.isGen ){
-                this.hub.removeChild( this.full );
+                if (this.full.parentNode === this.hub) this.hub.removeChild( this.full );
                 this.isGen = false;
             }
         }
-        
+
     }
 
 
