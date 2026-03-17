@@ -9345,17 +9345,27 @@ class Hub {
         var happiness = data[7] || 50;
         var unemployment = data[8] || 0;
         var season = data[9] || 'Spring';
+        var policeCoverage = data[10] !== undefined ? data[10] : 0;
+        var fireCoverage   = data[11] !== undefined ? data[11] : 0;
+        var parkCount      = data[12] !== undefined ? data[12] : 0;
 
         var happyColor = happiness >= 70 ? '#4bcc7a' : happiness >= 40 ? '#f0b84a' : '#e05555';
         var eduStr = this._getLevelString(eduLevel, 200, ['None', 'Poor', 'Basic', 'Good', 'Excellent']);
         var healthStr = this._getLevelString(healthLevel, 200, ['Critical', 'Poor', 'Fair', 'Good', 'Excellent']);
+        var policeColor = policeCoverage >= 70 ? '#4bcc7a' : policeCoverage >= 40 ? '#f0b84a' : '#e05555';
+        var fireColor   = fireCoverage   >= 70 ? '#4bcc7a' : fireCoverage   >= 40 ? '#f0b84a' : '#e05555';
+        var parkColor   = parkCount      >= 10 ? '#4bcc7a' : parkCount      >= 3  ? '#f0b84a' : 'rgba(180,210,240,0.5)';
 
         this.evaltExtended.innerHTML = '<b style="font-size:10px; letter-spacing:0.08em; color:rgba(180,210,240,0.6);">CITY WELL-BEING</b><br>'
             + '<span style="' + lblStyle + '">Season:</span><span style="color:#4a9edd;">' + season + '</span><br>'
             + '<span style="' + lblStyle + '">Education:</span>' + eduStr + '<br>'
             + '<span style="' + lblStyle + '">Health:</span>' + healthStr + '<br>'
             + '<span style="' + lblStyle + '">Unemployment:</span>' + unemployment + '%<br>'
-            + '<span style="' + lblStyle + '">Happiness:</span><span style="color:' + happyColor + '; font-weight:bold;">' + happiness + '%</span>';
+            + '<span style="' + lblStyle + '">Happiness:</span><span style="color:' + happyColor + '; font-weight:bold;">' + happiness + '%</span><br>'
+            + '<br><b style="font-size:10px; letter-spacing:0.08em; color:rgba(180,210,240,0.6);">COVERAGE &amp; AMENITIES</b><br>'
+            + '<span style="' + lblStyle + '">🚓 Police:</span><span style="color:' + policeColor + ';">' + policeCoverage + '%</span><br>'
+            + '<span style="' + lblStyle + '">🚒 Fire:</span><span style="color:' + fireColor + ';">' + fireCoverage + '%</span><br>'
+            + '<span style="' + lblStyle + '">🌳 Parks:</span><span style="color:' + parkColor + ';">' + parkCount + '</span>';
 
         this.evaluationWindow.dataset.state = 'open';
     }
@@ -9416,7 +9426,8 @@ class Hub {
         if(test == 'budget') return;
 
         this.dataKeys = ['roadFund', 'roadRate', 'fireFund', 'fireRate', 'policeFund', 'policeRate',
-                         'resTaxRate', 'comTaxRate', 'indTaxRate', 'totalFunds', 'taxesCollected'];
+                         'resTaxRate', 'comTaxRate', 'indTaxRate', 'totalFunds', 'taxesCollected',
+                         'bondDebt', 'bondAnnualPayment', 'bondMaxDebt'];
 
         var i = this.dataKeys.length;
 
@@ -9443,7 +9454,7 @@ class Hub {
             this.budgetWindow.appendChild( this.makeWindowHeader('Budget', function(){ _this.closeBudget(); }) );
 
             var body = document.createElement('div');
-            body.style.cssText = 'position:relative; height:360px; pointer-events:none;';
+            body.style.cssText = 'position:relative; height:460px; pointer-events:none;';
             this.budgetWindow.appendChild( body );
 
             var taxLabel = document.createElement('div');
@@ -9471,6 +9482,32 @@ class Hub {
                                             + ' pointer-events:none; color:' + this.colors[0] + '; font-size:12px; line-height:1.6;';
             body.appendChild( this.budgetResult );
 
+            // ── Municipal Bonds section ───────────────────────────────
+            var bondLabel = document.createElement('div');
+            bondLabel.style.cssText = 'position:absolute; left:10px; top:338px; font-size:10px; font-weight:700;'
+                                    + ' letter-spacing:0.08em; color:rgba(240,184,74,0.8); text-transform:uppercase;';
+            bondLabel.textContent = 'Municipal Bonds';
+            body.appendChild(bondLabel);
+
+            this.bondDebtInfo = document.createElement('div');
+            this.bondDebtInfo.style.cssText = 'position:absolute; left:10px; top:356px; width:200px;'
+                                            + ' pointer-events:none; color:' + this.colors[0] + '; font-size:11px; line-height:1.5;';
+            body.appendChild(this.bondDebtInfo);
+
+            var bondBtnsRow = document.createElement('div');
+            bondBtnsRow.style.cssText = 'position:absolute; left:10px; top:390px; display:flex; gap:4px; pointer-events:auto;';
+            body.appendChild(bondBtnsRow);
+
+            var b5k  = this.addButton(bondBtnsRow, '+$5K',  [58, 22, 10], null);
+            var b10k = this.addButton(bondBtnsRow, '+$10K', [62, 22, 10], null);
+            var b20k = this.addButton(bondBtnsRow, '+$20K', [62, 22, 10], null);
+            b5k.title  = 'Issue $5,000 bond (7% interest/yr)';
+            b10k.title = 'Issue $10,000 bond (7% interest/yr)';
+            b20k.title = 'Issue $20,000 bond (7% interest/yr)';
+            b5k.addEventListener( 'click', function(e){ e.preventDefault(); Main.issueBond(5000);  }, false);
+            b10k.addEventListener('click', function(e){ e.preventDefault(); Main.issueBond(10000); }, false);
+            b20k.addEventListener('click', function(e){ e.preventDefault(); Main.issueBond(20000); }, false);
+
             var bg1 = this.addButton(body, 'CLOSE', [88, 22, 11], 'position:absolute; left:10px; bottom:10px;');
             var bg2 = this.addButton(body, 'APPLY', [88, 22, 11], 'position:absolute; right:10px; bottom:10px;');
 
@@ -9484,6 +9521,19 @@ class Hub {
 
         this.budgetResult.innerHTML = '<span style="color:rgba(180,210,240,0.6)">Annual receipts:</span> ' + cashFlow + '$'
                                     + '<br><span style="color:rgba(180,210,240,0.6)">Taxes collected:</span> ' + taxesCollected + '$';
+
+        // Update bond info display
+        var bondDebt    = data.bondDebt        || 0;
+        var bondPayment = data.bondAnnualPayment || 0;
+        var bondMax     = data.bondMaxDebt      || 50000;
+        var debtColor   = bondDebt === 0 ? 'rgba(180,210,240,0.6)' : bondDebt > bondMax * 0.8 ? '#e05555' : '#f0b84a';
+        if (this.bondDebtInfo) {
+            this.bondDebtInfo.innerHTML = '<span style="color:rgba(180,210,240,0.6);">Outstanding debt:</span>'
+                + ' <span style="color:' + debtColor + '; font-weight:600;">' + bondDebt + '$</span>'
+                + '<br><span style="color:rgba(180,210,240,0.6);">Interest / yr:</span>'
+                + ' <span style="color:' + (bondPayment > 0 ? '#f0b84a' : 'rgba(180,210,240,0.6)') + ';">' + bondPayment + '$</span>'
+                + '<br><span style="color:rgba(180,210,240,0.4); font-size:10px;">Max: ' + bondMax + '$ (7% annual)</span>';
+        }
 
         this.budgetWindow.dataset.state = 'open';
 
@@ -65602,6 +65652,10 @@ class Main {
 
     static setOrdinance(id) {
         AppState.workerBridge.post({ tell:"SETORDINANCE", id:id });
+    }
+
+    static issueBond(amount) {
+        AppState.workerBridge.post({ tell:"ISSUEBOND", amount:amount });
     }
 
     static setDisaster(disaster){

@@ -86,6 +86,8 @@ export class CityGame {
         if( p == "GETORDINANCES") Game.getOrdinances();
         if( p == "SETORDINANCE")  Game.setOrdinance(e.data.id);
 
+        if( p == "ISSUEBOND")     Game.issueBond(e.data.amount);
+
         if( p == "SAVEGAME") Game.saveGame(e.data.saveCity, e.data.silent);
         if( p == "LOADGAME") Game.loadGame(e.data.isStart);
         if( p == "MAKELOADGAME") Game.makeLoadGame(e.data.savegame, e.data.isStart);
@@ -459,7 +461,10 @@ export class MainGame {
             comTaxRate:     b.comTaxRate,
             indTaxRate:     b.indTaxRate,
             totalFunds:     b.totalFunds,
-            taxesCollected: b.taxFund
+            taxesCollected: b.taxFund,
+            bondDebt:            b.bondDebt,
+            bondAnnualPayment:   b.getBondAnnualPayment(),
+            bondMaxDebt:         b.MAX_BOND_DEBT
         };
 
         CityGame.post({ tell:"BUDGET", budgetData:budgetData});
@@ -491,9 +496,10 @@ export class MainGame {
         let pollutionAvg = census.pollutionAverage;
         let trafficAvg = this.infos[12] || 0;
 
-        // Enhanced eval data with education, health, happiness, unemployment, season
+        // Enhanced eval data with education, health, happiness, unemployment, season, coverage
         let unemployment = Math.round(this._getUnemploymentPct());
         let season = this.simulation.seasonManager.getSeasonName();
+        let coverage = this.simulation._computeCoverage();
 
         let evalData = [
             evaluation.cityYes,   // 0
@@ -505,7 +511,10 @@ export class MainGame {
             census.healthLevel,     // 6
             census.happinessLevel,  // 7
             unemployment,           // 8
-            season                  // 9
+            season,                 // 9
+            coverage.police,        // 10
+            coverage.fire,          // 11
+            census.parkCount        // 12
         ];
 
         CityGame.post({ tell:"EVAL", evalData:evalData});
@@ -540,6 +549,21 @@ export class MainGame {
         let active = this.simulation.ordinances.toggle(id);
         // Re-send the full updated list so the UI stays in sync
         this.getOrdinances();
+    }
+
+    issueBond (amount) {
+        let issued = this.simulation.budget.issueBond(amount);
+        if (issued) {
+            this.simulation.messageManager.sendMessage(Messages.BOND_ISSUED);
+            this.simulation.cityHistory.addEvent(
+                'economic',
+                'Issued municipal bond of $' + amount + ' (total debt: $' + this.simulation.budget.bondDebt + ')',
+                this.simulation.cityTime,
+                this.simulation.startingYear
+            );
+        }
+        // Refresh budget panel so the UI shows updated debt
+        this.handleBudgetRequest();
     }
 
 

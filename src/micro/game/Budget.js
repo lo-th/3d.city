@@ -44,6 +44,14 @@ export class Budget {
         this.awaitingValues = false;
         this.autoBudget = true;
 
+        // ── Municipal bonds ───────────────────────────────────────────
+        // bondDebt: total outstanding principal across all issued bonds
+        // bondInterestRate: annual interest rate applied each tax cycle
+        // MAX_BOND_DEBT: cap on borrowing to prevent runaway debt
+        this.bondDebt = 0;
+        this.bondInterestRate = 0.07;
+        this.MAX_BOND_DEBT = 50000;
+
     }
 
     save (saveData) {
@@ -63,6 +71,21 @@ export class Budget {
     get roadFund () { return this.roadMaintenanceBudget; }
     get fireFund () { return this.fireMaintenanceBudget; }
     get policeFund () { return this.policeMaintenanceBudget; }
+
+    // Returns the annual interest payment owed on outstanding bond debt.
+    getBondAnnualPayment () {
+        return Math.round(this.bondDebt * this.bondInterestRate);
+    }
+
+    // Issue a municipal bond: credit the city coffers immediately, add to debt.
+    // Returns true if the bond was issued, false if the debt cap would be exceeded.
+    issueBond ( amount ) {
+        if (amount <= 0) return false;
+        if (this.bondDebt + amount > this.MAX_BOND_DEBT) return false;
+        this.bondDebt += amount;
+        this.setFunds(this.totalFunds + amount);
+        return true;
+    }
 
     setAutoBudget (value) {
         this.autoBudget = value;
