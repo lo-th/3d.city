@@ -5,7 +5,6 @@ import { WorkerBridge } from './WorkerBridge.js';
 import { DebugOverlay } from './DebugOverlay.js';
 
 
-var d = document.getElementById('debug');
 const simulation_timestep = 30;
 
 window.tilesData = null;
@@ -73,14 +72,14 @@ export class Main {
     }
 
     static sendTool( name ) {
-        post({tell:"TOOL", name:name});
+        workerBridge.post({tell:"TOOL", name:name});
     }
 
     static destroy( x, y ) {
 
         // TODO SOUND EXPLOSION
 
-        post({tell:"MAPCLICK", x:x, y:y, single:true });
+        workerBridge.post({tell:"MAPCLICK", x:x, y:y, single:true });
     }
 
     static mapClick( tool ) {
@@ -89,7 +88,7 @@ export class Main {
         if( p.x<0 && p.z<0 ) return
 
         //if( tool === 'bulldozer' ) view3d.testDestruct( p.x, p.y )
-        post({tell:"MAPCLICK", x:p.x, y:p.z });
+        workerBridge.post({tell:"MAPCLICK", x:p.x, y:p.z });
     }
 
     // HUB
@@ -109,7 +108,7 @@ export class Main {
         hub.generate( true );
         withHeight = t!=='NEW';
         view3d.inMapGenation = true;
-        setTimeout( post, 1000, {tell:"NEWMAP"});
+        setTimeout( () => { workerBridge.post({tell:"NEWMAP"}); }, 1000);
     
     }
 
@@ -117,7 +116,7 @@ export class Main {
 
         hub.initGameHub();
         view3d.startZoom();
-        post({tell:"PLAYMAP"});
+        workerBridge.post({tell:"PLAYMAP"});
 
     }
 
@@ -127,36 +126,36 @@ export class Main {
         let n = 0;
         if(t === 'MEDIUM') n = 1
         if(t === 'HARD') n = 2
-        post({tell:"DIFFICULTY", n:n });
+        workerBridge.post({tell:"DIFFICULTY", n:n });
     }
 
     static setSpeed( n ) {
         if( window.debugOverlay ) window.debugOverlay.setSpeed( n );
-        post({tell:"SPEED", n:n });
+        workerBridge.post({tell:"SPEED", n:n });
     }
 
     static getBudjet() {
-        post({ tell:"BUDGET" });
+        workerBridge.post({ tell:"BUDGET" });
     }
 
     static setBudjet( budgetData ) {
-        post({ tell:"NEWBUDGET", budgetData:budgetData });
+        workerBridge.post({ tell:"NEWBUDGET", budgetData:budgetData });
     }
 
     static getEval() {
-        post({ tell:"EVAL" });
+        workerBridge.post({ tell:"EVAL" });
     }
 
     static getAchievements() {
-        post({ tell:"ACHIEVEMENTS" });
+        workerBridge.post({ tell:"ACHIEVEMENTS" });
     }
 
     static getHistory() {
-        post({ tell:"HISTORY" });
+        workerBridge.post({ tell:"HISTORY" });
     }
 
     static setDisaster(disaster){
-        post({ tell:"DISASTER", disaster:disaster });
+        workerBridge.post({ tell:"DISASTER", disaster:disaster });
     }
 
     static setOverlays( type ) {
@@ -168,7 +167,7 @@ export class Main {
         view3d.saveCityBuild(saveCity);
         saveCity = JSON.stringify(saveCity);
        // var cityData = view3d.saveCityBuild();
-        post({ tell:"SAVEGAME", saveCity:saveCity });
+        workerBridge.post({ tell:"SAVEGAME", saveCity:saveCity });
     }
 
     // Silent background save — writes to localStorage only, no file download
@@ -176,7 +175,7 @@ export class Main {
         var saveCity = [];
         view3d.saveCityBuild(saveCity);
         saveCity = JSON.stringify(saveCity);
-        post({ tell:"SAVEGAME", saveCity:saveCity, silent:true });
+        workerBridge.post({ tell:"SAVEGAME", saveCity:saveCity, silent:true });
     }
 
     static startAutoSave( intervalMs ) {
@@ -190,7 +189,7 @@ export class Main {
             hub.generate( true );
             view3d.inMapGenation = true;
         }
-        post({ tell:"LOADGAME", isStart:isStart });
+        workerBridge.post({ tell:"LOADGAME", isStart:isStart });
     }
 
     static newGameMap() {
@@ -210,21 +209,9 @@ export class Main {
 
 }
 
-function debug( txt ) { d.innerHTML += "<br>"+txt; }
  
 function testMobile() {
     if (navigator.userAgent.match(/Android/i) || navigator.userAgent.match(/webOS/i) || navigator.userAgent.match(/iPhone/i) || navigator.userAgent.match(/iPad/i) 
         || navigator.userAgent.match(/iPod/i) || navigator.userAgent.match(/BlackBerry/i) || navigator.userAgent.match(/Windows Phone/i)) return true;
     else return false;        
-}
-
-
-//=======================================
-//  CITY FLOW
-//=======================================
-
-function post( e, buffer ) {
-
-    workerBridge.post( e, buffer );
-
 }
