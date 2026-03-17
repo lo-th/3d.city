@@ -19,15 +19,15 @@
 Browser loads index.html
   └─ <script type="module"> imports build/MainGame.module.js
        └─ calls Main.init()
-            ├─ testMobile()            → sets window.isMobile
+            ├─ testMobile()            → sets AppState.isMobile
             ├─ Main.initWorker()
             │    └─ new Worker('build/citygame.min.js')     [worker thread]
             │         └─ self.onmessage = CityGame.message
             │    └─ post({ tell:"INIT", timestep:30 })
             │         └─ worker: new MainGame(30) → posts READY back (ignored)
-            ├─ window.hub = new Hub()
+            ├─ AppState.hub = new Hub()
             │    └─ builds loading overlay DOM (#hub-loading), GitHub / donate buttons
-            └─ window.view3d = new View(isMobile)
+            └─ AppState.view3d = new View(isMobile)
                  └─ new Pool(done_cb, ...)   ← loads world.glb + all textures
                       └─ when fully loaded: Pool calls View.done()
                            ├─ View.init()
@@ -39,30 +39,30 @@ Browser loads index.html
                            │    then calls View.preIntro()
                            │         ├─ renders a 19×19 mini-city with animated traffic
                            │         └─ overlays NEW / LOAD 3D canvas buttons (UIL.Gui)
-                           └─ Main.start() → hub.start() → fades loading screen out
+                           └─ Main.start() → AppState.hub.start() → fades loading screen out
 
 --- User sees intro scene ---
 
 User clicks NEW
   └─ View.openMap('NEW') → Main.newMap('NEW')
-       ├─ hub.generate(true)          show "Generating map…" overlay
-       ├─ view3d.inMapGenation = true   (note: property name is a typo in source)
+       ├─ AppState.hub.generate(true)          show "Generating map…" overlay
+       ├─ AppState.view3d.inMapGenation = true   (note: property name is a typo in source)
        └─ setTimeout → post({ tell:"NEWMAP" })
             └─ worker: mapGen.construct(128,128)
                  └─ posts NEWMAP back { tilesData, mapSize, island }
 
 Main thread receives NEWMAP
-  ├─ hub.generate(false)             hide overlay
-  ├─ window.tilesData = e.data.tilesData
-  └─ view3d.paintMap(mapSize, island, withHeight)
+  ├─ AppState.hub.generate(false)             hide overlay
+  ├─ AppState.tilesData = e.data.tilesData
+  └─ AppState.view3d.paintMap(mapSize, island, AppState.withHeight)
        ├─ initTerrain()   64 PlaneGeometry tiles (8×8 grid of 16×16)
        └─ updateTerrainTexture() for each tile
 
 --- User selects difficulty, clicks PLAY THIS MAP ---
 
   └─ View.startPlay() → Main.playMap()
-       ├─ hub.initGameHub()          build top bar, tool panel, status bar
-       ├─ view3d.startZoom()         camera eases in
+       ├─ AppState.hub.initGameHub()          build top bar, tool panel, status bar
+       ├─ AppState.view3d.startZoom()         camera eases in
        └─ post({ tell:"PLAYMAP" })
             └─ worker: MainGame.playMap()
                  ├─ instantiates all game tools (RoadTool, BuildingTool, …)
@@ -81,16 +81,16 @@ worker tick()
   └─ posts RUN { tilesData, powerData, sprites, layer, infos }
 
 Main thread receives RUN
-  ├─ window.tilesData  = e.data.tilesData
-  ├─ window.powerData  = e.data.powerData
-  ├─ window.spriteData = e.data.sprites
-  ├─ window.layerData  = e.data.layer
-  ├─ window.newup  = true
-  ├─ window.powerup = e.data.infos[9]
-  ├─ hub.updateCITYinfo(infos)       date, pop, funds, score, season, happiness
-  ├─ view3d.updateLayer()
-  ├─ view3d.moveSprite()
-  └─ view3d.showPower()
+  ├─ AppState.tilesData  = e.data.tilesData
+  ├─ AppState.powerData  = e.data.powerData
+  ├─ AppState.spriteData = e.data.sprites
+  ├─ AppState.layerData  = e.data.layer
+  ├─ AppState.newup  = true
+  ├─ AppState.powerup = e.data.infos[9]
+  ├─ AppState.hub.updateCITYinfo(infos)       date, pop, funds, score, season, happiness
+  ├─ AppState.view3d.updateLayer()
+  ├─ AppState.view3d.moveSprite()
+  └─ AppState.view3d.showPower()
 
 --- City is playable ---
 Main.startAutoSave() started (2-minute interval)
@@ -111,8 +111,8 @@ Everything that crosses that boundary goes through `post()` (main → worker) or
 | Worker facade | Every user action (tool, click, budget, speed, disaster…) is a `Main.xxx()` call that posts a command to the worker |
 | Message dispatcher | `message(e)` receives every worker response and routes it to `hub` or `view3d` |
 | Save / load entry points | `saveGame()`, `autoSave()`, `loadGame()`, `startAutoSave()` |
-| Mode switch | `isWorker=false` / `directMessage` lets the simulation run on the main thread (e.g. for debugging) |
-| Window globals | Declares all `window.*` globals at the top of the file |
+| Mode switch | `AppState.isWorker=false` / `AppState.directMessage` lets the simulation run on the main thread (e.g. for debugging) |
+| App state init | Initialises `AppState.workerBridge`, `AppState.debugOverlay`, `AppState.hub`, `AppState.view3d` |
 
 `Main` intentionally has no state of its own; it is a thin coordination layer.
 
@@ -184,28 +184,60 @@ rather than `postMessage`.
 
 ---
 
-## 3. Window globals
+## 3. Shared application state (`AppState`)
 
-All of the following are declared at the top of `src/Main.js` and are accessed without
-qualification throughout `Main.js`, `Hub.js`, and `View.js`.
+All main-thread runtime state is now held in the `AppState` singleton exported from
+`src/AppState.js`.  Any module in the main-thread bundle can import and use it:
 
-| Global | Type | Set by | Purpose |
+```js
+import { AppState } from './AppState.js';
+```
+
+Because ES modules are singletons within a Rollup bundle, every importer shares the same
+object reference — writes in one module are immediately visible in all others.
+
+### 3a. Migrated fields (formerly `window.*` globals)
+
+Previously these were set on `window` in `src/Main.js` and accessed as bare identifiers
+throughout `Main.js`, `WorkerBridge.js`, `Hub.js`, and `View.js`.  They are now properties
+of `AppState`.
+
+| `AppState` property | Type | Set by | Purpose |
 |---|---|---|---|
-| `window.tilesData` | `Uint16Array` / null | worker `RUN` / `NEWMAP` | Flat 128×128 array of tile values; read by View each tick |
-| `window.spriteData` | `Array` / null | worker `RUN` | Array of `[type, frame, x, y]` for each active sprite |
-| `window.gameData` | null | (never written) | Declared but never populated; appears to be a leftover placeholder — a candidate for removal |
-| `window.powerData` | `Array` / null | worker `RUN` | List of tile coords that lack power |
-| `window.layerData` | `Array` | worker `RUN` | Diff of tiles changed this tick; used by `updateLayer()` |
-| `window.isMobile` | `Boolean` | `testMobile()` in `Main.init` | Disables trees, env map, normal maps, reduces resolution |
-| `window.trans` | `Boolean` | hardcoded `false` | Legacy ArrayBuffer transfer flag; no longer used |
-| `window.newup` | `Boolean` | worker `RUN` | Dirty flag: tile data has been updated (set true each tick) |
-| `window.powerup` | `Boolean` | worker `RUN` | Dirty flag: power grid changed this tick |
-| `window.directMessage` | `Function` / null | `Main.init(DirectMessage)` | Callback used when simulation runs on main thread instead of worker |
-| `window.isWorker` | `Boolean` | `Main.init` | `true` → use Web Worker; `false` → use `directMessage` |
-| `window.withHeight` | `Boolean` | `Main.newMap()` | Whether the current map was generated with a height map |
-| `window.hub` | `Hub` | `Main.init` | The live Hub instance; accessed directly by View and Hub event handlers |
-| `window.view3d` | `View` | `Main.init` | The live View/renderer instance |
-| `window.cityWorker` | `Worker` | `Main.initWorker` | The Web Worker instance |
+| `tilesData` | `Uint16Array` / null | `WorkerBridge` — `RUN` / `NEWMAP` | Flat 128×128 array of tile values; read by View each tick |
+| `spriteData` | `Array` / null | `WorkerBridge` — `RUN` | Array of `[type, frame, x, y]` for each active sprite |
+| `powerData` | `Array` / null | `WorkerBridge` — `RUN` | Power-grid state per tile |
+| `layerData` | `Array` | `WorkerBridge` — `RUN` | Diff of tile layers changed this tick; drives `updateLayer()` |
+| `isMobile` | `Boolean` | `testMobile()` in `Main.init` | Disables trees, env map, normal maps, reduces pixel ratio |
+| `newup` | `Boolean` | `WorkerBridge` — `RUN` | Dirty flag: tile data was updated this tick |
+| `powerup` | `Boolean` | `WorkerBridge` — `RUN` | Dirty flag: power grid changed this tick |
+| `directMessage` | `Function` / null | `Main.init(DirectMessage)` | Callback for simulation-on-main-thread (non-worker) mode |
+| `isWorker` | `Boolean` | `Main.init` | `true` → use Web Worker; `false` → use `directMessage` |
+| `withHeight` | `Boolean` | `Main.newMap()` | Whether the current map was generated with a height map |
+| `hub` | `Hub` | `Main.init` | The live Hub instance (DOM UI manager) |
+| `view3d` | `View` | `Main.init` | The live View/renderer instance |
+| `workerBridge` | `WorkerBridge` | module init in `Main.js` | Worker communication layer |
+| `debugOverlay` | `DebugOverlay` | module init in `Main.js` | Developer HUD overlay |
+
+### 3b. Browser-native APIs (not migrated — they are not custom app state)
+
+These remain as plain `window.*` / global calls because they are part of the browser platform:
+
+| Expression | Reason kept as-is |
+|---|---|
+| `window.localStorage` | Browser storage API |
+| `window.open(url)` | Browser navigation API |
+| `window.devicePixelRatio` | Browser display API |
+| `window.innerWidth` / `window.innerHeight` | Browser layout API |
+| `window.addEventListener` | Browser event API |
+
+### 3c. Removed legacy globals (never used — deleted without migration)
+
+| Former global | Reason removed |
+|---|---|
+| `window.trans` | Legacy `ArrayBuffer` transfer flag; always `false`; never read |
+| `window.gameData` | Placeholder declared but never populated or read |
+| `window.cityWorker` | Stale reference; the Worker instance is managed internally by `WorkerBridge._worker` |
 
 ---
 
@@ -293,11 +325,14 @@ View.openMap('LOADDONE') / View.endOpen()
 
 ## 5. Top 10 architectural risks
 
-### 1  Global state proliferation
-Fifteen variables live on `window` (`tilesData`, `spriteData`, `powerData`, `layerData`,
-`hub`, `view3d`, `cityWorker`, `newup`, `powerup`, `withHeight`, `isMobile`, `isWorker`,
-`trans`, `directMessage`, `gameData`).  Any module can accidentally overwrite them.
-As more features are added, tracing data flow or testing in isolation becomes increasingly hard.
+### 1  ~~Global state proliferation~~ (addressed — v0.9.0+)
+Fourteen variables formerly lived on `window` and were accessed as bare identifiers, allowing
+any module to accidentally overwrite them.  They have been consolidated into the `AppState`
+singleton (`src/AppState.js`) and accessed explicitly via `AppState.xxx` throughout
+`Main.js`, `WorkerBridge.js`, `View.js`, and `Hub.js`.  Two unused legacy properties
+(`window.trans`, `window.gameData`) were removed entirely.  The three browser-native APIs
+that remained as `window.*` calls (`localStorage`, `open`, layout properties) are
+intentionally excluded — they are not app state.
 
 ### 2  Untyped, unversioned worker message protocol
 All messages are plain JS objects identified by a `tell` string with no schema, no runtime

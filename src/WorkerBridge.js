@@ -6,12 +6,12 @@
 //    • Inbound message dispatch
 //    • Save / load helpers that were previously inline in Main.js
 //
-//  Dependencies (window globals used inside dispatch / helpers):
-//    hub, view3d, tilesData, powerData, spriteData, layerData,
-//    newup, powerup, withHeight — all set on window by Main.js
+//  Application state (hub, view3d, tilesData, powerData, spriteData, layerData,
+//  newup, powerup, withHeight) is accessed via the shared AppState module.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { saveAs } from './saveAs.js';
+import { AppState } from './AppState.js';
 
 export class WorkerBridge {
 
@@ -73,50 +73,50 @@ export class WorkerBridge {
         }
 
         if ( phase === 'NEWMAP' ) {
-            hub.generate( false );
-            tilesData = d.tilesData;
-            view3d.paintMap( d.mapSize, d.island, withHeight );
+            AppState.hub.generate( false );
+            AppState.tilesData = d.tilesData;
+            AppState.view3d.paintMap( d.mapSize, d.island, AppState.withHeight );
         }
 
         if ( phase === 'FULLREBUILD' ) {
-            if ( d.isStart ) hub.generate( false );
-            view3d.fullRedraw = true;
-            tilesData = d.tilesData;
-            view3d.paintMap( d.mapSize, d.island, withHeight );
-            view3d.loadCityBuild( d.cityData );
+            if ( d.isStart ) AppState.hub.generate( false );
+            AppState.view3d.fullRedraw = true;
+            AppState.tilesData = d.tilesData;
+            AppState.view3d.paintMap( d.mapSize, d.island, AppState.withHeight );
+            AppState.view3d.loadCityBuild( d.cityData );
             if ( d.isStart ) {
-                view3d.startPlay();
+                AppState.view3d.startPlay();
                 if ( this._onPlayStart ) this._onPlayStart();
             }
         }
 
         if ( phase === 'BUILD' ) {
-            view3d.build( d.x, d.y );
+            AppState.view3d.build( d.x, d.y );
         }
 
         if ( phase === 'RUN' ) {
-            tilesData  = d.tilesData;
-            powerData  = d.powerData;
-            spriteData = d.sprites;
-            layerData  = d.layer;
+            AppState.tilesData  = d.tilesData;
+            AppState.powerData  = d.powerData;
+            AppState.spriteData = d.sprites;
+            AppState.layerData  = d.layer;
 
-            hub.updateCITYinfo( d.infos );
+            AppState.hub.updateCITYinfo( d.infos );
 
-            newup   = true;
-            powerup = d.infos[ 9 ];
+            AppState.newup   = true;
+            AppState.powerup = d.infos[ 9 ];
 
-            view3d.updateLayer();
-            view3d.moveSprite();
-            view3d.showPower();
+            AppState.view3d.updateLayer();
+            AppState.view3d.moveSprite();
+            AppState.view3d.showPower();
 
-            if ( window.debugOverlay ) window.debugOverlay.onWorkerTick();
+            if ( AppState.debugOverlay ) AppState.debugOverlay.onWorkerTick();
         }
 
-        if ( phase === 'BUDGET' )       hub.openBudget( d.budgetData );
-        if ( phase === 'QUERY' )        hub.openQuery( d.queryTxt );
-        if ( phase === 'EVAL' )         hub.openEval( d.evalData );
-        if ( phase === 'ACHIEVEMENTS' ) hub.openAchievements( d.achData, d.progress );
-        if ( phase === 'HISTORY' )      hub.openHistory( d.historyData );
+        if ( phase === 'BUDGET' )       AppState.hub.openBudget( d.budgetData );
+        if ( phase === 'QUERY' )        AppState.hub.openQuery( d.queryTxt );
+        if ( phase === 'EVAL' )         AppState.hub.openEval( d.evalData );
+        if ( phase === 'ACHIEVEMENTS' ) AppState.hub.openAchievements( d.achData, d.progress );
+        if ( phase === 'HISTORY' )      AppState.hub.openHistory( d.historyData );
 
         if ( phase === 'SAVEGAME' ) this._makeGameSave( d.gameData, d.key, d.silent );
         if ( phase === 'LOADGAME' ) this._makeLoadGame( d.key, d.isStart );
@@ -129,14 +129,14 @@ export class WorkerBridge {
 
         window.localStorage.setItem( key, gameData );
 
-        if ( !silent && !view3d.isMobile ) {
+        if ( !silent && !AppState.view3d.isMobile ) {
             var blob = new Blob( [ gameData ], { type: 'text/plain;charset=utf-8' } );
             saveAs( blob, 'city3d.json' );
         }
 
-        if ( silent && hub ) {
-            hub.flashAutoSave();
-            if ( window.debugOverlay ) window.debugOverlay.onAutoSave();
+        if ( silent && AppState.hub ) {
+            AppState.hub.flashAutoSave();
+            if ( AppState.debugOverlay ) AppState.debugOverlay.onAutoSave();
         }
 
     }
@@ -146,15 +146,15 @@ export class WorkerBridge {
         var isStart  = atStart || false;
         var savegame;
 
-        if ( view3d.tmpGameData ) {
-            savegame = view3d.tmpGameData;
+        if ( AppState.view3d.tmpGameData ) {
+            savegame = AppState.view3d.tmpGameData;
         } else {
             savegame = window.localStorage.getItem( key );
         }
 
         if ( savegame ) {
             this.post( { tell: 'MAKELOADGAME', savegame: savegame, isStart: isStart } );
-            view3d.tmpGameData = null;
+            AppState.view3d.tmpGameData = null;
         }
 
     }
