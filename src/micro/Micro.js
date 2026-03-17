@@ -136,6 +136,7 @@ export const Micro = {
 
     // storage
     CURRENT_VERSION : 3,
+    SAVE_VERSION : 1,
     KEY : 'micropolisJSGame',
 
     // disasters

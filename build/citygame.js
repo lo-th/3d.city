@@ -126,6 +126,7 @@
 		DISASTER_EARTHQUAKE: 'Earthquake',
 		// storage
 		CURRENT_VERSION: 3,
+		SAVE_VERSION: 1,
 		KEY: 'micropolisJSGame',
 		// disasters
 		DisChance: [479, 239, 59],
@@ -6799,6 +6800,59 @@
 	 * http://micropolisjs.graememcc.co.uk/COPYING
 	 *
 	 */
+	class Storage {
+		static transitionOldSave(savedGame) {
+			switch (savedGame.version) {
+				case 1:
+					savedGame.everClicked = false;
+				/* falls through */
+				case 2:
+					savedGame.pollutionMaxX = Math.floor(savedGame.width / 2);
+					savedGame.pollutionMaxY = Math.floor(savedGame.height / 2);
+					savedGame.cityCentreX = Math.floor(savedGame.width / 2);
+					savedGame.cityCentreY = Math.floor(savedGame.height / 2);
+					break;
+				//default: throw new Error('Unknown save version!');
+			}
+		}
+	}
+
+	/*
+		var Storage = {
+			getSavedGame: getSavedGame,
+			saveGame: saveGame,
+			transitionOldSave: transitionOldSave
+		};
+
+
+	Micro.defineProperty(Storage, 'CURRENT_VERSION', Micro.makeConstantDescriptor(3));
+	Micro.defineProperty(Storage, 'KEY', Micro.makeConstantDescriptor('micropolisJSGame'));
+	Micro.defineProperty(Storage, 'canStore', Micro.makeConstantDescriptor(window.localStorage !== undefined));
+	*/
+	Storage.getSavedGame = function () {
+		return;
+	};
+	Storage.saveGame = function (gameData) {
+		return;
+	};
+	Storage.migrate = function (savedGame) {
+		// Upgrades savedGame in-place to the current save schema version.
+		var from = savedGame.saveVersion || 0;
+		// v0 → v1: saveVersion field did not exist; nothing structural to transform.
+		if (from < 1) {
+			savedGame.saveVersion = 1;
+		}
+		// Future versions: add additional upgrade steps here.
+	};
+
+	/* micropolisJS. Adapted by Graeme McCutcheon from Micropolis.
+	 *
+	 * This code is released under the GNU GPL v3, with some additional terms.
+	 * Please see the files LICENSE and COPYING for details. Alternatively,
+	 * consult http://micropolisjs.graememcc.co.uk/LICENSE and
+	 * http://micropolisjs.graememcc.co.uk/COPYING
+	 *
+	 */
 	class WorldEffects {
 		constructor(map) {
 			this._map = map;
@@ -8073,6 +8127,7 @@
 			gameData.speed = this.speed;
 			gameData.difficulty = this.difficulty;
 			gameData.version = Micro.CURRENT_VERSION;
+			gameData.saveVersion = Micro.SAVE_VERSION;
 			gameData.city = cityData;
 			this.simulation.save(gameData);
 			gameData = JSON.stringify(gameData);
@@ -8103,27 +8158,19 @@
 		makeLoadGame(gameData, atStart) {
 			let isStart = atStart || false;
 			clearTimeout(this.timer);
-			this.savedGame = JSON.parse(gameData);
-
-			//this.simulation.load(this.savedGame);
-			//this.map = this.simulation.map;
-			// this.everClicked = savedGame.everClicked;
-			//if (savedGame.version !== Micro.CURRENT_VERSION) this.transitionOldSave(savedGame);
-			//savedGame.isSavedGame = true;
-			/*if(this.map){
-					this.map.load(this.savedGame);
-			}else{*/
+			try {
+				this.savedGame = JSON.parse(gameData);
+			} catch (e) {
+				console.error('OpenPublica: failed to parse save data — cannot load game.', e);
+				CityGame.post({
+					tell: "LOADERROR",
+					message: "Save data is corrupt or unreadable."
+				});
+				return;
+			}
+			Storage.migrate(this.savedGame);
 			this.map = new GameMap(Micro.MAP_WIDTH, Micro.MAP_HEIGHT);
 			this.map.load(this.savedGame);
-			//}
-
-			//
-
-			//this.playMap(true);
-			//this.simulation.map = this.map;//return
-			//
-			//this.map = this.simulation.map;
-
 			CityGame.post({
 				tell: "FULLREBUILD",
 				tilesData: this.map.tilesData,

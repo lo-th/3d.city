@@ -11,6 +11,7 @@ import { AnimationManager } from './game/AnimationManager.js';
 
 import { GameMap } from './map/GameMap.js';
 import { MapGenerator} from './map/MapGenerator.js';
+import { Storage } from './Storage.js';
 
 // game TOOL
 import { BuildingTool } from './tool/BuildingTool.js';
@@ -515,6 +516,7 @@ export class MainGame {
         gameData.speed = this.speed;
         gameData.difficulty = this.difficulty;
         gameData.version = Micro.CURRENT_VERSION;
+        gameData.saveVersion = Micro.SAVE_VERSION;
         gameData.city = cityData;
         this.simulation.save(gameData);
 
@@ -542,28 +544,19 @@ export class MainGame {
 
         let isStart = atStart || false;
         clearTimeout(this.timer);
-        this.savedGame = JSON.parse(gameData);
 
+        try {
+            this.savedGame = JSON.parse(gameData);
+        } catch (e) {
+            console.error('OpenPublica: failed to parse save data — cannot load game.', e);
+            CityGame.post({ tell:"LOADERROR", message:"Save data is corrupt or unreadable." });
+            return;
+        }
 
+        Storage.migrate(this.savedGame);
 
-        //this.simulation.load(this.savedGame);
-        //this.map = this.simulation.map;
-       // this.everClicked = savedGame.everClicked;
-        //if (savedGame.version !== Micro.CURRENT_VERSION) this.transitionOldSave(savedGame);
-        //savedGame.isSavedGame = true;
-        /*if(this.map){
-            this.map.load(this.savedGame);
-        }else{*/
         this.map = new GameMap(Micro.MAP_WIDTH, Micro.MAP_HEIGHT);
         this.map.load(this.savedGame);
-        //}
-        
-        //
-
-        //this.playMap(true);
-        //this.simulation.map = this.map;//return
-        //
-        //this.map = this.simulation.map;
 
         CityGame.post({ tell:"FULLREBUILD", tilesData:this.map.tilesData, mapSize:this.mapSize, island:this.map.isIsland, cityData:this.savedGame.city, isStart:isStart });
     }
