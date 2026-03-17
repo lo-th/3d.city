@@ -75,6 +75,11 @@ export class Pool {
 			this.env = texture;
 			this.loadImages();
 
+		}.bind(this), undefined, function ( err ) {
+
+			console.error( 'Pool: failed to load envmap', err );
+			this.loadImages();
+
 		}.bind(this))
 
 	}
@@ -92,12 +97,18 @@ export class Pool {
 
 
     	this.imgs[name] = new Image();
-    	this.imgs[name].onload = function(){ 
+    	this.imgs[name].onload = function(){
     		this.num++;
     		if( this.num === this.imgSrc.length ) this.defineCanvas();
     		else this.loadImages();
     	}.bind(this);
-        this.imgs[name].src = this.mapPath + url; 
+    	this.imgs[name].onerror = function(){
+    		console.error( 'Pool: failed to load image', this.mapPath + url );
+    		this.num++;
+    		if( this.num === this.imgSrc.length ) this.defineCanvas();
+    		else this.loadImages();
+    	}.bind(this);
+        this.imgs[name].src = this.mapPath + url;
 
 	}
 
@@ -449,12 +460,23 @@ export class Pool {
 			this.defineGeometry( o, name )
 
 	    	this.num++;
-			if( this.num === this.modelSrc.length ){ 
+			if( this.num === this.modelSrc.length ){
 				this.displayMessage( '...' )
 				this.callback()
 			} else {
 				this.loadModel()
 			}
+
+	    }.bind(this), undefined, function ( err ) {
+
+	    	console.error( 'Pool: failed to load model', this.modelPath + name + '.glb', err );
+	    	this.num++;
+	    	if( this.num === this.modelSrc.length ){
+	    		this.displayMessage( '...' )
+	    		this.callback()
+	    	} else {
+	    		this.loadModel()
+	    	}
 
 	    }.bind(this))
 
