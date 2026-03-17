@@ -115,6 +115,7 @@ export class Main {
 
     static setSpeed( n ) {
         if( AppState.debugOverlay ) AppState.debugOverlay.setSpeed( n );
+        AppState.workerBridge.setGamePaused( n === 0 );
         AppState.workerBridge.post({tell:"SPEED", n:n });
     }
 

@@ -486,6 +486,37 @@ export class Hub {
         }, 1500);
     }
 
+    // Persistent error banner — shown when the simulation encounters a fatal error.
+    // Stays visible until dismissed by the user (click ✕) or replaced by a new error.
+    showError ( message ) {
+        if ( !this.errorBanner ) {
+            this.errorBanner = document.createElement('div');
+            this.errorBanner.style.cssText = 'position:absolute; top:44px; left:50%;'
+                + ' transform:translateX(-50%); z-index:9999;'
+                + ' background:rgba(40,10,10,0.95); color:#ff7070;'
+                + ' font-size:12px; font-weight:600; letter-spacing:0.04em;'
+                + ' padding:7px 14px 7px 12px; border-radius:8px; max-width:420px;'
+                + ' border:1px solid rgba(220,60,60,0.6); box-shadow:0 4px 16px rgba(0,0,0,0.6);'
+                + ' display:flex; align-items:flex-start; gap:8px;';
+            var closeBtn = document.createElement('button');
+            closeBtn.innerHTML = '✕';
+            closeBtn.style.cssText = 'background:none; border:none; color:#ff9090; cursor:pointer;'
+                + ' font-size:13px; padding:0; line-height:1; flex-shrink:0; margin-top:1px;';
+            var _this = this;
+            closeBtn.addEventListener('click', function () {
+                if ( _this.errorBanner && _this.errorBanner.parentNode ) {
+                    _this.errorBanner.parentNode.removeChild( _this.errorBanner );
+                }
+                _this.errorBanner = null;
+            }, false);
+            this.errorBanner.appendChild( closeBtn );
+            this._errorText = document.createElement('span');
+            this.errorBanner.appendChild( this._errorText );
+            this.hub.appendChild( this.errorBanner );
+        }
+        this._errorText.textContent = message;
+    }
+
     //-----------------------------------QUERY
 
     //-----------------------------------ALL WINDOW

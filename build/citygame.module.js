@@ -8786,26 +8786,40 @@ class MainGame {
 
         //if ( this.isPaused ) return
 
-        let up = this.simulation.simTick();
+        try {
 
-        if( up ) { 
+            let up = this.simulation.simTick();
 
-            this.infos = this.simulation.infos;
+            if( up ) {
 
-            this.processMessages( Game.simulation.messageManager.getMessages() );
+                this.infos = this.simulation.infos;
 
-            this.animatedTiles();
+                this.processMessages( Game.simulation.messageManager.getMessages() );
 
-            this.simulation.spriteManager.moveObjects();
-            this.calculateSprites();
+                if( Micro.haveMapAnimation ) this.animatedTiles();
 
-            CityGame.post({ tell:"RUN", infos:this.infos, tilesData:this.map.tilesData, powerData:this.map.powerData, sprites:this.spritesData, layer:this.map.layer });
+                this.simulation.spriteManager.moveObjects();
+                this.calculateSprites();
 
-            this.map.resetLayer();
+                CityGame.post({ tell:"RUN", infos:this.infos, tilesData:this.map.tilesData, powerData:this.map.powerData, sprites:this.spritesData, layer:this.map.layer });
+
+                this.map.resetLayer();
+
+            }
+
+            this.next();
+
+        } catch ( err ) {
+
+            // Halt the loop so the broken state does not persist.
+            // Report the failure to the main thread so the UI can inform the user.
+            var msg = ( err && err.message ) ? err.message : String( err );
+            var stack = ( err && err.stack )  ? err.stack  : '';
+            console.error( 'OpenPublica simulation tick error:', err );
+            CityGame.post({ tell: 'TICKERROR', message: msg, stack: stack });
+            // Do NOT call this.next() — loop is intentionally stopped.
 
         }
-
-        this.next();
 
     }
 

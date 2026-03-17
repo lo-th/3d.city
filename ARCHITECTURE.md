@@ -352,11 +352,13 @@ with positional semantics (`ar[0]`=x, `ar[1]`=y, …, `ar[5]`=house flag).  Any 
 changes the order or count of these fields silently corrupts existing saves.  Version migration
 (`transitionOldSave`) only covers the simulation part of the save; the 3D side has none.
 
-### 5  Tick loop has no error recovery or frame-budget enforcement
-`MainGame.tick()` schedules itself via `setTimeout` recursion.  If an uncaught exception occurs
-mid-tick the loop silently stops.  There is no watchdog, no try/catch around the tick, no
-max-time guard, and no way for the UI to detect that the simulation has stalled.  At high speeds
-the simulation could also outrun the renderer, queueing unbounded messages.
+### 5  ~~Tick loop has no error recovery~~ (addressed — v0.9.1+)
+`MainGame.tick()` is now wrapped in a `try/catch`.  On error the loop is halted and a `TICKERROR`
+message is posted to the main thread, which shows a visible error banner via `Hub.showError()`.
+A stall watchdog (`WorkerBridge._startWatchdog`) fires if no `RUN` tick arrives for 10 s while
+the game is active and not paused, covering the case where the worker silently dies without
+posting an error.  A `worker.onerror` handler covers worker-level crashes.
+The remaining concern — unbounded message queue at very high speeds — is not yet addressed.
 
 ### 6  Entire tile array is serialised every tick
 `window.tilesData` (128×128 = 16,384 tile values) plus `powerData`, `spriteData`, and

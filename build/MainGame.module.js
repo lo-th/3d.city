@@ -9011,6 +9011,37 @@ class Hub {
         }, 1500);
     }
 
+    // Persistent error banner — shown when the simulation encounters a fatal error.
+    // Stays visible until dismissed by the user (click ✕) or replaced by a new error.
+    showError ( message ) {
+        if ( !this.errorBanner ) {
+            this.errorBanner = document.createElement('div');
+            this.errorBanner.style.cssText = 'position:absolute; top:44px; left:50%;'
+                + ' transform:translateX(-50%); z-index:9999;'
+                + ' background:rgba(40,10,10,0.95); color:#ff7070;'
+                + ' font-size:12px; font-weight:600; letter-spacing:0.04em;'
+                + ' padding:7px 14px 7px 12px; border-radius:8px; max-width:420px;'
+                + ' border:1px solid rgba(220,60,60,0.6); box-shadow:0 4px 16px rgba(0,0,0,0.6);'
+                + ' display:flex; align-items:flex-start; gap:8px;';
+            var closeBtn = document.createElement('button');
+            closeBtn.innerHTML = '✕';
+            closeBtn.style.cssText = 'background:none; border:none; color:#ff9090; cursor:pointer;'
+                + ' font-size:13px; padding:0; line-height:1; flex-shrink:0; margin-top:1px;';
+            var _this = this;
+            closeBtn.addEventListener('click', function () {
+                if ( _this.errorBanner && _this.errorBanner.parentNode ) {
+                    _this.errorBanner.parentNode.removeChild( _this.errorBanner );
+                }
+                _this.errorBanner = null;
+            }, false);
+            this.errorBanner.appendChild( closeBtn );
+            this._errorText = document.createElement('span');
+            this.errorBanner.appendChild( this._errorText );
+            this.hub.appendChild( this.errorBanner );
+        }
+        this._errorText.textContent = message;
+    }
+
     //-----------------------------------QUERY
 
     //-----------------------------------ALL WINDOW
@@ -64693,6 +64724,13 @@ var saveAs = function(e) {
 
 }(typeof self !== "undefined" && self || typeof window !== "undefined" && window );
 
+// Milliseconds of RUN-tick silence (while game is active) before the stall
+// watchdog fires.  At speed 2–3 the worker posts ≈ 30 RUN messages per second;
+// 10 s of silence is an unambiguous hang.
+const STALL_THRESHOLD_MS = 10000;
+// How often the watchdog polls (ms)
+const WATCHDOG_INTERVAL_MS = 3000;
+
 class WorkerBridge {
 
     constructor () {
@@ -64701,6 +64739,12 @@ class WorkerBridge {
         this._isWorker      = true;
         this._directMessage = null;
         this._onPlayStart   = null;   // callback: called when FULLREBUILD+isStart fires
+
+        // Stall watchdog state
+        this._lastRunTime       = 0;     // timestamp of most recent RUN message
+        this._gameActive        = false; // true once a game is running (PLAYMAP received)
+        this._gamePaused        = false; // true while speed === 0
+        this._watchdogInterval  = null;
 
     }
 
@@ -64721,6 +64765,7 @@ class WorkerBridge {
             this._worker = new Worker( './build/citygame.min.js' );
             this._worker.postMessage = this._worker.webkitPostMessage || this._worker.postMessage;
             this._worker.onmessage   = handler;
+            this._worker.onerror     = function ( e ) { _this._onWorkerError( e ); };
             this.post( { tell: 'INIT', timestep: timestep } );
 
         } else {
@@ -64731,8 +64776,58 @@ class WorkerBridge {
 
     }
 
-    // Send a message to the worker (or invoke directMessage in non-worker mode)
+    // Called by Main.setSpeed() so the watchdog knows whether silence is expected
+    setGamePaused ( paused ) {
+        this._gamePaused = paused;
+        if ( !paused ) this._lastRunTime = Date.now(); // reset timer on unpause
+    }
+
+    // ── Stall watchdog ─────────────────────────────────────────────────────
+
+    _startWatchdog () {
+        if ( this._watchdogInterval ) return;
+        var _this = this;
+        this._lastRunTime      = Date.now();
+        this._watchdogInterval = setInterval( function () { _this._checkStall(); }, WATCHDOG_INTERVAL_MS );
+    }
+
+    _stopWatchdog () {
+        if ( this._watchdogInterval ) {
+            clearInterval( this._watchdogInterval );
+            this._watchdogInterval = null;
+        }
+    }
+
+    _checkStall () {
+        if ( !this._gameActive || this._gamePaused ) return;
+        var elapsed = Date.now() - this._lastRunTime;
+        if ( elapsed > STALL_THRESHOLD_MS ) {
+            this._stopWatchdog();
+            var msg = 'The simulation has stopped responding (' + Math.round( elapsed / 1000 ) + ' s since last tick).  Try reloading the page.';
+            console.error( 'OpenPublica stall watchdog:', msg );
+            if ( AppState.hub ) AppState.hub.showError( msg );
+        }
+    }
+
+    // ── Worker crash handler ────────────────────────────────────────────────
+
+    _onWorkerError ( e ) {
+        this._stopWatchdog();
+        var msg = 'Simulation worker crashed';
+        if ( e && e.message ) msg += ': ' + e.message;
+        console.error( 'OpenPublica worker error:', e );
+        if ( AppState.hub ) AppState.hub.showError( msg );
+    }
+
+    // Send a message to the worker (or invoke directMessage in non-worker mode).
+    // Intercepts PLAYMAP to arm the stall watchdog for new-game starts.
     post ( data, buffer ) {
+
+        if ( data && data.tell === 'PLAYMAP' ) {
+            this._gameActive = true;
+            this._gamePaused = false;
+            this._startWatchdog();
+        }
 
         if ( this._isWorker ) {
             this._worker.postMessage( data, buffer );
@@ -64763,6 +64858,10 @@ class WorkerBridge {
             if ( d.isStart ) {
                 AppState.view3d.startPlay();
                 if ( this._onPlayStart ) this._onPlayStart();
+                // Arm the stall watchdog now that the simulation is running
+                this._gameActive = true;
+                this._gamePaused = false;
+                this._startWatchdog();
             }
         }
 
@@ -64786,6 +64885,9 @@ class WorkerBridge {
             AppState.view3d.showPower();
 
             if ( AppState.debugOverlay ) AppState.debugOverlay.onWorkerTick();
+
+            // Feed the stall watchdog
+            this._lastRunTime = Date.now();
         }
 
         if ( phase === 'BUDGET' )       AppState.hub.openBudget( d.budgetData );
@@ -64796,6 +64898,22 @@ class WorkerBridge {
 
         if ( phase === 'SAVEGAME' ) this._makeGameSave( d.gameData, d.key, d.silent );
         if ( phase === 'LOADGAME' ) this._makeLoadGame( d.key, d.isStart );
+
+        if ( phase === 'LOADERROR' ) {
+            var loadMsg = d.message || 'Failed to load saved game.';
+            console.error( 'OpenPublica load error:', loadMsg );
+            if ( AppState.hub ) {
+                AppState.hub.generate( false );
+                AppState.hub.showError( loadMsg );
+            }
+        }
+
+        if ( phase === 'TICKERROR' ) {
+            this._stopWatchdog();
+            var tickMsg = 'Simulation error: ' + ( d.message || 'unknown error' );
+            console.error( 'OpenPublica tick error:', d.message, d.stack || '' );
+            if ( AppState.hub ) AppState.hub.showError( tickMsg );
+        }
 
     }
 
@@ -65095,6 +65213,7 @@ class Main {
 
     static setSpeed( n ) {
         if( AppState.debugOverlay ) AppState.debugOverlay.setSpeed( n );
+        AppState.workerBridge.setGamePaused( n === 0 );
         AppState.workerBridge.post({tell:"SPEED", n:n });
     }
 
