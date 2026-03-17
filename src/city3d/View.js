@@ -776,6 +776,8 @@ export class View {
     	this.doResize()
     	this.renderer.render( this.scene, this.camera )
 
+    	if( window.debugOverlay ) window.debugOverlay.onFrame( time );
+
     }
 
 
@@ -2091,7 +2093,10 @@ export class View {
 
 		this.isIsland = island;
 
-		if( mapSize ) this.mapSize = mapSize;
+		if( mapSize ) {
+			this.mapSize = mapSize;
+			if( window.debugOverlay ) window.debugOverlay.setMapSize( mapSize[0], mapSize[1] );
+		}
 
 		if( this.basePlane ) this.scene.remove( this.basePlane )
 

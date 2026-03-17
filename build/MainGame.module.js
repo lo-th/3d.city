@@ -8859,6 +8859,7 @@ class Hub {
                 case 'h': case 'H': Main.getHistory();      break;
                 case '?':           _this.openAbout();       break;
                 case 'o': case 'O': _this.openOverlays();    break;
+                case '`':           if(window.debugOverlay) window.debugOverlay.toggle(); break;
             }
         }, false);
     }
@@ -62717,6 +62718,8 @@ class View {
     	this.doResize();
     	this.renderer.render( this.scene, this.camera );
 
+    	if( window.debugOverlay ) window.debugOverlay.onFrame( time );
+
     }
 
 
@@ -64022,7 +64025,10 @@ class View {
 
 		this.isIsland = island;
 
-		if( mapSize ) this.mapSize = mapSize;
+		if( mapSize ) {
+			this.mapSize = mapSize;
+			if( window.debugOverlay ) window.debugOverlay.setMapSize( mapSize[0], mapSize[1] );
+		}
 
 		if( this.basePlane ) this.scene.remove( this.basePlane );
 
@@ -64643,6 +64649,299 @@ var saveAs = function(e) {
 
 }(typeof self !== "undefined" && self || typeof window !== "undefined" && window );
 
+class WorkerBridge {
+
+    constructor () {
+
+        this._worker        = null;
+        this._isWorker      = true;
+        this._directMessage = null;
+        this._onPlayStart   = null;   // callback: called when FULLREBUILD+isStart fires
+
+    }
+
+    // Boot the worker (or wire up direct-call mode).
+    // onPlayStart: optional callback invoked when a saved game finishes loading
+    //              so Main can start the autosave timer.
+    boot ( isWorkerMode, directMessage, timestep, onPlayStart ) {
+
+        this._isWorker      = isWorkerMode;
+        this._directMessage = directMessage;
+        this._onPlayStart   = onPlayStart || null;
+
+        var _this   = this;
+        var handler = function ( e ) { _this.dispatch( e ); };
+
+        if ( isWorkerMode ) {
+
+            this._worker = new Worker( './build/citygame.min.js' );
+            this._worker.postMessage = this._worker.webkitPostMessage || this._worker.postMessage;
+            this._worker.onmessage   = handler;
+            this.post( { tell: 'INIT', timestep: timestep } );
+
+        } else {
+
+            this.post( { tell: 'INIT', timestep: timestep, returnMessage: handler } );
+
+        }
+
+    }
+
+    // Send a message to the worker (or invoke directMessage in non-worker mode)
+    post ( data, buffer ) {
+
+        if ( this._isWorker ) {
+            this._worker.postMessage( data, buffer );
+        } else {
+            this._directMessage( { data: data } );
+        }
+
+    }
+
+    // Dispatch an inbound worker message to the appropriate handler
+    dispatch ( e ) {
+
+        var d     = e.data;
+        var phase = d.tell;
+
+        if ( phase === 'NEWMAP' ) {
+            hub.generate( false );
+            tilesData = d.tilesData;
+            view3d.paintMap( d.mapSize, d.island, withHeight );
+        }
+
+        if ( phase === 'FULLREBUILD' ) {
+            if ( d.isStart ) hub.generate( false );
+            view3d.fullRedraw = true;
+            tilesData = d.tilesData;
+            view3d.paintMap( d.mapSize, d.island, withHeight );
+            view3d.loadCityBuild( d.cityData );
+            if ( d.isStart ) {
+                view3d.startPlay();
+                if ( this._onPlayStart ) this._onPlayStart();
+            }
+        }
+
+        if ( phase === 'BUILD' ) {
+            view3d.build( d.x, d.y );
+        }
+
+        if ( phase === 'RUN' ) {
+            tilesData  = d.tilesData;
+            powerData  = d.powerData;
+            spriteData = d.sprites;
+            layerData  = d.layer;
+
+            hub.updateCITYinfo( d.infos );
+
+            newup   = true;
+            powerup = d.infos[ 9 ];
+
+            view3d.updateLayer();
+            view3d.moveSprite();
+            view3d.showPower();
+
+            if ( window.debugOverlay ) window.debugOverlay.onWorkerTick();
+        }
+
+        if ( phase === 'BUDGET' )       hub.openBudget( d.budgetData );
+        if ( phase === 'QUERY' )        hub.openQuery( d.queryTxt );
+        if ( phase === 'EVAL' )         hub.openEval( d.evalData );
+        if ( phase === 'ACHIEVEMENTS' ) hub.openAchievements( d.achData, d.progress );
+        if ( phase === 'HISTORY' )      hub.openHistory( d.historyData );
+
+        if ( phase === 'SAVEGAME' ) this._makeGameSave( d.gameData, d.key, d.silent );
+        if ( phase === 'LOADGAME' ) this._makeLoadGame( d.key, d.isStart );
+
+    }
+
+    // ── Save / load helpers ────────────────────────────────────────────────
+
+    _makeGameSave ( gameData, key, silent ) {
+
+        window.localStorage.setItem( key, gameData );
+
+        if ( !silent && !view3d.isMobile ) {
+            var blob = new Blob( [ gameData ], { type: 'text/plain;charset=utf-8' } );
+            saveAs( blob, 'city3d.json' );
+        }
+
+        if ( silent && hub ) {
+            hub.flashAutoSave();
+            if ( window.debugOverlay ) window.debugOverlay.onAutoSave();
+        }
+
+    }
+
+    _makeLoadGame ( key, atStart ) {
+
+        var isStart  = atStart || false;
+        var savegame;
+
+        if ( view3d.tmpGameData ) {
+            savegame = view3d.tmpGameData;
+        } else {
+            savegame = window.localStorage.getItem( key );
+        }
+
+        if ( savegame ) {
+            this.post( { tell: 'MAKELOADGAME', savegame: savegame, isStart: isStart } );
+            view3d.tmpGameData = null;
+        }
+
+    }
+
+}
+
+// ── DebugOverlay ──────────────────────────────────────────────────────────────
+//  Lightweight developer HUD: FPS, map size, simulation speed, worker tick
+//  rate, and last autosave timestamp.
+//  Toggle with the ` (backtick) key while the game is running.
+// ─────────────────────────────────────────────────────────────────────────────
+
+class DebugOverlay {
+
+    constructor () {
+
+        this._el   = null;
+        this._visible = false;
+
+        // FPS tracking
+        this._frameCount  = 0;
+        this._lastFpsTime = 0;
+        this._fps         = 0;
+
+        // Worker tick-rate tracking
+        this._workerTickCount = 0;
+        this._lastWorkerTime  = 0;
+        this._workerRate      = 0;
+
+        // Other display data
+        this._autoSaveTime = null;
+        this._speed        = 0;
+        this._speedLabel   = [ 'Pause', 'Slow', 'Normal', 'Fast', 'Turbo' ];
+        this._mapW         = 0;
+        this._mapH         = 0;
+
+    }
+
+    // Attach the overlay element to the hub container (called once after hub is ready)
+    mount ( hubEl ) {
+
+        this._el = document.createElement( 'div' );
+        this._el.id = 'debug-overlay';
+        this._el.style.cssText = 'position:absolute; top:44px; left:10px;'
+            + ' background:rgba(10,16,28,0.90);'
+            + ' border:1px solid rgba(74,158,221,0.40);'
+            + ' border-radius:8px;'
+            + ' padding:8px 14px;'
+            + ' font:11px/1.9 monospace;'
+            + ' color:rgba(140,200,255,0.92);'
+            + ' pointer-events:none;'
+            + ' display:none;'
+            + ' z-index:20;'
+            + ' min-width:170px;'
+            + ' white-space:pre;';
+
+        hubEl.appendChild( this._el );
+
+    }
+
+    // Show / hide the overlay
+    toggle () {
+
+        this._visible = !this._visible;
+        if ( this._el ) this._el.style.display = this._visible ? 'block' : 'none';
+
+    }
+
+    // Called every render frame from View.loop(); `time` is the DOMHighResTimeStamp
+    onFrame ( time ) {
+
+        this._frameCount++;
+
+        if ( this._lastFpsTime === 0 ) {
+            this._lastFpsTime = time;
+            return;
+        }
+
+        var elapsed = time - this._lastFpsTime;
+        if ( elapsed >= 1000 ) {
+            this._fps        = Math.round( this._frameCount * 1000 / elapsed );
+            this._frameCount = 0;
+            this._lastFpsTime = time;
+            if ( this._visible ) this._refresh();
+        }
+
+    }
+
+    // Called each time a RUN message arrives from the worker
+    onWorkerTick () {
+
+        var now = performance.now();
+        this._workerTickCount++;
+
+        if ( this._lastWorkerTime === 0 ) {
+            this._lastWorkerTime = now;
+            return;
+        }
+
+        var elapsed = now - this._lastWorkerTime;
+        if ( elapsed >= 1000 ) {
+            this._workerRate      = Math.round( this._workerTickCount * 1000 / elapsed );
+            this._workerTickCount = 0;
+            this._lastWorkerTime  = now;
+        }
+
+    }
+
+    // Called whenever a silent autosave completes
+    onAutoSave () {
+
+        this._autoSaveTime = new Date().toLocaleTimeString();
+        if ( this._visible ) this._refresh();
+
+    }
+
+    // Keep current speed index in sync (0-4)
+    setSpeed ( n ) {
+
+        this._speed = n;
+
+    }
+
+    // Keep map dimensions in sync; called from View.paintMap()
+    setMapSize ( w, h ) {
+
+        this._mapW = w;
+        this._mapH = h;
+
+    }
+
+    // Re-render the overlay text
+    _refresh () {
+
+        if ( !this._el ) return;
+
+        var mapStr    = ( this._mapW && this._mapH ) ? this._mapW + '\xd7' + this._mapH : '\u2014';
+        var speedStr  = ( this._speedLabel[ this._speed ] !== undefined )
+                        ? this._speedLabel[ this._speed ]
+                        : String( this._speed );
+        var autoStr   = this._autoSaveTime || '\u2014';
+        var workerStr = this._lastWorkerTime > 0 ? this._workerRate + '/s' : '\u2014';
+
+        this._el.innerHTML =
+            '<b style="color:#74bfff;letter-spacing:0.1em;">\u25a0 DEBUG HUD</b>\n'
+            + 'FPS    : ' + this._fps      + '\n'
+            + 'Map    : ' + mapStr         + '\n'
+            + 'Speed  : ' + speedStr       + '\n'
+            + 'Worker : ' + workerStr      + '\n'
+            + 'Saved  : ' + autoStr;
+
+    }
+
+}
+
 document.getElementById('debug');
 const simulation_timestep = 30;
 
@@ -64658,11 +64957,13 @@ window.trans = false;
 window.newup = false;
 window.powerup = false;
 
-//var storage;
 window.directMessage = null;
 window.isWorker = true;
 
 window.withHeight = false;
+
+window.workerBridge = new WorkerBridge();
+window.debugOverlay = new DebugOverlay();
 
 class Main {
 
@@ -64677,11 +64978,12 @@ class Main {
         
         isMobile = testMobile();
 
-        //storage = window.localStorage;
-
         this.initWorker();
         window.hub = new Hub();
         window.view3d = new View( isMobile );
+
+        // Mount the debug overlay once the hub element is available
+        debugOverlay.mount( document.getElementById('hub') );
 
     }
 
@@ -64689,22 +64991,12 @@ class Main {
 
     static initWorker (){
 
-        if( isWorker ){
-
-            window.cityWorker = new Worker( './build/citygame.min.js' );
-
-            //window.cityWorker = new Worker( 'js/worker.city.js' );
-            cityWorker.postMessage = cityWorker.webkitPostMessage || cityWorker.postMessage;
-            //post({tell:"INIT", url:document.location.href.replace(/\/[^/]*$/,"/") + "build/city.3d.js", timestep:simulation_timestep });
-            cityWorker.onmessage = message;
-
-            post({ tell:"INIT", timestep:simulation_timestep });
-
-        } else {
-
-            post({ tell:"INIT", timestep:simulation_timestep, returnMessage:message });
-
-        }
+        workerBridge.boot(
+            isWorker,
+            directMessage,
+            simulation_timestep,
+            function () { Main.startAutoSave(); }
+        );
 
     }
 
@@ -64776,6 +65068,7 @@ class Main {
     }
 
     static setSpeed( n ) {
+        if( window.debugOverlay ) window.debugOverlay.setSpeed( n );
         post({tell:"SPEED", n:n });
     }
 
@@ -64852,7 +65145,6 @@ class Main {
     
 
 
-
 }
  
 function testMobile() {
@@ -64862,121 +65154,14 @@ function testMobile() {
 }
 
 
-
-//=======================================
-//  SAVE LOAD
-//=======================================
-
-function makeGameSave( gameData, key, silent ) {
-    window.localStorage.setItem(key, gameData);
-
-    if( !silent && !view3d.isMobile ){
-        var blob = new Blob([gameData], {type: "text/plain;charset=utf-8"});
-        saveAs(blob, "city3d.json");
-    }
-
-    if( silent && hub ) hub.flashAutoSave();
-}
-
-function makeLoadGame( key, atStart ) {
-
-    var isStart = atStart || false;
-
-    let savegame; 
-    if( view3d.tmpGameData ){ 
-        savegame = view3d.tmpGameData;
-    } else {
-        savegame = window.localStorage.getItem( key );
-    }
-
-    if(savegame){ 
-        post({tell:"MAKELOADGAME", savegame:savegame, isStart:isStart});
-        view3d.tmpGameData = null;
-        
-    }
-}
-
-
 //=======================================
 //  CITY FLOW
 //=======================================
 
 function post( e, buffer ) {
 
-    if( isWorker ) cityWorker.postMessage( e, buffer );
-    else directMessage( { data : e } );
+    workerBridge.post( e, buffer );
 
-}
-
-function message( e ) {
-
-    var phase = e.data.tell;
-    if( phase == "NEWMAP"){
-
-        hub.generate( false );
-        tilesData = e.data.tilesData;
-        view3d.paintMap( e.data.mapSize, e.data.island, withHeight );
-   
-    }
-
-    if( phase == "FULLREBUILD"){
-
-        //console.log('fullrebuild')
-
-        if(e.data.isStart){
-            hub.generate( false );
-        }
-        view3d.fullRedraw = true;
-        tilesData = e.data.tilesData;
-        view3d.paintMap( e.data.mapSize, e.data.island, withHeight );
-        view3d.loadCityBuild( e.data.cityData );
-
-        if( e.data.isStart ){
-            view3d.startPlay();
-            Main.startAutoSave();
-        }
-    }
-    if( phase == "BUILD"){
-        view3d.build(e.data.x, e.data.y);
-    }
-    if( phase == "RUN"){
-        tilesData = e.data.tilesData;
-        powerData = e.data.powerData;
-        spriteData = e.data.sprites;
-        layerData = e.data.layer;
-
-        hub.updateCITYinfo(e.data.infos);
-
-        newup = true;
-        powerup = e.data.infos[9];
-
-        // update only layer change
-        view3d.updateLayer();
-        view3d.moveSprite();
-        view3d.showPower();
-
-    }
-    if( phase == "BUDGET"){
-        hub.openBudget(e.data.budgetData);
-    }
-    if( phase == "QUERY"){
-        hub.openQuery(e.data.queryTxt);
-    }
-    if( phase == "EVAL"){
-        hub.openEval(e.data.evalData);
-    }
-    if( phase == "ACHIEVEMENTS"){
-        hub.openAchievements(e.data.achData, e.data.progress);
-    }
-    if( phase == "HISTORY"){
-        hub.openHistory(e.data.historyData);
-    }
-    if( phase == "SAVEGAME"){
-        makeGameSave(e.data.gameData, e.data.key, e.data.silent);
-    }
-    if( phase == "LOADGAME"){
-        makeLoadGame(e.data.key, e.data.isStart);
-    }
 }
 
 export { Main };
