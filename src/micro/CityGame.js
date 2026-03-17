@@ -342,6 +342,10 @@ export class MainGame {
 
     processMessages ( messages ) {
 
+        // Clear any message left over from the previous tick so the HUD doesn't
+        // display stale text when no new message arrives this tick.
+        this.infos[8] = '';
+
         var messageOutput = false;
 
         for (var i = 0, l = messages.length; i < l; i++) {
@@ -512,7 +516,7 @@ export class MainGame {
 
         let b = this.simulation.budget;
         let waterCoverage = b.waterMaintenanceBudget > 0
-            ? Math.round((b.waterEffect / 32) * 100)
+            ? Math.round((b.waterEffect / Micro.MAX_WATER_EFFECT) * 100)
             : 100;
 
         let indDef = this.simulation.industrySpec.getCurrentDef();
@@ -659,6 +663,11 @@ export class MainGame {
         this.map.load(this.savedGame);
 
         CityGame.post({ tell:"FULLREBUILD", tilesData:this.map.tilesData, mapSize:this.mapSize, island:this.map.isIsland, cityData:this.savedGame.city, isStart:isStart });
+
+        // Re-create the simulation from the loaded save data and restart the tick loop.
+        // Without this the city is visually rebuilt on the main thread but the simulation
+        // remains halted because clearTimeout above killed the previous loop.
+        this.playMap(true);
     }
 
     transitionOldSave  (savedGame) {
