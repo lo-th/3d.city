@@ -62198,12 +62198,18 @@ class View {
 	    this.vsize = { x:window.innerWidth, y:window.innerHeight, z:window.innerWidth/window.innerHeight};
 	    this.mouse = { ox:0, oy:0, h:0, v:0, mx:0, my:0, dx:0, dy:0, down:false, over:false, drag:false, click:false, move:true, dragView:false, button:0 };
 
+	    // vertical orbit limits (degrees) — keep camera above horizon and below zenith
+	    this.CAM_V_MIN = 5;
+	    this.CAM_V_MAX = 87;
+
 	    // smooth camera state
 	    this.zoomVelocity = 0;
 	    this.orbitVelocityH = 0;
 	    this.orbitVelocityV = 0;
 	    this.pinchStartDist = 0;
 	    this.pinchStartCamDist = 0;
+	    this.pinchMidX = 0;
+	    this.pinchMidY = 0;
 	    this.raypos =  {x:-1, y:0, z:-1};
 
 	    this.select = '';
@@ -64018,18 +64024,31 @@ class View {
 
 	}
 
+	// Apply a world-space pan offset (dx, dz in screen-space units) without
+	// disturbing the shared this.ease vector.
+	panCenter ( dx, dz ) {
+	    const ry = this.cam.horizontal * this.ToRad;
+	    const wx =  Math.sin(ry) * dx + Math.cos(ry) * dz;
+	    const wz =  Math.cos(ry) * dx - Math.sin(ry) * dz;
+	    this.center.x = this.clamp( this.center.x + wx, 0, 128 );
+	    this.center.z = this.clamp( this.center.z - wz, 0, 128 );
+	    this.moveCamera();
+	}
+
 	onMouseDown  (e) {
 
 		e.preventDefault();
 	    let px, py;
 	    if(e.touches){
-	        // two-finger pinch start
+	        // two-finger gesture: track pinch-start and mid-point for zoom+pan
 	        if(e.touches.length === 2){
 	            this.pinchStartDist = Math.hypot(
 	                e.touches[0].pageX - e.touches[1].pageX,
 	                e.touches[0].pageY - e.touches[1].pageY
 	            );
 	            this.pinchStartCamDist = this.cam.distance;
+	            this.pinchMidX = (e.touches[0].pageX + e.touches[1].pageX) * 0.5;
+	            this.pinchMidY = (e.touches[0].pageY + e.touches[1].pageY) * 0.5;
 	            return;
 	        }
 	        px = e.clientX || e.touches[ 0 ].pageX;
@@ -64068,6 +64087,8 @@ class View {
 	    this.ease.x = 0;
 	    this.ease.z = 0;
 	    this.pinchStartDist = 0;
+	    this.pinchMidX = 0;
+	    this.pinchMidY = 0;
 	    document.body.style.cursor = 'auto';
 	}
 
@@ -64076,6 +64097,9 @@ class View {
 	    if( this.mouse.down ) { this.orbitVelocityH = 0; this.orbitVelocityV = 0; return; }
 	    this.cam.horizontal += this.orbitVelocityH;
 	    this.cam.vertical   += this.orbitVelocityV;
+	    // clamp vertical so momentum never flips camera past ground or zenith
+	    if( this.cam.vertical > this.CAM_V_MAX ) { this.cam.vertical = this.CAM_V_MAX; this.orbitVelocityV = 0; }
+	    if( this.cam.vertical < this.CAM_V_MIN ) { this.cam.vertical = this.CAM_V_MIN; this.orbitVelocityV = 0; }
 	    this.orbitVelocityH *= 0.88;
 	    this.orbitVelocityV *= 0.88;
 	    if( Math.abs(this.orbitVelocityH) < 0.01 ) this.orbitVelocityH = 0;
@@ -64088,14 +64112,21 @@ class View {
 
 	    let px, py;
 	    if(e.touches){
-	        // two-finger pinch zoom
+	        // two-finger gesture: pinch zoom + midpoint pan
 	        if(e.touches.length === 2 && this.pinchStartDist > 0){
 	            const d = Math.hypot(
 	                e.touches[0].pageX - e.touches[1].pageX,
 	                e.touches[0].pageY - e.touches[1].pageY
 	            );
+	            // zoom via pinch
 	            this.cam.distance = this.clamp( this.pinchStartCamDist * (this.pinchStartDist / d), 1, 150 );
-	            this.moveCamera();
+	            // pan via midpoint shift
+	            const midX = (e.touches[0].pageX + e.touches[1].pageX) * 0.5;
+	            const midY = (e.touches[0].pageY + e.touches[1].pageY) * 0.5;
+	            const panScale = this.clamp( this.cam.distance / 2000, 0.0005, 0.08 );
+	            this.panCenter( (midX - this.pinchMidX) * panScale, (midY - this.pinchMidY) * panScale );
+	            this.pinchMidX = midX;
+	            this.pinchMidY = midY;
 	            return;
 	        }
 	        px = e.clientX || e.touches[ 0 ].pageX;
@@ -64110,7 +64141,7 @@ class View {
 	        	this.mouse.dragView = false;
 		        document.body.style.cursor = 'crosshair';
 		        const newH = ((px - this.mouse.ox) * 0.3) + this.mouse.h;
-		        const newV = (-(py - this.mouse.oy) * 0.3) + this.mouse.v;
+		        const newV = this.clamp( (-(py - this.mouse.oy) * 0.3) + this.mouse.v, this.CAM_V_MIN, this.CAM_V_MAX );
 		        this.orbitVelocityH = newH - this.cam.horizontal;
 		        this.orbitVelocityV = newV - this.cam.vertical;
 		        this.cam.horizontal = newH;
@@ -64138,7 +64169,9 @@ class View {
 	    if(e.deltaY !== undefined){ delta = e.deltaY; }
 	    else if(e.wheelDelta){ delta = e.wheelDelta * -1; }
 	    else if(e.detail){ delta = e.detail * 20; }
-	    this.zoomVelocity += delta / 80;
+	    // scale zoom speed proportionally to current distance so close-up is precise
+	    const sensitivity = this.clamp( this.cam.distance / 50, 0.2, 4 );
+	    this.zoomVelocity += (delta / 80) * sensitivity;
 
 	}
 

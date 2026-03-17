@@ -28,13 +28,13 @@ The foundation is working and playable in the browser today:
 Goal: make the existing game feel complete and bug-free before adding new systems.
 
 - [ ] Fix all known simulation edge-cases (power grid, traffic jams, budget crashes)
-- [ ] Improve mobile / touch controls and responsive layout
+- [x] Improve mobile / touch controls and responsive layout — CSS media queries for small screens; two-finger pan + pinch zoom on touch devices; proportional scroll-zoom sensitivity
 - [ ] Expand building model variety (more residential, commercial, and industrial LOD levels)
 - [ ] Animated building construction sequence (scaffold → finished)
 - [x] Day / night cycle with dynamic lighting — time-of-day wheel changes fog colour, sky gradient, and renderer exposure
 - [x] Winter / season visual toggle — snow mode now correctly switches sky and fog colours
 - [ ] Improved disaster visuals (fire spread, tornado, flood)
-- [ ] Smooth camera transitions and orbit controls refinement
+- [x] Smooth camera transitions and orbit controls refinement — proportional zoom sensitivity, vertical-angle clamping prevents camera flip, two-finger midpoint pan on mobile
 - [x] Keyboard shortcut reference overlay — press `?` to open; added `O` shortcut for Overlays panel
 - [x] Persistent city auto-save (localStorage) — silent background save every 2 minutes with on-screen indicator
 - [ ] Performance profiling pass — target 60 fps on mid-range hardware
