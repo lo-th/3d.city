@@ -55,16 +55,16 @@ Goal: expand the Micropolis engine with richer gameplay mechanics.
   - [ ] Airports and seaports (cargo & passenger)
 - [ ] **Economic system**
   - [x] Taxes per zone type — residential, commercial, and industrial tax rates are now independently adjustable in the Budget panel; tax yield computed per-zone
-  - [ ] City bonds and debt
+  - [x] City bonds and debt — players can issue municipal bonds ($5K / $10K / $20K) from the Budget panel; 7% annual interest is deducted each tax cycle; outstanding debt and interest are displayed; debt cap prevents runaway borrowing; bond events logged to City History
   - [ ] Industry specialization (tech, manufacturing, tourism, farming)
   - [x] City budget breakdown by department — Budget panel now shows per-zone tax rates (Res/Com/Ind) plus service spending sliders for Roads, Fire, Police with live dollar amounts; fixed previously-undefined maintenance budget values
 - [ ] **Education & Health**
   - [ ] Schools, universities, and literacy rating
   - [ ] Hospitals, clinics, and city health rating
 - [ ] **Safety services**
-  - [ ] Police stations with coverage radius
-  - [ ] Fire stations with response time simulation
-- [ ] **Parks & recreation** — variety of park and landmark tiles
+  - [x] Police stations with coverage radius — police coverage percentage shown in Evaluation panel; colour-coded (green/amber/red); computed from policeStationEffectMap over populated land
+  - [x] Fire stations with response time simulation — fire coverage percentage shown in Evaluation panel alongside police coverage; both update live as stations are built or funded
+- [x] **Parks & recreation** — park tiles (WOODS2–WOODS5 and Fountain placed by the Park tool) are now counted each simulation cycle; park count shown in Evaluation panel under Coverage & Amenities
 - [x] **City ordinances / policies** — six toggleable ordinances (Free Clinics, Recycling Program, Education Subsidies, Noise Ordinance, Small Business Incentive, Public Transit Subsidy); each has gameplay effects on health, pollution, education, traffic, and tax yield; annual costs deducted from city budget; accessible via Ordinances button (`N`) in top bar
 
 ---

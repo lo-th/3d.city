@@ -106,7 +106,12 @@ var messageData = {
   NEED_SCHOOLS: MiscUtils.mcd('Citizens demand schools'),
 
   // History
-  HISTORY_EVENT: MiscUtils.mcd('Historic event recorded')
+  HISTORY_EVENT: MiscUtils.mcd('Historic event recorded'),
+
+  // Bonds
+  BOND_PAYMENT_DUE: MiscUtils.mcd('Annual bond payment deducted'),
+  BOND_ISSUED: MiscUtils.mcd('Municipal bond issued'),
+  BOND_HIGH_DEBT: MiscUtils.mcd('Warning: high municipal debt')
 };
 
 export const Messages = Object.defineProperties({}, messageData);

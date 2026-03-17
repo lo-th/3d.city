@@ -24,7 +24,7 @@
 		GameMapProps: ['cityCentreX', 'cityCentreY', 'pollutionMaxX', 'pollutionMaxY', 'width', 'height'],
 		savePropsVar: ['cityTime'],
 		CensusProps: ['resPop', 'comPop', 'indPop', 'crimeRamp', 'pollutionRamp', 'landValueAverage', 'pollutionAverage', 'crimeAverage', 'totalPop', 'resHist10', 'resHist120', 'comHist10', 'comHist120', 'indHist10', 'indHist120', 'crimeHist10', 'crimeHist120', 'moneyHist10', 'moneyHist120', 'pollutionHist10', 'pollutionHist120'],
-		BudgetProps: ['autoBudget', 'totalFunds', 'policePercent', 'roadPercent', 'firePercent', 'roadSpend', 'policeSpend', 'fireSpend', 'roadMaintenanceBudget', 'policeMaintenanceBudget', 'fireMaintenanceBudget', 'cityTax', 'roadEffect', 'policeEffect', 'fireEffect', 'resTaxRate', 'comTaxRate', 'indTaxRate'],
+		BudgetProps: ['autoBudget', 'totalFunds', 'policePercent', 'roadPercent', 'firePercent', 'roadSpend', 'policeSpend', 'fireSpend', 'roadMaintenanceBudget', 'policeMaintenanceBudget', 'fireMaintenanceBudget', 'cityTax', 'roadEffect', 'policeEffect', 'fireEffect', 'resTaxRate', 'comTaxRate', 'indTaxRate', 'bondDebt'],
 		// eval
 		PROBLEMS: ['CVP_CRIME', 'CVP_POLLUTION', 'CVP_HOUSING', 'CVP_TAXES', 'CVP_TRAFFIC', 'CVP_UNEMPLOYMENT', 'CVP_FIRE'],
 		NUMPROBLEMS: 7,
@@ -1158,7 +1158,11 @@
 		LOW_EDUCATION: MiscUtils.mcd('Education levels are low'),
 		NEED_SCHOOLS: MiscUtils.mcd('Citizens demand schools'),
 		// History
-		HISTORY_EVENT: MiscUtils.mcd('Historic event recorded')
+		HISTORY_EVENT: MiscUtils.mcd('Historic event recorded'),
+		// Bonds
+		BOND_PAYMENT_DUE: MiscUtils.mcd('Annual bond payment deducted'),
+		BOND_ISSUED: MiscUtils.mcd('Municipal bond issued'),
+		BOND_HIGH_DEBT: MiscUtils.mcd('Warning: high municipal debt')
 	};
 	const Messages = Object.defineProperties({}, messageData);
 	//var Messages = Object.defineProperties({}, messageData);
@@ -1240,6 +1244,8 @@
 		neutralMessages[Messages.WELCOMEBACK] = 'Welcome to 3D City';
 		neutralMessages[Messages.SEASON_CHANGED] = 'A new season has arrived';
 		neutralMessages[Messages.NEED_SCHOOLS] = 'Citizens demand more schools';
+		neutralMessages[Messages.BOND_PAYMENT_DUE] = 'Annual bond interest payment deducted';
+		neutralMessages[Messages.BOND_ISSUED] = 'Municipal bond issued';
 		var badMessages = {};
 		badMessages[Messages.BLACKOUTS_REPORTED] = 'Brownouts, build another Power Plant';
 		badMessages[Messages.COPTER_CRASHED] = 'A helicopter crashed ';
@@ -1263,6 +1269,7 @@
 		badMessages[Messages.HEAT_WAVE] = 'Heat wave! Increased fire risk';
 		badMessages[Messages.BLIZZARD] = 'Blizzard! Roads deteriorating faster';
 		badMessages[Messages.LOW_EDUCATION] = 'Education levels critically low';
+		badMessages[Messages.BOND_HIGH_DEBT] = 'Warning: high municipal debt burden';
 		var goodMessages = {};
 		goodMessages[Messages.REACHED_CAPITAL] = 'Population has reached 50,000';
 		goodMessages[Messages.REACHED_CITY] = 'Population has reached 10,000';
@@ -2623,6 +2630,14 @@
 			this.policeSpend = 0;
 			this.awaitingValues = false;
 			this.autoBudget = true;
+
+			// ── Municipal bonds ───────────────────────────────────────────
+			// bondDebt: total outstanding principal across all issued bonds
+			// bondInterestRate: annual interest rate applied each tax cycle
+			// MAX_BOND_DEBT: cap on borrowing to prevent runaway debt
+			this.bondDebt = 0;
+			this.bondInterestRate = 0.07;
+			this.MAX_BOND_DEBT = 50000;
 		}
 		save(saveData) {
 			for (var i = 0, l = Micro.BudgetProps.length; i < l; i++) saveData[Micro.BudgetProps[i]] = this[Micro.BudgetProps[i]];
@@ -2642,6 +2657,21 @@
 		}
 		get policeFund() {
 			return this.policeMaintenanceBudget;
+		}
+
+		// Returns the annual interest payment owed on outstanding bond debt.
+		getBondAnnualPayment() {
+			return Math.round(this.bondDebt * this.bondInterestRate);
+		}
+
+		// Issue a municipal bond: credit the city coffers immediately, add to debt.
+		// Returns true if the bond was issued, false if the debt cap would be exceeded.
+		issueBond(amount) {
+			if (amount <= 0) return false;
+			if (this.bondDebt + amount > this.MAX_BOND_DEBT) return false;
+			this.bondDebt += amount;
+			this.setFunds(this.totalFunds + amount);
+			return true;
 		}
 		setAutoBudget(value) {
 			this.autoBudget = value;
@@ -2880,6 +2910,7 @@
 			this.nuclearPowerPop = 0;
 			this.seaportPop = 0;
 			this.airportPop = 0;
+			this.parkCount = 0;
 
 			// Education is derived from hospitals + churches + land value
 			this.educationLevel = 0;
@@ -5634,6 +5665,10 @@
 			this.infos[15] = this.census.healthLevel;
 			this.infos[16] = this.census.happinessLevel;
 			this.infos[17] = this.seasonManager.getSeason();
+
+			// Bond / debt info
+			this.infos[18] = this.budget.bondDebt;
+			this.infos[19] = this.budget.getBondAnnualPayment();
 			return this.infos;
 		}
 
@@ -5641,6 +5676,19 @@
 		updateEducationHealth() {
 			let census = this.census;
 			let fx = this.ordinances.getEffects();
+
+			// Count placed park tiles (WOODS2-WOODS5 = tile values 40–43; FOUNTAIN = 840).
+			// These tiles have values below the MapScanner skip threshold (Tile.FLOOD = 48),
+			// so they are never visited during mapScan and must be counted with a direct scan.
+			let parkCount = 0;
+			let map = this.map;
+			for (let x = 0; x < map.width; x++) {
+				for (let y = 0; y < map.height; y++) {
+					let tv = map.getTileValue(x, y);
+					if (tv >= 40 && tv <= 43 || tv === 840) parkCount++;
+				}
+			}
+			census.parkCount = parkCount;
 
 			// Education: derived from hospitals (which also serve as schools in this sim),
 			// churches (community centers), and land value
@@ -5672,6 +5720,37 @@
 			// Tax penalty
 			if (this.budget.cityTax > 10) happyScore -= (this.budget.cityTax - 10) * 2;
 			census.happinessLevel = Math.round(Math.max(0, Math.min(100, happyScore)));
+		}
+
+		// Compute percentage of populated land covered by police/fire stations.
+		// A block is "covered" when the relevant effect map value exceeds a threshold.
+		// COVERAGE_THRESHOLD: minimum effect-map value to consider a block "covered"
+		// (effect maps range 0–1000; 10 represents light but meaningful station presence).
+		_computeCoverage() {
+			let policeMap = this.blockMaps.policeStationEffectMap;
+			let fireMap = this.blockMaps.fireStationEffectMap;
+			let landMap = this.blockMaps.landValueMap;
+			let coveredPolice = 0,
+				coveredFire = 0,
+				landCells = 0;
+			var COVERAGE_THRESHOLD = 10;
+			for (let x = 0; x < landMap.gameMapWidth; x += landMap.blockSize) {
+				for (let y = 0; y < landMap.gameMapHeight; y += landMap.blockSize) {
+					if (landMap.worldGet(x, y) > 0) {
+						landCells++;
+						if (policeMap.worldGet(x, y) > COVERAGE_THRESHOLD) coveredPolice++;
+						if (fireMap.worldGet(x, y) > COVERAGE_THRESHOLD) coveredFire++;
+					}
+				}
+			}
+			if (landCells === 0) return {
+				police: 0,
+				fire: 0
+			};
+			return {
+				police: Math.round(coveredPolice / landCells * 100),
+				fire: Math.round(coveredFire / landCells * 100)
+			};
 		}
 		simFrame() {
 			if (this.budget.awaitingValues) return false;
@@ -5755,6 +5834,12 @@
 						// Deduct annual ordinance costs from city funds
 						let ordCost = this.ordinances.getAnnualCost();
 						if (ordCost > 0) this.budget.spend(ordCost);
+						// Deduct annual bond interest payments
+						let bondPayment = this.budget.getBondAnnualPayment();
+						if (bondPayment > 0) {
+							this.budget.spend(bondPayment);
+							this.messageManager.sendMessage(Messages.BOND_PAYMENT_DUE);
+						}
 						this.evaluation.cityEvaluation();
 					}
 
@@ -5883,6 +5968,9 @@
 					break;
 				case 51:
 					if (this.budget.cityTax > 12) this.messageManager.sendMessage(Messages.TAX_TOO_HIGH);
+					break;
+				case 52:
+					if (this.budget.bondDebt > this.budget.MAX_BOND_DEBT * 0.8) this.messageManager.sendMessage(Messages.BOND_HIGH_DEBT);
 					break;
 				case 54:
 					if (this.budget.roadEffect < Math.floor(5 * Micro.MAX_ROAD_EFFECT / 8) && this.census.roadTotal > 30) this.messageManager.sendMessage(Messages.ROAD_NEEDS_FUNDING);
@@ -7931,6 +8019,7 @@
 			if (p == "HISTORY") Game.getHistory();
 			if (p == "GETORDINANCES") Game.getOrdinances();
 			if (p == "SETORDINANCE") Game.setOrdinance(e.data.id);
+			if (p == "ISSUEBOND") Game.issueBond(e.data.amount);
 			if (p == "SAVEGAME") Game.saveGame(e.data.saveCity, e.data.silent);
 			if (p == "LOADGAME") Game.loadGame(e.data.isStart);
 			if (p == "MAKELOADGAME") Game.makeLoadGame(e.data.savegame, e.data.isStart);
@@ -8266,7 +8355,10 @@
 				comTaxRate: b.comTaxRate,
 				indTaxRate: b.indTaxRate,
 				totalFunds: b.totalFunds,
-				taxesCollected: b.taxFund
+				taxesCollected: b.taxFund,
+				bondDebt: b.bondDebt,
+				bondAnnualPayment: b.getBondAnnualPayment(),
+				bondMaxDebt: b.MAX_BOND_DEBT
 			};
 			CityGame.post({
 				tell: "BUDGET",
@@ -8297,9 +8389,10 @@
 			let pollutionAvg = census.pollutionAverage;
 			let trafficAvg = this.infos[12] || 0;
 
-			// Enhanced eval data with education, health, happiness, unemployment, season
+			// Enhanced eval data with education, health, happiness, unemployment, season, coverage
 			let unemployment = Math.round(this._getUnemploymentPct());
 			let season = this.simulation.seasonManager.getSeasonName();
+			let coverage = this.simulation._computeCoverage();
 			let evalData = [evaluation.cityYes,
 			// 0
 			problemes,
@@ -8318,7 +8411,13 @@
 			// 7
 			unemployment,
 			// 8
-			season // 9
+			season,
+			// 9
+			coverage.police,
+			// 10
+			coverage.fire,
+			// 11
+			census.parkCount // 12
 			];
 			CityGame.post({
 				tell: "EVAL",
@@ -8361,6 +8460,15 @@
 			this.simulation.ordinances.toggle(id);
 			// Re-send the full updated list so the UI stays in sync
 			this.getOrdinances();
+		}
+		issueBond(amount) {
+			let issued = this.simulation.budget.issueBond(amount);
+			if (issued) {
+				this.simulation.messageManager.sendMessage(Messages.BOND_ISSUED);
+				this.simulation.cityHistory.addEvent('economic', 'Issued municipal bond of $' + amount + ' (total debt: $' + this.simulation.budget.bondDebt + ')', this.simulation.cityTime, this.simulation.startingYear);
+			}
+			// Refresh budget panel so the UI shows updated debt
+			this.handleBudgetRequest();
 		}
 
 		//______________________________________ SAVE

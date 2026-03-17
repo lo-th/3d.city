@@ -76,6 +76,7 @@ export class Census {
         this.nuclearPowerPop = 0;
         this.seaportPop = 0;
         this.airportPop = 0;
+        this.parkCount = 0;
 
         // Education is derived from hospitals + churches + land value
         this.educationLevel = 0;

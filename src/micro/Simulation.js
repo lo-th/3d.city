@@ -254,6 +254,10 @@ export class Simulation {
         this.infos[16] = this.census.happinessLevel;
         this.infos[17] = this.seasonManager.getSeason();
 
+        // Bond / debt info
+        this.infos[18] = this.budget.bondDebt;
+        this.infos[19] = this.budget.getBondAnnualPayment();
+
         return this.infos
 
     }
@@ -262,6 +266,19 @@ export class Simulation {
     updateEducationHealth () {
         let census = this.census;
         let fx = this.ordinances.getEffects();
+
+        // Count placed park tiles (WOODS2-WOODS5 = tile values 40–43; FOUNTAIN = 840).
+        // These tiles have values below the MapScanner skip threshold (Tile.FLOOD = 48),
+        // so they are never visited during mapScan and must be counted with a direct scan.
+        let parkCount = 0;
+        let map = this.map;
+        for (let x = 0; x < map.width; x++) {
+            for (let y = 0; y < map.height; y++) {
+                let tv = map.getTileValue(x, y);
+                if ((tv >= 40 && tv <= 43) || tv === 840) parkCount++;
+            }
+        }
+        census.parkCount = parkCount;
 
         // Education: derived from hospitals (which also serve as schools in this sim),
         // churches (community centers), and land value
@@ -299,6 +316,32 @@ export class Simulation {
         if (this.budget.cityTax > 10) happyScore -= (this.budget.cityTax - 10) * 2;
 
         census.happinessLevel = Math.round(Math.max(0, Math.min(100, happyScore)));
+    }
+
+    // Compute percentage of populated land covered by police/fire stations.
+    // A block is "covered" when the relevant effect map value exceeds a threshold.
+    // COVERAGE_THRESHOLD: minimum effect-map value to consider a block "covered"
+    // (effect maps range 0–1000; 10 represents light but meaningful station presence).
+    _computeCoverage () {
+        let policeMap = this.blockMaps.policeStationEffectMap;
+        let fireMap   = this.blockMaps.fireStationEffectMap;
+        let landMap   = this.blockMaps.landValueMap;
+        let coveredPolice = 0, coveredFire = 0, landCells = 0;
+        var COVERAGE_THRESHOLD = 10;
+        for (let x = 0; x < landMap.gameMapWidth; x += landMap.blockSize) {
+            for (let y = 0; y < landMap.gameMapHeight; y += landMap.blockSize) {
+                if (landMap.worldGet(x, y) > 0) {
+                    landCells++;
+                    if (policeMap.worldGet(x, y) > COVERAGE_THRESHOLD) coveredPolice++;
+                    if (fireMap.worldGet(x, y)   > COVERAGE_THRESHOLD) coveredFire++;
+                }
+            }
+        }
+        if (landCells === 0) return { police: 0, fire: 0 };
+        return {
+            police: Math.round((coveredPolice / landCells) * 100),
+            fire:   Math.round((coveredFire   / landCells) * 100)
+        };
     }
 
     simFrame () {
@@ -389,6 +432,12 @@ export class Simulation {
                     // Deduct annual ordinance costs from city funds
                     let ordCost = this.ordinances.getAnnualCost();
                     if (ordCost > 0) this.budget.spend(ordCost);
+                    // Deduct annual bond interest payments
+                    let bondPayment = this.budget.getBondAnnualPayment();
+                    if (bondPayment > 0) {
+                        this.budget.spend(bondPayment);
+                        this.messageManager.sendMessage(Messages.BOND_PAYMENT_DUE);
+                    }
                     this.evaluation.cityEvaluation();
                 };
 
@@ -454,6 +503,7 @@ export class Simulation {
             case 48: if (this.census.totalPop > 60 && this.census.policeStationPop === 0) this.messageManager.sendMessage(Messages.NEED_POLICE_STATION); break;
             case 50: if (this.census.totalPop > 200 && this.census.educationLevel < 30) this.messageManager.sendMessage(Messages.NEED_SCHOOLS); break;
             case 51: if (this.budget.cityTax > 12) this.messageManager.sendMessage(Messages.TAX_TOO_HIGH); break;
+            case 52: if (this.budget.bondDebt > this.budget.MAX_BOND_DEBT * 0.8) this.messageManager.sendMessage(Messages.BOND_HIGH_DEBT); break;
             case 54: if (this.budget.roadEffect < Math.floor(5 * Micro.MAX_ROAD_EFFECT / 8) && this.census.roadTotal > 30) this.messageManager.sendMessage(Messages.ROAD_NEEDS_FUNDING); break;
             case 57: if (this.budget.fireEffect < Math.floor(7 * Micro.MAX_FIRESTATION_EFFECT / 10) && this.census.totalPop > 20) this.messageManager.sendMessage(Messages.FIRE_STATION_NEEDS_FUNDING); break;
             case 60: if (this.budget.policeEffect < Math.floor(7 * Micro.MAX_POLICESTATION_EFFECT / 10) && this.census.totalPop > 20) this.messageManager.sendMessage(Messages.POLICE_NEEDS_FUNDING); break;

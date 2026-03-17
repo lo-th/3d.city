@@ -79,6 +79,8 @@ const Text = function(){
     neutralMessages[Messages.WELCOMEBACK] = 'Welcome to 3D City';
     neutralMessages[Messages.SEASON_CHANGED] = 'A new season has arrived';
     neutralMessages[Messages.NEED_SCHOOLS] = 'Citizens demand more schools';
+    neutralMessages[Messages.BOND_PAYMENT_DUE] = 'Annual bond interest payment deducted';
+    neutralMessages[Messages.BOND_ISSUED] = 'Municipal bond issued';
 
     var badMessages = {};
     badMessages[Messages.BLACKOUTS_REPORTED] = 'Brownouts, build another Power Plant';
@@ -103,6 +105,7 @@ const Text = function(){
     badMessages[Messages.HEAT_WAVE] = 'Heat wave! Increased fire risk';
     badMessages[Messages.BLIZZARD] = 'Blizzard! Roads deteriorating faster';
     badMessages[Messages.LOW_EDUCATION] = 'Education levels critically low';
+    badMessages[Messages.BOND_HIGH_DEBT] = 'Warning: high municipal debt burden';
 
     var goodMessages = {};
     goodMessages[Messages.REACHED_CAPITAL] = 'Population has reached 50,000';

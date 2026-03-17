@@ -147,6 +147,10 @@ export class Main {
         AppState.workerBridge.post({ tell:"SETORDINANCE", id:id });
     }
 
+    static issueBond(amount) {
+        AppState.workerBridge.post({ tell:"ISSUEBOND", amount:amount });
+    }
+
     static setDisaster(disaster){
         AppState.workerBridge.post({ tell:"DISASTER", disaster:disaster });
     }
