@@ -13,9 +13,15 @@ export class Storage {
     static getSavedGame = function() {
         if(Micro.localStorage==null) return;
         var savedGame = Micro.localStorage.getItem(Micro.KEY);
-        if (savedGame !== null) { 
-            savedGame = JSON.parse(savedGame);
+        if (savedGame !== null) {
+            try {
+                savedGame = JSON.parse(savedGame);
+            } catch (e) {
+                console.warn('OpenPublica: failed to parse saved game, starting fresh.', e);
+                return null;
+            }
             if (savedGame.version !== Micro.CURRENT_VERSION) this.transitionOldSave(savedGame);
+            this.migrate(savedGame);
             // Flag as a saved game for Game/Simulation etc...
             savedGame.isSavedGame = true;
         }
@@ -26,8 +32,19 @@ export class Storage {
     static saveGame = function(gameData) {
         if(Micro.localStorage==null) return;
         gameData.version = Micro.CURRENT_VERSION;
+        gameData.saveVersion = Micro.SAVE_VERSION;
         gameData = JSON.stringify(gameData);
         Micro.localStorage.setItem(Micro.KEY, gameData);
+    }
+
+    static migrate = function(savedGame) {
+        // Upgrades savedGame in-place to the current save schema version.
+        var from = savedGame.saveVersion || 0;
+        // v0 → v1: saveVersion field did not exist; nothing structural to transform.
+        if (from < 1) {
+            savedGame.saveVersion = 1;
+        }
+        // Future versions: add additional upgrade steps here.
     }
 
     static transitionOldSave (savedGame) {
