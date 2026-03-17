@@ -379,6 +379,69 @@ body { background: var(--c-bg); font: 12px/1.4 var(--font-ui);
 /* ── Links ───────────────────────────────────────────────────── */
 a:link, a:visited { text-decoration:none; color: var(--c-accent); }
 a:hover { text-decoration:underline; color: var(--c-accent-hi); }
+
+/* ── Responsive / mobile layout ─────────────────────────────── */
+@media (max-width: 600px) {
+  /* Enlarge touch targets on top menu */
+  .hub-topmenu {
+    height: 44px;
+    gap: 4px;
+    padding: 0 4px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .hub-topmenu::-webkit-scrollbar { display: none; }
+  .hub-topmenu .hub-btn {
+    height: 34px;
+    padding: 0 10px;
+    font-size: 10px;
+    flex-shrink: 0;
+  }
+  /* Status bar: smaller, horizontally scrollable */
+  .hub-statusbar {
+    height: 40px;
+    padding: 0 6px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .hub-statusbar::-webkit-scrollbar { display: none; }
+  .hub-stat {
+    padding: 0 10px;
+    flex-shrink: 0;
+  }
+  .hub-stat-label { font-size: 8px; }
+  .hub-stat-value { font-size: 11px; }
+  /* Speed buttons: slightly larger for touch */
+  .hub-speed-btn {
+    width: 32px;
+    height: 30px;
+    font-size: 12px;
+  }
+  /* Notification message: narrower on small screens */
+  .hub-msg { width: calc(100vw - 24px); }
+  /* Panel windows: constrain width on small screens */
+  .hub-panel { max-width: calc(100vw - 20px); }
+  /* Loading screen title */
+  .loading-title { font-size: 36px; }
+  .loading-subtitle { font-size: 11px; margin-bottom: 36px; }
+}
+
+@media (max-width: 380px) {
+  .hub-topmenu .hub-btn { padding: 0 6px; font-size: 9px; }
+  .hub-stat { padding: 0 7px; }
+}
+
+@media (max-height: 500px) and (orientation: landscape) {
+  /* Landscape phone: compact vertical spacing */
+  .hub-topmenu { height: 36px; }
+  .hub-statusbar { height: 34px; }
+  .hub-stat-value { font-size: 11px; }
+  .hub-panel { max-height: calc(100vh - 80px); overflow-y: auto; }
+}
 </style>
 </head>
 
