@@ -1,13 +1,12 @@
 
 import { Hub } from './city3d/Hub.js'
 import { View } from './city3d/View.js'
-import { saveAs } from './saveAs.js';
-
+import { WorkerBridge } from './WorkerBridge.js';
+import { DebugOverlay } from './DebugOverlay.js';
 
 
 var d = document.getElementById('debug');
 const simulation_timestep = 30;
-var stats = null;
 
 window.tilesData = null;
 window.spriteData = null;
@@ -21,11 +20,13 @@ window.trans = false;
 window.newup = false;
 window.powerup = false;
 
-//var storage;
 window.directMessage = null
 window.isWorker = true
 
 window.withHeight = false
+
+window.workerBridge = new WorkerBridge();
+window.debugOverlay = new DebugOverlay();
 
 export class Main {
 
@@ -40,11 +41,12 @@ export class Main {
         
         isMobile = testMobile();
 
-        //storage = window.localStorage;
-
         this.initWorker()
         window.hub = new Hub()
         window.view3d = new View( isMobile );
+
+        // Mount the debug overlay once the hub element is available
+        debugOverlay.mount( document.getElementById('hub') );
 
     }
 
@@ -52,22 +54,12 @@ export class Main {
 
     static initWorker (){
 
-        if( isWorker ){
-
-            window.cityWorker = new Worker( './build/citygame.min.js' );
-
-            //window.cityWorker = new Worker( 'js/worker.city.js' );
-            cityWorker.postMessage = cityWorker.webkitPostMessage || cityWorker.postMessage;
-            //post({tell:"INIT", url:document.location.href.replace(/\/[^/]*$/,"/") + "build/city.3d.js", timestep:simulation_timestep });
-            cityWorker.onmessage = message;
-
-            post({ tell:"INIT", timestep:simulation_timestep });
-
-        } else {
-
-            post({ tell:"INIT", timestep:simulation_timestep, returnMessage:message });
-
-        }
+        workerBridge.boot(
+            isWorker,
+            directMessage,
+            simulation_timestep,
+            function () { Main.startAutoSave(); }
+        );
 
     }
 
@@ -139,6 +131,7 @@ export class Main {
     }
 
     static setSpeed( n ) {
+        if( window.debugOverlay ) window.debugOverlay.setSpeed( n );
         post({tell:"SPEED", n:n });
     }
 
@@ -215,7 +208,6 @@ export class Main {
     
 
 
-
 }
 
 function debug( txt ) { d.innerHTML += "<br>"+txt; }
@@ -227,128 +219,12 @@ function testMobile() {
 }
 
 
-
-//=======================================
-//  SAVE LOAD
-//=======================================
-
-function makeGameSave( gameData, key, silent ) {
-    window.localStorage.setItem(key, gameData);
-
-    if( !silent && !view3d.isMobile ){
-        var blob = new Blob([gameData], {type: "text/plain;charset=utf-8"});
-        saveAs(blob, "city3d.json");
-    }
-
-    if( silent && hub ) hub.flashAutoSave();
-}
-
-function makeLoadGame( key, atStart ) {
-
-    var isStart = atStart || false;
-    if(isStart){
-        
-       // hub.initGameHub();
-    }
-
-    let savegame 
-    if( view3d.tmpGameData ){ 
-        savegame = view3d.tmpGameData
-    } else {
-        savegame = window.localStorage.getItem( key )
-    }
-
-    if(savegame){ 
-        post({tell:"MAKELOADGAME", savegame:savegame, isStart:isStart});
-        view3d.tmpGameData = null
-        
-    } else {
-        // no saved game found in storage
-    }
-}
-
-
 //=======================================
 //  CITY FLOW
 //=======================================
 
 function post( e, buffer ) {
 
-    if( isWorker ) cityWorker.postMessage( e, buffer );
-    else directMessage( { data : e } )
+    workerBridge.post( e, buffer );
 
-}
-
-function message( e ) {
-
-    var phase = e.data.tell;
-    if( phase == "READY"){
-
-    }
-    if( phase == "NEWMAP"){
-
-        hub.generate( false );
-        tilesData = e.data.tilesData;
-        view3d.paintMap( e.data.mapSize, e.data.island, withHeight );
-   
-    }
-
-    if( phase == "FULLREBUILD"){
-
-        //console.log('fullrebuild')
-
-        if(e.data.isStart){
-            hub.generate( false );
-        }
-        view3d.fullRedraw = true;
-        tilesData = e.data.tilesData;
-        view3d.paintMap( e.data.mapSize, e.data.island, withHeight );
-        view3d.loadCityBuild( e.data.cityData );
-
-        if( e.data.isStart ){
-            view3d.startPlay();
-            Main.startAutoSave();
-        }
-    }
-    if( phase == "BUILD"){
-        view3d.build(e.data.x, e.data.y);
-    }
-    if( phase == "RUN"){
-        tilesData = e.data.tilesData;
-        powerData = e.data.powerData;
-        spriteData = e.data.sprites;
-        layerData = e.data.layer;
-
-        hub.updateCITYinfo(e.data.infos);
-
-        newup = true;
-        powerup = e.data.infos[9]
-
-        // update only layer change
-        view3d.updateLayer();
-        view3d.moveSprite();
-        view3d.showPower();
-
-    }
-    if( phase == "BUDGET"){
-        hub.openBudget(e.data.budgetData);
-    }
-    if( phase == "QUERY"){
-        hub.openQuery(e.data.queryTxt);
-    }
-    if( phase == "EVAL"){
-        hub.openEval(e.data.evalData);
-    }
-    if( phase == "ACHIEVEMENTS"){
-        hub.openAchievements(e.data.achData, e.data.progress);
-    }
-    if( phase == "HISTORY"){
-        hub.openHistory(e.data.historyData);
-    }
-    if( phase == "SAVEGAME"){
-        makeGameSave(e.data.gameData, e.data.key, e.data.silent);
-    }
-    if( phase == "LOADGAME"){
-        makeLoadGame(e.data.key, e.data.isStart);
-    }
 }

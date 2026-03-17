@@ -380,6 +380,7 @@ export class Hub {
                 case 'h': case 'H': Main.getHistory();      break;
                 case '?':           _this.openAbout();       break;
                 case 'o': case 'O': _this.openOverlays();    break;
+                case '`':           if(window.debugOverlay) window.debugOverlay.toggle(); break;
             }
         }, false);
     }
