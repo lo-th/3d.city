@@ -540,6 +540,39 @@ access to `localStorage`).
 
 ---
 
+### LOADERROR
+
+Sent when `MainGame.makeLoadGame()` fails to parse the save-game JSON.  The main thread should
+hide any loading overlay and display the error to the user.
+
+| Field | Type | Status | Notes |
+|-------|------|--------|-------|
+| `tell` | `"LOADERROR"` | ✔ confirmed | — |
+| `message` | `string` | ✔ confirmed | Human-readable description of the parse failure |
+
+**Sender:** `MainGame.makeLoadGame()` — the `catch` block around `JSON.parse(gameData)`
+**Main handler:** `WorkerBridge.dispatch()` → `hub.generate(false)` + `hub.showError(message)`
+**Mutates:** UI state (hides loading overlay, shows error banner)
+
+---
+
+### TICKERROR
+
+Sent when an uncaught exception is thrown inside `MainGame.tick()`.  The simulation loop is
+halted before this message is posted; it will not self-restart.
+
+| Field | Type | Status | Notes |
+|-------|------|--------|-------|
+| `tell` | `"TICKERROR"` | ✔ confirmed | — |
+| `message` | `string` | ✔ confirmed | `err.message` from the caught exception |
+| `stack` | `string` | ✔ confirmed | `err.stack` from the caught exception (may be empty string) |
+
+**Sender:** `MainGame.tick()` — the `catch` block wrapping `simulation.simTick()`
+**Main handler:** `WorkerBridge.dispatch()` → stops stall watchdog + `hub.showError(message)`
+**Mutates:** UI state (shows error banner, stall watchdog is stopped)
+
+---
+
 ### FULLREBUILD
 
 Sent after loading a saved game.  Delivers all data the main thread needs to fully reconstruct
@@ -592,6 +625,8 @@ the 3D scene.
 | SAVEGAME (← W) | — | ✔ toast (silent) | ✔ localStorage + file |
 | LOADGAME (← W) | — | — | ✔ triggers read |
 | FULLREBUILD (← W) | — | ✔ full 3D rebuild | — |
+| LOADERROR (← W) | — | ✔ error banner | — |
+| TICKERROR (← W) | — | ✔ error banner | — |
 
 ---
 

@@ -7774,24 +7774,38 @@
 		tick() {
 			//if ( this.isPaused ) return
 
-			let up = this.simulation.simTick();
-			if (up) {
-				this.infos = this.simulation.infos;
-				this.processMessages(Game.simulation.messageManager.getMessages());
-				this.animatedTiles();
-				this.simulation.spriteManager.moveObjects();
-				this.calculateSprites();
+			try {
+				let up = this.simulation.simTick();
+				if (up) {
+					this.infos = this.simulation.infos;
+					this.processMessages(Game.simulation.messageManager.getMessages());
+					if (Micro.haveMapAnimation) this.animatedTiles();
+					this.simulation.spriteManager.moveObjects();
+					this.calculateSprites();
+					CityGame.post({
+						tell: "RUN",
+						infos: this.infos,
+						tilesData: this.map.tilesData,
+						powerData: this.map.powerData,
+						sprites: this.spritesData,
+						layer: this.map.layer
+					});
+					this.map.resetLayer();
+				}
+				this.next();
+			} catch (err) {
+				// Halt the loop so the broken state does not persist.
+				// Report the failure to the main thread so the UI can inform the user.
+				var msg = err && err.message ? err.message : String(err);
+				var stack = err && err.stack ? err.stack : '';
+				console.error('OpenPublica simulation tick error:', err);
 				CityGame.post({
-					tell: "RUN",
-					infos: this.infos,
-					tilesData: this.map.tilesData,
-					powerData: this.map.powerData,
-					sprites: this.spritesData,
-					layer: this.map.layer
+					tell: 'TICKERROR',
+					message: msg,
+					stack: stack
 				});
-				this.map.resetLayer();
+				// Do NOT call this.next() — loop is intentionally stopped.
 			}
-			this.next();
 		}
 		newMap() {
 			this.map = this.mapGen.construct(this.mapSize[0], this.mapSize[1]);
