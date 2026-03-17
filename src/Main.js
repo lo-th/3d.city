@@ -151,6 +151,14 @@ export class Main {
         AppState.workerBridge.post({ tell:"ISSUEBOND", amount:amount });
     }
 
+    static getIndustrySpec() {
+        AppState.workerBridge.post({ tell:"GETINDUSTRYSPEC" });
+    }
+
+    static setIndustrySpec(id) {
+        AppState.workerBridge.post({ tell:"SETINDUSTRYSPEC", id:id });
+    }
+
     static setDisaster(disaster){
         AppState.workerBridge.post({ tell:"DISASTER", disaster:disaster });
     }

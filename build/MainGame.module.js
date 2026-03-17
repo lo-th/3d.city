@@ -8604,6 +8604,7 @@ class Hub {
         this.achievementsWindow = null;
         this.historyWindow      = null;
         this.ordinancesWindow   = null;
+        this.industrySpecWindow = null;
 
         this.selector = null;
         this.select   = null;
@@ -8786,6 +8787,9 @@ class Hub {
         var b8 = this.addButton(topBar, 'Ordinances', [88,22,11], null, true);
         b8.addEventListener('click', function(e){ e.preventDefault(); Main.getOrdinances(); }, false);
 
+        var b9 = this.addButton(topBar, 'Economy', [72,22,11], null, true);
+        b9.addEventListener('click', function(e){ e.preventDefault(); Main.getIndustrySpec(); }, false);
+
         // Speed selector is appended to the topBar in addSelector below
 
         // ── Tool panel ────────────────────────────────────────────────
@@ -8911,6 +8915,7 @@ class Hub {
                 case '?':           _this.openAbout();         break;
                 case 'o': case 'O': _this.openOverlays();      break;
                 case 'n': case 'N': Main.getOrdinances();      break;
+                case 'i': case 'I': Main.getIndustrySpec();    break;
                 case '`':           if(AppState.debugOverlay) AppState.debugOverlay.toggle(); break;
             }
         }, false);
@@ -9115,6 +9120,10 @@ class Hub {
             this.closeOrdinances();
             t = 'ordinances';
         }
+        if(this.industrySpecWindow !== null && this.industrySpecWindow.dataset.state === 'open'){
+            this.closeIndustrySpec();
+            t = 'industryspec';
+        }
 
         return t;
 
@@ -9165,6 +9174,7 @@ class Hub {
                              + '<span class="hub-kbd">H</span> History<br>'
                              + '<span class="hub-kbd">O</span> Overlays &nbsp;'
                              + '<span class="hub-kbd">N</span> Ordinances<br>'
+                             + '<span class="hub-kbd">I</span> Economy<br>'
                              + '<span class="hub-kbd">?</span> This panel<br>'
                              + '<span class="hub-kbd">Esc</span> Close window';
             body.appendChild( kbdDiv );
@@ -9348,6 +9358,8 @@ class Hub {
         var policeCoverage = data[10] !== undefined ? data[10] : 0;
         var fireCoverage   = data[11] !== undefined ? data[11] : 0;
         var parkCount      = data[12] !== undefined ? data[12] : 0;
+        var waterCoverage  = data[13] !== undefined ? data[13] : 100;
+        var indDef         = data[14] || null;
 
         var happyColor = happiness >= 70 ? '#4bcc7a' : happiness >= 40 ? '#f0b84a' : '#e05555';
         var eduStr = this._getLevelString(eduLevel, 200, ['None', 'Poor', 'Basic', 'Good', 'Excellent']);
@@ -9355,6 +9367,8 @@ class Hub {
         var policeColor = policeCoverage >= 70 ? '#4bcc7a' : policeCoverage >= 40 ? '#f0b84a' : '#e05555';
         var fireColor   = fireCoverage   >= 70 ? '#4bcc7a' : fireCoverage   >= 40 ? '#f0b84a' : '#e05555';
         var parkColor   = parkCount      >= 10 ? '#4bcc7a' : parkCount      >= 3  ? '#f0b84a' : 'rgba(180,210,240,0.5)';
+        var waterColor  = waterCoverage  >= 80 ? '#4bcc7a' : waterCoverage  >= 50 ? '#f0b84a' : '#e05555';
+        var indStr = indDef ? (indDef.icon + ' ' + indDef.name) : '🏙️ Mixed';
 
         this.evaltExtended.innerHTML = '<b style="font-size:10px; letter-spacing:0.08em; color:rgba(180,210,240,0.6);">CITY WELL-BEING</b><br>'
             + '<span style="' + lblStyle + '">Season:</span><span style="color:#4a9edd;">' + season + '</span><br>'
@@ -9365,7 +9379,10 @@ class Hub {
             + '<br><b style="font-size:10px; letter-spacing:0.08em; color:rgba(180,210,240,0.6);">COVERAGE &amp; AMENITIES</b><br>'
             + '<span style="' + lblStyle + '">🚓 Police:</span><span style="color:' + policeColor + ';">' + policeCoverage + '%</span><br>'
             + '<span style="' + lblStyle + '">🚒 Fire:</span><span style="color:' + fireColor + ';">' + fireCoverage + '%</span><br>'
-            + '<span style="' + lblStyle + '">🌳 Parks:</span><span style="color:' + parkColor + ';">' + parkCount + '</span>';
+            + '<span style="' + lblStyle + '">💧 Water:</span><span style="color:' + waterColor + ';">' + waterCoverage + '%</span><br>'
+            + '<span style="' + lblStyle + '">🌳 Parks:</span><span style="color:' + parkColor + ';">' + parkCount + '</span><br>'
+            + '<br><b style="font-size:10px; letter-spacing:0.08em; color:rgba(180,210,240,0.6);">ECONOMY</b><br>'
+            + '<span style="' + lblStyle + '">Focus:</span><span style="color:#f0b84a;">' + indStr + '</span>';
 
         this.evaluationWindow.dataset.state = 'open';
     }
@@ -9427,7 +9444,8 @@ class Hub {
 
         this.dataKeys = ['roadFund', 'roadRate', 'fireFund', 'fireRate', 'policeFund', 'policeRate',
                          'resTaxRate', 'comTaxRate', 'indTaxRate', 'totalFunds', 'taxesCollected',
-                         'bondDebt', 'bondAnnualPayment', 'bondMaxDebt'];
+                         'bondDebt', 'bondAnnualPayment', 'bondMaxDebt',
+                         'waterFund', 'waterRate'];
 
         var i = this.dataKeys.length;
 
@@ -9442,7 +9460,7 @@ class Hub {
 
         data.totalFunds;
         var taxesCollected = data.taxesCollected || 0;
-        var cashFlow = taxesCollected - (this.roadFund || 0) - (this.fireFund || 0) - (this.policeFund || 0);
+        var cashFlow = taxesCollected - (this.roadFund || 0) - (this.fireFund || 0) - (this.policeFund || 0) - (this.waterFund || 0);
 
         if(this.budgetWindow == null){
             this.budgetWindow = document.createElement('div');
@@ -9454,7 +9472,7 @@ class Hub {
             this.budgetWindow.appendChild( this.makeWindowHeader('Budget', function(){ _this.closeBudget(); }) );
 
             var body = document.createElement('div');
-            body.style.cssText = 'position:relative; height:460px; pointer-events:none;';
+            body.style.cssText = 'position:relative; height:510px; pointer-events:none;';
             this.budgetWindow.appendChild( body );
 
             var taxLabel = document.createElement('div');
@@ -9476,26 +9494,28 @@ class Hub {
             this.addSlider(body, 162, 'Roads',  this.roadRate,   this.roadFund,   '#e05555', 100);
             this.addSlider(body, 202, 'Fire',   this.fireRate,   this.fireFund,   '#e05555', 100);
             this.addSlider(body, 242, 'Police', this.policeRate, this.policeFund, '#e05555', 100);
+            this.addSlider(body, 282, 'Water',  this.waterRate !== undefined ? this.waterRate : 100,
+                                                this.waterFund,  '#4a9edd', 100);
 
             this.budgetResult = document.createElement('div');
-            this.budgetResult.style.cssText = 'position:absolute; top:296px; left:10px; width:200px;'
+            this.budgetResult.style.cssText = 'position:absolute; top:336px; left:10px; width:200px;'
                                             + ' pointer-events:none; color:' + this.colors[0] + '; font-size:12px; line-height:1.6;';
             body.appendChild( this.budgetResult );
 
             // ── Municipal Bonds section ───────────────────────────────
             var bondLabel = document.createElement('div');
-            bondLabel.style.cssText = 'position:absolute; left:10px; top:338px; font-size:10px; font-weight:700;'
+            bondLabel.style.cssText = 'position:absolute; left:10px; top:378px; font-size:10px; font-weight:700;'
                                     + ' letter-spacing:0.08em; color:rgba(240,184,74,0.8); text-transform:uppercase;';
             bondLabel.textContent = 'Municipal Bonds';
             body.appendChild(bondLabel);
 
             this.bondDebtInfo = document.createElement('div');
-            this.bondDebtInfo.style.cssText = 'position:absolute; left:10px; top:356px; width:200px;'
+            this.bondDebtInfo.style.cssText = 'position:absolute; left:10px; top:396px; width:200px;'
                                             + ' pointer-events:none; color:' + this.colors[0] + '; font-size:11px; line-height:1.5;';
             body.appendChild(this.bondDebtInfo);
 
             var bondBtnsRow = document.createElement('div');
-            bondBtnsRow.style.cssText = 'position:absolute; left:10px; top:390px; display:flex; gap:4px; pointer-events:auto;';
+            bondBtnsRow.style.cssText = 'position:absolute; left:10px; top:430px; display:flex; gap:4px; pointer-events:auto;';
             body.appendChild(bondBtnsRow);
 
             var b5k  = this.addButton(bondBtnsRow, '+$5K',  [58, 22, 10], null);
@@ -9543,7 +9563,8 @@ class Hub {
         this.budgetWindow.style.display = 'none';
         this.budgetWindow.dataset.state = 'close';
 
-        Main.setBudjet([this.resTaxRate, this.comTaxRate, this.indTaxRate, this.roadRate, this.fireRate, this.policeRate]);
+        var wRate = this.waterRate !== undefined ? this.waterRate : 100;
+        Main.setBudjet([this.resTaxRate, this.comTaxRate, this.indTaxRate, this.roadRate, this.fireRate, this.policeRate, wRate]);
     }
 
     closeBudget  (){
@@ -9558,6 +9579,7 @@ class Hub {
         this.setSliderValue('Roads',   this.roadRate,   100, this.roadFund);
         this.setSliderValue('Fire',    this.fireRate,   100, this.fireFund);
         this.setSliderValue('Police',  this.policeRate, 100, this.policeFund);
+        this.setSliderValue('Water',   this.waterRate !== undefined ? this.waterRate : 100, 100, this.waterFund);
     }
 
     //-----------------------------------DISASTER WINDOW
@@ -10104,6 +10126,83 @@ class Hub {
     closeOrdinances (){
         this.ordinancesWindow.style.display = 'none';
         this.ordinancesWindow.dataset.state = 'close';
+    }
+
+    //-----------------------------------INDUSTRY SPECIALIZATION WINDOW
+
+    openIndustrySpec (list, current) {
+        var _this = this;
+
+        var test = this.testOpen();
+        if (test === 'industryspec') return;
+
+        if (this.industrySpecWindow === null) {
+            this.industrySpecWindow = document.createElement('div');
+            this.industrySpecWindow.className = 'hub-panel';
+            this.industrySpecWindow.style.cssText = 'position:absolute; top:44px; left:10px; width:260px;'
+                                                  + ' pointer-events:none; display:flex; flex-direction:column; border-radius:10px;';
+            this.hub.appendChild(this.industrySpecWindow);
+
+            this.industrySpecWindow.appendChild(this.makeWindowHeader('City Economy <span class="hub-kbd">I</span>', function(){ _this.closeIndustrySpec(); }));
+
+            this.indSpecBody = document.createElement('div');
+            this.indSpecBody.style.cssText = 'padding:8px 12px; pointer-events:none; overflow-y:auto; max-height:460px;';
+            this.industrySpecWindow.appendChild(this.indSpecBody);
+        } else {
+            this.industrySpecWindow.style.display = 'flex';
+        }
+
+        // Rebuild each time
+        this.indSpecBody.innerHTML = '';
+
+        var hdr = document.createElement('div');
+        hdr.style.cssText = 'font-size:11px; color:rgba(180,210,240,0.6); margin-bottom:10px; pointer-events:none; line-height:1.5;';
+        hdr.textContent = 'Choose your city\'s economic focus. Specializations affect tax yields, pollution, and city growth.';
+        this.indSpecBody.appendChild(hdr);
+
+        if (Array.isArray(list)) {
+            for (var i = 0; i < list.length; i++) {
+                this._addIndustrySpecRow(this.indSpecBody, list[i]);
+            }
+        }
+
+        this.industrySpecWindow.dataset.state = 'open';
+    }
+
+    _addIndustrySpecRow (container, spec) {
+        var row = document.createElement('div');
+        row.style.cssText = 'display:flex; align-items:flex-start; gap:8px; margin-bottom:8px; pointer-events:auto; cursor:pointer;'
+                          + ' padding:8px; border-radius:6px; border:1px solid '
+                          + (spec.active ? 'rgba(240,184,74,0.6)' : 'rgba(100,160,220,0.2)') + ';'
+                          + ' background:' + (spec.active ? 'rgba(240,184,74,0.10)' : 'rgba(255,255,255,0.03)') + ';'
+                          + ' transition:background 120ms;';
+        row.dataset.id = spec.id;
+
+        var icon = document.createElement('div');
+        icon.style.cssText = 'flex-shrink:0; font-size:22px; line-height:1; margin-top:2px;';
+        icon.textContent = spec.icon || '🏙️';
+        row.appendChild(icon);
+
+        var info = document.createElement('div');
+        info.style.cssText = 'pointer-events:none; flex:1;';
+        info.innerHTML = '<div style="font-size:13px; font-weight:600; color:#dce8f5;">' + spec.name
+                       + (spec.active ? ' <span style="color:#f0b84a; font-size:10px;">[Active]</span>' : '') + '</div>'
+                       + '<div style="font-size:11px; color:rgba(180,210,240,0.6); line-height:1.4; margin-top:2px;">' + spec.description + '</div>';
+        row.appendChild(info);
+
+        row.addEventListener('click', function(e){
+            e.preventDefault();
+            Main.setIndustrySpec(this.dataset.id);
+        }, false);
+
+        container.appendChild(row);
+    }
+
+    closeIndustrySpec () {
+        if (this.industrySpecWindow) {
+            this.industrySpecWindow.style.display = 'none';
+            this.industrySpecWindow.dataset.state = 'close';
+        }
     }
 
     clearElement  (id){
@@ -65304,6 +65403,7 @@ class WorkerBridge {
         if ( phase === 'ACHIEVEMENTS' ) AppState.hub.openAchievements( d.achData, d.progress );
         if ( phase === 'HISTORY' )      AppState.hub.openHistory( d.historyData );
         if ( phase === 'ORDINANCES' )   AppState.hub.openOrdinances( d.ordinances, d.annualCost );
+        if ( phase === 'INDUSTRYSPEC' ) AppState.hub.openIndustrySpec( d.list, d.current );
 
         if ( phase === 'SAVEGAME' ) this._makeGameSave( d.gameData, d.key, d.silent );
         if ( phase === 'LOADGAME' ) this._makeLoadGame( d.key, d.isStart );
@@ -65656,6 +65756,14 @@ class Main {
 
     static issueBond(amount) {
         AppState.workerBridge.post({ tell:"ISSUEBOND", amount:amount });
+    }
+
+    static getIndustrySpec() {
+        AppState.workerBridge.post({ tell:"GETINDUSTRYSPEC" });
+    }
+
+    static setIndustrySpec(id) {
+        AppState.workerBridge.post({ tell:"SETINDUSTRYSPEC", id:id });
     }
 
     static setDisaster(disaster){

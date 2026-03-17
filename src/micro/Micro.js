@@ -24,7 +24,8 @@ export const Micro = {
     BudgetProps : ['autoBudget', 'totalFunds', 'policePercent', 'roadPercent', 'firePercent', 'roadSpend',
                    'policeSpend', 'fireSpend', 'roadMaintenanceBudget', 'policeMaintenanceBudget',
                    'fireMaintenanceBudget', 'cityTax', 'roadEffect', 'policeEffect', 'fireEffect',
-                   'resTaxRate', 'comTaxRate', 'indTaxRate', 'bondDebt'
+                   'resTaxRate', 'comTaxRate', 'indTaxRate', 'bondDebt',
+                   'waterPercent', 'waterSpend', 'waterMaintenanceBudget', 'waterEffect'
                    ],
     // eval
     PROBLEMS : ['CVP_CRIME', 'CVP_POLLUTION', 'CVP_HOUSING', 'CVP_TAXES', 'CVP_TRAFFIC', 'CVP_UNEMPLOYMENT', 'CVP_FIRE'],
@@ -120,6 +121,8 @@ export const Micro = {
     fireMaintenanceCost : 100,
     roadMaintenanceCost : 1,
     railMaintenanceCost : 2,
+    waterMaintenanceCost : 5,    // cost per 1000 residents per cycle
+    MAX_WATER_EFFECT : 32,       // scales water infrastructure quality (matches road effect scale)
 
     // PowerManager
     COAL_POWER_STRENGTH : 700,
@@ -170,6 +173,13 @@ export const Micro = {
     // Education & Health thresholds
     EDUCATION_EFFECT_RANGE: 200,
     HEALTH_EFFECT_RANGE: 200,
+
+    // Industry Specialization types
+    INDUSTRY_MIXED:         'MIXED',
+    INDUSTRY_TECH:          'TECH',
+    INDUSTRY_MANUFACTURING: 'MANUFACTURING',
+    INDUSTRY_TOURISM:       'TOURISM',
+    INDUSTRY_FARMING:       'FARMING',
 
     simData:null,
     messageManager:null,
