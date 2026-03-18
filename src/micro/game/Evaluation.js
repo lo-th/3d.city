@@ -212,7 +212,7 @@ export class Evaluation {
         });
 
         this.problemOrder = this.problemVotes.map(function(pv, i) {
-            if (i >= Micro.NUM_COMPLAINTS || pv.voteCount === 0) return null;
+            if (i >= Micro.NUM_COMPLAINTS || pv.voteCount === 0) return Micro.NUMPROBLEMS;
             return pv.index;
         });
 
@@ -341,8 +341,9 @@ export class Evaluation {
     }
 
     getProblemVotes (i) {
-        if (i < 0 || i >= Micro.NUM_COMPLAINTS || this.problemOrder[i] == Micro.NUMPROBLEMS) return -1;
-        else return this.problemVotes[this.problemOrder[i]].voteCount;
+        if (i < 0 || i >= Micro.NUM_COMPLAINTS || this.problemOrder[i] === Micro.NUMPROBLEMS) return -1;
+        // problemVotes is sorted by voteCount descending after doProblems(), so position i = rank i
+        return this.problemVotes[i].voteCount;
     }
 
 }

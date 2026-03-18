@@ -30,6 +30,9 @@ const ACHIEVEMENTS = [
     { id: 'high_education',  name: 'Educated City',     desc: 'Reach education level 150+',        check: (s) => s.census.educationLevel >= 150 },
     { id: 'high_health',     name: 'Healthy City',      desc: 'Reach health level 150+',           check: (s) => s.census.healthLevel >= 150 },
     { id: 'happy_city',      name: 'Utopia',            desc: 'Reach happiness level 85+',         check: (s) => s.census.happinessLevel >= 85 },
+    { id: 'debt_free',       name: 'Debt Free',         desc: 'Pay off all municipal bond debt',   check: (s) => s.budget.bondDebt === 0 && s.census.totalPop > 500 },
+    { id: 'no_fire',         name: 'Fireproof',         desc: 'Keep fire severity at zero for a full evaluation cycle', check: (s) => s.census.firePop === 0 && s.census.fireStationPop > 0 && s.census.totalPop > 1000 },
+    { id: 'park_builder',    name: 'Park Builder',      desc: 'Place 20 or more park tiles',       check: (s) => (s.census.parkCount || 0) >= 20 },
 ];
 
 export class Achievements {

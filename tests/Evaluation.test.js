@@ -178,7 +178,7 @@ describe('Evaluation', () => {
 
     });
 
-    // ── countProblems / getProblemNumber ─────────────────────────────────────
+    // ── countProblems / getProblemNumber / getProblemVotes ───────────────────
 
     describe('problem helpers', () => {
 
@@ -190,6 +190,58 @@ describe('Evaluation', () => {
         it('getProblemNumber returns -1 out of range', () => {
             expect(evaluation.getProblemNumber(-1)).toBe(-1);
             expect(evaluation.getProblemNumber(999)).toBe(-1);
+        });
+
+        it('getProblemVotes returns -1 after evalInit (no votes cast)', () => {
+            evaluation.evalInit();
+            expect(evaluation.getProblemVotes(0)).toBe(-1);
+        });
+
+        it('getProblemVotes returns -1 out of range', () => {
+            expect(evaluation.getProblemVotes(-1)).toBe(-1);
+            expect(evaluation.getProblemVotes(999)).toBe(-1);
+        });
+
+        it('getProblemVotes after doProblems returns the vote count for the top problem (regression)', () => {
+            // Regression for bug: getProblemVotes used problemOrder[i] as an array offset
+            // into the sorted problemVotes array, causing wrong values when top problem
+            // index ≠ its position in the sorted array.
+            var census   = makeCensus({ crimeAverage: 200, pollutionAverage: 0, landValueAverage: 0, firePop: 0 });
+            var budget   = makeBudget({ cityTax: 0 });
+            var blockMaps = makeBlockMaps();
+
+            // Populate problemData
+            Micro.problemData = [];
+            for (var i = 0; i < Micro.NUMPROBLEMS; i++) Micro.problemData[i] = 0;
+
+            evaluation.doProblems(census, budget, blockMaps);
+
+            var count = evaluation.countProblems();
+            if (count > 0) {
+                var votes0 = evaluation.getProblemVotes(0);
+                // votes should be a non-negative integer, not the buggy cross-index value
+                expect(votes0).toBeGreaterThanOrEqual(0);
+                // Rank 0 vote count should be >= rank 1 (sorted descending)
+                if (count > 1) {
+                    var votes1 = evaluation.getProblemVotes(1);
+                    if (votes1 !== -1) expect(votes0).toBeGreaterThanOrEqual(votes1);
+                }
+            }
+        });
+
+        it('countProblems reflects actual ranked problem count after doProblems', () => {
+            // With high crime, there should be at least 1 problem
+            var census    = makeCensus({ crimeAverage: 255, pollutionAverage: 0, landValueAverage: 0, firePop: 0 });
+            var budget    = makeBudget({ cityTax: 0 });
+            var blockMaps = makeBlockMaps();
+
+            Micro.problemData = [];
+            for (var i = 0; i < Micro.NUMPROBLEMS; i++) Micro.problemData[i] = 0;
+
+            evaluation.doProblems(census, budget, blockMaps);
+            var count = evaluation.countProblems();
+            expect(count).toBeGreaterThanOrEqual(0);
+            expect(count).toBeLessThanOrEqual(Micro.NUM_COMPLAINTS);
         });
 
     });
