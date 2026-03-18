@@ -8681,8 +8681,10 @@ class Hub {
         t.full.style.opacity = Math.max(0, t.bg);
     	if(t.bg <= 0){
     		clearInterval(t.timer);
-    		t.hub.removeChild(t.full);
+            // Only remove if not already removed by generate(false) during the fade
+            if (t.full.parentNode === t.hub) t.hub.removeChild(t.full);
             t.isIntro = false;
+            t.isGen = false;
     	}
     }
 
@@ -8691,17 +8693,18 @@ class Hub {
         if( b ){
             if(!this.isGen) {
                 this.full.style.opacity = '1';
-                this.hub.appendChild( this.full );
+                // Guard: only append when not already in the DOM (intro may still be fading)
+                if (this.full.parentNode !== this.hub) this.hub.appendChild( this.full );
                 this.text.textContent = 'Generating map…';
                 this.isGen = true;
             }
         } else {
             if( this.isGen ){
-                this.hub.removeChild( this.full );
+                if (this.full.parentNode === this.hub) this.hub.removeChild( this.full );
                 this.isGen = false;
             }
         }
-        
+
     }
 
 
@@ -59548,7 +59551,7 @@ class Pool$1 {
 
 	displayMessage( str ){
 
-		if( hub ) hub.message( str );
+		if( AppState.hub ) AppState.hub.message( str );
 
 	}
  
@@ -59562,6 +59565,11 @@ class Pool$1 {
 		new RGBELoader().load( this.mapPath + this.sky + '.hdr', function ( texture ) {
 
 			this.env = texture;
+			this.loadImages();
+
+		}.bind(this), undefined, function ( err ) {
+
+			console.error( 'Pool: failed to load envmap', err );
 			this.loadImages();
 
 		}.bind(this));
@@ -59581,12 +59589,18 @@ class Pool$1 {
 
 
     	this.imgs[name] = new Image();
-    	this.imgs[name].onload = function(){ 
+    	this.imgs[name].onload = function(){
     		this.num++;
     		if( this.num === this.imgSrc.length ) this.defineCanvas();
     		else this.loadImages();
     	}.bind(this);
-        this.imgs[name].src = this.mapPath + url; 
+    	this.imgs[name].onerror = function(){
+    		console.error( 'Pool: failed to load image', this.mapPath + url );
+    		this.num++;
+    		if( this.num === this.imgSrc.length ) this.defineCanvas();
+    		else this.loadImages();
+    	}.bind(this);
+        this.imgs[name].src = this.mapPath + url;
 
 	}
 
@@ -59938,12 +59952,23 @@ class Pool$1 {
 			this.defineGeometry( o, name );
 
 	    	this.num++;
-			if( this.num === this.modelSrc.length ){ 
+			if( this.num === this.modelSrc.length ){
 				this.displayMessage( '...' );
 				this.callback();
 			} else {
 				this.loadModel();
 			}
+
+	    }.bind(this), undefined, function ( err ) {
+
+	    	console.error( 'Pool: failed to load model', this.modelPath + name + '.glb', err );
+	    	this.num++;
+	    	if( this.num === this.modelSrc.length ){
+	    		this.displayMessage( '...' );
+	    		this.callback();
+	    	} else {
+	    		this.loadModel();
+	    	}
 
 	    }.bind(this));
 
