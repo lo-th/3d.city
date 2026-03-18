@@ -152,14 +152,25 @@ export class Hub {
     }
 
     fadding (t){
+        // If generation starts while intro is fading, stop intro fade and keep
+        // the loading overlay fully visible until generation finishes.
+        if (t.isGen) {
+            clearInterval(t.timer);
+            t.timer = null;
+            t.bg = 1;
+            t.full.style.opacity = '1';
+            t.isIntro = false;
+            return;
+        }
+
     	t.bg -= 0.08;
         t.full.style.opacity = Math.max(0, t.bg);
     	if(t.bg <= 0){
     		clearInterval(t.timer);
+            t.timer = null;
             // Only remove if not already removed by generate(false) during the fade
             if (t.full.parentNode === t.hub) t.hub.removeChild(t.full);
             t.isIntro = false;
-            t.isGen = false;
     	}
     }
 
