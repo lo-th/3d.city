@@ -62,7 +62,7 @@ export class CityGame {
         }
 
 
-        if( p == "NEWMAP" ) Game.newMap(); 
+        if( p == "NEWMAP" ) Game.newMap( e.data.mapSize );
         if( p == "PLAYMAP" ) Game.playMap();
         if( p == "TOOL" ) Game.tool(e.data.name);
         if( p == "MAPCLICK" ) Game.mapClick(e.data.x, e.data.y, e.data.single || false);
@@ -207,8 +207,9 @@ export class MainGame {
 
     }
 
-    newMap () {
+    newMap ( mapSize ) {
 
+        if( mapSize ) this.mapSize = mapSize;
         this.map = this.mapGen.construct( this.mapSize[0], this.mapSize[1] );
         CityGame.post({ tell:"NEWMAP", tilesData:this.map.tilesData, mapSize:this.mapSize, island:this.map.isIsland, trans:trans });
 
@@ -659,7 +660,10 @@ export class MainGame {
 
         Storage.migrate(this.savedGame);
 
-        this.map = new GameMap(Micro.MAP_WIDTH, Micro.MAP_HEIGHT);
+        const savedW = this.savedGame.width  || Micro.MAP_WIDTH;
+        const savedH = this.savedGame.height || Micro.MAP_HEIGHT;
+        this.mapSize = [ savedW, savedH ];
+        this.map = new GameMap( savedW, savedH );
         this.map.load(this.savedGame);
 
         CityGame.post({ tell:"FULLREBUILD", tilesData:this.map.tilesData, mapSize:this.mapSize, island:this.map.isIsland, cityData:this.savedGame.city, isStart:isStart });

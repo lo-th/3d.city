@@ -8,6 +8,12 @@ import { AppState } from './AppState.js';
 
 const simulation_timestep = 30;
 
+const MAP_SIZES = {
+    SMALL:  [64,  64],
+    MEDIUM: [128, 128],
+    LARGE:  [192, 192],
+};
+
 AppState.workerBridge = new WorkerBridge();
 AppState.debugOverlay = new DebugOverlay();
 
@@ -76,6 +82,10 @@ export class Main {
         AppState.view3d.setTimeColors(id);
     }
 
+    static setMapSize( label ) {
+        AppState.selectedMapSize = MAP_SIZES[label] || [128, 128];
+    }
+
     static newMap( t ) {
 
         if( AppState.view3d.inMapGeneration ) return;
@@ -83,7 +93,7 @@ export class Main {
         AppState.hub.generate( true );
         AppState.withHeight = t!=='NEW';
         AppState.view3d.inMapGeneration = true;
-        setTimeout( () => { AppState.workerBridge.post({tell:"NEWMAP"}); }, 1000);
+        setTimeout( () => { AppState.workerBridge.post({tell:"NEWMAP", mapSize: AppState.selectedMapSize}); }, 1000);
 
     }
 

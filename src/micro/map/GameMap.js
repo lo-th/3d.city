@@ -28,6 +28,10 @@ export class GameMap {
         
         this.fsize = this.width * this.height;
 
+        this._layerW = Math.ceil(this.width / 16);
+        this._layerH = Math.ceil(this.height / 16);
+        this._layerCount = this._layerW * this._layerH;
+
         this.defaultValue = new Tiles().getValue();
 
         this.data = [];//new Array(this.fsize);
@@ -75,15 +79,15 @@ export class GameMap {
 
     resetLayer () {
 
-        let i = 64;
+        let i = this._layerCount;
         while( i-- ) this.layer[i] = 0;
-        
+
     }
 
     findLayer ( x, y ){
         let cx = Math.floor(x/16)
         let cy = Math.floor(y/16)
-        return cx+(cy*8)
+        return cx+(cy*this._layerW)
     }
 
     goodValue ( v ){

@@ -171,7 +171,9 @@ export class View {
 	    this.meshs = {};
 
 	    this.mapSize = [128,128];
-	    this.nlayers = 64;
+	    this.layerW = 8;   // mapSize[0] / 16
+	    this.layerH = 8;   // mapSize[1] / 16
+	    this.nlayers = 64; // layerW * layerH
 
 	    //this.terrain = null;
 
@@ -446,11 +448,12 @@ export class View {
 		    this.scene.add( this.plane )
 		    this.plane.position.copy(this.center)
 		    this.plane.position.y = 4
-		    this.plane.position.z = 128-5
+		    this.plane.position.z = this.mapSize[0]-5
 		    this.isMenu = true;
 
 		    this.plane.scale.set(4,4,4)
 
+		    this.ui.add('selector', { name:'SIZE', h:30, values:['SMALL','MEDIUM','LARGE'], radius:30, value:'MEDIUM', p:0 }).onChange( Main.setMapSize );
 		    this.ui.add('grid', { values:['NEW','HIGH'], selectable:false, bsize:[140, 30 ], spaces:[ 18,2 ], radius:30 }).onChange(  function(t){ setTimeout( Main.newMap, 1000, t ) } );
 		    this.ui.add('selector', { name:'', h:30, values:['LOW', 'MEDIUM', 'HARD'], radius:30, value:'MEDIUM', p:0 }).onChange( Main.setDifficulty )
 		    this.ui.add('button', { name:'PLAY THIS MAP', h:40, radius:40, p:20, forceWidth: 300 }).onChange( this.startPlay.bind(this) );
@@ -486,7 +489,7 @@ export class View {
         this.moveCamera();
 
         this.basePlane.position.copy( this.center )
-        let s = 1 + ( (128/19) - 1 ) * v;
+        let s = 1 + ( (this.mapSize[0]/19) - 1 ) * v;
         this.basePlane.scale.set( s, 1, s )
 
 		this.border.morphTargetInfluences[ 0 ] = 1 - v
@@ -1296,6 +1299,11 @@ export class View {
 		this.center.x = this.mapSize[0]*0.5;
 		this.center.z = this.mapSize[1]*0.5;
 
+		// Update layer dimensions based on current map size
+		this.layerW = Math.ceil(this.mapSize[0] / 16);
+		this.layerH = Math.ceil(this.mapSize[1] / 16);
+		this.nlayers = this.layerW * this.layerH;
+
 		// create terrain if not existe
         if( this.miniTerrain.length === 0 ){
 
@@ -1305,9 +1313,9 @@ export class View {
 
         	let colors;
 
-        	for( i=0; i<8; i++){
-        		for( j=0; j<8; j++){
-        		
+        	for( i=0; i<this.layerH; i++){
+        		for( j=0; j<this.layerW; j++){
+
                     geo = new THREE.PlaneGeometry( 16, 16, divid, divid );
                     geo.rotateX( -Math.PI * 0.5 );
                     geo.translate( (8+j*16)-0.5, 0, (8+i*16)-0.5 );
@@ -1447,7 +1455,7 @@ export class View {
 		let pos, layer, h, v, d=0, n, nn, geo, id, deep;
         this.Gtmp = [];
 
-        let big = new THREE.PlaneGeometry( 16*8, 16*8, 16*8, 16*8 );
+        let big = new THREE.PlaneGeometry( this.mapSize[0], this.mapSize[1], this.mapSize[0], this.mapSize[1] );
         big.rotateX( -Math.PI * 0.5 );
         big.translate( this.center.x, 0, this.center.z );
 
@@ -1463,7 +1471,7 @@ export class View {
         big.computeVertexNormals();
         let rn = big.attributes.normal.array;
 
-        i = 64;
+        i = this.nlayers;
         while (i--){
 
         	geo = this.miniTerrain[i].geometry
@@ -1499,7 +1507,7 @@ export class View {
                 }
 
                 // border smooth
-                if(gr[n]===-0.5 || gr[n+2]===-0.5 || gr[n]===128-0.5 || gr[n+2]===128-0.5){
+                if(gr[n]===-0.5 || gr[n+2]===-0.5 || gr[n]===this.mapSize[0]-0.5 || gr[n+2]===this.mapSize[1]-0.5){
                 	if( gr[n+1]>0 ) gr[n+1] = this.heightData[ id ] = 0.25
                 	if( gr[n+1]<0 ) gr[n+1] = this.heightData[ id ] = 0
                 }
@@ -1519,7 +1527,7 @@ export class View {
 
         // add water mesh
 
-        let waterGeo = new THREE.PlaneGeometry( 16*8, 16*8, 1, 1 );
+        let waterGeo = new THREE.PlaneGeometry( this.mapSize[0], this.mapSize[1], 1, 1 );
         waterGeo.rotateX( -Math.PI * 0.5 );
         waterGeo.translate( this.center.x-0.5, 0, this.center.z-0.5 );
 
@@ -1592,12 +1600,12 @@ export class View {
 	findLayer( x, y ) {
         let cx = Math.floor(x/16)
         let cy = Math.floor(y/16)
-		return cx+(cy*8)
+		return cx+(cy*this.layerW)
 	}
 
 	findLayerPos( x, y, layer ) {
-		let cy = Math.floor(layer/8)
-        let cx = Math.floor(layer-(cy*8))
+		let cy = Math.floor(layer/this.layerW)
+        let cx = layer-(cy*this.layerW)
 		let py = y-(16*cy)
         let px = x-(16*cx)
         return [px,py]
@@ -1614,8 +1622,8 @@ export class View {
 	}
 
 	findVertices( layer, pos ){
-		let cy = Math.floor(layer/8)
-        let cx = Math.floor(layer-(cy*8))
+		let cy = Math.floor(layer/this.layerW)
+        let cx = layer-(cy*this.layerW)
         let py = pos[1]-(16*cy)
         let px = pos[0]-(16*cx)
 		return px + (py*16)
@@ -2056,9 +2064,9 @@ export class View {
     	this.center.z -= this.easeRot.z; 
 
     	if(this.center.x<0) this.center.x = 0;
-    	if(this.center.x>128) this.center.x = 128;
+    	if(this.center.x>this.mapSize[0]) this.center.x = this.mapSize[0];
     	if(this.center.z<0) this.center.z = 0;
-    	if(this.center.z>128) this.center.z = 128;
+    	if(this.center.z>this.mapSize[1]) this.center.z = this.mapSize[1];
     	
         this.moveCamera();
 
@@ -2070,8 +2078,8 @@ export class View {
 	    const ry = this.cam.horizontal * this.ToRad;
 	    const wx =  Math.sin(ry) * dx + Math.cos(ry) * dz;
 	    const wz =  Math.cos(ry) * dx - Math.sin(ry) * dz;
-	    this.center.x = this.clamp( this.center.x + wx, 0, 128 );
-	    this.center.z = this.clamp( this.center.z - wz, 0, 128 );
+	    this.center.x = this.clamp( this.center.x + wx, 0, this.mapSize[0] );
+	    this.center.z = this.clamp( this.center.z - wz, 0, this.mapSize[1] );
 	    this.moveCamera();
 	}
 
@@ -2236,6 +2244,8 @@ export class View {
 
 		if( mapSize ) {
 			this.mapSize = mapSize;
+			this.layerW = Math.ceil(mapSize[0] / 16);
+			this.layerH = Math.ceil(mapSize[1] / 16);
 			if( AppState.debugOverlay ) AppState.debugOverlay.setMapSize( mapSize[0], mapSize[1] );
 		}
 
@@ -2259,7 +2269,7 @@ export class View {
 				// find layer
 				cy = Math.floor(y/16);
                 cx = Math.floor(x/16);
-				layer = cx+(cy*8);
+				layer = cx+(cy*this.layerW);
 
 				n--;
 				v = AppState.tilesData[n];
@@ -2345,8 +2355,8 @@ export class View {
 	drawLayer ( layer, full ){
 
 		let y = 16, x, v, n, cy, cx, ar, i, vx, vy, g;
-		let ly = Math.floor(layer/8)
-		let lx = Math.floor(layer-(ly*8))
+		let ly = Math.floor(layer/this.layerW)
+		let lx = layer-(ly*this.layerW)
 
 		let pix = 32;
 		let mid = pix * 0.5;

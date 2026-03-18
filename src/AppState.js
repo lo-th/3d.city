@@ -30,6 +30,9 @@ export const AppState = {
     newup:         false,   // tile data has been updated
     powerup:       false,   // power grid changed this tick
 
+    // ── Map size selection (set before posting NEWMAP) ────────────────────
+    selectedMapSize: [128, 128],  // [width, height] chosen by the player
+
     // ── Device / mode flags ────────────────────────────────────────────────
     isMobile:      false,   // true when running on a mobile device
     isWorker:      true,    // true → use Web Worker; false → directMessage mode

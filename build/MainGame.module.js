@@ -8476,6 +8476,9 @@ const AppState = {
     newup:         false,   // tile data has been updated
     powerup:       false,   // power grid changed this tick
 
+    // ── Map size selection (set before posting NEWMAP) ────────────────────
+    selectedMapSize: [128, 128],  // [width, height] chosen by the player
+
     // ── Device / mode flags ────────────────────────────────────────────────
     isMobile:      false,   // true when running on a mobile device
     isWorker:      true,    // true → use Web Worker; false → directMessage mode
@@ -8677,14 +8680,25 @@ class Hub {
     }
 
     fadding (t){
+        // If generation starts while intro is fading, stop intro fade and keep
+        // the loading overlay fully visible until generation finishes.
+        if (t.isGen) {
+            clearInterval(t.timer);
+            t.timer = null;
+            t.bg = 1;
+            t.full.style.opacity = '1';
+            t.isIntro = false;
+            return;
+        }
+
     	t.bg -= 0.08;
         t.full.style.opacity = Math.max(0, t.bg);
     	if(t.bg <= 0){
     		clearInterval(t.timer);
+            t.timer = null;
             // Only remove if not already removed by generate(false) during the fade
             if (t.full.parentNode === t.hub) t.hub.removeChild(t.full);
             t.isIntro = false;
-            t.isGen = false;
     	}
     }
 
@@ -8767,7 +8781,7 @@ class Hub {
         this.hub.appendChild( topBar );
 
         var b1 = this.addButton(topBar, 'Budget',  [75,22,11], null, true);
-        b1.addEventListener('click', function(e){ e.preventDefault(); Main.getBudjet(); }, false);
+        b1.addEventListener('click', function(e){ e.preventDefault(); Main.getBudget(); }, false);
 
         var b2 = this.addButton(topBar, 'Eval',    [60,22,11], null, true);
         b2.addEventListener('click', function(e){ e.preventDefault(); Main.getEval(); }, false);
@@ -8909,7 +8923,7 @@ class Hub {
             if(e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
             switch(e.key){
                 case 'Escape': _this.testOpen(); break;
-                case 'b': case 'B': Main.getBudjet();          break;
+                case 'b': case 'B': Main.getBudget();          break;
                 case 'e': case 'E': Main.getEval();            break;
                 case 'd': case 'D': _this.openDisaster();      break;
                 case 's': case 'S': _this.openExit();          break;
@@ -9567,7 +9581,7 @@ class Hub {
         this.budgetWindow.dataset.state = 'close';
 
         var wRate = this.waterRate !== undefined ? this.waterRate : 100;
-        Main.setBudjet([this.resTaxRate, this.comTaxRate, this.indTaxRate, this.roadRate, this.fireRate, this.policeRate, wRate]);
+        Main.setBudget([this.resTaxRate, this.comTaxRate, this.indTaxRate, this.roadRate, this.fireRate, this.policeRate, wRate]);
     }
 
     closeBudget  (){
@@ -62469,7 +62483,7 @@ class View {
 
 		this.isMenu = false;
 
-		this.inMapGenation = false;
+		this.inMapGeneration = false;
 
 		this.isPixelStyle = false;
 
@@ -62608,7 +62622,9 @@ class View {
 	    this.meshs = {};
 
 	    this.mapSize = [128,128];
-	    this.nlayers = 64;
+	    this.layerW = 8;   // mapSize[0] / 16
+	    this.layerH = 8;   // mapSize[1] / 16
+	    this.nlayers = 64; // layerW * layerH
 
 	    //this.terrain = null;
 
@@ -62795,7 +62811,7 @@ class View {
 	fileSelect( e ){
 
 		AppState.hub.generate( true );
-        this.inMapGenation = true;
+        this.inMapGeneration = true;
 
 		const file = e.target.files[0];
 		const reader = new FileReader();
@@ -62883,11 +62899,12 @@ class View {
 		    this.scene.add( this.plane );
 		    this.plane.position.copy(this.center);
 		    this.plane.position.y = 4;
-		    this.plane.position.z = 128-5;
+		    this.plane.position.z = this.mapSize[0]-5;
 		    this.isMenu = true;
 
 		    this.plane.scale.set(4,4,4);
 
+		    this.ui.add('selector', { name:'SIZE', h:30, values:['SMALL','MEDIUM','LARGE'], radius:30, value:'MEDIUM', p:0 }).onChange( Main.setMapSize );
 		    this.ui.add('grid', { values:['NEW','HIGH'], selectable:false, bsize:[140, 30 ], spaces:[ 18,2 ], radius:30 }).onChange(  function(t){ setTimeout( Main.newMap, 1000, t ); } );
 		    this.ui.add('selector', { name:'', h:30, values:['LOW', 'MEDIUM', 'HARD'], radius:30, value:'MEDIUM', p:0 }).onChange( Main.setDifficulty );
 		    this.ui.add('button', { name:'PLAY THIS MAP', h:40, radius:40, p:20, forceWidth: 300 }).onChange( this.startPlay.bind(this) );
@@ -62923,7 +62940,7 @@ class View {
         this.moveCamera();
 
         this.basePlane.position.copy( this.center );
-        let s = 1 + ( (128/19) - 1 ) * v;
+        let s = 1 + ( (this.mapSize[0]/19) - 1 ) * v;
         this.basePlane.scale.set( s, 1, s );
 
 		this.border.morphTargetInfluences[ 0 ] = 1 - v;
@@ -63703,6 +63720,11 @@ class View {
 		this.center.x = this.mapSize[0]*0.5;
 		this.center.z = this.mapSize[1]*0.5;
 
+		// Update layer dimensions based on current map size
+		this.layerW = Math.ceil(this.mapSize[0] / 16);
+		this.layerH = Math.ceil(this.mapSize[1] / 16);
+		this.nlayers = this.layerW * this.layerH;
+
 		// create terrain if not existe
         if( this.miniTerrain.length === 0 ){
 
@@ -63712,9 +63734,9 @@ class View {
 
         	let colors;
 
-        	for( i=0; i<8; i++){
-        		for( j=0; j<8; j++){
-        		
+        	for( i=0; i<this.layerH; i++){
+        		for( j=0; j<this.layerW; j++){
+
                     geo = new PlaneGeometry( 16, 16, divid, divid );
                     geo.rotateX( -Math.PI * 0.5 );
                     geo.translate( (8+j*16)-0.5, 0, (8+i*16)-0.5 );
@@ -63849,7 +63871,7 @@ class View {
 		let n, nn, geo, id, deep;
         this.Gtmp = [];
 
-        let big = new PlaneGeometry( 16*8, 16*8, 16*8, 16*8 );
+        let big = new PlaneGeometry( this.mapSize[0], this.mapSize[1], this.mapSize[0], this.mapSize[1] );
         big.rotateX( -Math.PI * 0.5 );
         big.translate( this.center.x, 0, this.center.z );
 
@@ -63865,7 +63887,7 @@ class View {
         big.computeVertexNormals();
         let rn = big.attributes.normal.array;
 
-        i = 64;
+        i = this.nlayers;
         while (i--){
 
         	geo = this.miniTerrain[i].geometry;
@@ -63901,7 +63923,7 @@ class View {
                 }
 
                 // border smooth
-                if(gr[n]===-0.5 || gr[n+2]===-0.5 || gr[n]===128-0.5 || gr[n+2]===128-0.5){
+                if(gr[n]===-0.5 || gr[n+2]===-0.5 || gr[n]===this.mapSize[0]-0.5 || gr[n+2]===this.mapSize[1]-0.5){
                 	if( gr[n+1]>0 ) gr[n+1] = this.heightData[ id ] = 0.25;
                 	if( gr[n+1]<0 ) gr[n+1] = this.heightData[ id ] = 0;
                 }
@@ -63921,7 +63943,7 @@ class View {
 
         // add water mesh
 
-        let waterGeo = new PlaneGeometry( 16*8, 16*8, 1, 1 );
+        let waterGeo = new PlaneGeometry( this.mapSize[0], this.mapSize[1], 1, 1 );
         waterGeo.rotateX( -Math.PI * 0.5 );
         waterGeo.translate( this.center.x-0.5, 0, this.center.z-0.5 );
 
@@ -63993,12 +64015,12 @@ class View {
 	findLayer( x, y ) {
         let cx = Math.floor(x/16);
         let cy = Math.floor(y/16);
-		return cx+(cy*8)
+		return cx+(cy*this.layerW)
 	}
 
 	findLayerPos( x, y, layer ) {
-		let cy = Math.floor(layer/8);
-        let cx = Math.floor(layer-(cy*8));
+		let cy = Math.floor(layer/this.layerW);
+        let cx = layer-(cy*this.layerW);
 		let py = y-(16*cy);
         let px = x-(16*cx);
         return [px,py]
@@ -64015,8 +64037,8 @@ class View {
 	}
 
 	findVertices( layer, pos ){
-		let cy = Math.floor(layer/8);
-        let cx = Math.floor(layer-(cy*8));
+		let cy = Math.floor(layer/this.layerW);
+        let cx = layer-(cy*this.layerW);
         let py = pos[1]-(16*cy);
         let px = pos[0]-(16*cx);
 		return px + (py*16)
@@ -64035,7 +64057,7 @@ class View {
 
         this.raycaster.setFromCamera( this.rayVector, this.camera );
 
-        if( this.isMenu && !this.inMapGenation ){
+        if( this.isMenu && !this.inMapGeneration ){
         	
         	this.ui.noMouse();
 
@@ -64457,9 +64479,9 @@ class View {
     	this.center.z -= this.easeRot.z; 
 
     	if(this.center.x<0) this.center.x = 0;
-    	if(this.center.x>128) this.center.x = 128;
+    	if(this.center.x>this.mapSize[0]) this.center.x = this.mapSize[0];
     	if(this.center.z<0) this.center.z = 0;
-    	if(this.center.z>128) this.center.z = 128;
+    	if(this.center.z>this.mapSize[1]) this.center.z = this.mapSize[1];
     	
         this.moveCamera();
 
@@ -64471,8 +64493,8 @@ class View {
 	    const ry = this.cam.horizontal * this.ToRad;
 	    const wx =  Math.sin(ry) * dx + Math.cos(ry) * dz;
 	    const wz =  Math.cos(ry) * dx - Math.sin(ry) * dz;
-	    this.center.x = this.clamp( this.center.x + wx, 0, 128 );
-	    this.center.z = this.clamp( this.center.z - wz, 0, 128 );
+	    this.center.x = this.clamp( this.center.x + wx, 0, this.mapSize[0] );
+	    this.center.z = this.clamp( this.center.z - wz, 0, this.mapSize[1] );
 	    this.moveCamera();
 	}
 
@@ -64637,6 +64659,8 @@ class View {
 
 		if( mapSize ) {
 			this.mapSize = mapSize;
+			this.layerW = Math.ceil(mapSize[0] / 16);
+			this.layerH = Math.ceil(mapSize[1] / 16);
 			if( AppState.debugOverlay ) AppState.debugOverlay.setMapSize( mapSize[0], mapSize[1] );
 		}
 
@@ -64660,7 +64684,7 @@ class View {
 				// find layer
 				cy = Math.floor(y/16);
                 cx = Math.floor(x/16);
-				layer = cx+(cy*8);
+				layer = cx+(cy*this.layerW);
 
 				n--;
 				v = AppState.tilesData[n];
@@ -64715,7 +64739,7 @@ class View {
 			this.fullRedraw = false;
 		}
 
-		this.inMapGenation = false;
+		this.inMapGeneration = false;
 
 	}
 
@@ -64746,8 +64770,8 @@ class View {
 	drawLayer ( layer, full ){
 
 		let y = 16, x, v, n, ar, i, vx, vy, g;
-		let ly = Math.floor(layer/8);
-		let lx = Math.floor(layer-(ly*8));
+		let ly = Math.floor(layer/this.layerW);
+		let lx = layer-(ly*this.layerW);
 
 		let pix = 32;
 		let mid = pix * 0.5;
@@ -65116,6 +65140,16 @@ class View {
 			}
 		}, false);
 	    self.focus();
+
+	}
+
+	// ── Overlay Modes ────────────────────────────────────────────────────────
+	// Switch the active map overlay (power, crime, pollution, traffic, none).
+	// Currently the power overlay is always visible when power data is present;
+	// this method stores the requested mode and extends that logic in future.
+	setOverlayMode ( type ) {
+
+		this.overlayMode = type || 'none';
 
 	}
 
@@ -65640,6 +65674,12 @@ class DebugOverlay {
 
 const simulation_timestep = 30;
 
+const MAP_SIZES = {
+    SMALL:  [64,  64],
+    MEDIUM: [128, 128],
+    LARGE:  [192, 192],
+};
+
 AppState.workerBridge = new WorkerBridge();
 AppState.debugOverlay = new DebugOverlay();
 
@@ -65647,13 +65687,13 @@ class Main {
 
     static init ( DirectMessage ){
 
-        if( DirectMessage !== undefined ){ 
+        if( DirectMessage !== undefined ){
 
             AppState.directMessage = DirectMessage;
             AppState.isWorker = false;
 
         }
-        
+
         AppState.isMobile = testMobile();
 
         this.initWorker();
@@ -65664,8 +65704,6 @@ class Main {
         AppState.debugOverlay.mount( document.getElementById('hub') );
 
     }
-
-    // viex3d
 
     static initWorker (){
 
@@ -65682,9 +65720,6 @@ class Main {
 
         AppState.hub.start();
 
-        //hub.message('Generating world...')
-        //post({ tell:"NEWMAP"})
-
     }
 
     static sendTool( name ) {
@@ -65692,9 +65727,6 @@ class Main {
     }
 
     static destroy( x, y ) {
-
-        // TODO SOUND EXPLOSION
-
         AppState.workerBridge.post({tell:"MAPCLICK", x:x, y:y, single:true });
     }
 
@@ -65703,7 +65735,6 @@ class Main {
 
         if( p.x<0 && p.z<0 ) return
 
-        //if( tool === 'bulldozer' ) view3d.testDestruct( p.x, p.y )
         AppState.workerBridge.post({tell:"MAPCLICK", x:p.x, y:p.z });
     }
 
@@ -65717,15 +65748,19 @@ class Main {
         AppState.view3d.setTimeColors(id);
     }
 
+    static setMapSize( label ) {
+        AppState.selectedMapSize = MAP_SIZES[label] || [128, 128];
+    }
+
     static newMap( t ) {
 
-        if( AppState.view3d.inMapGenation ) return;
+        if( AppState.view3d.inMapGeneration ) return;
 
         AppState.hub.generate( true );
         AppState.withHeight = t!=='NEW';
-        AppState.view3d.inMapGenation = true;
-        setTimeout( () => { AppState.workerBridge.post({tell:"NEWMAP"}); }, 1000);
-    
+        AppState.view3d.inMapGeneration = true;
+        setTimeout( () => { AppState.workerBridge.post({tell:"NEWMAP", mapSize: AppState.selectedMapSize}); }, 1000);
+
     }
 
     static playMap() {
@@ -65738,7 +65773,6 @@ class Main {
 
     static setDifficulty( t ) {
 
-        //console.log( t )
         let n = 0;
         if(t === 'MEDIUM') n = 1;
         if(t === 'HARD') n = 2;
@@ -65751,11 +65785,11 @@ class Main {
         AppState.workerBridge.post({tell:"SPEED", n:n });
     }
 
-    static getBudjet() {
+    static getBudget() {
         AppState.workerBridge.post({ tell:"BUDGET" });
     }
 
-    static setBudjet( budgetData ) {
+    static setBudget( budgetData ) {
         AppState.workerBridge.post({ tell:"NEWBUDGET", budgetData:budgetData });
     }
 
@@ -65796,14 +65830,13 @@ class Main {
     }
 
     static setOverlays( type ) {
-        //cityWorker.postMessage({ tell:"OVERLAYS", type:type });
+        AppState.view3d.setOverlayMode( type );
     }
 
     static saveGame() {
         var saveCity = [];
         AppState.view3d.saveCityBuild(saveCity);
         saveCity = JSON.stringify(saveCity);
-       // var cityData = view3d.saveCityBuild();
         AppState.workerBridge.post({ tell:"SAVEGAME", saveCity:saveCity });
     }
 
@@ -65822,15 +65855,11 @@ class Main {
 
     static loadGame( atStart ) {
         var isStart = atStart || false;
-        if( isStart ){ 
+        if( isStart ){
             AppState.hub.generate( true );
-            AppState.view3d.inMapGenation = true;
+            AppState.view3d.inMapGeneration = true;
         }
         AppState.workerBridge.post({ tell:"LOADGAME", isStart:isStart });
-    }
-
-    static newGameMap() {
-
     }
 
     static showStats() {
@@ -65843,11 +65872,11 @@ class Main {
 
 }
 
- 
+
 function testMobile() {
-    if (navigator.userAgent.match(/Android/i) || navigator.userAgent.match(/webOS/i) || navigator.userAgent.match(/iPhone/i) || navigator.userAgent.match(/iPad/i) 
+    if (navigator.userAgent.match(/Android/i) || navigator.userAgent.match(/webOS/i) || navigator.userAgent.match(/iPhone/i) || navigator.userAgent.match(/iPad/i)
         || navigator.userAgent.match(/iPod/i) || navigator.userAgent.match(/BlackBerry/i) || navigator.userAgent.match(/Windows Phone/i)) return true;
-    else return false;        
+    else return false;
 }
 
 export { Main };
