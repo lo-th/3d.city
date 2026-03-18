@@ -24,7 +24,7 @@
 		GameMapProps: ['cityCentreX', 'cityCentreY', 'pollutionMaxX', 'pollutionMaxY', 'width', 'height'],
 		savePropsVar: ['cityTime'],
 		CensusProps: ['resPop', 'comPop', 'indPop', 'crimeRamp', 'pollutionRamp', 'landValueAverage', 'pollutionAverage', 'crimeAverage', 'totalPop', 'resHist10', 'resHist120', 'comHist10', 'comHist120', 'indHist10', 'indHist120', 'crimeHist10', 'crimeHist120', 'moneyHist10', 'moneyHist120', 'pollutionHist10', 'pollutionHist120'],
-		BudgetProps: ['autoBudget', 'totalFunds', 'policePercent', 'roadPercent', 'firePercent', 'roadSpend', 'policeSpend', 'fireSpend', 'roadMaintenanceBudget', 'policeMaintenanceBudget', 'fireMaintenanceBudget', 'cityTax', 'roadEffect', 'policeEffect', 'fireEffect', 'resTaxRate', 'comTaxRate', 'indTaxRate', 'bondDebt'],
+		BudgetProps: ['autoBudget', 'totalFunds', 'policePercent', 'roadPercent', 'firePercent', 'roadSpend', 'policeSpend', 'fireSpend', 'roadMaintenanceBudget', 'policeMaintenanceBudget', 'fireMaintenanceBudget', 'cityTax', 'roadEffect', 'policeEffect', 'fireEffect', 'resTaxRate', 'comTaxRate', 'indTaxRate', 'bondDebt', 'waterPercent', 'waterSpend', 'waterMaintenanceBudget', 'waterEffect'],
 		// eval
 		PROBLEMS: ['CVP_CRIME', 'CVP_POLLUTION', 'CVP_HOUSING', 'CVP_TAXES', 'CVP_TRAFFIC', 'CVP_UNEMPLOYMENT', 'CVP_FIRE'],
 		NUMPROBLEMS: 7,
@@ -112,6 +112,11 @@
 		fireMaintenanceCost: 100,
 		roadMaintenanceCost: 1,
 		railMaintenanceCost: 2,
+		waterMaintenanceCost: 5,
+		// cost per 1000 residents per cycle
+		MAX_WATER_EFFECT: 32,
+		// scales water infrastructure quality (matches road effect scale)
+
 		// PowerManager
 		COAL_POWER_STRENGTH: 700,
 		NUCLEAR_POWER_STRENGTH: 2000,
@@ -153,6 +158,12 @@
 		// Education & Health thresholds
 		EDUCATION_EFFECT_RANGE: 200,
 		HEALTH_EFFECT_RANGE: 200,
+		// Industry Specialization types
+		INDUSTRY_MIXED: 'MIXED',
+		INDUSTRY_TECH: 'TECH',
+		INDUSTRY_MANUFACTURING: 'MANUFACTURING',
+		INDUSTRY_TOURISM: 'TOURISM',
+		INDUSTRY_FARMING: 'FARMING',
 		simData: null,
 		messageManager: null
 	};
@@ -2638,6 +2649,12 @@
 			this.bondDebt = 0;
 			this.bondInterestRate = 0.07;
 			this.MAX_BOND_DEBT = 50000;
+
+			// ── Water supply & sewage ─────────────────────────────────────
+			this.waterMaintenanceBudget = 0;
+			this.waterPercent = 1;
+			this.waterSpend = 0;
+			this.waterEffect = Micro.MAX_WATER_EFFECT;
 		}
 		save(saveData) {
 			for (var i = 0, l = Micro.BudgetProps.length; i < l; i++) saveData[Micro.BudgetProps[i]] = this[Micro.BudgetProps[i]];
@@ -2657,6 +2674,9 @@
 		}
 		get policeFund() {
 			return this.policeMaintenanceBudget;
+		}
+		get waterFund() {
+			return this.waterMaintenanceBudget;
 		}
 
 		// Returns the annual interest payment owed on outstanding bond debt.
@@ -2699,17 +2719,20 @@
 			this.roadSpend = Math.round(this.roadMaintenanceBudget * this.roadPercent);
 			this.fireSpend = Math.round(this.fireMaintenanceBudget * this.firePercent);
 			this.policeSpend = Math.round(this.policeMaintenanceBudget * this.policePercent);
-			var total = this.roadSpend + this.fireSpend + this.policeSpend;
+			this.waterSpend = Math.round(this.waterMaintenanceBudget * this.waterPercent);
+			var total = this.roadSpend + this.fireSpend + this.policeSpend + this.waterSpend;
 
 			// If we don't have any services on the map, we can bail early
 			if (total === 0) {
 				this.roadPercent = 1;
 				this.firePercent = 1;
 				this.policePercent = 1;
+				this.waterPercent = 1;
 				return {
 					road: 1,
 					fire: 1,
-					police: 1
+					police: 1,
+					water: 1
 				};
 			}
 
@@ -2717,22 +2740,27 @@
 			var roadCost = 0;
 			var fireCost = 0;
 			var policeCost = 0;
+			var waterCost = 0;
 			var cashRemaining = this.totalFunds + this.taxFund;
 
-			// Spending priorities: road, fire, police
+			// Spending priorities: road, fire, police, water
 			if (cashRemaining >= this.roadSpend) roadCost = this.roadSpend;else roadCost = cashRemaining;
 			cashRemaining -= roadCost;
 			if (cashRemaining >= this.fireSpend) fireCost = this.fireSpend;else fireCost = cashRemaining;
 			cashRemaining -= fireCost;
 			if (cashRemaining >= this.policeSpend) policeCost = this.policeSpend;else policeCost = cashRemaining;
 			cashRemaining -= policeCost;
+			if (cashRemaining >= this.waterSpend) waterCost = this.waterSpend;else waterCost = cashRemaining;
+			cashRemaining -= waterCost;
 			if (this.roadMaintenanceBudget > 0) this.roadPercent = (roadCost / this.roadMaintenanceBudget).toPrecision(2) - 0;else this.roadPercent = 1;
 			if (this.fireMaintenanceBudget > 0) this.firePercent = (fireCost / this.fireMaintenanceBudget).toPrecision(2) - 0;else this.firePercent = 1;
 			if (this.policeMaintenanceBudget > 0) this.policePercent = (policeCost / this.policeMaintenanceBudget).toPrecision(2) - 0;else this.policePercent = 1;
+			if (this.waterMaintenanceBudget > 0) this.waterPercent = (waterCost / this.waterMaintenanceBudget).toPrecision(2) - 0;else this.waterPercent = 1;
 			return {
 				road: roadCost,
 				police: policeCost,
-				fire: fireCost
+				fire: fireCost,
+				water: waterCost
 			};
 		}
 
@@ -2752,14 +2780,15 @@
 			var roadCost = costs.road;
 			var policeCost = costs.police;
 			var fireCost = costs.fire;
-			var totalCost = roadCost + policeCost + fireCost;
+			var waterCost = costs.water || 0;
+			var totalCost = roadCost + policeCost + fireCost + waterCost;
 			var cashRemaining = this.totalFunds + this.taxFund - totalCost;
 
 			// Autobudget
 			if (cashRemaining > 0 && this.autoBudget || fromWindow) {
 				// Either we were able to fully fund services, or we have just normalised user input. Go ahead and spend.
 				this.awaitingValues = false;
-				this.doBudgetSpend(roadCost, fireCost, policeCost);
+				this.doBudgetSpend(roadCost, fireCost, policeCost, waterCost);
 				return;
 			}
 
@@ -2770,11 +2799,12 @@
 			EventEmitter.emitEvent(Messages.BUDGET_NEEDED);
 			EventEmitter.emitEvent(Messages.NO_MONEY);
 		}
-		doBudgetSpend(roadValue, fireValue, policeValue) {
+		doBudgetSpend(roadValue, fireValue, policeValue, waterValue) {
 			this.roadSpend = roadValue;
 			this.fireSpend = fireValue;
 			this.policeSpend = policeValue;
-			var total = this.roadSpend + this.fireSpend + this.policeSpend;
+			this.waterSpend = waterValue || 0;
+			var total = this.roadSpend + this.fireSpend + this.policeSpend + this.waterSpend;
 			this.spend(-(this.taxFund - total));
 			this.updateFundEffects();
 		}
@@ -2788,29 +2818,41 @@
 			this.roadEffect = Micro.MAX_ROAD_EFFECT;
 			this.policeEffect = Micro.MAX_POLICESTATION_EFFECT;
 			this.fireEffect = Micro.MAX_FIRESTATION_EFFECT;
+			this.waterEffect = Micro.MAX_WATER_EFFECT;
 			if (this.roadMaintenanceBudget > 0) this.roadEffect = Math.floor(this.roadEffect * this.roadSpend / this.roadMaintenanceBudget);
 			if (this.fireMaintenanceBudget > 0) this.fireEffect = Math.floor(this.fireEffect * this.fireSpend / this.fireMaintenanceBudget);
 			if (this.policeMaintenanceBudget > 0) this.policeEffect = Math.floor(this.policeEffect * this.policeSpend / this.policeMaintenanceBudget);
+			if (this.waterMaintenanceBudget > 0) this.waterEffect = Math.floor(this.waterEffect * this.waterSpend / this.waterMaintenanceBudget);else this.waterEffect = Micro.MAX_WATER_EFFECT;
 		}
-		collectTax(gameLevel, census, comTaxMod) {
+		collectTax(gameLevel, census, comTaxMod, indFx) {
 			this.cashFlow = 0;
 			// How much would it cost to fully fund every service?
 			this.policeMaintenanceBudget = census.policeStationPop * Micro.policeMaintenanceCost;
 			this.fireMaintenanceBudget = census.fireStationPop * Micro.fireMaintenanceCost;
+			// Water infrastructure: scales with total population (per 1000 residents)
+			this.waterMaintenanceBudget = Math.floor(census.totalPop / 1000) * Micro.waterMaintenanceCost;
 			var roadCost = census.roadTotal * Micro.roadMaintenanceCost;
 			var railCost = census.railTotal * Micro.railMaintenanceCost;
 			this.roadMaintenanceBudget = Math.floor((roadCost + railCost) * Micro.RLevels[gameLevel]);
 
 			// Compute per-zone tax contributions using individual zone tax rates.
 			// comTaxMod (e.g. -0.10 from small business incentive) reduces commercial yield.
+			// indFx contains additive tax-rate modifiers from the industry specialization.
 			// Residential population is normalised by 8 (one unit ≈ 8 residents) to match Valves.js.
 			// The divisor 120 is a per-capita land-value scaling factor carried over from Micropolis.
-			var mod = comTaxMod !== undefined ? comTaxMod : 0;
+			var comMod = comTaxMod !== undefined ? comTaxMod : 0;
+			var specResMod = indFx ? indFx.resTaxMod || 0 : 0;
+			var specComMod = indFx ? indFx.comTaxMod || 0 : 0;
+			var specIndMod = indFx ? indFx.indTaxMod || 0 : 0;
 			var normalizedResPop = Math.floor(census.resPop / 8);
 			var lva = census.landValueAverage;
-			var resTaxContrib = Math.floor(normalizedResPop * lva / 120) * this.resTaxRate;
-			var comTaxContrib = Math.floor(census.comPop * lva / 120) * Math.round(this.comTaxRate * (1 + mod));
-			var indTaxContrib = Math.floor(census.indPop * lva / 120) * this.indTaxRate;
+			// Apply specialization modifiers as additive adjustments to effective tax rates (clamped to 0-20)
+			var effectiveResTax = Math.max(0, Math.min(20, this.resTaxRate + specResMod));
+			var effectiveComTax = Math.max(0, Math.min(20, Math.round(this.comTaxRate * (1 + comMod)) + specComMod));
+			var effectiveIndTax = Math.max(0, Math.min(20, this.indTaxRate + specIndMod));
+			var resTaxContrib = Math.floor(normalizedResPop * lva / 120) * effectiveResTax;
+			var comTaxContrib = Math.floor(census.comPop * lva / 120) * effectiveComTax;
+			var indTaxContrib = Math.floor(census.indPop * lva / 120) * effectiveIndTax;
 			this.taxFund = Math.floor((resTaxContrib + comTaxContrib + indTaxContrib) * Micro.FLevels[gameLevel]);
 			if (census.totalPop > 0) {
 				this.cashFlow = this.taxFund - (this.policeMaintenanceBudget + this.fireMaintenanceBudget + this.roadMaintenanceBudget);
@@ -2821,6 +2863,7 @@
 				this.roadEffect = Micro.MAX_ROAD_EFFECT;
 				this.policeEffect = Micro.MAX_POLICESTATION_EFFECT;
 				this.fireEffect = Micro.MAX_FIRESTATION_EFFECT;
+				this.waterEffect = Micro.MAX_WATER_EFFECT;
 			}
 		}
 		setTax(amount) {
@@ -5497,6 +5540,183 @@
 		}
 	}
 
+	/* OpenPublica — Industry Specialization
+	 *
+	 * Players choose a city economic focus that shapes how the simulation
+	 * behaves — affecting tax yields, pollution, unemployment, and growth.
+	 *
+	 * Specializations are mutually exclusive (only one active at a time).
+	 * Effects are returned via getEffects() and applied in Simulation.js.
+	 */
+	const SPECIALIZATION_DEFS = [{
+		id: Micro.INDUSTRY_MIXED,
+		name: 'Mixed Economy',
+		icon: '🏙️',
+		description: 'Balanced development across all sectors. No bonuses or penalties.',
+		effects: {
+			resTaxMod: 0,
+			// additive modifier on residential tax rate (percentage points)
+			comTaxMod: 0,
+			// additive modifier on commercial tax rate
+			indTaxMod: 0,
+			// additive modifier on industrial tax rate
+			pollutionMod: 0,
+			// city-wide pollution delta
+			unemployMod: 0,
+			// unemployment score delta
+			landValueMod: 0,
+			// land value average delta
+			educationMod: 0,
+			// education level bonus
+			healthMod: 0,
+			// health level bonus
+			parkBonus: 0 // bonus per park tile
+		}
+	}, {
+		id: Micro.INDUSTRY_TECH,
+		name: 'Tech Hub',
+		icon: '💻',
+		description: 'High-skilled jobs, clean industry. Higher commercial/industrial tax, lower pollution, but expensive infrastructure.',
+		effects: {
+			resTaxMod: 0,
+			comTaxMod: 1,
+			// +1% effective commercial tax rate
+			indTaxMod: 1,
+			// +1% effective industrial tax rate
+			pollutionMod: -20,
+			// cleaner industry
+			unemployMod: -15,
+			// more jobs
+			landValueMod: 10,
+			// desirable neighbourhood
+			educationMod: 20,
+			// tech culture boosts education
+			healthMod: 5,
+			parkBonus: 0
+		}
+	}, {
+		id: Micro.INDUSTRY_MANUFACTURING,
+		name: 'Manufacturing',
+		icon: '🏭',
+		description: 'Heavy industry drives strong tax revenue but creates significant pollution.',
+		effects: {
+			resTaxMod: 0,
+			comTaxMod: 0,
+			indTaxMod: 2,
+			// +2% effective industrial tax rate (more output)
+			pollutionMod: 35,
+			// heavy pollution
+			unemployMod: -20,
+			// lots of blue-collar jobs
+			landValueMod: -10,
+			// pollution depresses land value
+			educationMod: -10,
+			// brain drain risk
+			healthMod: -15,
+			// pollution health impact
+			parkBonus: 0
+		}
+	}, {
+		id: Micro.INDUSTRY_TOURISM,
+		name: 'Tourism',
+		icon: '🌴',
+		description: 'Service-economy city. Strong commercial tax base, parks are highly valued; low crime required.',
+		effects: {
+			resTaxMod: 0,
+			comTaxMod: 2,
+			// +2% effective commercial tax rate (visitor spending)
+			indTaxMod: -1,
+			// less industry
+			pollutionMod: -10,
+			unemployMod: 10,
+			// seasonal / service jobs are unstable
+			landValueMod: 15,
+			// scenic appeal
+			educationMod: 5,
+			healthMod: 10,
+			// clean environment
+			parkBonus: 3 // each park tile worth 3 extra happiness points
+		}
+	}, {
+		id: Micro.INDUSTRY_FARMING,
+		name: 'Farming & Agriculture',
+		icon: '🌾',
+		description: 'Rural-focused economy. Low pollution and stable employment, but modest tax yields.',
+		effects: {
+			resTaxMod: 0,
+			comTaxMod: -1,
+			// lower commercial activity
+			indTaxMod: -1,
+			// modest industrial output
+			pollutionMod: -25,
+			// very clean
+			unemployMod: -10,
+			// stable rural employment
+			landValueMod: 5,
+			educationMod: 0,
+			healthMod: 20,
+			// clean air / food supply boost
+			parkBonus: 2
+		}
+	}];
+
+	// Build a quick lookup map by id
+	const _defsById = {};
+	for (var _i = 0; _i < SPECIALIZATION_DEFS.length; _i++) {
+		_defsById[SPECIALIZATION_DEFS[_i].id] = SPECIALIZATION_DEFS[_i];
+	}
+	class IndustrySpecialization {
+		constructor() {
+			this._current = Micro.INDUSTRY_MIXED;
+		}
+		save(saveData) {
+			saveData.industrySpecialization = this._current;
+		}
+		load(saveData) {
+			if (saveData && saveData.industrySpecialization && _defsById[saveData.industrySpecialization]) {
+				this._current = saveData.industrySpecialization;
+			}
+		}
+
+		// Returns id of active specialization
+		getCurrent() {
+			return this._current;
+		}
+
+		// Set active specialization by id; returns true if valid
+		setSpecialization(id) {
+			if (_defsById[id]) {
+				this._current = id;
+				return true;
+			}
+			return false;
+		}
+
+		// Returns the effect object for the active specialization
+		getEffects() {
+			var def = _defsById[this._current] || _defsById[Micro.INDUSTRY_MIXED];
+			return def.effects;
+		}
+
+		// Returns the full definition for the active specialization (name, icon, description, effects)
+		getCurrentDef() {
+			return _defsById[this._current] || _defsById[Micro.INDUSTRY_MIXED];
+		}
+
+		// Returns the full list of all specialization definitions (for UI rendering)
+		getList() {
+			return SPECIALIZATION_DEFS.map(function (def) {
+				return {
+					id: def.id,
+					name: def.name,
+					icon: def.icon,
+					description: def.description,
+					active: def.id === this._current
+				};
+			}, this);
+		}
+	}
+
 	/* micropolisJS. Adapted by Graeme McCutcheon from Micropolis.
 	 *
 	 * This code is released under the GNU GPL v3, with some additional terms.
@@ -5555,6 +5775,7 @@
 			this.cityHistory = new CityHistory();
 			this.seasonManager = new SeasonManager();
 			this.ordinances = new Ordinances();
+			this.industrySpec = new IndustrySpecialization();
 			this.messageManager = new MessageManager();
 			Micro.messageManager = this.messageManager;
 			let w = this.map.width,
@@ -5610,6 +5831,7 @@
 			this.achievements.save(saveData);
 			this.cityHistory.save(saveData);
 			this.ordinances.save(saveData);
+			this.industrySpec.save(saveData);
 		}
 		load(saveData) {
 			this.messageManager.clear();
@@ -5621,6 +5843,7 @@
 			this.achievements.load(saveData);
 			this.cityHistory.load(saveData);
 			this.ordinances.load(saveData);
+			this.industrySpec.load(saveData);
 		}
 		setSpeed(s) {
 			this.speed = s;
@@ -5669,6 +5892,13 @@
 			// Bond / debt info
 			this.infos[18] = this.budget.bondDebt;
 			this.infos[19] = this.budget.getBondAnnualPayment();
+
+			// Water supply coverage percentage (0–100)
+			var waterPct = this.budget.waterMaintenanceBudget > 0 ? Math.round(this.budget.waterEffect / Micro.MAX_WATER_EFFECT * 100) : 100; // no population yet → full coverage by default
+			this.infos[20] = waterPct;
+
+			// Industry specialization
+			this.infos[21] = this.industrySpec.getCurrentDef();
 			return this.infos;
 		}
 
@@ -5676,6 +5906,7 @@
 		updateEducationHealth() {
 			let census = this.census;
 			let fx = this.ordinances.getEffects();
+			let indFx = this.industrySpec.getEffects();
 
 			// Count placed park tiles (WOODS2-WOODS5 = tile values 40–43; FOUNTAIN = 840).
 			// These tiles have values below the MapScanner skip threshold (Tile.FLOOD = 48),
@@ -5691,18 +5922,23 @@
 			census.parkCount = parkCount;
 
 			// Education: derived from hospitals (which also serve as schools in this sim),
-			// churches (community centers), and land value
+			// churches (community centers), land value, and industry specialization
 			let educationBase = census.hospitalPop * 40 + census.churchPop * 20;
 			let landValueFactor = Math.min(census.landValueAverage, 150);
 			let popFactor = census.totalPop > 0 ? Math.min(census.totalPop / 100, 50) : 0;
-			census.educationLevel = Math.min(Math.floor(educationBase + landValueFactor * 0.3 + popFactor * 0.2 + fx.educationBonus), Micro.EDUCATION_EFFECT_RANGE);
+			census.educationLevel = Math.min(Math.floor(educationBase + landValueFactor * 0.3 + popFactor * 0.2 + fx.educationBonus + indFx.educationMod), Micro.EDUCATION_EFFECT_RANGE);
 
-			// Health: derived from hospital coverage minus pollution (with ordinance bonuses)
-			let healthBase = census.hospitalPop * 50 + fx.healthBonus;
-			let effectivePollution = Math.max(0, census.pollutionAverage + fx.pollutionMod);
+			// Health: hospitals + ordinances + water supply funding + industry effects
+			let healthBase = census.hospitalPop * 50 + fx.healthBonus + indFx.healthMod;
+			let effectivePollution = Math.max(0, census.pollutionAverage + fx.pollutionMod + indFx.pollutionMod);
 			let pollutionPenalty = effectivePollution * 0.8;
 			let crimeHealthPenalty = census.crimeAverage * 0.3;
-			census.healthLevel = Math.min(Math.max(Math.floor(healthBase - pollutionPenalty - crimeHealthPenalty + 20), 0), Micro.HEALTH_EFFECT_RANGE);
+
+			// Water supply: underfunded water infrastructure degrades health
+			let waterCoverage = this.budget.waterMaintenanceBudget > 0 ? this.budget.waterEffect / Micro.MAX_WATER_EFFECT : 1.0;
+			let waterHealthBonus = Math.round(waterCoverage * 30); // up to +30 health from full water funding
+
+			census.healthLevel = Math.min(Math.max(Math.floor(healthBase - pollutionPenalty - crimeHealthPenalty + 20 + waterHealthBonus), 0), Micro.HEALTH_EFFECT_RANGE);
 
 			// Happiness: composite score (0-100)
 			let happyScore = 50; // baseline
@@ -5712,10 +5948,13 @@
 			happyScore += census.educationLevel / Micro.EDUCATION_EFFECT_RANGE * 15; // education helps
 			happyScore += census.healthLevel / Micro.HEALTH_EFFECT_RANGE * 10; // health helps
 			happyScore += this.seasonManager.happinessMod; // season effect
+			// Park bonus from specialization (tourism/farming value parks more)
+			if (indFx.parkBonus > 0) happyScore += Math.min(parkCount * indFx.parkBonus * 0.1, 10);
 
-			// Unemployment penalty
+			// Unemployment penalty (including specialization modifier)
 			let unemployment = EvaluationUtils.getUnemployment(census);
-			happyScore -= unemployment * 0.05;
+			let effectiveUnemploy = Math.max(0, unemployment + indFx.unemployMod);
+			happyScore -= effectiveUnemploy * 0.05;
 
 			// Tax penalty
 			if (this.budget.cityTax > 10) happyScore -= (this.budget.cityTax - 10) * 2;
@@ -5830,7 +6069,8 @@
 					if (this.cityTime % Micro.CENSUS_FREQUENCY_120 === 0) this.census.take120Census(this.budget);
 					if (this.cityTime % Micro.TAX_FREQUENCY === 0) {
 						let ordFx = this.ordinances.getEffects();
-						this.budget.collectTax(this.gameLevel, this.census, ordFx.comTaxMod);
+						let indFx = this.industrySpec.getEffects();
+						this.budget.collectTax(this.gameLevel, this.census, ordFx.comTaxMod, indFx);
 						// Deduct annual ordinance costs from city funds
 						let ordCost = this.ordinances.getAnnualCost();
 						if (ordCost > 0) this.budget.spend(ordCost);
@@ -8020,6 +8260,8 @@
 			if (p == "GETORDINANCES") Game.getOrdinances();
 			if (p == "SETORDINANCE") Game.setOrdinance(e.data.id);
 			if (p == "ISSUEBOND") Game.issueBond(e.data.amount);
+			if (p == "GETINDUSTRYSPEC") Game.getIndustrySpec();
+			if (p == "SETINDUSTRYSPEC") Game.setIndustrySpec(e.data.id);
 			if (p == "SAVEGAME") Game.saveGame(e.data.saveCity, e.data.silent);
 			if (p == "LOADGAME") Game.loadGame(e.data.isStart);
 			if (p == "MAKELOADGAME") Game.makeLoadGame(e.data.savegame, e.data.isStart);
@@ -8222,6 +8464,9 @@
 			}
 		}
 		processMessages(messages) {
+			// Clear any message left over from the previous tick so the HUD doesn't
+			// display stale text when no new message arrives this tick.
+			this.infos[8] = '';
 			var messageOutput = false;
 			for (var i = 0, l = messages.length; i < l; i++) {
 				var m = messages[i];
@@ -8327,13 +8572,17 @@
 			this.processMessages(m.getMessages());
 		}
 		setBudget(budgetData) {
-			// Support new format: [resTax, comTax, indTax, roadRate, fireRate, policeRate]
-			// as well as old format: [taxRate, roadRate, fireRate, policeRate]
+			// Format: [resTax, comTax, indTax, roadRate, fireRate, policeRate, waterRate]
+			// Legacy: [resTax, comTax, indTax, roadRate, fireRate, policeRate]
+			// Old:		[taxRate, roadRate, fireRate, policeRate]
 			if (Array.isArray(budgetData) && budgetData.length >= 6) {
 				this.simulation.budget.setZoneTax(budgetData[0], budgetData[1], budgetData[2]);
 				this.simulation.budget.roadPercent = budgetData[3] / 100;
 				this.simulation.budget.firePercent = budgetData[4] / 100;
 				this.simulation.budget.policePercent = budgetData[5] / 100;
+				if (budgetData.length >= 7) {
+					this.simulation.budget.waterPercent = budgetData[6] / 100;
+				}
 			} else {
 				this.simulation.budget.setTax(budgetData[0]);
 				this.simulation.budget.roadPercent = budgetData[1] / 100;
@@ -8358,7 +8607,9 @@
 				taxesCollected: b.taxFund,
 				bondDebt: b.bondDebt,
 				bondAnnualPayment: b.getBondAnnualPayment(),
-				bondMaxDebt: b.MAX_BOND_DEBT
+				bondMaxDebt: b.MAX_BOND_DEBT,
+				waterFund: b.waterFund,
+				waterRate: Math.floor(b.waterPercent * 100)
 			};
 			CityGame.post({
 				tell: "BUDGET",
@@ -8393,6 +8644,9 @@
 			let unemployment = Math.round(this._getUnemploymentPct());
 			let season = this.simulation.seasonManager.getSeasonName();
 			let coverage = this.simulation._computeCoverage();
+			let b = this.simulation.budget;
+			let waterCoverage = b.waterMaintenanceBudget > 0 ? Math.round(b.waterEffect / Micro.MAX_WATER_EFFECT * 100) : 100;
+			let indDef = this.simulation.industrySpec.getCurrentDef();
 			let evalData = [evaluation.cityYes,
 			// 0
 			problemes,
@@ -8417,7 +8671,11 @@
 			// 10
 			coverage.fire,
 			// 11
-			census.parkCount // 12
+			census.parkCount,
+			// 12
+			waterCoverage,
+			// 13
+			indDef // 14
 			];
 			CityGame.post({
 				tell: "EVAL",
@@ -8469,6 +8727,23 @@
 			}
 			// Refresh budget panel so the UI shows updated debt
 			this.handleBudgetRequest();
+		}
+		getIndustrySpec() {
+			let list = this.simulation.industrySpec.getList();
+			let current = this.simulation.industrySpec.getCurrentDef();
+			CityGame.post({
+				tell: "INDUSTRYSPEC",
+				list: list,
+				current: current
+			});
+		}
+		setIndustrySpec(id) {
+			let changed = this.simulation.industrySpec.setSpecialization(id);
+			if (changed) {
+				this.simulation.cityHistory.addEvent('economic', 'City industry focus changed to ' + this.simulation.industrySpec.getCurrentDef().name, this.simulation.cityTime, this.simulation.startingYear);
+			}
+			// Re-send updated list
+			this.getIndustrySpec();
 		}
 
 		//______________________________________ SAVE
@@ -8536,6 +8811,11 @@
 				cityData: this.savedGame.city,
 				isStart: isStart
 			});
+
+			// Re-create the simulation from the loaded save data and restart the tick loop.
+			// Without this the city is visually rebuilt on the main thread but the simulation
+			// remains halted because clearTimeout above killed the previous loop.
+			this.playMap(true);
 		}
 		transitionOldSave(savedGame) {
 			switch (savedGame.version) {
