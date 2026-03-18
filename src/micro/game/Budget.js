@@ -94,6 +94,17 @@ export class Budget {
         return true;
     }
 
+    // Repay a portion (or all) of outstanding bond debt from city funds.
+    // Returns the actual amount repaid (capped to available funds and outstanding debt).
+    repayBond ( amount ) {
+        if (amount <= 0) return 0;
+        var actual = Math.min(amount, this.bondDebt, this.totalFunds);
+        if (actual <= 0) return 0;
+        this.bondDebt -= actual;
+        this.setFunds(this.totalFunds - actual);
+        return actual;
+    }
+
     setAutoBudget (value) {
         this.autoBudget = value;
         EventEmitter.emitEvent(Messages.AUTOBUDGET_CHANGED, this.autoBudget);

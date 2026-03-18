@@ -50,6 +50,20 @@ export const ORDINANCE_DEFS = [
         description: 'Fund public buses and trams to reduce road congestion.',
         annualCost: 250,
         effects: { healthBonus: 5, pollutionMod: -8, educationBonus: 0, trafficMod: -10, comTaxMod: 0 }
+    },
+    {
+        id: 'GREEN_BUILDING_CODE',
+        name: 'Green Building Code',
+        description: 'Require energy-efficient construction. Reduces city-wide pollution and improves health at modest cost.',
+        annualCost: 180,
+        effects: { healthBonus: 10, pollutionMod: -20, educationBonus: 5, trafficMod: 0, comTaxMod: 0 }
+    },
+    {
+        id: 'SPEED_CAMERAS',
+        name: 'Speed Camera Network',
+        description: 'Automated enforcement reduces accidents and deters crime in residential areas.',
+        annualCost: 100,
+        effects: { healthBonus: 5, pollutionMod: 0, educationBonus: 0, trafficMod: -5, comTaxMod: 0, crimeMod: -15 }
     }
 ];
 
@@ -97,17 +111,19 @@ export class Ordinances {
             pollutionMod:   0,
             educationBonus: 0,
             trafficMod:     0,
-            comTaxMod:      0
+            comTaxMod:      0,
+            crimeMod:       0
         };
         for (var i = 0; i < ORDINANCE_DEFS.length; i++) {
             var def = ORDINANCE_DEFS[i];
             if (!this._active[def.id]) continue;
             var fx = def.effects;
-            combined.healthBonus    += fx.healthBonus;
-            combined.pollutionMod   += fx.pollutionMod;
-            combined.educationBonus += fx.educationBonus;
-            combined.trafficMod     += fx.trafficMod;
-            combined.comTaxMod      += fx.comTaxMod;
+            combined.healthBonus    += fx.healthBonus    || 0;
+            combined.pollutionMod   += fx.pollutionMod   || 0;
+            combined.educationBonus += fx.educationBonus || 0;
+            combined.trafficMod     += fx.trafficMod     || 0;
+            combined.comTaxMod      += fx.comTaxMod      || 0;
+            combined.crimeMod       += fx.crimeMod       || 0;
         }
         return combined;
     }

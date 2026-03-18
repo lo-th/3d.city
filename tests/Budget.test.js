@@ -68,6 +68,67 @@ describe('Budget', () => {
 
     });
 
+    // ── repayBond ────────────────────────────────────────────────────────────
+
+    describe('repayBond', () => {
+
+        beforeEach(() => {
+            budget.issueBond(5000);  // bondDebt=5000, funds=15000
+        });
+
+        it('reduces bondDebt by the repaid amount', () => {
+            budget.repayBond(2000);
+            expect(budget.bondDebt).toBe(3000);
+        });
+
+        it('reduces totalFunds by the repaid amount', () => {
+            budget.repayBond(2000);
+            expect(budget.totalFunds).toBe(13000);
+        });
+
+        it('returns the actual amount repaid', () => {
+            var repaid = budget.repayBond(1000);
+            expect(repaid).toBe(1000);
+        });
+
+        it('caps repayment to outstanding debt', () => {
+            var repaid = budget.repayBond(999999); // more than debt
+            expect(repaid).toBe(5000);
+            expect(budget.bondDebt).toBe(0);
+        });
+
+        it('caps repayment to available funds', () => {
+            budget.setFunds(500); // less than debt
+            var repaid = budget.repayBond(5000);
+            expect(repaid).toBe(500);
+            expect(budget.totalFunds).toBe(0);
+        });
+
+        it('returns 0 when amount is zero', () => {
+            expect(budget.repayBond(0)).toBe(0);
+        });
+
+        it('returns 0 when amount is negative', () => {
+            expect(budget.repayBond(-100)).toBe(0);
+        });
+
+        it('returns 0 when no debt outstanding', () => {
+            budget.bondDebt = 0;
+            expect(budget.repayBond(1000)).toBe(0);
+        });
+
+        it('returns 0 when city has no funds', () => {
+            budget.setFunds(0);
+            expect(budget.repayBond(1000)).toBe(0);
+        });
+
+        it('allows full repayment to clear debt', () => {
+            budget.repayBond(5000);
+            expect(budget.bondDebt).toBe(0);
+        });
+
+    });
+
     // ── setZoneTax ───────────────────────────────────────────────────────────
 
     describe('setZoneTax', () => {
