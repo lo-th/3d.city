@@ -264,16 +264,16 @@ export class Evaluation {
 
         // Penalize if roads/rail underfunded
 
-        if (budget.roadEffect < budget.MAX_ROAD_EFFECT) score -= budget.MAX_ROAD_EFFECT - budget.roadEffect;
+        if (budget.roadEffect < Micro.MAX_ROAD_EFFECT) score -= Micro.MAX_ROAD_EFFECT - budget.roadEffect;
 
         // Penalize player by up to 10% for underfunded police and fire services
 
-        if (budget.policeEffect < budget.MAX_POLICE_STATION_EFFECT) {
-            score = Math.round(score * (0.9 + (budget.policeEffect / (10 * budget.MAX_POLICE_STATION_EFFECT))));
+        if (budget.policeEffect < Micro.MAX_POLICESTATION_EFFECT) {
+            score = Math.round(score * (0.9 + (budget.policeEffect / (10 * Micro.MAX_POLICESTATION_EFFECT))));
         }
 
-        if (budget.fireEffect < budget.MAX_FIRE_STATION_EFFECT) {
-            score = Math.round(score * (0.9 + (budget.fireEffect / (10 * budget.MAX_FIRE_STATION_EFFECT))));
+        if (budget.fireEffect < Micro.MAX_FIRESTATION_EFFECT) {
+            score = Math.round(score * (0.9 + (budget.fireEffect / (10 * Micro.MAX_FIRESTATION_EFFECT))));
         }
 
         // Penalise the player by 15% if demand for any type of zone has collapsed due to overprovision

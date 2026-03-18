@@ -25,7 +25,9 @@
     "build": "rollup -c utils/rollup.config.js",
     "buildm": "rollup -c utils/Main_rollup.config.js",
     "dev": "concurrently --names \"ROLLUP,HTTP\" -c \"bgBlue.bold,bgGreen.bold\" \"rollup -c utils/rollup.config.js -w -m inline\" \"servez -p 8111 --index\"",
-    "start": "concurrently --names \"ROLLUP,HTTP\" -c \"bgBlue.bold,bgGreen.bold\" \"rollup -c utils/rollup.config.js -w -m inline\" \"http-server -c-1 -p 8111 -o index.html\""
+    "start": "concurrently --names \"ROLLUP,HTTP\" -c \"bgBlue.bold,bgGreen.bold\" \"rollup -c utils/rollup.config.js -w -m inline\" \"http-server -c-1 -p 8111 -o index.html\"",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "keywords": [
     "openpublica",
@@ -48,6 +50,7 @@
     "regenerator-runtime": "^0.13.7",
     "rollup": "^2.39.0",
     "rollup-plugin-terser": "^7.0.2",
-    "servez": "^1.11.0"
+    "servez": "^1.11.0",
+    "vitest": "^1.6.0"
   }
 }

@@ -32,7 +32,7 @@ export class View {
 
 		this.isMenu = false;
 
-		this.inMapGenation = false;
+		this.inMapGeneration = false;
 
 		this.isPixelStyle = false;
 
@@ -358,7 +358,7 @@ export class View {
 	fileSelect( e ){
 
 		AppState.hub.generate( true );
-        this.inMapGenation = true;
+        this.inMapGeneration = true;
 
 		const file = e.target.files[0]
 		const reader = new FileReader();
@@ -1634,7 +1634,7 @@ export class View {
 
         this.raycaster.setFromCamera( this.rayVector, this.camera );
 
-        if( this.isMenu && !this.inMapGenation ){
+        if( this.isMenu && !this.inMapGeneration ){
         	
         	this.ui.noMouse();
 
@@ -2314,7 +2314,7 @@ export class View {
 			this.fullRedraw = false;
 		}
 
-		this.inMapGenation = false;
+		this.inMapGeneration = false;
 
 	}
 
@@ -2715,6 +2715,16 @@ export class View {
 			}
 		}, false);
 	    self.focus();
+
+	}
+
+	// ── Overlay Modes ────────────────────────────────────────────────────────
+	// Switch the active map overlay (power, crime, pollution, traffic, none).
+	// Currently the power overlay is always visible when power data is present;
+	// this method stores the requested mode and extends that logic in future.
+	setOverlayMode ( type ) {
+
+		this.overlayMode = type || 'none';
 
 	}
 

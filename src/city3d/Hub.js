@@ -253,7 +253,7 @@ export class Hub {
         this.hub.appendChild( topBar );
 
         var b1 = this.addButton(topBar, 'Budget',  [75,22,11], null, true);
-        b1.addEventListener('click', function(e){ e.preventDefault(); Main.getBudjet(); }, false);
+        b1.addEventListener('click', function(e){ e.preventDefault(); Main.getBudget(); }, false);
 
         var b2 = this.addButton(topBar, 'Eval',    [60,22,11], null, true);
         b2.addEventListener('click', function(e){ e.preventDefault(); Main.getEval(); }, false);
@@ -395,7 +395,7 @@ export class Hub {
             if(e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
             switch(e.key){
                 case 'Escape': _this.testOpen(); break;
-                case 'b': case 'B': Main.getBudjet();          break;
+                case 'b': case 'B': Main.getBudget();          break;
                 case 'e': case 'E': Main.getEval();            break;
                 case 'd': case 'D': _this.openDisaster();      break;
                 case 's': case 'S': _this.openExit();          break;
@@ -1053,7 +1053,7 @@ export class Hub {
         this.budgetWindow.dataset.state = 'close';
 
         var wRate = this.waterRate !== undefined ? this.waterRate : 100;
-        Main.setBudjet([this.resTaxRate, this.comTaxRate, this.indTaxRate, this.roadRate, this.fireRate, this.policeRate, wRate]);
+        Main.setBudget([this.resTaxRate, this.comTaxRate, this.indTaxRate, this.roadRate, this.fireRate, this.policeRate, wRate]);
     }
 
     closeBudget  (){
