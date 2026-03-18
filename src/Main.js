@@ -15,13 +15,13 @@ export class Main {
 
     static init ( DirectMessage ){
 
-        if( DirectMessage !== undefined ){ 
+        if( DirectMessage !== undefined ){
 
             AppState.directMessage = DirectMessage;
             AppState.isWorker = false;
 
         }
-        
+
         AppState.isMobile = testMobile();
 
         this.initWorker();
@@ -32,8 +32,6 @@ export class Main {
         AppState.debugOverlay.mount( document.getElementById('hub') );
 
     }
-
-    // viex3d
 
     static initWorker (){
 
@@ -50,9 +48,6 @@ export class Main {
 
         AppState.hub.start();
 
-        //hub.message('Generating world...')
-        //post({ tell:"NEWMAP"})
-
     }
 
     static sendTool( name ) {
@@ -60,9 +55,6 @@ export class Main {
     }
 
     static destroy( x, y ) {
-
-        // TODO SOUND EXPLOSION
-
         AppState.workerBridge.post({tell:"MAPCLICK", x:x, y:y, single:true });
     }
 
@@ -71,7 +63,6 @@ export class Main {
 
         if( p.x<0 && p.z<0 ) return
 
-        //if( tool === 'bulldozer' ) view3d.testDestruct( p.x, p.y )
         AppState.workerBridge.post({tell:"MAPCLICK", x:p.x, y:p.z });
     }
 
@@ -87,13 +78,13 @@ export class Main {
 
     static newMap( t ) {
 
-        if( AppState.view3d.inMapGenation ) return;
+        if( AppState.view3d.inMapGeneration ) return;
 
         AppState.hub.generate( true );
         AppState.withHeight = t!=='NEW';
-        AppState.view3d.inMapGenation = true;
+        AppState.view3d.inMapGeneration = true;
         setTimeout( () => { AppState.workerBridge.post({tell:"NEWMAP"}); }, 1000);
-    
+
     }
 
     static playMap() {
@@ -106,7 +97,6 @@ export class Main {
 
     static setDifficulty( t ) {
 
-        //console.log( t )
         let n = 0;
         if(t === 'MEDIUM') n = 1
         if(t === 'HARD') n = 2
@@ -119,11 +109,11 @@ export class Main {
         AppState.workerBridge.post({tell:"SPEED", n:n });
     }
 
-    static getBudjet() {
+    static getBudget() {
         AppState.workerBridge.post({ tell:"BUDGET" });
     }
 
-    static setBudjet( budgetData ) {
+    static setBudget( budgetData ) {
         AppState.workerBridge.post({ tell:"NEWBUDGET", budgetData:budgetData });
     }
 
@@ -164,14 +154,13 @@ export class Main {
     }
 
     static setOverlays( type ) {
-        //cityWorker.postMessage({ tell:"OVERLAYS", type:type });
+        AppState.view3d.setOverlayMode( type );
     }
 
     static saveGame() {
         var saveCity = [];
         AppState.view3d.saveCityBuild(saveCity);
         saveCity = JSON.stringify(saveCity);
-       // var cityData = view3d.saveCityBuild();
         AppState.workerBridge.post({ tell:"SAVEGAME", saveCity:saveCity });
     }
 
@@ -190,15 +179,11 @@ export class Main {
 
     static loadGame( atStart ) {
         var isStart = atStart || false;
-        if( isStart ){ 
+        if( isStart ){
             AppState.hub.generate( true );
-            AppState.view3d.inMapGenation = true;
+            AppState.view3d.inMapGeneration = true;
         }
         AppState.workerBridge.post({ tell:"LOADGAME", isStart:isStart });
-    }
-
-    static newGameMap() {
-
     }
 
     static showStats() {
@@ -211,9 +196,9 @@ export class Main {
 
 }
 
- 
+
 function testMobile() {
-    if (navigator.userAgent.match(/Android/i) || navigator.userAgent.match(/webOS/i) || navigator.userAgent.match(/iPhone/i) || navigator.userAgent.match(/iPad/i) 
+    if (navigator.userAgent.match(/Android/i) || navigator.userAgent.match(/webOS/i) || navigator.userAgent.match(/iPhone/i) || navigator.userAgent.match(/iPad/i)
         || navigator.userAgent.match(/iPod/i) || navigator.userAgent.match(/BlackBerry/i) || navigator.userAgent.match(/Windows Phone/i)) return true;
-    else return false;        
+    else return false;
 }
