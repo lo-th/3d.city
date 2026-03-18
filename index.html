@@ -369,6 +369,87 @@ body { background: var(--c-bg); font: 12px/1.4 var(--font-ui);
   font-family: var(--font-ui);
 }
 
+/* ── New-map modal overlay ───────────────────────────────────── */
+.hub-newmap-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(8, 14, 24, 0.72);
+  z-index: 20;
+  pointer-events: auto;
+  animation: msgIn 0.2s ease;
+}
+
+/* ── Option-button group (Size / Terrain / Difficulty) ────────── */
+.hub-option-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.hub-option-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--c-text-dim);
+}
+.hub-option-btns {
+  display: flex;
+  gap: 5px;
+}
+.hub-option-btn {
+  flex: 1;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--c-surface-alt);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-sm);
+  color: var(--c-text-dim);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: background var(--transition), border-color var(--transition),
+              color var(--transition);
+}
+.hub-option-btn:hover {
+  background: rgba(74, 158, 221, 0.22);
+  border-color: var(--c-border-hi);
+  color: var(--c-text);
+}
+.hub-option-btn.selected {
+  background: var(--c-accent);
+  border-color: var(--c-accent-hi);
+  color: #fff;
+}
+
+/* ── Action buttons inside new-map modal ─────────────────────── */
+.hub-newmap-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+.hub-newmap-actions .hub-btn {
+  flex: 1;
+  height: 32px;
+  padding: 0 8px;
+  font-size: 10px;
+}
+.hub-newmap-actions .hub-btn.primary {
+  background: var(--c-accent);
+  border-color: var(--c-accent-hi);
+  color: #fff;
+}
+.hub-newmap-actions .hub-btn.primary:hover {
+  background: var(--c-accent-hi);
+}
+
 /* ── Notification animation ──────────────────────────────────── */
 @keyframes msgIn {
   from { opacity: 0; transform: translateY(5px); }

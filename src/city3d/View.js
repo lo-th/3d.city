@@ -445,18 +445,7 @@ export class View {
 		
 		    Main.newMap('NEW')
 
-		    this.scene.add( this.plane )
-		    this.plane.position.copy(this.center)
-		    this.plane.position.y = 4
-		    this.plane.position.z = this.mapSize[0]-5
-		    this.isMenu = true;
-
-		    this.plane.scale.set(4,4,4)
-
-		    this.ui.add('selector', { name:'SIZE', h:30, values:['SMALL','MEDIUM','LARGE'], radius:30, value:'MEDIUM', p:0 }).onChange( Main.setMapSize );
-		    this.ui.add('grid', { values:['NEW','HIGH'], selectable:false, bsize:[140, 30 ], spaces:[ 18,2 ], radius:30 }).onChange(  function(t){ setTimeout( Main.newMap, 1000, t ) } );
-		    this.ui.add('selector', { name:'', h:30, values:['LOW', 'MEDIUM', 'HARD'], radius:30, value:'MEDIUM', p:0 }).onChange( Main.setDifficulty )
-		    this.ui.add('button', { name:'PLAY THIS MAP', h:40, radius:40, p:20, forceWidth: 300 }).onChange( this.startPlay.bind(this) );
+		    AppState.hub.openNewMap( this.startPlay.bind(this) );
 
 		}
 
@@ -466,7 +455,7 @@ export class View {
 
 		this.isMenu = false;
 		if(this.plane) this.scene.remove( this.plane )
-		setTimeout( function(){ this.ui.dispose() }.bind(this), 100 )
+		if(this.ui) setTimeout( function(){ this.ui.dispose() }.bind(this), 100 )
 
 		//
 		

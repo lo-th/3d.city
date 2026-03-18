@@ -73,6 +73,7 @@ export class Hub {
         this.evaluationWindow   = null;
         this.disasterWindow     = null;
         this.exitWindow         = null;
+        this.newMapWindow       = null;
         this.queryWindow        = null;
         this.overlaysWindow     = null;
         this.aboutWindow        = null;
@@ -80,6 +81,10 @@ export class Hub {
         this.historyWindow      = null;
         this.ordinancesWindow   = null;
         this.industrySpecWindow = null;
+
+        this._gameHubInit       = false;
+        this._newMapTerrainType = 'NEW';
+        this._newMapPlayFn      = null;
 
         this.selector = null;
         this.select   = null;
@@ -241,6 +246,9 @@ export class Hub {
     //--------------------------------------game hub
 
     initGameHub  (){
+
+        if (this._gameHubInit) return;
+        this._gameHubInit = true;
 
         this.link.dispose()
         this.donate.dispose()
@@ -585,6 +593,10 @@ export class Hub {
             this.closeExit();
             t = 'exit';
         }
+        if(this.newMapWindow !== null && this.newMapWindow.dataset.state === 'open'){
+            this.closeNewMap();
+            t = 'newmap';
+        }
         if(this.queryWindow !== null && this.queryWindow.dataset.state === 'open'){
             this.closeQuery();
             t = 'query';
@@ -906,7 +918,11 @@ export class Hub {
             var bg3 = this.addButton(body, 'SAVE',     [138, 26, 11], null);
             var bg4 = this.addButton(body, 'LOAD',     [138, 26, 11], null);
 
-            bg2.addEventListener('click', function(e){ e.preventDefault(); Main.newGameMap(); }, false);
+            bg2.addEventListener('click', function(e){
+                e.preventDefault();
+                _this.closeExit();
+                _this.openNewMap(function(){ Main.playMap(); });
+            }, false);
             bg3.addEventListener('click', function(e){ e.preventDefault(); Main.saveGame();   }, false);
             bg4.addEventListener('click', function(e){ e.preventDefault(); Main.loadGame();   }, false);
 
@@ -920,6 +936,128 @@ export class Hub {
     closeExit  (){
         this.exitWindow.style.display = 'none';
         this.exitWindow.dataset.state = 'close';
+    }
+
+
+    //-----------------------------------NEW MAP WINDOW
+
+    // Helper: create a labelled group of toggle buttons.
+    // Returns the container div; each button gets .selected on the active one.
+    _makeOptionGroup  (parent, label, options, defaultVal, onChange){
+        var group = document.createElement('div');
+        group.className = 'hub-option-group';
+        parent.appendChild(group);
+
+        var lbl = document.createElement('div');
+        lbl.className = 'hub-option-label';
+        lbl.textContent = label;
+        group.appendChild(lbl);
+
+        var row = document.createElement('div');
+        row.className = 'hub-option-btns';
+        group.appendChild(row);
+
+        var buttons = [];
+        for(var i = 0; i < options.length; i++){
+            (function(opt, btns){
+                var btn = document.createElement('div');
+                btn.className = 'hub-option-btn' + (opt === defaultVal ? ' selected' : '');
+                btn.textContent = opt;
+                btn.addEventListener('click', function(e){
+                    e.preventDefault();
+                    for(var j = 0; j < btns.length; j++) btns[j].classList.remove('selected');
+                    this.classList.add('selected');
+                    onChange(opt);
+                }, false);
+                row.appendChild(btn);
+                btns.push(btn);
+            })(options[i], buttons);
+        }
+
+        return group;
+    }
+
+    openNewMap  (playFn){
+        var _this = this;
+
+        this._newMapPlayFn      = playFn;
+        this._newMapTerrainType = 'NEW';
+
+        // Set default map-size and difficulty so the first generated map matches UI defaults
+        Main.setMapSize('MEDIUM');
+        Main.setDifficulty('MEDIUM');
+
+        if(this.newMapWindow == null){
+            // Full-screen semi-transparent backdrop
+            this.newMapWindow = document.createElement('div');
+            this.newMapWindow.className = 'hub-newmap-overlay';
+            this.hub.appendChild(this.newMapWindow);
+
+            // Inner card
+            var panel = document.createElement('div');
+            panel.className = 'hub-panel';
+            panel.style.cssText = 'width:310px; pointer-events:none; display:flex; flex-direction:column; border-radius:12px;';
+            this.newMapWindow.appendChild(panel);
+
+            panel.appendChild(this.makeWindowHeader('New Map', function(){ _this.closeNewMap(); }));
+
+            var body = document.createElement('div');
+            body.style.cssText = 'padding:14px 16px 10px; pointer-events:none;'
+                               + ' display:flex; flex-direction:column; gap:12px;';
+            panel.appendChild(body);
+
+            // ── Map Size ─────────────────────────────────────────────────
+            this._makeOptionGroup(body, 'Map Size', ['SMALL','MEDIUM','LARGE'], 'MEDIUM', function(v){
+                Main.setMapSize(v);
+            });
+
+            // ── Terrain ──────────────────────────────────────────────────
+            this._makeOptionGroup(body, 'Terrain', ['FLAT','HEIGHTMAP'], 'FLAT', function(v){
+                _this._newMapTerrainType = (v === 'HEIGHTMAP') ? 'HIGH' : 'NEW';
+            });
+
+            // ── Difficulty ───────────────────────────────────────────────
+            this._makeOptionGroup(body, 'Difficulty', ['LOW','MEDIUM','HARD'], 'MEDIUM', function(v){
+                Main.setDifficulty(v);
+            });
+
+            // ── Action buttons ────────────────────────────────────────────
+            var actions = document.createElement('div');
+            actions.className = 'hub-newmap-actions';
+            body.appendChild(actions);
+
+            var genBtn = document.createElement('div');
+            genBtn.className = 'hub-btn';
+            genBtn.textContent = 'Generate';
+            genBtn.title = 'Generate a new map with the current settings';
+            genBtn.addEventListener('click', function(e){
+                e.preventDefault();
+                Main.newMap(_this._newMapTerrainType);
+            }, false);
+            actions.appendChild(genBtn);
+
+            var playBtn = document.createElement('div');
+            playBtn.className = 'hub-btn primary';
+            playBtn.textContent = 'Play This Map';
+            playBtn.title = 'Start a new city on the generated map';
+            playBtn.addEventListener('click', function(e){
+                e.preventDefault();
+                var fn = _this._newMapPlayFn;
+                _this.closeNewMap();
+                if(fn) fn();
+            }, false);
+            actions.appendChild(playBtn);
+
+        }
+
+        this.newMapWindow.style.display = 'flex';
+        this.newMapWindow.dataset.state = 'open';
+    }
+
+    closeNewMap  (){
+        if(!this.newMapWindow) return;
+        this.newMapWindow.style.display = 'none';
+        this.newMapWindow.dataset.state = 'close';
     }
 
 
