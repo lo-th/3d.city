@@ -2,6 +2,7 @@ import * as THREE from '../../build/three.module.js'
 import { GLTFLoader } from '../jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from '../jsm/loaders/DRACOLoader.js';
 import { RGBELoader } from '../jsm/loaders/RGBELoader.js';
+import { AppState } from '../AppState.js';
 
 export class Pool {
 
@@ -59,7 +60,7 @@ export class Pool {
 
 	displayMessage( str ){
 
-		if( hub ) hub.message( str )
+		if( AppState.hub ) AppState.hub.message( str );
 
 	}
  
