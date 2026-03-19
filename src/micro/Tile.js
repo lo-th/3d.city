@@ -111,6 +111,13 @@ export class ZoneUtils {
         return tile.getValue() === Tile.HOSPITAL;
     }
 
+    static CHURCH (tile) {
+        let v = tile.getValue();
+        return v === Tile.CHURCH || v === Tile.CHURCH1 || v === Tile.CHURCH2 ||
+               v === Tile.CHURCH3 || v === Tile.CHURCH4 || v === Tile.CHURCH5 ||
+               v === Tile.CHURCH6 || v === Tile.CHURCH7;
+    }
+
     // ZoneUtils
 
     static checkBigZone = function(tile) {

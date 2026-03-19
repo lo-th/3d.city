@@ -58,6 +58,12 @@ export class Budget {
         this.waterSpend = 0;
         this.waterEffect = Micro.MAX_WATER_EFFECT;
 
+        // ── Education (hospitals & schools) ──────────────────────────
+        this.educationMaintenanceBudget = 0;
+        this.educationPercent = 1;
+        this.educationSpend = 0;
+        this.educationEffect = Micro.MAX_EDUCATION_EFFECT;
+
     }
 
     save (saveData) {
@@ -78,6 +84,7 @@ export class Budget {
     get fireFund () { return this.fireMaintenanceBudget; }
     get policeFund () { return this.policeMaintenanceBudget; }
     get waterFund () { return this.waterMaintenanceBudget; }
+    get educationFund () { return this.educationMaintenanceBudget; }
 
     // Returns the annual interest payment owed on outstanding bond debt.
     getBondAnnualPayment () {
@@ -129,30 +136,33 @@ export class Budget {
 
         // How much would we be spending based on current percentages?
         // Note: the *Budget items are updated every January by collectTax
-        this.roadSpend   = Math.round(this.roadMaintenanceBudget   * this.roadPercent);
-        this.fireSpend   = Math.round(this.fireMaintenanceBudget   * this.firePercent);
-        this.policeSpend = Math.round(this.policeMaintenanceBudget * this.policePercent);
-        this.waterSpend  = Math.round(this.waterMaintenanceBudget  * this.waterPercent);
-        var total = this.roadSpend + this.fireSpend + this.policeSpend + this.waterSpend;
+        this.roadSpend      = Math.round(this.roadMaintenanceBudget      * this.roadPercent);
+        this.fireSpend      = Math.round(this.fireMaintenanceBudget      * this.firePercent);
+        this.policeSpend    = Math.round(this.policeMaintenanceBudget    * this.policePercent);
+        this.waterSpend     = Math.round(this.waterMaintenanceBudget     * this.waterPercent);
+        this.educationSpend = Math.round(this.educationMaintenanceBudget * this.educationPercent);
+        var total = this.roadSpend + this.fireSpend + this.policeSpend + this.waterSpend + this.educationSpend;
 
         // If we don't have any services on the map, we can bail early
         if (total === 0) {
-            this.roadPercent   = 1;
-            this.firePercent   = 1;
-            this.policePercent = 1;
-            this.waterPercent  = 1;
-            return {road: 1, fire: 1, police: 1, water: 1};
+            this.roadPercent      = 1;
+            this.firePercent      = 1;
+            this.policePercent    = 1;
+            this.waterPercent     = 1;
+            this.educationPercent = 1;
+            return {road: 1, fire: 1, police: 1, water: 1, education: 1};
         }
 
         // How much are we actually going to spend?
-        var roadCost   = 0;
-        var fireCost   = 0;
-        var policeCost = 0;
-        var waterCost  = 0;
+        var roadCost      = 0;
+        var fireCost      = 0;
+        var policeCost    = 0;
+        var waterCost     = 0;
+        var educationCost = 0;
 
         var cashRemaining = this.totalFunds + this.taxFund;
 
-        // Spending priorities: road, fire, police, water
+        // Spending priorities: road, fire, police, water, education
         if (cashRemaining >= this.roadSpend) roadCost = this.roadSpend;
         else roadCost = cashRemaining;
         cashRemaining -= roadCost;
@@ -169,19 +179,26 @@ export class Budget {
         else waterCost = cashRemaining;
         cashRemaining -= waterCost;
 
-        if (this.roadMaintenanceBudget > 0)   this.roadPercent   = (roadCost   / this.roadMaintenanceBudget).toPrecision(2)   - 0;
+        if (cashRemaining >= this.educationSpend) educationCost = this.educationSpend;
+        else educationCost = cashRemaining;
+        cashRemaining -= educationCost;
+
+        if (this.roadMaintenanceBudget > 0)      this.roadPercent      = (roadCost      / this.roadMaintenanceBudget).toPrecision(2)      - 0;
         else this.roadPercent = 1;
 
-        if (this.fireMaintenanceBudget > 0)   this.firePercent   = (fireCost   / this.fireMaintenanceBudget).toPrecision(2)   - 0;
+        if (this.fireMaintenanceBudget > 0)      this.firePercent      = (fireCost      / this.fireMaintenanceBudget).toPrecision(2)      - 0;
         else this.firePercent = 1;
 
-        if (this.policeMaintenanceBudget > 0) this.policePercent = (policeCost / this.policeMaintenanceBudget).toPrecision(2) - 0;
+        if (this.policeMaintenanceBudget > 0)    this.policePercent    = (policeCost    / this.policeMaintenanceBudget).toPrecision(2)    - 0;
         else this.policePercent = 1;
 
-        if (this.waterMaintenanceBudget > 0)  this.waterPercent  = (waterCost  / this.waterMaintenanceBudget).toPrecision(2)  - 0;
+        if (this.waterMaintenanceBudget > 0)     this.waterPercent     = (waterCost     / this.waterMaintenanceBudget).toPrecision(2)     - 0;
         else this.waterPercent = 1;
 
-        return { road: roadCost, police: policeCost, fire: fireCost, water: waterCost };
+        if (this.educationMaintenanceBudget > 0) this.educationPercent = (educationCost / this.educationMaintenanceBudget).toPrecision(2) - 0;
+        else this.educationPercent = 1;
+
+        return { road: roadCost, police: policeCost, fire: fireCost, water: waterCost, education: educationCost };
     }
 
     // User initiated budget
@@ -200,18 +217,19 @@ export class Budget {
             return;
         }
 
-        var roadCost = costs.road;
-        var policeCost = costs.police;
-        var fireCost = costs.fire;
-        var waterCost = costs.water || 0;
-        var totalCost = roadCost + policeCost + fireCost + waterCost;
+        var roadCost      = costs.road;
+        var policeCost    = costs.police;
+        var fireCost      = costs.fire;
+        var waterCost     = costs.water || 0;
+        var educationCost = costs.education || 0;
+        var totalCost = roadCost + policeCost + fireCost + waterCost + educationCost;
         var cashRemaining = this.totalFunds + this.taxFund - totalCost;
 
         // Autobudget
         if ((cashRemaining > 0 && this.autoBudget) || fromWindow) {
             // Either we were able to fully fund services, or we have just normalised user input. Go ahead and spend.
             this.awaitingValues = false;
-            this.doBudgetSpend( roadCost, fireCost, policeCost, waterCost );
+            this.doBudgetSpend( roadCost, fireCost, policeCost, waterCost, educationCost );
             return;
         }
 
@@ -223,13 +241,14 @@ export class Budget {
         EventEmitter.emitEvent(Messages.NO_MONEY);
     }
 
-    doBudgetSpend ( roadValue, fireValue, policeValue, waterValue ) {
+    doBudgetSpend ( roadValue, fireValue, policeValue, waterValue, educationValue ) {
 
-        this.roadSpend   = roadValue;
-        this.fireSpend   = fireValue;
-        this.policeSpend = policeValue;
-        this.waterSpend  = waterValue || 0;
-        var total = this.roadSpend + this.fireSpend + this.policeSpend + this.waterSpend;
+        this.roadSpend      = roadValue;
+        this.fireSpend      = fireValue;
+        this.policeSpend    = policeValue;
+        this.waterSpend     = waterValue     || 0;
+        this.educationSpend = educationValue || 0;
+        var total = this.roadSpend + this.fireSpend + this.policeSpend + this.waterSpend + this.educationSpend;
 
         this.spend(-(this.taxFund - total) );
         this.updateFundEffects();
@@ -238,21 +257,25 @@ export class Budget {
 
     updateFundEffects () {
         // The caller is assumed to have correctly set the percentage spend
-        this.roadSpend = Math.round(this.roadMaintenanceBudget * this.roadPercent);
-        this.fireSpend = Math.round(this.fireMaintenanceBudget * this.firePercent);
-        this.policeSpend = Math.round(this.policeMaintenanceBudget * this.policePercent);
+        this.roadSpend      = Math.round(this.roadMaintenanceBudget      * this.roadPercent);
+        this.fireSpend      = Math.round(this.fireMaintenanceBudget      * this.firePercent);
+        this.policeSpend    = Math.round(this.policeMaintenanceBudget    * this.policePercent);
+        this.educationSpend = Math.round(this.educationMaintenanceBudget * this.educationPercent);
 
         // Update the effect this level of spending will have on infrastructure deterioration
-        this.roadEffect   = Micro.MAX_ROAD_EFFECT;
-        this.policeEffect = Micro.MAX_POLICESTATION_EFFECT;
-        this.fireEffect   = Micro.MAX_FIRESTATION_EFFECT;
-        this.waterEffect  = Micro.MAX_WATER_EFFECT;
+        this.roadEffect      = Micro.MAX_ROAD_EFFECT;
+        this.policeEffect    = Micro.MAX_POLICESTATION_EFFECT;
+        this.fireEffect      = Micro.MAX_FIRESTATION_EFFECT;
+        this.waterEffect     = Micro.MAX_WATER_EFFECT;
+        this.educationEffect = Micro.MAX_EDUCATION_EFFECT;
 
-        if (this.roadMaintenanceBudget > 0)   this.roadEffect   = Math.floor(this.roadEffect   * this.roadSpend   / this.roadMaintenanceBudget);
-        if (this.fireMaintenanceBudget > 0)   this.fireEffect   = Math.floor(this.fireEffect   * this.fireSpend   / this.fireMaintenanceBudget);
-        if (this.policeMaintenanceBudget > 0) this.policeEffect = Math.floor(this.policeEffect * this.policeSpend / this.policeMaintenanceBudget);
-        if (this.waterMaintenanceBudget > 0)  this.waterEffect  = Math.floor(this.waterEffect  * this.waterSpend  / this.waterMaintenanceBudget);
+        if (this.roadMaintenanceBudget > 0)      this.roadEffect      = Math.floor(this.roadEffect      * this.roadSpend      / this.roadMaintenanceBudget);
+        if (this.fireMaintenanceBudget > 0)      this.fireEffect      = Math.floor(this.fireEffect      * this.fireSpend      / this.fireMaintenanceBudget);
+        if (this.policeMaintenanceBudget > 0)    this.policeEffect    = Math.floor(this.policeEffect    * this.policeSpend    / this.policeMaintenanceBudget);
+        if (this.waterMaintenanceBudget > 0)     this.waterEffect     = Math.floor(this.waterEffect     * this.waterSpend     / this.waterMaintenanceBudget);
         else this.waterEffect = Micro.MAX_WATER_EFFECT;
+        if (this.educationMaintenanceBudget > 0) this.educationEffect = Math.floor(this.educationEffect * this.educationSpend / this.educationMaintenanceBudget);
+        else this.educationEffect = Micro.MAX_EDUCATION_EFFECT;
 
     }
 
@@ -264,6 +287,8 @@ export class Budget {
         this.fireMaintenanceBudget   = census.fireStationPop   * Micro.fireMaintenanceCost;
         // Water infrastructure: scales with total population (per 1000 residents)
         this.waterMaintenanceBudget = Math.floor(census.totalPop / 1000) * Micro.waterMaintenanceCost;
+        // Education: cost per hospital and school (church) in the city
+        this.educationMaintenanceBudget = (census.hospitalPop + census.churchPop) * Micro.educationMaintenanceCost;
 
         var roadCost = census.roadTotal * Micro.roadMaintenanceCost;
         var railCost = census.railTotal * Micro.railMaintenanceCost;

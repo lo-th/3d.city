@@ -24,7 +24,9 @@ const ACHIEVEMENTS = [
     { id: 'airport_built',   name: 'Sky\'s the Limit',  desc: 'Build an airport',                  check: (s) => s.census.airportPop > 0 },
     { id: 'seaport_built',   name: 'Harbor Master',     desc: 'Build a seaport',                   check: (s) => s.census.seaportPop > 0 },
     { id: 'stadium_built',   name: 'Sports Fan',        desc: 'Build a stadium',                   check: (s) => s.census.stadiumPop > 0 },
-    { id: 'full_services',   name: 'Full Coverage',     desc: 'Have police, fire, and hospital',   check: (s) => s.census.policeStationPop > 0 && s.census.fireStationPop > 0 && s.census.hospitalPop > 0 },
+    { id: 'hospital_built',  name: 'Doctor Mayor',      desc: 'Build a hospital',                  check: (s) => s.census.hospitalPop > 0 },
+    { id: 'school_built',   name: 'Educator',          desc: 'Build a school or community center', check: (s) => s.census.churchPop > 0 },
+    { id: 'full_services',  name: 'Full Coverage',     desc: 'Have police, fire, and hospital',   check: (s) => s.census.policeStationPop > 0 && s.census.fireStationPop > 0 && s.census.hospitalPop > 0 },
     { id: 'survive_disaster', name: 'Resilient',        desc: 'Survive a disaster',                check: null }, // Triggered manually
     { id: 'year_2000',       name: 'Millennium',        desc: 'Reach the year 2000',               check: (s) => { let yr = Math.floor(s.cityTime / 48) + s.startingYear; return yr >= 2000; } },
     { id: 'high_education',  name: 'Educated City',     desc: 'Reach education level 150+',        check: (s) => s.census.educationLevel >= 150 },

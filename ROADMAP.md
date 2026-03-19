@@ -59,12 +59,17 @@ Goal: expand the Micropolis engine with richer gameplay mechanics.
   - [x] Industry specialization — five city economic focuses: Mixed, Tech Hub, Manufacturing, Tourism, Farming/Agriculture; each modifies tax yields, pollution, unemployment, health, education and park bonus; accessible via Economy button (`I`) in top bar; selection persisted in save file
   - [x] City budget breakdown by department — Budget panel now shows per-zone tax rates (Res/Com/Ind) plus service spending sliders for Roads, Fire, Police with live dollar amounts; fixed previously-undefined maintenance budget values
 - [ ] **Education & Health**
-  - [ ] Schools, universities, and literacy rating
-  - [ ] Hospitals, clinics, and city health rating
+  - [x] Schools (community centers) — buildable 3×3 school tool; church scanner counts `schoolPop`; boosts education level
+  - [x] Hospitals — directly buildable by player; `hospitalPop` drives health and education levels; education budget slider controls funding quality
+  - [x] Education funding slider in Budget panel — underfunding reduces `educationEffect` and education level
+  - [x] Hospital and school counts shown in Evaluation panel alongside education funding rate
+  - [ ] Universities and literacy rating (deeper simulation)
+  - [ ] Dedicated health clinic buildings with coverage radius
 - [ ] **Safety services**
   - [x] Police stations with coverage radius — police coverage percentage shown in Evaluation panel; colour-coded (green/amber/red); computed from policeStationEffectMap over populated land
   - [x] Fire stations with response time simulation — fire coverage percentage shown in Evaluation panel alongside police coverage; both update live as stations are built or funded
 - [x] **Parks & recreation** — park tiles (WOODS2–WOODS5 and Fountain placed by the Park tool) are now counted each simulation cycle; park count shown in Evaluation panel under Coverage & Amenities
+- [x] **Hospitals & schools** — player can directly place 3×3 hospitals ($500) and schools/community centers ($500); education budget slider added; hospital/school counts tracked live in Evaluation panel
 - [x] **City ordinances / policies** — six toggleable ordinances (Free Clinics, Recycling Program, Education Subsidies, Noise Ordinance, Small Business Incentive, Public Transit Subsidy); each has gameplay effects on health, pollution, education, traffic, and tax yield; annual costs deducted from city budget; accessible via Ordinances button (`N`) in top bar
 
 ---

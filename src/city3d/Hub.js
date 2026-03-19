@@ -874,6 +874,9 @@ export class Hub {
         var parkCount      = data[12] !== undefined ? data[12] : 0;
         var waterCoverage  = data[13] !== undefined ? data[13] : 100;
         var indDef         = data[14] || null;
+        var hospitalCount  = data[15] !== undefined ? data[15] : 0;
+        var schoolCount    = data[16] !== undefined ? data[16] : 0;
+        var eduCoverage    = data[17] !== undefined ? data[17] : 100;
 
         var happyColor = happiness >= 70 ? '#4bcc7a' : happiness >= 40 ? '#f0b84a' : '#e05555';
         var eduStr = this._getLevelString(eduLevel, 200, ['None', 'Poor', 'Basic', 'Good', 'Excellent']);
@@ -882,6 +885,7 @@ export class Hub {
         var fireColor   = fireCoverage   >= 70 ? '#4bcc7a' : fireCoverage   >= 40 ? '#f0b84a' : '#e05555';
         var parkColor   = parkCount      >= 10 ? '#4bcc7a' : parkCount      >= 3  ? '#f0b84a' : 'rgba(180,210,240,0.5)';
         var waterColor  = waterCoverage  >= 80 ? '#4bcc7a' : waterCoverage  >= 50 ? '#f0b84a' : '#e05555';
+        var eduCovColor = eduCoverage    >= 80 ? '#4bcc7a' : eduCoverage    >= 50 ? '#f0b84a' : '#e05555';
         var indStr = indDef ? (indDef.icon + ' ' + indDef.name) : '🏙️ Mixed';
 
         this.evaltExtended.innerHTML = '<b style="font-size:10px; letter-spacing:0.08em; color:rgba(180,210,240,0.6);">CITY WELL-BEING</b><br>'
@@ -894,6 +898,9 @@ export class Hub {
             + '<span style="' + lblStyle + '">🚓 Police:</span><span style="color:' + policeColor + ';">' + policeCoverage + '%</span><br>'
             + '<span style="' + lblStyle + '">🚒 Fire:</span><span style="color:' + fireColor + ';">' + fireCoverage + '%</span><br>'
             + '<span style="' + lblStyle + '">💧 Water:</span><span style="color:' + waterColor + ';">' + waterCoverage + '%</span><br>'
+            + '<span style="' + lblStyle + '">🏥 Hospitals:</span><span style="color:' + (hospitalCount > 0 ? '#4bcc7a' : 'rgba(180,210,240,0.5)') + ';">' + hospitalCount + '</span><br>'
+            + '<span style="' + lblStyle + '">🏫 Schools:</span><span style="color:' + (schoolCount > 0 ? '#4bcc7a' : 'rgba(180,210,240,0.5)') + ';">' + schoolCount + '</span><br>'
+            + '<span style="' + lblStyle + '">📚 Edu. Fund:</span><span style="color:' + eduCovColor + ';">' + eduCoverage + '%</span><br>'
             + '<span style="' + lblStyle + '">🌳 Parks:</span><span style="color:' + parkColor + ';">' + parkCount + '</span><br>'
             + '<br><b style="font-size:10px; letter-spacing:0.08em; color:rgba(180,210,240,0.6);">ECONOMY</b><br>'
             + '<span style="' + lblStyle + '">Focus:</span><span style="color:#f0b84a;">' + indStr + '</span>';
@@ -1094,7 +1101,8 @@ export class Hub {
         this.dataKeys = ['roadFund', 'roadRate', 'fireFund', 'fireRate', 'policeFund', 'policeRate',
                          'resTaxRate', 'comTaxRate', 'indTaxRate', 'totalFunds', 'taxesCollected',
                          'bondDebt', 'bondAnnualPayment', 'bondMaxDebt',
-                         'waterFund', 'waterRate'];
+                         'waterFund', 'waterRate',
+                         'educationFund', 'educationRate'];
 
         var i = this.dataKeys.length;
 
@@ -1149,6 +1157,8 @@ export class Hub {
             this.addSlider(body, null, 'Police', this.policeRate, this.policeFund, '#e05555', 100);
             this.addSlider(body, null, 'Water',  this.waterRate !== undefined ? this.waterRate : 100,
                                                 this.waterFund,  '#4a9edd', 100);
+            this.addSlider(body, null, 'Education', this.educationRate !== undefined ? this.educationRate : 100,
+                                                this.educationFund, '#a855f7', 100);
 
             this.budgetResult = document.createElement('div');
             this.budgetResult.style.cssText = 'pointer-events:none; color:' + this.colors[0] + '; font-size:12px; line-height:1.6;'
@@ -1223,7 +1233,8 @@ export class Hub {
         this.budgetWindow.dataset.state = 'close';
 
         var wRate = this.waterRate !== undefined ? this.waterRate : 100;
-        Main.setBudget([this.resTaxRate, this.comTaxRate, this.indTaxRate, this.roadRate, this.fireRate, this.policeRate, wRate]);
+        var eRate = this.educationRate !== undefined ? this.educationRate : 100;
+        Main.setBudget([this.resTaxRate, this.comTaxRate, this.indTaxRate, this.roadRate, this.fireRate, this.policeRate, wRate, eRate]);
     }
 
     closeBudget  (){
@@ -1239,6 +1250,7 @@ export class Hub {
         this.setSliderValue('Fire',    this.fireRate,   100, this.fireFund);
         this.setSliderValue('Police',  this.policeRate, 100, this.policeFund);
         this.setSliderValue('Water',   this.waterRate !== undefined ? this.waterRate : 100, 100, this.waterFund);
+        this.setSliderValue('Education', this.educationRate !== undefined ? this.educationRate : 100, 100, this.educationFund);
     }
 
     //-----------------------------------DISASTER WINDOW
@@ -1360,6 +1372,7 @@ export class Hub {
                 case 'Fire':    children[1].innerHTML = t.name+' '+value+'% of '+(this.fireFund||0)+'$ = '+Math.floor((this.fireFund||0)*(value/100))+'$'; this.fireRate=value; break;
                 case 'Police':  children[1].innerHTML = t.name+' '+value+'% of '+(this.policeFund||0)+'$ = '+Math.floor((this.policeFund||0)*(value/100))+'$'; this.policeRate=value; break;
                 case 'Water':   children[1].innerHTML = t.name+' '+value+'% of '+(this.waterFund||0)+'$ = '+Math.floor((this.waterFund||0)*(value/100))+'$'; this.waterRate=value; break;
+                case 'Education': children[1].innerHTML = t.name+' '+value+'% of '+(this.educationFund||0)+'$ = '+Math.floor((this.educationFund||0)*(value/100))+'$'; this.educationRate=value; break;
             }
         }
     }

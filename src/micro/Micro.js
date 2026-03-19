@@ -25,7 +25,8 @@ export const Micro = {
                    'policeSpend', 'fireSpend', 'roadMaintenanceBudget', 'policeMaintenanceBudget',
                    'fireMaintenanceBudget', 'cityTax', 'roadEffect', 'policeEffect', 'fireEffect',
                    'resTaxRate', 'comTaxRate', 'indTaxRate', 'bondDebt',
-                   'waterPercent', 'waterSpend', 'waterMaintenanceBudget', 'waterEffect'
+                   'waterPercent', 'waterSpend', 'waterMaintenanceBudget', 'waterEffect',
+                   'educationPercent', 'educationSpend', 'educationMaintenanceBudget', 'educationEffect'
                    ],
     // eval
     PROBLEMS : ['CVP_CRIME', 'CVP_POLLUTION', 'CVP_HOUSING', 'CVP_TAXES', 'CVP_TRAFFIC', 'CVP_UNEMPLOYMENT', 'CVP_FIRE'],
@@ -123,6 +124,9 @@ export const Micro = {
     railMaintenanceCost : 2,
     waterMaintenanceCost : 5,    // cost per 1000 residents per cycle
     MAX_WATER_EFFECT : 32,       // scales water infrastructure quality (matches road effect scale)
+
+    educationMaintenanceCost : 50, // cost per hospital/school per tax cycle
+    MAX_EDUCATION_EFFECT : 32,     // scales education quality (same scale as water/road)
 
     // PowerManager
     COAL_POWER_STRENGTH : 700,

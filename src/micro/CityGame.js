@@ -228,6 +228,7 @@ export class MainGame {
             coal: new BuildingTool(3000, Tile.POWERPLANT, this.map, 4, false),
             commercial: new BuildingTool(100, Tile.COMCLR, this.map, 3, false),
             fire: new BuildingTool(500, Tile.FIRESTATION, this.map, 3, false),
+            hospital: new BuildingTool(500, Tile.HOSPITAL, this.map, 3, false),
             industrial: new BuildingTool(100, Tile.INDCLR, this.map, 3, false),
             nuclear: new BuildingTool(5000, Tile.NUCLEAR, this.map, 4, true),
             park: new ParkTool(this.map),
@@ -237,6 +238,7 @@ export class MainGame {
             residential: new BuildingTool(100, Tile.FREEZ, this.map, 3, false),
             road: new RoadTool(this.map),
             query: new QueryTool(this.map),
+            school: new BuildingTool(500, Tile.CHURCH, this.map, 3, false),
             stadium: new BuildingTool(5000, Tile.STADIUM, this.map, 4, false),
             wire: new WireTool(this.map),
         };
@@ -449,6 +451,9 @@ export class MainGame {
             if (budgetData.length >= 7) {
                 this.simulation.budget.waterPercent = budgetData[6] / 100;
             }
+            if (budgetData.length >= 8) {
+                this.simulation.budget.educationPercent = budgetData[7] / 100;
+            }
         } else {
             this.simulation.budget.setTax(budgetData[0]);
             this.simulation.budget.roadPercent   = budgetData[1] / 100;
@@ -478,7 +483,9 @@ export class MainGame {
             bondAnnualPayment:   b.getBondAnnualPayment(),
             bondMaxDebt:         b.MAX_BOND_DEBT,
             waterFund:      b.waterFund,
-            waterRate:      Math.floor(b.waterPercent * 100)
+            waterRate:      Math.floor(b.waterPercent * 100),
+            educationFund:  b.educationFund,
+            educationRate:  Math.floor(b.educationPercent * 100)
         };
 
         CityGame.post({ tell:"BUDGET", budgetData:budgetData});
@@ -519,6 +526,9 @@ export class MainGame {
         let waterCoverage = b.waterMaintenanceBudget > 0
             ? Math.round((b.waterEffect / Micro.MAX_WATER_EFFECT) * 100)
             : 100;
+        let educationCoverage = b.educationMaintenanceBudget > 0
+            ? Math.round((b.educationEffect / Micro.MAX_EDUCATION_EFFECT) * 100)
+            : 100;
 
         let indDef = this.simulation.industrySpec.getCurrentDef();
 
@@ -537,7 +547,10 @@ export class MainGame {
             coverage.fire,          // 11
             census.parkCount,       // 12
             waterCoverage,          // 13
-            indDef                  // 14
+            indDef,                 // 14
+            census.hospitalPop,     // 15
+            census.churchPop,       // 16
+            educationCoverage       // 17
         ];
 
         CityGame.post({ tell:"EVAL", evalData:evalData});

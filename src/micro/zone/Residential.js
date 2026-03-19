@@ -18,7 +18,9 @@ export const Residential = {
     registerHandlers: function ( mapScanner, repairManager ) {
         mapScanner.addAction(ZoneUtils.isResidentialZone, Residential.residentialFound);
         mapScanner.addAction(ZoneUtils.HOSPITAL, Residential.hospitalFound);
+        mapScanner.addAction(ZoneUtils.CHURCH, Residential.churchFound);
         repairManager.addAction(Tile.HOSPITAL, 15, 3);
+        repairManager.addAction(Tile.CHURCH, 15, 3);
     },
 
     // Residential tiles have 'populations' of 16, 24, 32 or 40
@@ -284,12 +286,17 @@ export const Residential = {
 
     hospitalFound: function ( map, x, y, simData ) {
         if(!simData) simData = Micro.simData
-            
+
         simData.census.hospitalPop += 1;
         // Degrade to an empty zone if a hospital is no longer sustainable
         if (simData.census.needHospital === -1) {
             if (math.getRandom(20) === 0) ZoneUtils.putZone(map, x, y, Tile.FREEZ, map.getTile(x, y).isPowered());
         }
+    },
+
+    churchFound: function ( map, x, y, simData ) {
+        if(!simData) simData = Micro.simData
+        simData.census.churchPop += 1;
     }
 
 }

@@ -271,6 +271,16 @@ export class Simulation {
         // Industry specialization
         this.infos[21] = this.industrySpec.getCurrentDef();
 
+        // Hospital and school (church) counts
+        this.infos[22] = this.census.hospitalPop;
+        this.infos[23] = this.census.churchPop;
+
+        // Education funding rate (0–100)
+        var educationPct = this.budget.educationMaintenanceBudget > 0
+            ? Math.round((this.budget.educationEffect / Micro.MAX_EDUCATION_EFFECT) * 100)
+            : 100;
+        this.infos[24] = educationPct;
+
         return this.infos
 
     }
@@ -294,9 +304,10 @@ export class Simulation {
         }
         census.parkCount = parkCount;
 
-        // Education: derived from hospitals (which also serve as schools in this sim),
-        // churches (community centers), land value, and industry specialization
-        let educationBase = (census.hospitalPop * 40) + (census.churchPop * 20);
+        // Education: derived from hospitals and schools (churches), scaled by funding level,
+        // land value, and industry specialization
+        let educationFundScale = this.budget.educationEffect / Micro.MAX_EDUCATION_EFFECT;
+        let educationBase = (census.hospitalPop * 40 + census.churchPop * 20) * educationFundScale;
         let landValueFactor = Math.min(census.landValueAverage, 150);
         let popFactor = census.totalPop > 0 ? Math.min(census.totalPop / 100, 50) : 0;
 

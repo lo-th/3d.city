@@ -24,9 +24,9 @@ export const Base = {
 		{id:14, tool:'stadium',     geo:11,   name:'',  build:1, size:4, sy:2,    price:5000,  color:'yellowgreen',drag:0  },
 		{id:15, tool:'airport',     geo:12,   name:'',  build:1, size:6, sy:0.5,  price:10000, color:'lightblue'  ,drag:0  },
 		
-		{id:16, tool:'none',        geo:0,    name:'',  build:0, size:0, sy:0,    price:0,     color:'none'       ,drag:0  },
+		{id:16, tool:'hospital',    geo:4,    name:'H', build:1, size:3, sy:1.2,  price:500,   color:'white'      ,drag:0  },
 		{id:17, tool:'query',       geo:0,    name:'?', build:0, size:1, sy:0,    price:0,     color:'cyan'       ,drag:0  },
-		{id:18, tool:'none',        geo:0,    name:'',  build:0, size:0, sy:0,    price:0,     color:'none'       ,drag:0  }
+		{id:18, tool:'school',      geo:7,    name:'S', build:1, size:3, sy:1.2,  price:500,   color:'cyan'       ,drag:0  }
 	],
 
 	H: [ 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260 ],
