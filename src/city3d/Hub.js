@@ -261,31 +261,44 @@ export class Hub {
         this.hub.appendChild( topBar );
 
         var b1 = this.addButton(topBar, 'Budget',  [75,22,11], null, true);
+        b1.title = 'Budget (B)';
         b1.addEventListener('click', function(e){ e.preventDefault(); Main.getBudget(); }, false);
 
         var b2 = this.addButton(topBar, 'Eval',    [60,22,11], null, true);
+        b2.title = 'City Evaluation (E)';
         b2.addEventListener('click', function(e){ e.preventDefault(); Main.getEval(); }, false);
 
         var b3 = this.addButton(topBar, 'Disaster',[75,22,11], null, true);
+        b3.title = 'Disasters (D)';
         b3.addEventListener('click', function(e){ e.preventDefault(); _this.openDisaster(); }, false);
 
         var b4 = this.addButton(topBar, 'Save/Load',[80,22,11], null, true);
+        b4.title = 'Save / Load / New Map (S)';
         b4.addEventListener('click', function(e){ e.preventDefault(); _this.openExit(); }, false);
 
         var b5 = this.addButton(topBar, 'About',   [60,22,11], null, true);
+        b5.title = 'About / Keyboard Shortcuts (?)';
         b5.addEventListener('click', function(e){ e.preventDefault(); _this.openAbout(); }, false);
 
         var b6 = this.addButton(topBar, 'Awards', [60,22,11], null, true);
+        b6.title = 'Achievements (A)';
         b6.addEventListener('click', function(e){ e.preventDefault(); Main.getAchievements(); }, false);
 
         var b7 = this.addButton(topBar, 'History', [65,22,11], null, true);
+        b7.title = 'City History (H)';
         b7.addEventListener('click', function(e){ e.preventDefault(); Main.getHistory(); }, false);
 
-        var b8 = this.addButton(topBar, 'Ordinances', [88,22,11], null, true);
-        b8.addEventListener('click', function(e){ e.preventDefault(); Main.getOrdinances(); }, false);
+        var b8 = this.addButton(topBar, 'Overlays', [70,22,11], null, true);
+        b8.title = 'Map Overlays (O)';
+        b8.addEventListener('click', function(e){ e.preventDefault(); _this.openOverlays(); }, false);
 
-        var b9 = this.addButton(topBar, 'Economy', [72,22,11], null, true);
-        b9.addEventListener('click', function(e){ e.preventDefault(); Main.getIndustrySpec(); }, false);
+        var b9 = this.addButton(topBar, 'Ordinances', [88,22,11], null, true);
+        b9.title = 'City Ordinances (N)';
+        b9.addEventListener('click', function(e){ e.preventDefault(); Main.getOrdinances(); }, false);
+
+        var b10 = this.addButton(topBar, 'Economy', [72,22,11], null, true);
+        b10.title = 'Industry Specialization (I)';
+        b10.addEventListener('click', function(e){ e.preventDefault(); Main.getIndustrySpec(); }, false);
 
         // Speed selector is appended to the topBar in addSelector below
 
@@ -911,20 +924,29 @@ export class Hub {
             this.exitWindow.appendChild( this.makeWindowHeader('Save / Load', function(){ _this.closeExit(); }) );
 
             var body = document.createElement('div');
-            body.style.cssText = 'padding:10px 12px; pointer-events:none; display:flex; flex-direction:column; gap:8px;';
+            body.style.cssText = 'padding:10px 12px; pointer-events:none; display:flex; flex-direction:column; gap:6px;';
             this.exitWindow.appendChild( body );
 
-            var bg2 = this.addButton(body, 'NEW MAP',  [138, 26, 11], null);
             var bg3 = this.addButton(body, 'SAVE',     [138, 26, 11], null);
             var bg4 = this.addButton(body, 'LOAD',     [138, 26, 11], null);
 
+            bg3.title = 'Save current city to a JSON file';
+            bg4.title = 'Load a previously saved city';
+
+            bg3.addEventListener('click', function(e){ e.preventDefault(); Main.saveGame();   }, false);
+            bg4.addEventListener('click', function(e){ e.preventDefault(); Main.loadGame();   }, false);
+
+            var sep = document.createElement('div');
+            sep.style.cssText = 'border-top:1px solid rgba(100,160,220,0.22); margin:2px 0;';
+            body.appendChild(sep);
+
+            var bg2 = this.addButton(body, 'NEW MAP',  [138, 26, 11], null);
+            bg2.title = 'Create a new city on a freshly generated map';
             bg2.addEventListener('click', function(e){
                 e.preventDefault();
                 _this.closeExit();
                 _this.openNewMap(function(){ Main.playMap(); });
             }, false);
-            bg3.addEventListener('click', function(e){ e.preventDefault(); Main.saveGame();   }, false);
-            bg4.addEventListener('click', function(e){ e.preventDefault(); Main.loadGame();   }, false);
 
         } else {
             this.exitWindow.style.display = 'flex';
@@ -1093,56 +1115,61 @@ export class Hub {
             this.budgetWindow = document.createElement('div');
             this.budgetWindow.className = 'hub-panel';
             this.budgetWindow.style.cssText = 'position:absolute; top:44px; left:10px; width:220px;'
-                                            + ' pointer-events:none; display:flex; flex-direction:column; border-radius:10px;';
+                                            + ' pointer-events:none; display:flex; flex-direction:column; border-radius:10px;'
+                                            + ' max-height:calc(100vh - 54px);';
             this.hub.appendChild( this.budgetWindow );
 
             this.budgetWindow.appendChild( this.makeWindowHeader('Budget', function(){ _this.closeBudget(); }) );
 
             var body = document.createElement('div');
-            body.style.cssText = 'position:relative; height:510px; pointer-events:none;';
+            body.style.cssText = 'padding:10px 12px 6px; pointer-events:none; overflow-y:auto;'
+                               + ' display:flex; flex-direction:column;';
             this.budgetWindow.appendChild( body );
 
             var taxLabel = document.createElement('div');
-            taxLabel.style.cssText = 'position:absolute; left:10px; top:8px; font-size:10px; font-weight:700;'
-                                   + ' letter-spacing:0.08em; color:rgba(75,204,122,0.8); text-transform:uppercase;';
+            taxLabel.style.cssText = 'font-size:10px; font-weight:700;'
+                                   + ' letter-spacing:0.08em; color:rgba(75,204,122,0.8); text-transform:uppercase;'
+                                   + ' margin-bottom:2px;';
             taxLabel.textContent = 'Tax Rates';
             body.appendChild(taxLabel);
 
-            this.addSlider(body, 22, 'Res Tax', this.resTaxRate, null, '#4bcc7a', 20);
-            this.addSlider(body, 62, 'Com Tax', this.comTaxRate, null, '#4bcc7a', 20);
-            this.addSlider(body, 102,'Ind Tax', this.indTaxRate, null, '#4bcc7a', 20);
+            this.addSlider(body, null, 'Res Tax', this.resTaxRate, null, '#4bcc7a', 20);
+            this.addSlider(body, null, 'Com Tax', this.comTaxRate, null, '#4bcc7a', 20);
+            this.addSlider(body, null, 'Ind Tax', this.indTaxRate, null, '#4bcc7a', 20);
 
             var svcLabel = document.createElement('div');
-            svcLabel.style.cssText = 'position:absolute; left:10px; top:148px; font-size:10px; font-weight:700;'
-                                   + ' letter-spacing:0.08em; color:rgba(224,85,85,0.8); text-transform:uppercase;';
+            svcLabel.style.cssText = 'font-size:10px; font-weight:700;'
+                                   + ' letter-spacing:0.08em; color:rgba(224,85,85,0.8); text-transform:uppercase;'
+                                   + ' margin-top:6px; margin-bottom:2px;';
             svcLabel.textContent = 'Services';
             body.appendChild(svcLabel);
 
-            this.addSlider(body, 162, 'Roads',  this.roadRate,   this.roadFund,   '#e05555', 100);
-            this.addSlider(body, 202, 'Fire',   this.fireRate,   this.fireFund,   '#e05555', 100);
-            this.addSlider(body, 242, 'Police', this.policeRate, this.policeFund, '#e05555', 100);
-            this.addSlider(body, 282, 'Water',  this.waterRate !== undefined ? this.waterRate : 100,
+            this.addSlider(body, null, 'Roads',  this.roadRate,   this.roadFund,   '#e05555', 100);
+            this.addSlider(body, null, 'Fire',   this.fireRate,   this.fireFund,   '#e05555', 100);
+            this.addSlider(body, null, 'Police', this.policeRate, this.policeFund, '#e05555', 100);
+            this.addSlider(body, null, 'Water',  this.waterRate !== undefined ? this.waterRate : 100,
                                                 this.waterFund,  '#4a9edd', 100);
 
             this.budgetResult = document.createElement('div');
-            this.budgetResult.style.cssText = 'position:absolute; top:336px; left:10px; width:200px;'
-                                            + ' pointer-events:none; color:' + this.colors[0] + '; font-size:12px; line-height:1.6;';
+            this.budgetResult.style.cssText = 'pointer-events:none; color:' + this.colors[0] + '; font-size:12px; line-height:1.6;'
+                                            + ' margin-top:8px; margin-bottom:4px;';
             body.appendChild( this.budgetResult );
 
             // ── Municipal Bonds section ───────────────────────────────
             var bondLabel = document.createElement('div');
-            bondLabel.style.cssText = 'position:absolute; left:10px; top:378px; font-size:10px; font-weight:700;'
-                                    + ' letter-spacing:0.08em; color:rgba(240,184,74,0.8); text-transform:uppercase;';
+            bondLabel.style.cssText = 'font-size:10px; font-weight:700;'
+                                    + ' letter-spacing:0.08em; color:rgba(240,184,74,0.8); text-transform:uppercase;'
+                                    + ' margin-top:6px; margin-bottom:4px;';
             bondLabel.textContent = 'Municipal Bonds';
             body.appendChild(bondLabel);
 
             this.bondDebtInfo = document.createElement('div');
-            this.bondDebtInfo.style.cssText = 'position:absolute; left:10px; top:396px; width:200px;'
-                                            + ' pointer-events:none; color:' + this.colors[0] + '; font-size:11px; line-height:1.5;';
+            this.bondDebtInfo.style.cssText = 'pointer-events:none; color:' + this.colors[0] + '; font-size:11px; line-height:1.5;'
+                                            + ' margin-bottom:6px;';
             body.appendChild(this.bondDebtInfo);
 
             var bondBtnsRow = document.createElement('div');
-            bondBtnsRow.style.cssText = 'position:absolute; left:10px; top:430px; display:flex; gap:4px; pointer-events:auto;';
+            bondBtnsRow.style.cssText = 'display:flex; gap:4px; pointer-events:auto; margin-bottom:6px;';
             body.appendChild(bondBtnsRow);
 
             var b5k  = this.addButton(bondBtnsRow, '+$5K',  [58, 22, 10], null);
@@ -1155,8 +1182,13 @@ export class Hub {
             b10k.addEventListener('click', function(e){ e.preventDefault(); Main.issueBond(10000); }, false);
             b20k.addEventListener('click', function(e){ e.preventDefault(); Main.issueBond(20000); }, false);
 
-            var bg1 = this.addButton(body, 'CLOSE', [88, 22, 11], 'position:absolute; left:10px; bottom:10px;');
-            var bg2 = this.addButton(body, 'APPLY', [88, 22, 11], 'position:absolute; right:10px; bottom:10px;');
+            var actionRow = document.createElement('div');
+            actionRow.style.cssText = 'display:flex; gap:8px; padding:6px 0; pointer-events:auto;'
+                                    + ' border-top:1px solid rgba(100,160,220,0.22); margin-top:4px; flex-shrink:0;';
+            body.appendChild(actionRow);
+
+            var bg1 = this.addButton(actionRow, 'CLOSE', [88, 22, 11], null);
+            var bg2 = this.addButton(actionRow, 'APPLY', [88, 22, 11], null);
 
             bg1.addEventListener('click', function(e){ e.preventDefault(); _this.closeBudget(); }, false);
             bg2.addEventListener('click', function(e){ e.preventDefault(); _this.applyBudget(); }, false);
@@ -1254,15 +1286,30 @@ export class Hub {
         var txt = document.createElement( 'div' );
         var bg  = document.createElement( 'div' );
         var sel = document.createElement( 'div' );
-        txt.style.cssText = 'position:absolute; left:10px; top:-18px; pointer-events:none;'
-                          + ' width:180px; height:20px; font-size:12px; color:' + this.colors[0] + ';';
-        bg.style.cssText  = 'border-radius:6px; position:absolute; left:10px; top:'+(py+20)+'px;'
-                          + ' padding:0; cursor:w-resize; pointer-events:auto; width:180px; height:20px;'
-                          + ' background:rgba(255,255,255,0.07); border:1px solid rgba(100,160,220,0.22);'
-                          + ' transition:border-color 150ms;';
+
         sel.style.cssText = 'border-radius:6px; position:absolute; pointer-events:none;'
                           + ' margin:4px; height:12px; background:' + color + '; opacity:0.85;';
-        target.appendChild( bg );
+
+        if(py !== null){
+            // Legacy absolute-positioned layout (used for backwards-compat if needed)
+            txt.style.cssText = 'position:absolute; left:10px; top:-18px; pointer-events:none;'
+                              + ' width:180px; height:20px; font-size:12px; color:' + this.colors[0] + ';';
+            bg.style.cssText  = 'border-radius:6px; position:absolute; left:10px; top:'+(py+20)+'px;'
+                              + ' padding:0; cursor:w-resize; pointer-events:auto; width:180px; height:20px;'
+                              + ' background:rgba(255,255,255,0.07); border:1px solid rgba(100,160,220,0.22);'
+                              + ' transition:border-color 150ms;';
+            target.appendChild( bg );
+        } else {
+            // Flow layout: wrapper provides top spacing for the label that floats above the track
+            txt.style.cssText = 'position:absolute; left:0; top:-18px; pointer-events:none;'
+                              + ' width:180px; height:20px; font-size:12px; color:' + this.colors[0] + ';';
+            bg.style.cssText  = 'border-radius:6px; position:relative; cursor:w-resize; pointer-events:auto;'
+                              + ' width:180px; height:20px;'
+                              + ' background:rgba(255,255,255,0.07); border:1px solid rgba(100,160,220,0.22);'
+                              + ' transition:border-color 150ms; margin-top:20px; margin-bottom:6px;';
+            target.appendChild( bg );
+        }
+
         bg.appendChild( sel );
         bg.appendChild( txt );
         bg.name = name;
@@ -1312,6 +1359,7 @@ export class Hub {
                 case 'Roads':   children[1].innerHTML = t.name+' '+value+'% of '+(this.roadFund||0)+'$ = '+Math.floor((this.roadFund||0)*(value/100))+'$'; this.roadRate=value; break;
                 case 'Fire':    children[1].innerHTML = t.name+' '+value+'% of '+(this.fireFund||0)+'$ = '+Math.floor((this.fireFund||0)*(value/100))+'$'; this.fireRate=value; break;
                 case 'Police':  children[1].innerHTML = t.name+' '+value+'% of '+(this.policeFund||0)+'$ = '+Math.floor((this.policeFund||0)*(value/100))+'$'; this.policeRate=value; break;
+                case 'Water':   children[1].innerHTML = t.name+' '+value+'% of '+(this.waterFund||0)+'$ = '+Math.floor((this.waterFund||0)*(value/100))+'$'; this.waterRate=value; break;
             }
         }
     }
