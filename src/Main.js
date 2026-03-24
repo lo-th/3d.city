@@ -87,17 +87,17 @@ export class Main {
     static destroy( x, y ) {
 
         // TODO SOUND EXPLOSION
-
         post({tell:"MAPCLICK", x:x, y:y, single:true });
+
     }
 
     static mapClick( tool ) {
-        var p = view3d.raypos;
-
+        
+        const p = view3d.raypos;
         if( p.x<0 && p.z<0 ) return
-
         //if( tool === 'bulldozer' ) view3d.testDestruct( p.x, p.y )
         post({tell:"MAPCLICK", x:p.x, y:p.z });
+
     }
 
     // HUB
@@ -110,14 +110,15 @@ export class Main {
         view3d.setTimeColors(id);
     }
 
-    static newMap( t ) {
+    static newMap() {
 
-        if( view3d.inMapGenation ) return;
+        if( view3d.inMapGeneration ) return;
 
         hub.generate( true );
-        withHeight = t!=='NEW';
-        view3d.inMapGenation = true;
-        setTimeout( post, 1000, {tell:"NEWMAP"});
+        withHeight = false;//t!=='NEW';
+        view3d.inMapGeneration = true;
+        //setTimeout( post, 0, {tell:"NEWMAP"});
+        post({ tell:"NEWMAP" });
     
     }
 
@@ -133,13 +134,22 @@ export class Main {
         view3d.selectTool(id);
     }
 
+    static setSize( t ) {
+
+        let n = 64;
+        if(t === 'MEDIUM') n = 128
+        if(t === 'LARGE') n = 192
+        post({tell:"MAPSIZE", n:n });
+    
+    }
+
     static setDifficulty( t ) {
 
-        //console.log( t )
         let n = 0;
-        if(t === 'MEDIUM') n = 1
+        if(t === 'NORMAL') n = 1
         if(t === 'HARD') n = 2
         post({tell:"DIFFICULTY", n:n });
+
     }
 
     static setSpeed( n ) {
@@ -179,7 +189,7 @@ export class Main {
         var isStart = atStart || false;
         if( isStart ){ 
             hub.generate( true );
-            view3d.inMapGenation = true;
+            view3d.inMapGeneration = true;
         }
         post({ tell:"LOADGAME", isStart:isStart });
     }
@@ -276,6 +286,8 @@ function message( e ) {
     }
     if( phase == "NEWMAP"){
 
+        
+
         hub.generate( false );
         tilesData = e.data.tilesData;
         view3d.paintMap( e.data.mapSize, e.data.island, withHeight );
@@ -317,6 +329,7 @@ function message( e ) {
 
     }
     if( phase == "BUDGET"){
+        //console.log(e.data.budgetData)
         hub.openBudget(e.data.budgetData);
     }
     if( phase == "QUERY"){
@@ -327,8 +340,6 @@ function message( e ) {
     }
     if( phase == "SAVEGAME"){
         makeGameSave(e.data.gameData, e.data.key);
-
-
     }
     if( phase == "LOADGAME"){
         makeLoadGame(e.data.key, e.data.isStart);

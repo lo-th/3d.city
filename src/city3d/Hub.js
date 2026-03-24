@@ -113,12 +113,12 @@ export class Hub {
             button:'#8397ac' 
         }).icon( UIL.Tools.icon('github', '#DEDEDE', 50) ).onChange( function(v){ let w = window.open('https://github.com/lo-th/3d.city','_blank'); } )
 
-        this.donate = UIL.add('button', { 
+        /*this.donate = UIL.add('button', { 
             target:this.hub, w:64, h:64, pos:{left:'84px', bottom:'10px'}, simple:true, 
             button:'#8397ac' 
         }).icon( UIL.Tools.icon('donate', '#DEDEDE', 50) ).onChange( function(v){ let w = window.open('https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=8KTXA987XHYNQ','_blank'); } )
 
-
+*/
 
         this.version = document.createElement('div');
         this.version.style.cssText = 'position:absolute; font-size:14px; right:10px; bottom:10px; text-align:right; width:100px; pointer-events:none; display:block;';
@@ -178,16 +178,18 @@ export class Hub {
     }
 
     fadding (t){
+
     	t.bg -= 0.1;
     	t.full.style.background = 'rgba(144,163,183,'+t.bg+')';
        // background-image:linear-gradient(60deg, white, black);
     	if(t.bg<=0){
     		clearInterval(t.timer);
+            //t.loader.style.display = 'none'
             t.hub.removeChild(t.loader);
             t.hub.removeChild(t.text);
     		t.hub.removeChild(t.full);
 
-            console.log('done')
+            //console.log('done')
 
     		//t.initPrevHub();
             t.isIntro = false;
@@ -198,6 +200,7 @@ export class Hub {
 
         if( b ){
             if(!this.isGen) {
+                //this.loader.style.display = 'block'
                 this.hub.appendChild( this.loader );
                 this.hub.appendChild( this.text );
                 this.text.innerHTML = 'Generate map...'
@@ -205,6 +208,7 @@ export class Hub {
             }
         } else {
             if( this.isGen ){
+                //this.loader.style.display = 'none'
                 this.hub.removeChild( this.loader );
                 this.hub.removeChild( this.text );
                 this.isGen = false
@@ -279,7 +283,7 @@ export class Hub {
     initGameHub  (){
 
         this.link.dispose()
-        this.donate.dispose()
+        //this.donate.dispose()
 
         var _this = this;
         //this.removeSelector("DIFFICULTY");
@@ -413,6 +417,7 @@ export class Hub {
     }
 
     updateCITYinfo  (infos){
+
         this.date.innerHTML = infos[0];
         this.money.innerHTML = infos[4];
         this.population.innerHTML = infos[3];
@@ -421,6 +426,7 @@ export class Hub {
         this.msg.innerHTML = infos[8];
 
         this.updateRCI( infos[5], infos[6], infos[7] );
+
     }
 
     //-----------------------------------QUERY
@@ -684,11 +690,11 @@ export class Hub {
 
     //-----------------------------------BUDGET WINDOW
 
-    openBudget  (data){
+    openBudget (data){
         var _this = this;
 
         var test = this.testOpen();
-        if(test == 'budget') return;
+        
 
         /*if(this.budgetWindow !== null && this.budgetWindow.className == "open"){
             this.closeBudget(); 
@@ -699,10 +705,18 @@ export class Hub {
 
         var i = this.dataKeys.length;
 
-        var elem;
+        //var elem;
         while(i--){
-            this[this.dataKeys[i]] = data[this.dataKeys[i]];
+            this[this.dataKeys[i]] = data[this.dataKeys[i]] || 0;
         }
+
+        /*this.roadFund = 0;
+        this.fireFund = 0;
+        this.policeFund = 0;*/
+
+        //console.log( this.roadRate )
+
+        if(test == 'budget') return;
 
         var previousFunds = data.totalFunds;
         var taxesCollected = data.taxesCollected;

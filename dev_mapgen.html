@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>OpenPublica</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+<link rel="icon" href="favicon.ico" />
+</head>
+<style>
+*{ padding:0; margin: 0; -o-user-select:none; -ms-user-select:none; -khtml-user-select:none; -webkit-user-select:none; -moz-user-select: none;}
+html { width:100%; height:100%; }
+body { background:#8397ac; font:10px sans-serif; width:100%; height:100%; color:#FFFFFF; overflow: hidden; }
+
+#debug{ }
+#hub{ position:absolute; top:0; left:0; height:100%; width:100%; pointer-events:none; display:block; text-align:center;}
+
+</style>
+<script type="module">
+	import * as UIL from './build/uil.module.js'
+	import { MapGenerator } from './src/micro/map/MapGenerator.js';
+
+	let map
+	let canvas = null 
+
+	const mapGen = new MapGenerator()
+
+	const MAP_SIZES = {
+	    SMALL:  [64,  64],
+	    MEDIUM: [128, 128],
+	    LARGE:  [192, 192],
+	};
+
+	const setting = {
+		size:'MEDIUM'
+	}
+
+
+	const ui = new UIL.Gui({w:320})
+	ui.add( 'title',  { name:'MAP Gen', h:22, align:'center' })
+	ui.add( setting, 'size', { type:'button', values: ['SMALL', 'MEDIUM', 'LARGE'], selectable:true, unselectable:true, selectmulty:true, p:0, h:30 })
+
+	ui.add('button', { name:'GENERATE', h:30, callback:gen })
+
+
+	function gen(){
+
+		const size = MAP_SIZES[setting.size];
+
+		map = mapGen.construct( size[0], size[1], true );
+
+		makePreview(map)
+
+	}
+
+	function makePreview ( map ){
+
+		if(canvas) document.body.removeChild(canvas)
+
+		const w = map.width
+		const h = map.height
+
+		canvas = document.createElement("canvas")
+		canvas.width = w
+		canvas.height = h
+
+		canvas.style.cssText = 'position:absolute; left:10px; top:10px;transform: scale(8);'
+
+		const ctx = canvas.getContext('2d')
+		ctx.fillStyle = "blue";
+		ctx.fillRect(0, 0, w, h);
+
+		//const monImageData = ctx.createImageData(w, h)
+		const imageData = ctx.getImageData(0, 0, w, h);
+		const data = imageData.data;
+		const pp = map.tilesData
+
+		let n, c
+
+		for (var i = 0; i < pp.length; i ++) {
+			n = i*4;
+			c = pp[i]
+			if(c<2){
+				data[n] = 255-(c*4); // rouge
+		        data[n + 1] = 128-(c*4); // vert
+		        data[n + 2] = 0; // bleu
+			}
+			else if(c<21){
+				data[n] = 0; // rouge
+		        data[n + 1] = 128-(c*4); // vert
+		        data[n + 2] = 255-(c*4); // bleu
+
+			}else {
+				data[n] = c*2; // rouge
+		        data[n + 1] = 128+(c*2); // vert
+		        data[n + 2] = c*2; // bleu
+
+			}
+		    data[n + 4] = 255
+		}
+
+		ctx.putImageData(imageData, 0, 0);
+		document.body.appendChild(canvas)
+
+	}
+
+
+  
+</script>
+
+<div id="container"></div>
+<div id="hub"></div>
+
+</body></html>

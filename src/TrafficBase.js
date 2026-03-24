@@ -1,8 +1,8 @@
-import * as THREE from '../build/three.module.js'
+import * as THREE from '../build/three.module.min.js'
 import { GLTFLoader } from './jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from './jsm/loaders/DRACOLoader.js';
 import { OrbitControls } from './jsm/controls/OrbitControls.js';
-import { mergeBufferGeometries } from './jsm/utils/BufferGeometryUtils.js';
+import { mergeGeometries } from './jsm/utils/BufferGeometryUtils.js';
 
 import { TrafficWorld, Traffic } from './traffic/Traffic.js';
 
@@ -14,6 +14,8 @@ export class TrafficBase extends THREE.Group {
         super()
 
         let isStandard = o.isStandard !== undefined ? o.isStandard : true
+
+        this.withShadow = o.withShadow || false;
 
         this.position.y = 0.01
 
@@ -76,6 +78,7 @@ export class TrafficBase extends THREE.Group {
 			let gridMesh = new THREE.GridHelper(t, t, 0x000000, 0x202020)
 			gridMesh.position.set(decal, -0.01, decal);
 			this.add(gridMesh);
+			if(this.withShadow) this.gridMesh.receiveShadow = true;
 		}
 		
 
@@ -301,13 +304,16 @@ export class TrafficBase extends THREE.Group {
 
 
 
-			let g = mergeBufferGeometries( geoms )
+			let g = mergeGeometries( geoms )
 
 			//var mtx = new THREE.Matrix4().makeScale(scaler,scaler,scaler)
 			//g.applyMatrix4( mtx )
 
 
 			let c = new THREE.Mesh( g, this.mats['road_mat'] );
+			if(this.withShadow){
+	        	c.receiveShadow = true;
+			}
 			this.add( c );
 
 
@@ -342,6 +348,10 @@ export class TrafficBase extends THREE.Group {
 		if( this.cars[id]==null ){
 			let r = this.randInt(0,2);
 			let c = new THREE.Mesh( this.car_geo[ Traffic.TYPE_OF_CARS[ car.type].m ], this.car_mat[r] );
+			/*if(this.withShadow){
+	        	c.receiveShadow = true;
+	        	c.castShadow = true;
+			}*/
 			
 			this.add( c );
 			c.position.set(10000, 0,0);
@@ -371,6 +381,9 @@ export class TrafficBase extends THREE.Group {
 		let id = intersection.id.substring(12);
 		if( this.inter[id]==null ){
 			this.inter[id] = new THREE.Mesh( this.inter_geo, this.mats['inter_mat'] );
+			if(this.withShadow){
+	        	this.inter[id].receiveShadow = true;
+			}
 			this.add( this.inter[id] );
 			let type = intersection.roads.length;
 			// console.log(intersection.inRoads.length)

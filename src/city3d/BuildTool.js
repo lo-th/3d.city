@@ -1,4 +1,4 @@
-import * as THREE from '../../build/three.module.js'
+import * as THREE from '../../build/three.module.min.js'
 
 export class BuildTool extends THREE.Object3D {
 

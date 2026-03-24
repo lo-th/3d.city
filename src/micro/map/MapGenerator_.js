@@ -65,12 +65,9 @@ export class MapGenerator {
         Micro.TERRAIN_CURVE_LEVEL = -1;
         Micro.ISLAND_RADIUS = 18;
 
-        if( w !== undefined ) Micro.MAP_WIDTH = w
-        if( h !== undefined ) Micro.MAP_HEIGHT = h
-
         if(debug) console.time("start newmap");
 
-        this.map = new GameMap( Micro.MAP_WIDTH, Micro.MAP_HEIGHT );
+        this.map = new GameMap( w || Micro.MAP_WIDTH, h || Micro.MAP_HEIGHT );
         //this.map.makePP()
 
         Micro.TERRAIN_CREATE_ISLAND = math.getRandom(2) - 1;

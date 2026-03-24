@@ -1,7 +1,11 @@
-import * as THREE from '../../build/three.module.js'
+import * as THREE from '../../build/three.module.min.js'
 import { GLTFLoader } from '../jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from '../jsm/loaders/DRACOLoader.js';
-import { RGBELoader } from '../jsm/loaders/RGBELoader.js';
+import { HDRLoader } from '../jsm/loaders/HDRLoader.js';
+
+import { KTX2Loader } from '../jsm/loaders/KTX2Loader.js';
+import { KTX2Exporter } from '../jsm/exporters/KTX2Exporter.js';
+
 
 export class Pool {
 
@@ -17,7 +21,16 @@ export class Pool {
 		this.isPixelStyle = pixel
 
 		this.loaderGLB = new GLTFLoader();
+
+		let type = 'js'
+		if ( navigator.userAgentData ) type = 'wasm'
+        else {
+            let ua = navigator.userAgent.toLowerCase()
+            type = (ua.indexOf('safari') !== -1 && ua.indexOf('chrome') === -1) ? 'js' : 'wasm'
+        }
+
     	let dracoLoader = new DRACOLoader().setDecoderPath( './build/draco/' )
+    	dracoLoader.setDecoderConfig( { type: type } )
     	this.loaderGLB.setDRACOLoader( dracoLoader )
 
 		this.mapPath = './assets/textures/'
@@ -29,7 +42,7 @@ export class Pool {
 
 		if( this.isWithNormal ) this.imgSrc.push( 'tiles_n.png', 'building_n.png', 'town_n.png' )
 		if( this.isWithRoughness ) this.imgSrc.push( 'tiles_r.png', 'building_r.png', 'town_r.png' )
-		this.imgSrc.push( 'border.jpg', 'border_a.jpg' )
+		this.imgSrc.push( 'border.png' )
 
 		this.imgs = [];
 		this.num = 0;
@@ -46,7 +59,7 @@ export class Pool {
 			snow:'#e6f0ff',
 			white:'#ffffff',
 			lightGrey:'#CCCCCC',
-			metal:'#AAAAAA',
+			metal:'#808080',
 			sky:'#8397ac',
 		}
 
@@ -70,7 +83,7 @@ export class Pool {
 
 		this.displayMessage( 'Loading envmap ...' )
 
-		new RGBELoader().load( this.mapPath + this.sky + '.hdr', function ( texture ) {
+		new HDRLoader().load( this.mapPath + this.sky + '.hdr', function ( texture ) {
 
 			this.env = texture;
 			this.loadImages();
@@ -148,7 +161,7 @@ export class Pool {
 
 			c = this.canvas[name];
 
-			ctx = c.getContext('2d');
+			ctx = c.getContext('2d', { willReadFrequently: true });
 			ctx.clearRect ( 0 , 0, c.width, c.height );
 			if( name === 'tiles' || name === 'town' || name === 'building'){
 				ctx.fillStyle = this.color.ground;
@@ -163,7 +176,7 @@ export class Pool {
 				ctx.fillRect( 0, 0, c.width, c.height )
 			}
 
-			 ctx.drawImage( this.imgs[ name ], 0, 0, c.width, c.height );
+			ctx.drawImage( this.imgs[ name ], 0, 0, c.width, c.height );
 		
 		}
 
@@ -212,8 +225,7 @@ export class Pool {
         this.textures['border'] = new THREE.Texture( this.imgs['border'] );
 		this.filterTexture( this.textures['border'], { flip:false } )
 
-		this.textures['border_a'] = new THREE.Texture( this.imgs['border_a'] );
-		this.filterTexture( this.textures['border_a'], { flip:false } )
+		
 
         this.loadModel()
 
@@ -221,7 +233,7 @@ export class Pool {
 
 	filterTexture ( texture, o = {} ){
 
-    	if( !o.normal ) texture.encoding = THREE.sRGBEncoding
+    	if( !o.normal ) texture.colorSpace = THREE.SRGBColorSpace;//texture.encoding = THREE.sRGBEncoding
     	if( o.flip !== undefined ) texture.flipY = o.flip
     	if( o.midmap !== undefined ) texture.generateMipmaps = o.midmap;
     	if( o.alpha !== undefined ) texture.premultiplyAlpha = o.alpha;
@@ -233,6 +245,13 @@ export class Pool {
     		texture.magFilter = THREE.LinearFilter;
     	    texture.minFilter = THREE.LinearMipmapLinearFilter;
     	}
+
+    	//texture.format = THREE.FloatType;
+
+
+    	//texture.magFilter = THREE.NearestFilter;
+    	//texture.minFilter = THREE.NearestFilter;
+    	//    texture.generateMipmaps = false
     	
     	//texture.anisotropy = this.anisotropy;
     	texture.needsUpdate = true;
@@ -242,7 +261,7 @@ export class Pool {
 
     makePixelData( name ) {
 
-		let ctx = this.canvas[ name ].getContext('2d')
+		let ctx = this.canvas[ name ].getContext('2d', { willReadFrequently: true })
 		let pix = this.tileSize, x, y
 
 		for ( let i = 0; i < 240; i++ ){
@@ -250,9 +269,9 @@ export class Pool {
 			x = ( i % 32 ) * pix;
 			y = Math.floor( i / 32 ) * pix;
 			let data = ctx.getImageData(x, y, pix, pix).data;
-			if ( name === 'tiles_n' ) this.tiles.normal[i] = new THREE.DataTexture( data, pix, pix );
-			else if ( name === 'tiles_r' ) this.tiles.roughness[i] = new THREE.DataTexture( data, pix, pix );
-			else this.tiles.texture[i] = new THREE.DataTexture( data, pix, pix );
+			if ( name === 'tiles_n' ) this.tiles.normal[i] = new THREE.DataTexture( data, pix, pix, THREE.RGBAFormat, THREE.FloatType );
+			else if ( name === 'tiles_r' ) this.tiles.roughness[i] = new THREE.DataTexture( data, pix, pix, THREE.RGBAFormat, THREE.FloatType );
+			else this.tiles.texture[i] = new THREE.DataTexture( data, pix, pix, THREE.RGBAFormat, THREE.FloatType );
 
 		}
 
@@ -263,7 +282,7 @@ export class Pool {
 
 		let data, i, n;
 		let pixels = canvas.width*canvas.height;
-	    let ctx = canvas.getContext('2d');
+	    let ctx = canvas.getContext('2d', { willReadFrequently: true });
 	    
 	    // draw windows
 	    let topData = null;
@@ -333,7 +352,7 @@ export class Pool {
 
 		let c = document.createElement( 'canvas' );
 		c.width = c.height = 1024*s;
-		let ctx = c.getContext('2d');
+		let ctx = c.getContext('2d', { willReadFrequently: true });
 
 		ctx.beginPath();
 		ctx.fillStyle = color[0];
@@ -440,11 +459,11 @@ export class Pool {
 	    	gltf.scene.traverse( function ( node ) {
 	    		if( node.name === 'title' ) t = node;
 	    		if( node.name === 'border' ) b1 = node;
-	    		if( node.name === 'border_min' ) b2 = node;
+	    		//if( node.name === 'border_min' ) b2 = node;
 				if( node.isMesh && !o[node.name] ) o[node.name] = node.geometry;
 			})
 			if(b1) this.border = b1;
-			if(b2) this.border_min = b2;
+			//if(b2) this.border_min = b2;
 			if(t) this.title = t;
 			this.defineGeometry( o, name )
 

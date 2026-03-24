@@ -44,19 +44,19 @@ export const Micro = {
     MAP_WIDTH : 128,
     MAP_HEIGHT : 128,
     
-    MAP_DEFAULT_WIDTH : 128*3, //Micro.MAP_WIDTH*3,
-    MAP_DEFAULT_HEIGHT : 128*3, //Micro.MAP_HEIGHT*3,
-    MAP_BIG_DEFAULT_WIDTH : 128*16, //Micro.MAP_WIDTH*16,
-    MAP_BIG_DEFAULT_HEIGHT : 128*16, //Micro.MAP_HEIGHT*16,
-    MAP_BIG_DEFAULT_ID : "bigMap",
-    MAP_PARENT_ID : "splashContainer",
-    MAP_DEFAULT_ID : "SplashCanvas",
+    //MAP_DEFAULT_WIDTH : 128*3, //Micro.MAP_WIDTH*3,
+    //MAP_DEFAULT_HEIGHT : 128*3, //Micro.MAP_HEIGHT*3,
+    //MAP_BIG_DEFAULT_WIDTH : 128*16, //Micro.MAP_WIDTH*16,
+    //MAP_BIG_DEFAULT_HEIGHT : 128*16, //Micro.MAP_HEIGHT*16,
+    //MAP_BIG_DEFAULT_ID : "bigMap",
+    //MAP_PARENT_ID : "splashContainer",
+    //MAP_DEFAULT_ID : "SplashCanvas",
 
     //GameCanvas
-    DEFAULT_WIDTH : 400,
-    DEFAULT_HEIGHT : 400,
-    DEFAULT_ID : "MicropolisCanvas",
-    RCI_DEFAULT_ID : "RCICanvas",
+    //DEFAULT_WIDTH : 400,
+    //DEFAULT_HEIGHT : 400,
+    //DEFAULT_ID : "MicropolisCanvas",
+    //RCI_DEFAULT_ID : "RCICanvas",
 
     // Simulation
     LEVEL_EASY : 0,

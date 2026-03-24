@@ -28,10 +28,6 @@ export class GameMap {
         
         this.fsize = this.width * this.height;
 
-        this._layerW = Math.ceil(this.width / 16);
-        this._layerH = Math.ceil(this.height / 16);
-        this._layerCount = this._layerW * this._layerH;
-
         this.defaultValue = new Tiles().getValue();
 
         this.data = [];//new Array(this.fsize);
@@ -56,6 +52,7 @@ export class GameMap {
         this.layer = [];
         this.resetLayer();
 
+
         this.makePP()
 
     }
@@ -78,15 +75,15 @@ export class GameMap {
 
     resetLayer () {
 
-        let i = this._layerCount;
+        let i = 64;
         while( i-- ) this.layer[i] = 0;
-
+        
     }
 
     findLayer ( x, y ){
         let cx = Math.floor(x/16)
         let cy = Math.floor(y/16)
-        return cx+(cy*this._layerW)
+        return cx+(cy*8)
     }
 
     goodValue ( v ){
@@ -203,18 +200,12 @@ export class GameMap {
 
     }
 
-    testBounds ( x, y ) {
-        
-        //return this.isValid(this.getId(x,y));
+    testBounds (x, y) {
         return x >= 0 && y >= 0 && x < this.width && y < this.height;
     }
 
     getId ( x, y ){
         return x + y * this.width
-    }
-
-    isValid ( id ){
-        return id<0 || id>this.fsize-1 ? false : true
     }
 
     getTile ( x, y, newTile ) {
@@ -224,20 +215,14 @@ export class GameMap {
         if (typeof(x) === 'object') { y = x.y; x = x.x; }
         //if (!this.testBounds(x, y)) throw e;
 
-        //let width = this.width;
-        //let height = this.height;
+        let width = this.width;
+        let height = this.height;
 
-        /*if (x < 0 || y < 0 || x >= width || y >= height) {
-            console.warn('getTile called with bad bounds', x, y);
-            return new Tiles(Tile.TILE_INVALID);
-        }*/
-        let tileIndex = this.getId( x, y );
-
-        if(!this.isValid(tileIndex)){
+        if (x < 0 || y < 0 || x >= width || y >= height) {
             console.warn('getTile called with bad bounds', x, y);
             return new Tiles(Tile.TILE_INVALID);
         }
-
+        let tileIndex = this.getId( x, y );
         let tile = this.data[tileIndex];
 
         //var tileIndex = this._calculateIndex(x, y);
@@ -252,28 +237,24 @@ export class GameMap {
     }
 
     getTileValue( x, y ) {
-        //let e = new Error('Invalid parameter');
-        //if (arguments.length < 1) throw e;
+        let e = new Error('Invalid parameter');
+        if (arguments.length < 1) throw e;
         // Argument-shuffling
-        //if (arguments.length === 1) { x = x.x; y = x.y; }
         if (typeof(x) === 'object') {  y = x.y; x = x.x; }
-        //if (!this.testBounds(x, y)) throw e;
+        if (!this.testBounds(x, y)) throw e;
 
         let tileIndex = this.getId(x, y);
-
-        //if( !this.isValid(tileIndex) ) console.log( 'bug' )
 
         if (!(tileIndex in this.data)) this.data[tileIndex] = new Tiles(this.defaultValue);
         return this.data[tileIndex].getValue();
     }
 
     getTileFlags( x, y ) {
-        //let e = new Error('Invalid parameter');
-        //if (arguments.length < 1) throw e;
+        let e = new Error('Invalid parameter');
+        if (arguments.length < 1) throw e;
         // Argument-shuffling
         if (typeof(x) === 'object') {  y = x.y; x = x.x; }
-        //if (arguments.length === 1) { x = x.x; y = x.y; }
-        //if (!this.testBounds(x, y))  throw e;
+        if (!this.testBounds(x, y))  throw e;
 
         let tileIndex = this.getId(x, y);
 
@@ -283,11 +264,11 @@ export class GameMap {
 
     getTiles( x, y, w, h ) {
 
-        //let e = new Error('Invalid parameter');
-        //if (arguments.length < 3) throw e;
+        let e = new Error('Invalid parameter');
+        if (arguments.length < 3) throw e;
         // Argument-shuffling
         if (arguments.length === 3) { h = w; w = y; y = x.y; x = x.x; }
-        //if (!this.testBounds(x, y)) throw e;
+        if (!this.testBounds(x, y)) throw e;
 
         let res = [];
         for (let a = y, ylim = y + h; a < ylim; a++) {
@@ -305,8 +286,8 @@ export class GameMap {
     getTileValues( x, y, w, h, result ) {
 
         result = result || [];
-        //let e = new Error('Invalid parameter');
-        //if (arguments.length < 3) throw e;
+        let e = new Error('Invalid parameter');
+        if (arguments.length < 3) throw e;
         // Argument-shuffling
         if (arguments.length === 3) { h = w; w = y;  y = x.y; x = x.x; }
         //if (!this.testBounds(x, y)) throw e;
@@ -434,7 +415,6 @@ export class GameMap {
         if (!this.testBounds(x, y)) throw e;
 
         let id = this.getId(x, y);
-
         this.data[id].setFlags(flags);
 
     }
@@ -448,7 +428,6 @@ export class GameMap {
         if (!this.testBounds(x, y)) throw e;
 
         let id = this.getId(x, y);
-
         this.data[id].addFlags(flags);
 
     }
@@ -461,7 +440,6 @@ export class GameMap {
         if (!this.testBounds(x, y)) throw new Error('GameMap removeTileFlags called with invalid bounds'+ x + ', ' + y);
 
         let id = this.getId( x, y );
-
         this.data[id].removeFlags(flags);
 
         ///this.upLayer( id, this.data[id].getValue(), x, y )

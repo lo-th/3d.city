@@ -27,7 +27,8 @@ export class RailTool extends BaseToolConnector {
         tile = ZoneUtils.normalizeRoad(tile);
 
         switch (tile) {
-            case Tile.DIRT: this._worldEffects.setTile(x, y, Tile.LHRAIL | Tile.BULLBIT | Tile.BURNBIT); break;
+            //case Tile.DIRT: this._worldEffects.setTile(x, y, Tile.LHRAIL | Tile.BULLBIT | Tile.BURNBIT); break;
+            case Tile.DIRT: this._worldEffects.setTile(x, y, Tile.LHRAIL , Tile.BULLBIT | Tile.BURNBIT); break;
 
             case Tile.RIVER:
             case Tile.REDGE:

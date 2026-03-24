@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>OpenPublica</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+<link rel="icon" href="favicon.ico" />
+</head>
+<style>
+*{ padding:0; margin: 0; -o-user-select:none; -ms-user-select:none; -khtml-user-select:none; -webkit-user-select:none; -moz-user-select: none;}
+html { width:100%; height:100%; }
+body { background:#8397ac; font:10px sans-serif; width:100%; height:100%; color:#FFFFFF; overflow: hidden; }
+
+#debug{ }
+#hub{ position:absolute; top:0; left:0; height:100%; width:100%; pointer-events:none; display:block; text-align:center;}
+
+</style>
+<script type="module">
+	import * as THREE from './build/three.module.min.js'
+	import * as UIL from './build/uil.module.js'
+	import { MapGenerator } from './src/micro/map/MapGenerator.js';
+	import { OrbitControls } from './src/jsm/controls/OrbitControls.js';
+	import { GroundShader } from './src/city3d/GroundShader.js';
+
+
+
+	let camera, scene, renderer, orbitControls;
+	let mesh;
+
+	init();
+	animate();
+
+	function randInt( low, high ) {return  low + Math.floor( Math.random() * ( high - low + 1 ) ) }
+
+	function init() {
+
+		camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 0.1, 100 );
+		camera.position.z = 5;
+		camera.position.y = 5;
+
+		scene = new THREE.Scene();
+
+		const textureTile = new THREE.TextureLoader().load( 'assets/textures/tiles.png' );
+		textureTile.colorSpace = THREE.SRGBColorSpace;
+
+		const textureNorm = new THREE.TextureLoader().load( 'assets/textures/tiles_n.png' );
+
+		const geometry = new THREE.PlaneGeometry( 16, 16, 7, 7 );
+		geometry.rotateX( -Math.PI * 0.5 );
+		
+		geometry.setAttribute( 'color', new THREE.BufferAttribute( new Float32Array(8 * 8 * 4), 4 ) );
+
+		const position = geometry.attributes.position;
+		console.log( position )
+		const colors = geometry.attributes.color;
+		const ar = colors.array
+		let n
+
+		for (let i = 0; i < colors.count; i++) {
+			n = i*4
+			ar[n] = randInt(1,30)
+			ar[n+1] = randInt(1,30)
+			ar[n+2] = randInt(1,30)
+			ar[n+3] = 1//randInt(1,30)
+			//colors.setXYZW( i * 4 , randInt(1,30), randInt(1,30), randInt(1,30), randInt(1,30) );
+		}
+
+		colors.needsUpdate = true;
+
+		console.log( colors )
+
+
+		const material = new GroundShader( { map:textureTile, normalMap:textureNorm } );
+
+		mesh = new THREE.Mesh( geometry, material );
+		scene.add( mesh );
+
+		const dirLight = new THREE.DirectionalLight( 0xffffff, 5 );
+		dirLight.position.set( -5, 10, 6 );
+		scene.add( dirLight );
+		
+
+		renderer = new THREE.WebGLRenderer( { antialias: true } );
+		renderer.setPixelRatio( window.devicePixelRatio );
+		renderer.setSize( window.innerWidth, window.innerHeight );
+		document.body.appendChild( renderer.domElement );
+
+		orbitControls = new OrbitControls( camera, renderer.domElement );
+		orbitControls.target.set( 0, 0, 0 );
+		orbitControls.enablePan = false;
+		orbitControls.update();
+
+		//
+
+		window.addEventListener( 'resize', onWindowResize );
+
+	}
+
+	function onWindowResize() {
+
+		camera.aspect = window.innerWidth / window.innerHeight;
+		camera.updateProjectionMatrix();
+
+		renderer.setSize( window.innerWidth, window.innerHeight );
+
+	}
+
+	function animate() {
+
+		requestAnimationFrame( animate );
+
+		mesh.rotation.y += 0.0005;
+		//mesh.rotation.y += 0.01;
+
+		renderer.render( scene, camera );
+
+	}
+
+
+
+
+
+	/*let map
+	let canvas = null 
+
+	const mapGen = new MapGenerator()
+
+	const MAP_SIZES = {
+	    SMALL:  [64,  64],
+	    MEDIUM: [128, 128],
+	    LARGE:  [192, 192],
+	};
+
+	const setting = {
+		size:'MEDIUM'
+	}
+
+
+	const ui = new UIL.Gui({w:320})
+	ui.add( 'title',  { name:'MAP Gen', h:22, align:'center' })
+	ui.add( setting, 'size', { type:'button', values: ['SMALL', 'MEDIUM', 'LARGE'], selectable:true, unselectable:true, selectmulty:true, p:0, h:30 })
+
+	ui.add('button', { name:'GENERATE', h:30, callback:gen })
+
+
+	function gen(){
+
+		const size = MAP_SIZES[setting.size];
+
+		map = mapGen.construct( size[0], size[1], true );
+
+		makePreview(map)
+
+	}
+
+	function makePreview ( map ){
+
+		if(canvas) document.body.removeChild(canvas)
+
+		const w = map.width
+		const h = map.height
+
+		canvas = document.createElement("canvas")
+		canvas.width = w
+		canvas.height = h
+
+		canvas.style.cssText = 'position:absolute; left:10px; top:10px;transform: scale(8);'
+
+		const ctx = canvas.getContext('2d')
+		ctx.fillStyle = "blue";
+		ctx.fillRect(0, 0, w, h);
+
+		//const monImageData = ctx.createImageData(w, h)
+		const imageData = ctx.getImageData(0, 0, w, h);
+		const data = imageData.data;
+		const pp = map.tilesData
+
+		let n, c
+
+		for (var i = 0; i < pp.length; i ++) {
+			n = i*4;
+			c = pp[i]
+			if(c<2){
+				data[n] = 255-(c*4); // rouge
+		        data[n + 1] = 128-(c*4); // vert
+		        data[n + 2] = 0; // bleu
+			}
+			else if(c<21){
+				data[n] = 0; // rouge
+		        data[n + 1] = 128-(c*4); // vert
+		        data[n + 2] = 255-(c*4); // bleu
+
+			}else {
+				data[n] = c*2; // rouge
+		        data[n + 1] = 128+(c*2); // vert
+		        data[n + 2] = c*2; // bleu
+
+			}
+		    data[n + 4] = 255
+		}
+
+		ctx.putImageData(imageData, 0, 0);
+		document.body.appendChild(canvas)
+
+	}*/
+
+
+  
+</script>
+
+<div id="container"></div>
+<div id="hub"></div>
+
+</body></html>

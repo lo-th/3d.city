@@ -1,7 +1,7 @@
-3d.city v 0.8.0
+3d.city v 0.9.0
 =======
 
-3d city builder [LAUNCH](http://lo-th.github.io/3d.city/index.html)<br>
+3d city builder [LAUNCH](https://lo-th.github.io/3d.city/index.html)<br>
 
 The goal is create 3d city builder to test performance for three.js webgl games<br>
 With minimum size impact and maximum speed.<br>
@@ -14,11 +14,16 @@ Game simulation work in a web worker.
 
 Work in progress
 
-<a target='_blank' href='http://lo-th.github.io/3d.city/index.html'><img src="http://lo-th.github.io/3d.city/assets/img/preview01.jpg"/></a><br>
-<a target='_blank' href='http://lo-th.github.io/3d.city/index.html'><img src="http://lo-th.github.io/3d.city/assets/img/preview02.jpg"/></a><br>
-<a target='_blank' href='http://lo-th.github.io/3d.city/index.html'><img src="http://lo-th.github.io/3d.city/assets/img/preview03.jpg"/></a><br>
+<a target='_blank' href='https://lo-th.github.io/3d.city/index.html'><img src="https://lo-th.github.io/3d.city/assets/img/preview01.jpg"/></a><br>
+<a target='_blank' href='https://lo-th.github.io/3d.city/index.html'><img src="https://lo-th.github.io/3d.city/assets/img/preview02.jpg"/></a><br>
+<a target='_blank' href='https://lo-th.github.io/3d.city/index.html'><img src="https://lo-th.github.io/3d.city/assets/img/preview03.jpg"/></a><br>
 
 Feature improvements
 
 add different envmap, add snow, destruct ...<br>
-correct message display.
+correct message display.<br><br>
+
+I'm going to do a big update very soon.<br>
+If you like it, sponsor me.
+
+

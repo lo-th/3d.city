@@ -1,8 +1,5 @@
-import * as THREE from '../../build/three.module.js'
+import * as THREE from '../../build/three.module.min.js'
 import * as UIL from '../../build/uil.module.js'
-import { GLTFLoader } from '../jsm/loaders/GLTFLoader.js';
-import { DRACOLoader } from '../jsm/loaders/DRACOLoader.js';
-import { RGBELoader } from '../jsm/loaders/RGBELoader.js';
 import { ImprovedNoise } from '../jsm/math/ImprovedNoise.js';
 //import { BufferGeometryUtils } from './jsm/utils/BufferGeometryUtils.js';
 
@@ -17,9 +14,15 @@ import { TrafficBase } from '../TrafficBase.js'
 
 //let Audio;
 
+const tmpPos = new THREE.Vector2( 0, 0 );
+
 export class View {
 
 	constructor ( isMobile, Hub, pix, isLow ) {
+
+		this.debugTime = true;
+
+		this.pauseRender = false
 
 		this.container = document.getElementById( 'container' );
 
@@ -31,7 +34,7 @@ export class View {
 
 		this.isMenu = false;
 
-		this.inMapGenation = false;
+		this.inMapGeneration = false;
 
 		this.isPixelStyle = false;
 
@@ -48,8 +51,9 @@ export class View {
 	    this.M_mesh = ['treeMeshs'     , 'townMeshs'     , 'houseMeshs'       , 'buildingMeshs' ];
 	    this.M_mats = ['townMaterial'  , 'townMaterial'  , 'buildingMaterial' , 'buildingMaterial' ];
 		
-		this.pix = window.devicePixelRatio;
-		if( this.pix > 2 ) this.pix = 2;
+		this.pix = 1//window.devicePixelRatio;
+		//if( this.pix > 2 ) this.pix = 2;
+
 
 		this.isLow = isLow || false;
 		
@@ -59,12 +63,14 @@ export class View {
 
 		this.isWithTree = true;
 	    this.isWithLight = true;
+	    this.withShadow = true;
 
 	    this.isStandardMaterial = true;
 
 		this.isWithEnv = true;
 	    this.isWithNormal = true;
-	    this.isWithRoughness = true
+	    this.isWithRoughness = false;
+	    
 		this.isWithFog = true;
 		this.isIsland = false;
 		this.isWinter = false;
@@ -80,7 +86,7 @@ export class View {
 
 		this.oldData = [];
 
-		this.tileSize = 64//64;
+		this.tileSize = 64;
 		
 
 		if(this.isMobile || this.isLow){ 
@@ -89,6 +95,7 @@ export class View {
 	        this.isWithEnv = false;
 	        this.isWithNormal = false;
 	        this.isWithLight = false;
+	        this.withShadow = false;
 	        this.tileSize = 32;
 	    }
 
@@ -157,6 +164,8 @@ export class View {
 	    this.meshs = {};
 
 	    this.mapSize = [128,128];
+	    this.layerW = 8;
+	    this.layerH = 8;
 	    this.nlayers = 64;
 
 	    //this.terrain = null;
@@ -229,7 +238,11 @@ export class View {
 		this.env = null
 
 		this.ease_p = -1
-		this.onEase = null;
+		this.onEase = false;
+
+		// Construction animation markers
+		this.constructionGroup = null;
+		this.constructionQueue = [];
 		
 
 		this.spriteLists = ['train', 'elico', 'plane', 'boat', 'monster', 'tornado', 'sparks'];
@@ -261,8 +274,16 @@ export class View {
         this.basePlane.position.copy( this.center )
         this.scene.add( this.basePlane );
 
+        if(this.withShadow){
+        	this.basePlane.receiveShadow = true;
+		}
+
         this.title = this.pool.title;
         this.title.material = this.titleMat
+        if(this.withShadow){
+        	this.title.receiveShadow = true;
+        	this.title.castShadow = true;
+		}
 
         
         
@@ -271,7 +292,7 @@ export class View {
 
 
         // traffic map 
-        this.traffic = new TrafficBase({ isStandard:this.isStandardMaterial })
+        this.traffic = new TrafficBase({ isStandard:this.isStandardMaterial, withShadow:this.withShadow })
 	    this.scene.add( this.traffic )
 
 	    // add random building 
@@ -324,7 +345,8 @@ export class View {
 
 	            this.screen = new THREE.Texture( this.canvas );
 	            //this.screen.minFilter = THREE.LinearFilter;
-	            this.screen.encoding = THREE.sRGBEncoding;
+	            //this.screen.encoding = THREE.sRGBEncoding;
+	            this.screen.colorSpace = THREE.SRGBColorSpace;
 	            this.plane.material.map = this.screen;
 	            this.plane.material.needsUpdate = true;
 	            
@@ -341,7 +363,7 @@ export class View {
 	fileSelect( e ){
 
 		hub.generate( true );
-        this.inMapGenation = true;
+        this.inMapGeneration = true;
 
 		const file = e.target.files[0]
 		const reader = new FileReader();
@@ -352,7 +374,6 @@ export class View {
 
         reader.onload = function (e) {
 
-        	
         	this.tmpGameData = e.target.result
         	this.openMap( 'LOADDONE' )
 
@@ -362,7 +383,7 @@ export class View {
 
 	openMap( type ){
 
-		if( this.isMobile && type==='LOAD' ){ 
+		if( this.isMobile && type === 'LOAD' ){ 
 			if( window.localStorage.getItem( 'micropolisJSGame' ) ) type = 'LOADDONE'
 			else return
 		}
@@ -395,7 +416,7 @@ export class View {
 		this.isMenu = false;
 
 		this.ease_p = 0;
-		this.onEase = this.easing;
+		this.onEase = true;
 
 		this.scene.remove( this.title )
 		this.scene.remove( this.plane )
@@ -425,21 +446,47 @@ export class View {
 
 		if( this.command === 'NEW' ){
 		
-		    Main.newMap('NEW')
+		    const self = this
 
 		    this.scene.add( this.plane )
 		    this.plane.position.copy(this.center)
 		    this.plane.position.y = 4
-		    this.plane.position.z = 128-5
+		    this.plane.position.z = this.mapSize[0]+6
 		    this.isMenu = true;
 
-		    this.plane.scale.set(4,4,4)
+		    this.plane.scale.set(3,3,3)
 
-		    this.ui.add('grid', { values:['NEW','HIGH'], selectable:false, bsize:[140, 30 ], spaces:[ 18,2 ], radius:30 }).onChange(  function(t){ setTimeout( Main.newMap, 1000, t ) } );
-		    this.ui.add('selector', { name:'', h:30, values:['LOW', 'MEDIUM', 'HARD'], radius:30, value:'MEDIUM', p:0 }).onChange( Main.setDifficulty )
-		    this.ui.add('button', { name:'PLAY THIS MAP', h:40, radius:40, p:20, forceWidth: 300 }).onChange( this.startPlay.bind(this) );
+		    this.ui.add('selector', { name:'Difficulty', h:30, values:['EASY', 'NORMAL', 'HARD'], radius:30, value:'NORMAL', p:0 }).onChange( Main.setDifficulty )
+		    this.ui.add('selector', { name:'Map Size', h:30, values:['SMALL', 'MEDIUM', 'LARGE'], radius:30, value:'MEDIUM', p:0 }).onChange( Main.setSize )
+
+		    this.ui.add('grid', { values:['GENERATE','PLAY'], h:40, selectable:false, bsize:[ 140, 30 ], spaces:[ 18,2 ], radius:30 }).onChange(  
+		    	function(t){ 
+		    		switch(t){
+		    			case 'GENERATE': self.generateNewMap(); break;
+		    			case 'PLAY': self.startPlay(); break;
+		    		}
+		    });
+
+		    // generate new map
+		    this.generateNewMap()
+
+		    //this.command = 'GENERATE'
 
 		}
+
+	}
+
+	done() {
+
+		this.init();
+		this.createMaterial()
+		Main.start();
+
+	}
+
+	generateNewMap(){
+
+		Main.newMap()
 
 	}
 
@@ -459,9 +506,11 @@ export class View {
 
 		let v = this.ease_p;
 		if( v >= 1 ) {
-			this.onEase = null
+			this.onEase = false;
 			v = 1;
-			this.endOpen()
+			this.endOpen();
+		} else {
+			this.ease_p += 0.01
 		}
 
 		let p = 19*0.5
@@ -473,9 +522,9 @@ export class View {
         let s = 1 + ( (128/19) - 1 ) * v;
         this.basePlane.scale.set( s, 1, s )
 
-		this.border.morphTargetInfluences[ 0 ] = 1 - v
+		//this.border.morphTargetInfluences[ 0 ] = 1 - v
 
-		this.ease_p = v + 0.01
+		this.resizeBorder( this.mapSize[0] * v )
 
 	}
 
@@ -483,40 +532,59 @@ export class View {
 
 	//----------------------------------- BORDER
 
+	resizeBorderGenerator( size ){
+		this.resizeBorder( size )
+		let p = 19*0.5
+		this.center.x = this.center.z = p + ( (size*0.5) - p ) * 1;
+		if(this.plane){
+			this.plane.position.copy(this.center)
+		    this.plane.position.y = 4
+		    this.plane.position.z = size+6
+		}
+		
+	}
+
 	addBorder() {
 
 		this.border = this.pool.border;
-		this.border_m = this.pool.border_min;
-		this.border_m.position.set( 0, 0, 0 )
-        this.border.position.set( 0, 0, 0 )
-        this.scene.add( this.border )
+		this.borderGeometry = this.border.geometry.clone()
+        this.border.position.set( 0, 0, 0 );
+        this.border.material = this.borderMat;
+        this.scene.add( this.border );
+        if(this.withShadow) this.border.receiveShadow = true;
+		
+	}
 
-        this.border.material = this.borderMat
-        this.border.geometry.morphAttributes.position = [ this.border_m.geometry.attributes.position ]
-        this.border.updateMorphTargets();
-        this.border.morphTargetInfluences[ 0 ] = 1;
+	resizeBorder( size ) {
+
+		const baseGeometry = this.borderGeometry;
+		const geometry = this.border.geometry;
+		//const center = new THREE.Vector3();
+		//geometry.boundingBox.getCenter( center );
+		const position = geometry.attributes.position;
+		const baseAr = baseGeometry.attributes.position.array;
+		const ar = position.array;
+		let i = position.count, n=0;
+
+		while(i--){
+			n = i*3;
+			if(baseAr[n]>9.5) ar[n] = baseAr[n] + (size-19.5);
+			if(baseAr[n+2]>9.5) ar[n+2] = baseAr[n+2] + (size-19.5)
+		}
+
+	    position.needsUpdate = true;
 
 	}
 
-	done() {
 
 
+	//----------------------------------- MATERIAL
 
-		//console.log( 'pool full loaded !!!' )
+	createTerrainMaterial() {
 
-		this.init();
-		this.createMaterial()
-
-		Main.start();
-
-	}
-
-	createMaterial() {
-
-		this.colors = {
-			ground: new THREE.Color( this.pool.color.ground ).convertSRGBToLinear(),
-			metal: new THREE.Color( this.pool.color.metal ).convertSRGBToLinear(),
-			sky: new THREE.Color( this.pool.color.sky ).convertSRGBToLinear()
+		if(this.terrainMaterials.length > 0){
+			for(let i in this.terrainMaterials) this.terrainMaterials[i].dispose();
+			this.terrainMaterials = []
 		}
 
 		let i = this.nlayers; 
@@ -525,13 +593,34 @@ export class View {
 
 		while(i--){ 
 			this.terrainMaterials[i] = new Type({ color:0xffffff, vertexColors:true, ...option })
-			this.modifyShader( this.terrainMaterials[i] )
+			this.modifyShader2( this.terrainMaterials[i] )
 		}
 
+	}
+
+	createMaterial() {
+
+		this.colors = {
+			ground: new THREE.Color( this.pool.color.ground ),//.convertSRGBToLinear(),
+			metal: new THREE.Color( this.pool.color.metal ),//.convertSRGBToLinear(),
+			sky: new THREE.Color( this.pool.color.sky ),//.convertSRGBToLinear()
+		}
+
+		//let i = this.nlayers; 
+		let option = this.isStandardMaterial ? { roughness:1, metalness:1 } : {}
+		let Type = this.isStandardMaterial ? THREE.MeshStandardMaterial : THREE.MeshBasicMaterial;
+
+		/*while(i--){ 
+			this.terrainMaterials[i] = new Type({ color:0xffffff, vertexColors:true, ...option })
+			this.modifyShader( this.terrainMaterials[i] )
+		}*/
+
+		this.createTerrainMaterial()
+
         this.townMaterial = new Type( { map: this.pool.texture('town'), ...option } );
-        this.modifyShader( this.townMaterial )
+        this.modifyShader2( this.townMaterial )
         this.buildingMaterial = new Type( { map: this.pool.texture('building'), ...option } ) 
-        this.modifyShader( this.buildingMaterial )
+        this.modifyShader2( this.buildingMaterial )
 
         this.titleMat = new Type( { map: this.pool.makeTitleTexture(), ...option } ) 
         if( this.isStandardMaterial ){ 
@@ -546,7 +635,7 @@ export class View {
 
         if( this.isStandardMaterial ) { option.roughness = 0.2;  option.metalness = 0.8 }
         //this.borderMat = new Type({ map:this.pool.texture('border'), alphaMap:this.pool.texture('border_a'), transparent:true, ...option })
-        this.borderMat = new Type({ color:this.colors.metal , alphaMap:this.pool.texture('border_a'), transparent:true, ...option })
+        this.borderMat = new Type({ color:this.colors.metal, alphaMap:this.pool.texture('border'), transparent:true, side:THREE.DoubleSide, ...option })
 
         if( this.isStandardMaterial ) { option.roughness = 0.8;  option.metalness = 0.2 }
         this.planeMat = new Type({ color:this.colors.ground, depthWrite:false, ...option })
@@ -587,6 +676,72 @@ export class View {
 
 	}
 
+	modifyShader2( m ) {
+
+		if( !this.isStandardMaterial ) return
+
+		m.defines = {
+			//'USE_NORMALMAP_TANGENTSPACE' : true
+		}
+
+		m.onBeforeCompile = function ( s ) {
+			s.fragmentShader = s.fragmentShader.replace( '#include <normal_fragment_maps>', `
+	            #ifdef USE_NORMALMAP_OBJECTSPACE
+
+					normal = texture2D( normalMap, vNormalMapUv ).xyz * 2.0 - 1.0; // overrides both flatShading and attribute normals
+
+					#ifdef FLIP_SIDED
+
+						normal = - normal;
+
+					#endif
+
+					#ifdef DOUBLE_SIDED
+
+						normal = normal * faceDirection;
+
+					#endif
+
+					normal = normalize( normalMatrix * normal );
+
+				#elif defined( USE_NORMALMAP_TANGENTSPACE )
+
+					vec3 mapN = texture2D( normalMap, vNormalMapUv ).xyz * 2.0 - 1.0;
+					
+					#if defined( USE_PACKED_NORMALMAP )
+
+						mapN = vec3( mapN.xy, sqrt( saturate( 1.0 - dot( mapN.xy, mapN.xy ) ) ) );
+
+					#endif
+
+					mapN.xy *= normalScale;
+					mapN.z = 1.0;
+
+					normal = normalize( tbn * mapN );
+
+				#elif defined( USE_BUMPMAP )
+
+					normal = perturbNormalArb( - vViewPosition, normal, dHdxy_fwd(), faceDirection );
+
+				#endif
+	        `);
+			s.fragmentShader = s.fragmentShader.replace( '#include <roughnessmap_fragment>', `
+	            float roughnessFactor = roughness;
+	            #ifdef USE_NORMALMAP
+	            vec4 texelRoughness = texture2D( normalMap, vNormalMapUv );
+	            roughnessFactor *= texelRoughness.b;
+	            #endif
+	        `);
+	        s.fragmentShader = s.fragmentShader.replace( '#include <metalnessmap_fragment>', `
+	            float metalnessFactor = metalness;
+	            #ifdef USE_NORMALMAP
+	            metalnessFactor *= 1.0 - texelRoughness.b;
+	            #endif
+	        `);
+	    }
+
+	}
+
 	
 
 
@@ -594,7 +749,6 @@ export class View {
 
     init () {
 
-    	this.tmpPos = new THREE.Vector2( 0, 0 );
 
     	//if(this.isMobile) this.pix = 0.5;
     	//this.clock = new THREE.Clock();
@@ -629,19 +783,19 @@ export class View {
 
 
          //this.renderer = new THREE.WebGLRenderer({ canvas:this.canvas, antialias:false });
-    	let renderer = new THREE.WebGLRenderer({ antialias:false });
+    	//let renderer = new THREE.WebGLRenderer({ antialias:!this.isMobile });
+    	const renderer = new THREE.WebGLRenderer({ antialias:false });
         renderer.setSize( this.vsize.x, this.vsize.y );
         renderer.setPixelRatio( this.pix )
     	//renderer.sortObjects = false;
     	//renderer.sortElements = false;
     	//renderer.autoClear = this.isWithBackground;
 
-    	renderer.outputEncoding = THREE.sRGBEncoding
-    	renderer.toneMapping = THREE.ACESFilmicToneMapping
-    	//renderer.physicallyCorrectLights = true
-    	renderer.toneMappingExposure = 1.0
+    	//renderer.outputEncoding = THREE.sRGBEncoding
+    	renderer.toneMapping = THREE.NeutralToneMapping;
+    	renderer.toneMappingExposure = 0.5;
 
-    	this.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    	this.anisotropy = 1.0//renderer.capabilities.getMaxAnisotropy();
 
     	//this.renderer.autoClear = false;
         this.container.appendChild( renderer.domElement );
@@ -650,42 +804,51 @@ export class View {
 
         if( this.isWithEnv ){
 
-        	let envmap = this.pool.env;
-        	let pmremGenerator = new THREE.PMREMGenerator( renderer );
-    	    this.env = pmremGenerator.fromEquirectangular( envmap ).texture;
-    	    this.scene.background = this.env;
-			this.scene.environment = this.env;
-    	    envmap.dispose()
-    	    pmremGenerator.dispose()
+        	this.envmap = this.pool.env;
+        	this.envmap.mapping = THREE.EquirectangularReflectionMapping;
+        	//let pmremGenerator = new THREE.PMREMGenerator( renderer );
+    	    //this.env = pmremGenerator.fromEquirectangular( envmap ).texture;
+    	    this.scene.background = this.envmap;
+			this.scene.environment = this.envmap;
+			this.scene.backgroundBlurriness = 0.5;
+			this.scene.backgroundIntensity = 1.0;
+			this.scene.environmentIntensity = 1.5;
+    	    //envmap.dispose()
+    	    //pmremGenerator.dispose()
 
         }
 
 
         if( this.isWithLight ){
 
-            /*let light = new THREE.DirectionalLight( 0xffffff, 0.5 );//new THREE.SpotLight( 0xffffff, 1, 0, Math.PI / 2, 10, 2 );
-            light.position.set(  this.center.x+100 , 300, this.center.z-100 );
-            light.target.position.set( this.center.x, this.center.y, this.center.z );
-            this.scene.add( light );*/
+        	const sun = new THREE.DirectionalLight( 0xFFFFFF, 10 );
+			sun.position.set( this.center.x+10 , 100, this.center.z+50 );
+			sun.target.position.set( this.center.x, this.center.y, this.center.z );
+			sun.castShadow = true;
+			this.scene.add( sun );
+			this.scene.add( sun.target );
 
-            //let hemiLight = new THREE.HemisphereLight( 0xCC7F66, 0xEFEFFF, 0.8 );
-            //let hemiLight = new THREE.HemisphereLight( 0xffff00, 0xff8000, 1 );
-            //hemiLight.color.setHSL( 0.6, 1, 0.6 );
-            //hemiLight.groundColor.setHSL( 0.095, 1, 0.75 );
-           // hemiLight.position.set( 0, 20, 0 );
-            //this.scene.add( hemiLight );
+			if(this.withShadow){
 
+				this.renderer.shadowMap.enabled = true;
+				const shadow = sun.shadow;
+				shadow.mapSize.width = shadow.mapSize.height = 2048*2;
+				shadow.radius = 2;
+				shadow.bias = - 0.0005;
+				shadow.intensity = 1;
+				const shadowCam = shadow.camera, s = 100;
+				shadowCam.near = 50;
+				shadowCam.far = 150;
+				shadowCam.right = shadowCam.top	= s;
+				shadowCam.left = shadowCam.bottom = - s;
+				// debug shadow
+			    //this.scene.add(  new THREE.CameraHelper(shadowCam) );
 
-            //this.hemiLight = hemiLight;
+			}
 
+			this.sun = sun;
 
-
-            /*let pointLight = new THREE.PointLight( 0xFFFFFF, 1 );
-            pointLight.position.set( this.center.x, 10, this.center.x );
-            this.scene.add( pointLight );*/
-
-            //this.scene.add( new THREE.AmbientLight( 0xcc7f66 ) );
-
+			
 
         }
     	
@@ -697,7 +860,8 @@ export class View {
         	this.skyCanvasBasic = this.gradTexture([[0.51,0.49, 0.3], ['#cc7f66','#A7DCFA', 'deepskyblue']]);
         	this.skyCanvas = this.gradTexture([[0.51,0.49, 0.3], ['#cc7f66','#A7DCFA', 'deepskyblue']]);
         	this.skyTexture = new THREE.Texture(this.skyCanvas);
-        	this.skyTexture.encoding = THREE.sRGBEncoding
+        	//this.skyTexture.encoding = THREE.sRGBEncoding
+        	this.skyTexture.colorSpace = THREE.SRGBColorSpace;
 		    this.skyTexture.needsUpdate = true;
             this.back = new THREE.Mesh( new THREE.IcosahedronGeometry(300,1), new THREE.MeshBasicMaterial( { map:this.skyTexture, side:THREE.BackSide, depthWrite: false, fog:false }  ));
             this.scene.add( this.back );
@@ -756,7 +920,7 @@ export class View {
 
     	//requestAnimationFrame( function(t){ this.loop(t) }.bind(this) );
 
-    	if( this.onEase !== null ) this.onEase()
+    	if( this.onEase ) this.easing()
 
 	    if( this.dragMode() ){
 	        this.dragCenterposition();
@@ -764,14 +928,16 @@ export class View {
 	        this.updateKey();
 	    }
 
-	    this.render( time );
+	    this.render();
 
     }
 
 
     //----------------------------------- RENDER
 
-    render( time ) {
+    render() {
+
+    	if(this.pauseRender) return;
 
     	this.doResize()
     	this.renderer.render( this.scene, this.camera )
@@ -956,6 +1122,10 @@ export class View {
 
 		
 		let mesh = new THREE.Mesh( geo,  this.buildingMaterial );
+		if(this.withShadow){
+        	mesh.receiveShadow = true;
+		    mesh.castShadow = true;
+		}
 		//mesh.name = geo.name;
 		return mesh;
 
@@ -1085,6 +1255,10 @@ export class View {
 
                 // final mesh
 	            this[mesh][layer] = new THREE.Mesh( g, this[mats] );
+	            if(this.withShadow){
+	            	this[mesh][layer].receiveShadow = true;
+				    this[mesh][layer].castShadow = true;
+				}
 	            this.scene.add( this[mesh][layer] );
 
             }
@@ -1221,7 +1395,8 @@ export class View {
 		    	}
 		    }
 		    this.skyTexture = new THREE.Texture(this.skyCanvas);
-		    this.skyTexture.encoding = THREE.sRGBEncoding
+		    //this.skyTexture.encoding = THREE.sRGBEncoding
+		    this.skyTexture.colorSpace = THREE.SRGBColorSpace;
 		    this.skyTexture.needsUpdate = true;
 		    this.back.material.map = this.skyTexture;
 		} else {
@@ -1252,8 +1427,18 @@ export class View {
 
 	initTerrain() {
 
+		//if(this.debugTime) console.time("initTerrain");
+
 		this.center.x = this.mapSize[0]*0.5;
 		this.center.z = this.mapSize[1]*0.5;
+
+		// Update layer dimensions based on current map size
+		this.layerW = Math.ceil(this.mapSize[0] / 16);
+		this.layerH = Math.ceil(this.mapSize[1] / 16);
+		this.nlayers = this.layerW * this.layerH;
+
+		// rebuild terrain material 
+		this.createTerrainMaterial()
 
 		// create terrain if not existe
         if( this.miniTerrain.length === 0 ){
@@ -1264,10 +1449,11 @@ export class View {
 
         	let colors;
 
-        	for( i=0; i<8; i++){
-        		for( j=0; j<8; j++){
+        	for( i=0; i<this.layerH; i++){
+        		for( j=0; j<this.layerW; j++){
         		
-                    geo = new THREE.PlaneBufferGeometry( 16, 16, divid, divid );
+                    //geo = new THREE.PlaneBufferGeometry( 16, 16, divid, divid );
+                    geo = new THREE.PlaneGeometry( 16, 16, divid, divid );
                     geo.rotateX( -Math.PI * 0.5 );
                     geo.translate( (8+j*16)-0.5, 0, (8+i*16)-0.5 );
 
@@ -1277,6 +1463,10 @@ export class View {
                     geo.setAttribute( 'color', new THREE.Float32BufferAttribute( colors, 3 ) );
 
                     mesh = new THREE.Mesh( geo, this.terrainMaterials[ n ] )
+
+                    if(this.withShadow){
+		            	mesh.receiveShadow = true;
+					}
 	        		
                    // if( this.isWithLight ) mesh = new THREE.Mesh( geo, new THREE.MeshStandardMaterial({ color:0xffffff, metalness:this.metalness, roughness:this.roughness, wireframe:this.wireframe, vertexColors:true }) );
                     //else mesh = new THREE.Mesh( geo, new THREE.MeshBasicMaterial({ color:0xffffff, vertexColors:true }) );
@@ -1289,6 +1479,8 @@ export class View {
 	        	}
 	        }
 	    }
+
+
 
 	    // update start map texture
 
@@ -1310,20 +1502,30 @@ export class View {
 		this.moveCamera();
 		if( this.isWithBackground ) this.back.position.copy(this.center);
 
-        
+		
+		//if(this.debugTime) console.timeEnd("initTerrain");
+
 	}
 
 	initTerrainTexture () {
 
 		let n = this.nlayers;
+
         let texture, textureN, textureR;
         let canvas = document.createElement('canvas');
 		canvas.width = canvas.height = 256*this.mu;
+		//let p = 256*this.mu
+
+		//console.log(canvas.width)
+
+		//let data = new Float32Array(p*p*4);
 
         while( n-- ){
 
+        	//texture = new THREE.DataTexture(data, p, p)
         	texture = new THREE.Texture( canvas );
         	this.pool.filterTexture( texture, {} )
+        	//texture.needsUpdate = false
 
         	this.miniTerrain[n].material.map = texture;
         	this.terrainTxt[n] = texture;
@@ -1356,6 +1558,8 @@ export class View {
 	//------------------------------------------HEIGHT
 
 	generateHeight() {
+
+		return
 
         let d = this.mapSize[0]+1;
 		let size = d * d;
@@ -1406,7 +1610,7 @@ export class View {
 		let pos, layer, h, v, d=0, n, nn, geo, id, deep;
         this.Gtmp = [];
 
-        let big = new THREE.PlaneGeometry( 16*8, 16*8, 16*8, 16*8 );
+        let big = new THREE.PlaneGeometry( this.mapSize[0], this.mapSize[1], this.mapSize[0], this.mapSize[1] );
         big.rotateX( -Math.PI * 0.5 );
         big.translate( this.center.x, 0, this.center.z );
 
@@ -1422,7 +1626,7 @@ export class View {
         big.computeVertexNormals();
         let rn = big.attributes.normal.array;
 
-        i = 64;
+        i = this.nlayers;
         while (i--){
 
         	geo = this.miniTerrain[i].geometry
@@ -1553,12 +1757,12 @@ export class View {
 	findLayer( x, y ) {
         let cx = Math.floor(x/16)
         let cy = Math.floor(y/16)
-		return cx+(cy*8)
+		return cx+(cy*this.layerW)
 	}
 
 	findLayerPos( x, y, layer ) {
-		let cy = Math.floor(layer/8)
-        let cx = Math.floor(layer-(cy*8))
+		let cy = Math.floor(layer/this.layerW)
+        let cx = layer-(cy*this.layerW)
 		let py = y-(16*cy)
         let px = x-(16*cx)
         return [px,py]
@@ -1575,8 +1779,8 @@ export class View {
 	}
 
 	findVertices( layer, pos ){
-		let cy = Math.floor(layer/8)
-        let cx = Math.floor(layer-(cy*8))
+		let cy = Math.floor(layer/this.layerW)
+        let cx = layer-(cy*this.layerW)
         let py = pos[1]-(16*cy)
         let px = pos[0]-(16*cx)
 		return px + (py*16)
@@ -1595,7 +1799,7 @@ export class View {
 
         this.raycaster.setFromCamera( this.rayVector, this.camera );
 
-        if( this.isMenu && !this.inMapGenation ){
+        if( this.isMenu && !this.inMapGeneration ){
         	
         	this.ui.noMouse();
 
@@ -2079,13 +2283,19 @@ export class View {
 
 	paintMap ( mapSize, island = false, withHeight = false ) {
 
+		if(this.debugTime) console.time("PaintMap");
+		
 		this.isIsland = island;
 
-		if( mapSize ) this.mapSize = mapSize;
+		if( mapSize ){ 
+			if(this.mapSize[0] !== mapSize[0]) this.resizeBorderGenerator(mapSize[0])
+			this.mapSize = mapSize;
+			this.layerW = Math.ceil(mapSize[0] / 16);
+			this.layerH = Math.ceil(mapSize[1] / 16);
+		}
 
 		if( this.basePlane ) this.scene.remove( this.basePlane )
 
-		//console.log(tilesData.length)
 		this.clearTerrain()
 		this.clearAllTrees()
 		this.clearHeight()
@@ -2104,7 +2314,7 @@ export class View {
 				// find layer
 				cy = Math.floor(y/16);
                 cx = Math.floor(x/16);
-				layer = cx+(cy*8);
+				layer = cx+(cy*this.layerW);
 
 				n--;
 				v = tilesData[n];
@@ -2148,10 +2358,15 @@ export class View {
 
 		this.initTerrain();
 
+		if(this.debugTime) console.time("drawLayer");
+		//this.pauseRender = true;
 		let i = this.nlayers;
 	    while(i--){ 
 	    	this.drawLayer( i, true )
 	    }
+
+	    //this.pauseRender = false;
+	    if(this.debugTime) console.timeEnd("drawLayer");
 		
 		this.populateTree();
 		
@@ -2159,7 +2374,9 @@ export class View {
 			this.fullRedraw = false;
 		}
 
-		this.inMapGenation = false;
+		if(this.debugTime) console.timeEnd("PaintMap");
+
+		this.inMapGeneration = false;
 
 	}
 
@@ -2187,17 +2404,17 @@ export class View {
 
 	}
 
-	drawLayer ( layer, full ){
+	drawLayer ( layer, full = false ){
 
 		let y = 16, x, v, n, cy, cx, ar, i, vx, vy, g;
-		let ly = Math.floor(layer/8)
-		let lx = Math.floor(layer-(ly*8))
+		const ly = Math.floor(layer/this.layerW);
+		const lx = Math.floor(layer-(ly*this.layerW));
 
-		let pix = 32;
-		let mid = pix * 0.5;
+
+		const pix = 32;
+		const mid = pix * 0.5;
 
 		while( y-- ){
-
 			x = 16;
 			while(x--){
 
@@ -2214,15 +2431,17 @@ export class View {
 
                 if( g < 240 ){
 
-                	this.tmpPos.x = x*mid*this.mu 
-                	this.tmpPos.y = (240 - y*mid)*this.mu
+                	tmpPos.x = x*mid*this.mu 
+                	tmpPos.y = (240 - y*mid)*this.mu
 
                 	// apply tile change
-            		this.renderer.copyTextureToTexture( this.tmpPos, this.pool.tile('texture', g), this.terrainTxt[layer] );
-            		if( this.isWithNormal ) this.renderer.copyTextureToTexture( this.tmpPos, this.pool.tile('normal', g), this.terrainTxtN[layer] );
-            		if( this.isWithRoughness ) this.renderer.copyTextureToTexture( this.tmpPos, this.pool.tile('roughness', g), this.terrainTxtR[layer] );
+                	this.renderer.copyTextureToTexture( this.pool.tile('texture', g), this.terrainTxt[layer], null, tmpPos );
+                	//this.terrainTxt[layer].needsUpdate = false
+                	if( this.isWithNormal ) this.renderer.copyTextureToTexture( this.pool.tile('normal', g), this.terrainTxtN[layer], null, tmpPos );
+            		//if( this.isWithRoughness ) this.renderer.copyTextureToTexture( this.pool.tile('roughness', g), this.terrainTxtR[layer], null, tmpPos );
                 	
 	            }
+
 
 	            if( v > 239 ){
 
@@ -2378,8 +2597,6 @@ export class View {
 	// -----------------------
 
 	showPower (){
-
-		//if( !powerData ) return
 
 		let i = powerData.length, pos;
 		while(i--){
@@ -2541,7 +2758,7 @@ export class View {
 
 	}
 
-	bindKeys (){
+	/*bindKeys (){
 
 		let _this = this;
 
@@ -2570,6 +2787,41 @@ export class View {
 			}
 		}
 	    self.focus();
+
+	}*/
+
+	bindKeys (){
+
+		let _this = this;
+
+		document.addEventListener('keydown', function(e) {
+			switch ( e.code ) {
+			    case 'ArrowUp':    case 'KeyW': case 'KeyZ': _this.key[0] = 1; break; // up, W, Z
+				case 'ArrowDown':  case 'KeyS':              _this.key[1] = 1; break; // down, S
+				case 'ArrowLeft':  case 'KeyA': case 'KeyQ': _this.key[2] = 1; break; // left, A, Q
+				case 'ArrowRight': case 'KeyD':              _this.key[3] = 1; break; // right, D
+			}
+		}, false);
+		document.addEventListener('keyup', function(e) {
+			switch ( e.code ) {
+				case 'ArrowUp':    case 'KeyW': case 'KeyZ': _this.key[0] = 0; break; // up, W, Z
+				case 'ArrowDown':  case 'KeyS':              _this.key[1] = 0; break; // down, S
+				case 'ArrowLeft':  case 'KeyA': case 'KeyQ': _this.key[2] = 0; break; // left, A, Q
+				case 'ArrowRight': case 'KeyD':              _this.key[3] = 0; break; // right, D
+			}
+		}, false);
+	    self.focus();
+
+	}
+
+
+	// ── Overlay Modes ────────────────────────────────────────────────────────
+	// Switch the active map overlay (power, crime, pollution, traffic, none).
+	// Currently the power overlay is always visible when power data is present;
+	// this method stores the requested mode and extends that logic in future.
+	setOverlayMode ( type ) {
+
+		this.overlayMode = type || 'none';
 
 	}
 

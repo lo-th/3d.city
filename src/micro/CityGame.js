@@ -61,7 +61,7 @@ export class CityGame {
         }
 
 
-        if( p == "NEWMAP" ) Game.newMap(); 
+         
         if( p == "PLAYMAP" ) Game.playMap();
         if( p == "TOOL" ) Game.tool(e.data.name);
         if( p == "MAPCLICK" ) Game.mapClick(e.data.x, e.data.y, e.data.single || false);
@@ -69,8 +69,10 @@ export class CityGame {
         //if( p == "DESTROY" ) Game.destroy(e.data.x, e.data.y);
 
         //if( p == "RUN" && trans) updateTrans(e.data);
-
+        if( p == "NEWMAP" ) Game.newMap();
+        if( p == "MAPSIZE" ) Game.changeMapSize(e.data.n);
         if( p == "DIFFICULTY" ) Game.changeDifficulty(e.data.n);
+        
         if( p == "SPEED" ) Game.changeSpeed(e.data.n);
 
         if( p == "BUDGET") Game.handleBudgetRequest();
@@ -288,6 +290,10 @@ export class MainGame {
         }*/
     }
 
+    changeMapSize(n){
+        this.mapSize = [n,n];
+    }
+
     changeDifficulty(n){
         // 0: easy  1: medium  2: hard
         this.difficulty = n;
@@ -424,11 +430,11 @@ export class MainGame {
         this.budgetShowing = true;
 
         let budgetData = {
-            roadFund: this.simulation.budget.roadFund,
+            roadFund: this.simulation.budget.roadMaintenanceBudget,//roadFund,
             roadRate: Math.floor(this.simulation.budget.roadPercent * 100),
-            fireFund: this.simulation.budget.fireFund,
+            fireFund: this.simulation.budget.fireMaintenanceBudget,//fireFund,
             fireRate: Math.floor(this.simulation.budget.firePercent * 100),
-            policeFund: this.simulation.budget.policeFund,
+            policeFund: this.simulation.budget.policeMaintenanceBudget,//policeFund,
             policeRate: Math.floor(this.simulation.budget.policePercent * 100),
             taxRate: this.simulation.budget.cityTax,
             totalFunds: this.simulation.budget.totalFunds,

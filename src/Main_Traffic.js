@@ -1,5 +1,5 @@
 
-import * as THREE from '../build/three.module.js'
+import * as THREE from '../build/three.module.min.js'
 import * as UIL from '../build/uil.module.js'
 import { OrbitControls } from './jsm/controls/OrbitControls.js';
 
