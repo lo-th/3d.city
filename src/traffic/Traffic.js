@@ -1,5 +1,3 @@
- 
-export { TrafficWorld } from './core/TrafficWorld.js';
 
 const ctor = function(){};
 const breaker = {};

@@ -1,8 +1,7 @@
 import * as UIL from '../../build/uil.module.js'
 
-import { Main } from '../Main.js';
 import { Base } from './Base.js';
-
+import { AppState } from '../AppState.js'
 
 //------------------------------------------------------//
 //                   HUB INTERFACE                      //
@@ -246,12 +245,12 @@ export class Hub {
         //let b2 = this.addButton(this.full, 'New Map',  [276, 26, 22], 'position:absolute; top:150px; left:0px;');
         //var b3 = this.addButton(this.full, 'Height Map',  [120, 26, 22], 'position:absolute; top:150px; right:0px;');
         //let b4 = this.addButton(this.full, 'Load Map',  [276, 26, 22], 'position:absolute; top:90px; left:0px;');
-        //this.addSelector("DIFFICULTY", ['LOW', 'MEDIUM', 'HARD'], Main.setDifficulty, 0);
+        //this.addSelector("DIFFICULTY", ['LOW', 'MEDIUM', 'HARD'], AppState.main.setDifficulty, 0);
 
-        //b1.addEventListener('click',  function ( e ) { e.preventDefault(); Main.playMap(); }, false);
-        //b2.addEventListener('click',  function ( e ) { e.preventDefault(); Main.newMap(); }, false);
-       // b3.addEventListener('click',  function ( e ) { e.preventDefault(); Main.newHeightMap(); }, false);
-        //b4.addEventListener('click',  function ( e ) { e.preventDefault(); Main.loadGame(true); }, false);
+        //b1.addEventListener('click',  function ( e ) { e.preventDefault(); AppState.main.playMap(); }, false);
+        //b2.addEventListener('click',  function ( e ) { e.preventDefault(); AppState.main.newMap(); }, false);
+       // b3.addEventListener('click',  function ( e ) { e.preventDefault(); AppState.main.newHeightMap(); }, false);
+        //b4.addEventListener('click',  function ( e ) { e.preventDefault(); AppState.main.loadGame(true); }, false);
 
     }
 
@@ -268,12 +267,12 @@ export class Hub {
     	var b2 = this.addButton(this.full, 'New Map',  [120, 26, 22], 'position:absolute; top:150px; left:0px;');
         var b3 = this.addButton(this.full, 'Height Map',  [120, 26, 22], 'position:absolute; top:150px; right:0px;');
         var b4 = this.addButton(this.full, 'Load Map',  [276, 26, 22], 'position:absolute; top:90px; left:0px;');
-        this.addSelector("DIFFICULTY", ['LOW', 'MEDIUM', 'HARD'], Main.setDifficulty, 0);
+        this.addSelector("DIFFICULTY", ['LOW', 'MEDIUM', 'HARD'], AppState.main.setDifficulty, 0);
 
-        b1.addEventListener('click',  function ( e ) { e.preventDefault(); Main.playMap(); }, false);
-        b2.addEventListener('click',  function ( e ) { e.preventDefault(); Main.newMap(); }, false);
-        b3.addEventListener('click',  function ( e ) { e.preventDefault(); Main.newHeightMap(); }, false);
-        b4.addEventListener('click',  function ( e ) { e.preventDefault(); Main.loadGame(true); }, false);*/
+        b1.addEventListener('click',  function ( e ) { e.preventDefault(); AppState.main.playMap(); }, false);
+        b2.addEventListener('click',  function ( e ) { e.preventDefault(); AppState.main.newMap(); }, false);
+        b3.addEventListener('click',  function ( e ) { e.preventDefault(); AppState.main.newHeightMap(); }, false);
+        b4.addEventListener('click',  function ( e ) { e.preventDefault(); AppState.main.loadGame(true); }, false);*/
 
     }
 
@@ -318,13 +317,13 @@ export class Hub {
         this.toolSet.appendChild(img);
         img.style.cssText ='position:absolute; margin:0px; padding:0px; top:0px; right:0px; width:198px; height:396px; pointer-events:none;';
 
-        this.addSelector("Speed", ['II', '>', '>>', '>>>', '>>>'], Main.setSpeed, 2, [20,20,20,20,20]);
+        this.addSelector("Speed", ['II', '>', '>>', '>>>', '>>>'], AppState.main.setSpeed, 2, [20,20,20,20,20]);
 
         var b1 = this.addButton(this.hub, 'Budget', [75,16,14], 'position:absolute; left:10px; top:-7px; font-weight:bold;', true);
-        b1.addEventListener('click',  function ( e ) { e.preventDefault(); Main.getBudjet(); }, false);
+        b1.addEventListener('click',  function ( e ) { e.preventDefault(); AppState.main.getBudjet(); }, false);
 
         var b2 = this.addButton(this.hub, 'Eval', [75,16,14], 'position:absolute; left:110px; top:-7px; font-weight:bold;', true);
-        b2.addEventListener('click',  function ( e ) { e.preventDefault(); Main.getEval(); }, false);
+        b2.addEventListener('click',  function ( e ) { e.preventDefault(); AppState.main.getEval(); }, false);
 
         /*var b3 = this.addButton(this.hub, 'Disaster', [75,16,14], 'position:absolute; left:210px; top:-7px; font-weight:bold;', true);
         b3.addEventListener('click',  function ( e ) { e.preventDefault();  _this.openDisaster(); }, false);*/
@@ -357,7 +356,7 @@ export class Hub {
                 e.preventDefault();
                 _this.hideoldSel();
                 _this.H[this.name].style.background = '#ffffff';
-                Main.setTimeColors(this.name);
+                AppState.main.setTimeColors(this.name);
                  }, false);
             this.H[i]=dd;
         }
@@ -369,8 +368,8 @@ export class Hub {
         this.hub.appendChild(winter);
 
         winter.addEventListener('click',  function ( e ) { 
-            view3d.winterSwitch();
-            if(view3d.isWinter) this.style.background = 'rgba(255,255,255,0.5);';
+            AppState.view3d.winterSwitch();
+            if(AppState.view3d.isWinter) this.style.background = 'rgba(255,255,255,0.5);';
             else  this.style.background = 'rgba(0,0,0,0);';
         }, false);
 
@@ -502,7 +501,7 @@ export class Hub {
             this.aboutWindow.style.display = 'block';
         }
 
-        Main.showStats();
+        AppState.main.showStats();
 
         this.aboutWindow.className = "open";
 
@@ -513,7 +512,7 @@ export class Hub {
     }
 
     closeAbout  (){
-        Main.hideStats();
+        AppState.main.hideStats();
 
         this.aboutWindow.style.display = 'none';
         this.aboutWindow.className = "close";
@@ -652,9 +651,9 @@ export class Hub {
             var bg4 = this.addButton(this.exitWindow, 'LOAD', [96,16,14], 'position:absolute; left:10px; top:130px;');
 
             bg1.addEventListener('click',  function(e){ e.preventDefault(); _this.closeExit(); }, false);
-            bg2.addEventListener('click',  function(e){ e.preventDefault(); Main.newGameMap(); }, false);
-            bg3.addEventListener('click',  function(e){ e.preventDefault(); Main.saveGame(); }, false);
-            bg4.addEventListener('click',  function(e){ e.preventDefault(); Main.loadGame(); }, false);
+            bg2.addEventListener('click',  function(e){ e.preventDefault(); AppState.main.newGameMap(); }, false);
+            bg3.addEventListener('click',  function(e){ e.preventDefault(); AppState.main.saveGame(); }, false);
+            bg4.addEventListener('click',  function(e){ e.preventDefault(); AppState.main.loadGame(); }, false);
 
             /*var x = document.createElement("INPUT");
             x.setAttribute("id", "fileToLoad");
@@ -759,7 +758,7 @@ export class Hub {
         this.budgetWindow.style.display = 'none';
         this.budgetWindow.className = "close";
 
-        Main.setBudjet([this.taxRate, this.roadRate, this.fireRate, this.policeRate ]);
+        AppState.main.setBudjet([this.taxRate, this.roadRate, this.fireRate, this.policeRate ]);
     }
 
     closeBudget  (){
@@ -788,7 +787,7 @@ export class Hub {
             for(var i=0; i<this.disasterTypes.length; i++){
                 this.disasterButtons[i] = this.addButton(this.disasterWindow, this.disasterTypes[i].toUpperCase(), [96,16,14],'position:absolute; left:10px; top:'+(10+(i*40))+'px;');
                 this.disasterButtons[i].name = this.disasterTypes[i];
-                this.disasterButtons[i].addEventListener('click',  function(e){ e.preventDefault(); Main.setDisaster(this.name); }, false);
+                this.disasterButtons[i].addEventListener('click',  function(e){ e.preventDefault(); AppState.main.setDisaster(this.name); }, false);
             }
         } else {
             this.disasterWindow.style.display = 'block';
@@ -1008,7 +1007,7 @@ export class Hub {
             this.currentToolName = 0;
         }
 
-        Main.selectTool(this.currentToolName);
+        AppState.main.selectTool(this.currentToolName);
 
     }
 

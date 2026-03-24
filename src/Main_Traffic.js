@@ -1,7 +1,7 @@
 
-import * as THREE from '../build/three.module.min.js'
+import * as THREE from 'three'
 import * as UIL from '../build/uil.module.js'
-import { OrbitControls } from './jsm/controls/OrbitControls.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 import { TrafficBase } from './TrafficBase.js'
 

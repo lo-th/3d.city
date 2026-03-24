@@ -1,4 +1,4 @@
-import { LinearTransfer, Matrix3, SRGBTransfer, SRGBColorSpace, ColorManagement } from '../../../build/three.core.min.js';
+import { LinearTransfer, Matrix3, SRGBTransfer, SRGBColorSpace, ColorManagement } from '../../three/three.core.min.js';
 
 /** @module ColorSpaces */
 

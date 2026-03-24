@@ -1,10 +1,10 @@
-import * as THREE from '../../build/three.module.min.js'
-import * as UIL from '../../build/uil.module.js'
+import * as THREE from '../three/three.module.min.js'
 import { ImprovedNoise } from '../jsm/math/ImprovedNoise.js';
+;
+import * as UIL from '../../build/uil.module.js'
 //import { BufferGeometryUtils } from './jsm/utils/BufferGeometryUtils.js';
 
-import { Main } from '../Main.js';
-
+import { AppState } from '../AppState.js'
 import { Base } from './Base.js';
 import { BuildTool } from './BuildTool.js';
 import { Pool } from './Pool.js';
@@ -18,7 +18,7 @@ const tmpPos = new THREE.Vector2( 0, 0 );
 
 export class View {
 
-	constructor ( isMobile, Hub, pix, isLow ) {
+	constructor () {
 
 		this.debugTime = true;
 
@@ -30,7 +30,6 @@ export class View {
 		this.modelPath = './assets/models/'
 		this.rootModel = this.modelPath + 'world.glb';
 
-		this.hub = null;
 
 		this.isMenu = false;
 
@@ -55,15 +54,13 @@ export class View {
 		//if( this.pix > 2 ) this.pix = 2;
 
 
-		this.isLow = isLow || false;
-		
-		this.isMobile = isMobile || false;
+		this.isLow = false;
 
 		this.ARRAY_TYPE = ( typeof Float32Array !== 'undefined' ) ? Float32Array : Array;
 
 		this.isWithTree = true;
 	    this.isWithLight = true;
-	    this.withShadow = true;
+	    this.withShadow = false;
 
 	    this.isStandardMaterial = true;
 
@@ -89,7 +86,7 @@ export class View {
 		this.tileSize = 64;
 		
 
-		if(this.isMobile || this.isLow){ 
+		if(AppState.isMobile){ 
 			this.pix = 1
 	        this.isWithTree = false;
 	        this.isWithEnv = false;
@@ -362,7 +359,7 @@ export class View {
 
 	fileSelect( e ){
 
-		hub.generate( true );
+		AppState.hub.generate( true );
         this.inMapGeneration = true;
 
 		const file = e.target.files[0]
@@ -383,7 +380,7 @@ export class View {
 
 	openMap( type ){
 
-		if( this.isMobile && type === 'LOAD' ){ 
+		if( AppState.isMobile && type === 'LOAD' ){ 
 			if( window.localStorage.getItem( 'micropolisJSGame' ) ) type = 'LOADDONE'
 			else return
 		}
@@ -439,7 +436,7 @@ export class View {
 			this.isMenu = false;
 			setTimeout( function(){ this.ui.dispose() }.bind(this), 100 )
 
-			Main.loadGame( true )
+			AppState.main.loadGame( true )
 
 
 		}
@@ -456,8 +453,8 @@ export class View {
 
 		    this.plane.scale.set(3,3,3)
 
-		    this.ui.add('selector', { name:'Difficulty', h:30, values:['EASY', 'NORMAL', 'HARD'], radius:30, value:'NORMAL', p:0 }).onChange( Main.setDifficulty )
-		    this.ui.add('selector', { name:'Map Size', h:30, values:['SMALL', 'MEDIUM', 'LARGE'], radius:30, value:'MEDIUM', p:0 }).onChange( Main.setSize )
+		    this.ui.add('selector', { name:'Difficulty', h:30, values:['EASY', 'NORMAL', 'HARD'], radius:30, value:'NORMAL', p:0 }).onChange( AppState.main.setDifficulty )
+		    this.ui.add('selector', { name:'Map Size', h:30, values:['SMALL', 'MEDIUM', 'LARGE'], radius:30, value:'MEDIUM', p:0 }).onChange( AppState.main.setSize )
 
 		    this.ui.add('grid', { values:['GENERATE','PLAY'], h:40, selectable:false, bsize:[ 140, 30 ], spaces:[ 18,2 ], radius:30 }).onChange(  
 		    	function(t){ 
@@ -480,13 +477,13 @@ export class View {
 
 		this.init();
 		this.createMaterial()
-		Main.start();
+		AppState.main.start();
 
 	}
 
 	generateNewMap(){
 
-		Main.newMap()
+		AppState.main.newMap()
 
 	}
 
@@ -498,7 +495,7 @@ export class View {
 
 		//
 		
-		Main.playMap()
+		AppState.main.playMap()
 
 	}
 
@@ -905,7 +902,7 @@ export class View {
 
 
 	    // active key
-	    if(!this.isMobile) this.bindKeys();
+	    if(!AppState.isMobile) this.bindKeys();
 
 
 	    this.loop(0)
@@ -1829,7 +1826,7 @@ export class View {
 
 					//this.tool.position.set(this.raypos.x, this.raypos.y, this.raypos.z);
 					if(this.mouse.click || this.mouse.drag){ 
-						Main.mapClick( this.currentTool.tool );
+						AppState.main.mapClick( this.currentTool.tool );
 
 					}
 					//if(this.mouse.click || this.currentTool.drag) mapClick();
@@ -1871,7 +1868,7 @@ export class View {
 
 		}
 
-        Main.sendTool( Base.toolSet[id].tool );
+        AppState.main.sendTool( Base.toolSet[id].tool );
 
 	}
 
@@ -1981,7 +1978,7 @@ export class View {
 					while(j--){
 						if(x == ar2[j][0] && y == ar2[j][1]){
 							this.showDestruct(ar);
-							Main.destroy(ar2[0][0], ar2[0][1]);
+							AppState.main.destroy(ar2[0][0], ar2[0][1]);
 							this.townLists[l].splice(i, 1);
 							this.rebuildTownLayer(l);
 							return;
@@ -1999,7 +1996,7 @@ export class View {
 					while(j--){
 						if(x == ar2[j][0] && y == ar2[j][1]){
 							this.showDestruct(ar);
-							Main.destroy(ar2[0][0], ar2[0][1]);
+							AppState.main.destroy(ar2[0][0], ar2[0][1]);
 							// IF HOUSE
 							if(ar[5]===1){ this.removeBaseHouse(ar[0],ar[1],ar[2]); }
 
@@ -2737,7 +2734,7 @@ export class View {
 
 	updateKey (){
 
-		if( this.isMobile ) return;
+		if( AppState.isMobile ) return;
 
 		let f = 0.3, d = false;
 

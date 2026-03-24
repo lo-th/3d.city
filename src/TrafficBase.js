@@ -1,11 +1,9 @@
-import * as THREE from '../build/three.module.min.js'
+import * as THREE from './three/three.module.min.js'
 import { GLTFLoader } from './jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from './jsm/loaders/DRACOLoader.js';
-import { OrbitControls } from './jsm/controls/OrbitControls.js';
 import { mergeGeometries } from './jsm/utils/BufferGeometryUtils.js';
 
-import { TrafficWorld, Traffic } from './traffic/Traffic.js';
-
+import { Traffic, TrafficWorld } from './traffic/TrafficLib.js';
 
 export class TrafficBase extends THREE.Group {
 

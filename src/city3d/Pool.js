@@ -1,10 +1,10 @@
-import * as THREE from '../../build/three.module.min.js'
+import * as THREE from '../three/three.module.min.js';
 import { GLTFLoader } from '../jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from '../jsm/loaders/DRACOLoader.js';
 import { HDRLoader } from '../jsm/loaders/HDRLoader.js';
-
-import { KTX2Loader } from '../jsm/loaders/KTX2Loader.js';
-import { KTX2Exporter } from '../jsm/exporters/KTX2Exporter.js';
+import { AppState } from '../AppState.js'
+//import { KTX2Loader } from '../jsm/loaders/KTX2Loader.js';
+//import { KTX2Exporter } from '../jsm/exporters/KTX2Exporter.js';
 
 
 export class Pool {
@@ -72,7 +72,7 @@ export class Pool {
 
 	displayMessage( str ){
 
-		if( hub ) hub.message( str )
+		AppState.hub.message( str )
 
 	}
  

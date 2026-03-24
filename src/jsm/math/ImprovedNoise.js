@@ -1,4 +1,4 @@
-import { MathUtils } from '../../../build/three.core.min.js';
+import { MathUtils } from '../../three/three.core.min.js';
 
 const { lerp } = MathUtils;
 

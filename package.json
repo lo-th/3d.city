@@ -2,9 +2,10 @@
   "name": "3d.city",
   "version": "0.9.0",
   "description": "JavaScript city builder game",
-  "main": "build/Main.js",
+  "main": "./build/Main.js",
   "repository": "lo-th/3d.city",
-  "jsnext:main": "build/citygame.module.js",
+  "type": "module",
+  "jsnext:main": "./build/citygame.module.js",
   "module": "build/citygame.module.js",
   "files": [
     "package.json",
@@ -43,7 +44,6 @@
     "@rollup/plugin-node-resolve": "^16.0.0",
     "@rollup/plugin-terser": "^1.0.0",
     "magic-string": "^0.30.0",
-    "rollup": "^4.6.0",
-    "three": "^0.183.2"
+    "rollup": "^4.6.0"
   }
 }

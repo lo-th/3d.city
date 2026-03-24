@@ -2,7 +2,7 @@ import {
 	Triangle,
 	Vector2,
 	Vector3
-} from '../../../build/three.core.min.js';
+} from '../../three/three.core.min.js';
 
 const _face = new Triangle();
 const _color = new Vector3();

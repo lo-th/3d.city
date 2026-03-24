@@ -29,20 +29,19 @@ function header() {
 
 export default [
 	{
-		input: 'src/Main.js',
+		input: {
+			'MainGame.module.js' : 'src/Main.js'
+		},
 		plugins: [
-			header()
+			header(),
+			terser()
 		],
 		preserveEntrySignatures: 'allow-extension',
-		external: ['three'],
 		output: [
 			{
 				format: 'esm',
-				globals: {
-		          three: 'THREE'
-		        },
-				file: 'build/MainGame.module.js',
-				plugins: [terser()]
+				dir: 'build',
+				entryFileNames: '[name]'
 			}
 		]
 	}

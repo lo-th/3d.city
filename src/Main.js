@@ -2,7 +2,7 @@
 import { Hub } from './city3d/Hub.js'
 import { View } from './city3d/View.js'
 import { saveAs } from './saveAs.js';
-
+import { AppState } from './AppState.js';
 
 
 var d = document.getElementById('debug');
@@ -15,7 +15,7 @@ window.gameData = null;
 window.powerData = null;
 window.layerData = [];
 
-window.isMobile = false;
+//window.isMobile = false;
 
 window.trans = false;
 window.newup = false;
@@ -38,13 +38,17 @@ export class Main {
 
         }
         
-        isMobile = testMobile();
+        AppState.isMobile = testMobile();
+        AppState.main = this;
 
         //storage = window.localStorage;
 
         this.initWorker()
-        window.hub = new Hub()
-        window.view3d = new View( isMobile );
+
+        AppState.hub = new Hub()
+        AppState.view3d = new View();
+
+
 
     }
 
@@ -73,7 +77,7 @@ export class Main {
 
     static start (){
 
-        hub.start();
+        AppState.hub.start();
 
         //hub.message('Generating world...')
         //post({ tell:"NEWMAP"})
@@ -93,7 +97,7 @@ export class Main {
 
     static mapClick( tool ) {
         
-        const p = view3d.raypos;
+        const p = AppState.view3d.raypos;
         if( p.x<0 && p.z<0 ) return
         //if( tool === 'bulldozer' ) view3d.testDestruct( p.x, p.y )
         post({tell:"MAPCLICK", x:p.x, y:p.z });
@@ -103,20 +107,20 @@ export class Main {
     // HUB
 
     static selectTool( id ) {
-        view3d.selectTool( id );
+        AppState.view3d.selectTool( id );
     }
 
     static setTimeColors( id ) {
-        view3d.setTimeColors(id);
+        AppState.view3d.setTimeColors(id);
     }
 
     static newMap() {
 
-        if( view3d.inMapGeneration ) return;
+        if( AppState.view3d.inMapGeneration ) return;
 
-        hub.generate( true );
+        AppState.hub.generate( true );
         withHeight = false;//t!=='NEW';
-        view3d.inMapGeneration = true;
+        AppState.view3d.inMapGeneration = true;
         //setTimeout( post, 0, {tell:"NEWMAP"});
         post({ tell:"NEWMAP" });
     
@@ -124,14 +128,14 @@ export class Main {
 
     static playMap() {
 
-        hub.initGameHub();
-        view3d.startZoom();
+        AppState.hub.initGameHub();
+        AppState.view3d.startZoom();
         post({tell:"PLAYMAP"});
 
     }
 
     static selectTool( id ) {
-        view3d.selectTool(id);
+        AppState.view3d.selectTool(id);
     }
 
     static setSize( t ) {
@@ -179,7 +183,7 @@ export class Main {
 
     static saveGame() {
         var saveCity = [];
-        view3d.saveCityBuild(saveCity);
+        AppState.view3d.saveCityBuild(saveCity);
         saveCity = JSON.stringify(saveCity);
        // var cityData = view3d.saveCityBuild();
         post({ tell:"SAVEGAME", saveCity:saveCity });
@@ -188,8 +192,8 @@ export class Main {
     static loadGame( atStart ) {
         var isStart = atStart || false;
         if( isStart ){ 
-            hub.generate( true );
-            view3d.inMapGeneration = true;
+            AppState.hub.generate( true );
+            AppState.view3d.inMapGeneration = true;
         }
         post({ tell:"LOADGAME", isStart:isStart });
     }
@@ -201,11 +205,11 @@ export class Main {
     }
 
     static showStats() {
-        view3d.isWithStats = true;
+        AppState.view3d.isWithStats = true;
     }
 
     static hideStats() {
-        view3d.isWithStats = false;
+        AppState.view3d.isWithStats = false;
     }
 
     
@@ -232,7 +236,7 @@ function makeGameSave( gameData, key ) {
     window.localStorage.setItem(key, gameData);
     console.log("game is save", key);
 
-    if( !view3d.isMobile ){
+    if( !AppState.isMobile ){
         var blob = new Blob([gameData], {type: "text/plain;charset=utf-8"});
         saveAs(blob, "city3d.json");
     }
@@ -248,8 +252,8 @@ function makeLoadGame( key, atStart ) {
     }
 
     let savegame 
-    if( view3d.tmpGameData ){ 
-        savegame = view3d.tmpGameData
+    if( AppState.view3d.tmpGameData ){ 
+        savegame = AppState.view3d.tmpGameData
     } else {
         savegame = window.localStorage.getItem( key )
     }
@@ -257,7 +261,7 @@ function makeLoadGame( key, atStart ) {
     if(savegame){ 
         console.log("game is load");
         post({tell:"MAKELOADGAME", savegame:savegame, isStart:isStart});
-        view3d.tmpGameData = null
+        AppState.view3d.tmpGameData = null
         
     } else {
         console.log("No loading game found");
@@ -288,9 +292,9 @@ function message( e ) {
 
         
 
-        hub.generate( false );
+        AppState.hub.generate( false );
         tilesData = e.data.tilesData;
-        view3d.paintMap( e.data.mapSize, e.data.island, withHeight );
+        AppState.view3d.paintMap( e.data.mapSize, e.data.island, withHeight );
    
     }
 
@@ -299,17 +303,17 @@ function message( e ) {
         //console.log('fullrebuild')
 
         if(e.data.isStart){
-            hub.generate( false );
+            AppState.hub.generate( false );
         }
-        view3d.fullRedraw = true;
+        AppState.view3d.fullRedraw = true;
         tilesData = e.data.tilesData;
-        view3d.paintMap( e.data.mapSize, e.data.island, withHeight );
-        view3d.loadCityBuild( e.data.cityData );
+        AppState.view3d.paintMap( e.data.mapSize, e.data.island, withHeight );
+        AppState.view3d.loadCityBuild( e.data.cityData );
 
-        if( e.data.isStart ) view3d.startPlay()
+        if( e.data.isStart ) AppState.view3d.startPlay()
     }
     if( phase == "BUILD"){
-        view3d.build(e.data.x, e.data.y);
+        AppState.view3d.build(e.data.x, e.data.y);
     }
     if( phase == "RUN"){
         tilesData = e.data.tilesData;
@@ -317,26 +321,26 @@ function message( e ) {
         spriteData = e.data.sprites;
         layerData = e.data.layer;
 
-        hub.updateCITYinfo(e.data.infos);
+        AppState.hub.updateCITYinfo(e.data.infos);
 
         newup = true;
         powerup = e.data.infos[9]
 
         // update only layer change
-        view3d.updateLayer();
-        view3d.moveSprite();
-        view3d.showPower();
+        AppState.view3d.updateLayer();
+        AppState.view3d.moveSprite();
+        AppState.view3d.showPower();
 
     }
     if( phase == "BUDGET"){
         //console.log(e.data.budgetData)
-        hub.openBudget(e.data.budgetData);
+        AppState.hub.openBudget(e.data.budgetData);
     }
     if( phase == "QUERY"){
-        hub.openQuery(e.data.queryTxt);
+        AppState.hub.openQuery(e.data.queryTxt);
     }
     if( phase == "EVAL"){
-        hub.openEval(e.data.evalData);
+        AppState.hub.openEval(e.data.evalData);
     }
     if( phase == "SAVEGAME"){
         makeGameSave(e.data.gameData, e.data.key);
