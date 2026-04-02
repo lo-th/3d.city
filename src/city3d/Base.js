@@ -39,6 +39,12 @@ export const Zone = (size, x,y) => {
 	let zone;
 
 	switch(size){
+		case 0: 
+		zone = [
+			[x, y], [x+1, y],[x, y-1],
+			//[x, y-1], [x+1, y-1]
+		];
+		break;
 		case 1: 
 		zone = [ 
 			[x, y] 

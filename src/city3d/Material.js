@@ -87,8 +87,26 @@ export class Material {
 
 
 
-        if( AppState.isBestMaterial ) { option.roughness = 0.0; option.metalness = 1 }
-        MAT['water'] = new Type({ color:0xffffff, transparent:true, opacity:1, ...option })
+        if( AppState.isBestMaterial ) { option.roughness = 0; option.metalness = 0.9 }
+
+       /*this.water = this.pool.texture('water')
+        this.water.repeat.set(12,12)
+        this.water.wrapS = THREE.RepeatWrapping 
+		this.water.wrapT = THREE.RepeatWrapping*/
+        this.water = this.pool.texture('water_n')
+        this.water.repeat.set(12,12)
+        MAT['water'] = new Type({ 
+	        //map:this.water, 
+	        normalMap:this.water,
+	        normalScale:new THREE.Vector2(1,-1), 
+	        alphaToCoverage:true, 
+	        //premultipliedAlpha:true,
+	        color:AppState.color.water, transparent:true, opacity:0.8,  ...option 
+        })//
+
+        //const ww = texture(this.water_n).toVar();;
+        //MAT.water.normalNode = normalMap( vec3( ww.r, ww.g, 1.0), vec2(0.6,0.6) ) 
+	    //MAT.water.roughnessNode = ww.b
 
 
         //this.waterShader(MAT.water)

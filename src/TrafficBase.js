@@ -391,6 +391,7 @@ export class TrafficBase extends THREE.Group {
 		} else {
 			//var c = cc.rect;
 			let res = this.inter[id].userData.sign;
+			if(!res) return
 			let l = intersection.controlSignals.stateString;
 			for(let i = 0; i<4; i++){
 				if(res[i] !== null) res[i].setState(l[i])

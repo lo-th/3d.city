@@ -74,6 +74,7 @@ export const AppState = {
 
     color:{
         ground:'#9c856a',//c68564',
+        water:'#46709c',
         normal:'#8080ff',
         snow:'#e6f0ff',
         white:'#ffffff',

@@ -722,6 +722,11 @@ export class View {
 
         //requestAnimationFrame( this.loop.bind(this) );
 
+        if(this.material.water){
+        	this.material.water.offset.x += 0.0001
+        	this.material.water.offset.y -= 0.00008
+        }
+
 
     	if( this.needResize ) this.doResize()
 
@@ -1321,8 +1326,8 @@ export class View {
 			x = i % d;
             y = Math.floor( i * r );
             noise = (perlin.noise( x * quality, 0, y * quality ) + 1)*0.5;
-            //noise *= 1.8;
-            //noise = Math.pow( noise, 3 );
+            //noise *= 1.5;
+            noise = Math.pow( noise, 2 );
 			this.heightData[ i ] = noise
 
 			if(noise<min) min = noise
@@ -1347,6 +1352,8 @@ export class View {
 
 	applyHeight() {
 
+		const debugHeight = false
+
 		let i, j, gr, gn, gc;
         let lng = this.heightData.length;
 		let pos, layer, h, v, d=0, n, nn, geo, id, deep;
@@ -1354,7 +1361,7 @@ export class View {
 
         let big = new THREE.PlaneGeometry( this.mapSize[0], this.mapSize[1], this.mapSize[0], this.mapSize[1] );
         big.rotateX( -Math.PI * 0.5 );
-        big.translate( this.center.x, 0, this.center.z );
+        big.translate( this.center.x-0.5, 0, this.center.z-0.5 );
 
         gr = big.attributes.position.array;
 
@@ -1369,6 +1376,7 @@ export class View {
         let rn = big.attributes.normal.array;
 
         i = this.nlayers;
+
         while (i--){
 
         	geo = this.miniTerrain[i].geometry
@@ -1387,6 +1395,7 @@ export class View {
                 //id = this.findHeightId( gr[n], gr[n+2] )
                 id = this.findHeightId( gr[n]+0.5, gr[n+2]+0.5 )
 
+
                 gr[n+1] = this.Gtmp[i][j] = this.heightData[ id ]; 
 
                 nn = id*3;
@@ -1396,15 +1405,18 @@ export class View {
 
                 deep = 0.5 + this.clamp( this.heightData[ id ]/3, -1, 1) * 0.5;
 
+                // color
                 gc[n] = gc[n+1] = gc[n+2] = deep;
 
+                
                 if( gr[n+1]<0 ){ // under sea
                 	 gc[n] -= deep * 0.5
-                	 gc[n+1] -= deep * 0.4
+                	 gc[n+1] -= deep * 0.25
+                	 
                 }
 
                 // border smooth
-                if(gr[n]===-0.5 || gr[n+2]===-0.5 || gr[n]===128-0.5 || gr[n+2]===128-0.5){
+                if(gr[n]===-0.5 || gr[n+2]===-0.5 || gr[n]===this.mapSize[0]-0.5 || gr[n+2]===this.mapSize[1]-0.5){
                 	if( gr[n+1]>0 ) gr[n+1] = this.heightData[ id ] = 0.25
                 	if( gr[n+1]<0 ) gr[n+1] = this.heightData[ id ] = 0
                 }
@@ -1420,8 +1432,14 @@ export class View {
 
         }
 
-        big.dispose();
-        big = null;
+        if(debugHeight){
+        	const bigPreview = new THREE.Mesh(big, new THREE.MeshBasicMaterial({color:0x000000, wireframe:true }))
+            scene.add(bigPreview )
+        }else{
+        	big.dispose();
+        	big = null;
+        }
+
 
         // add water mesh
 
@@ -1429,6 +1447,10 @@ export class View {
         waterGeo.rotateX( -Math.PI * 0.5 );
         waterGeo.translate( this.center.x-0.5, 0, this.center.z-0.5 );
 
+
+        this.material.water.repeat.set(this.mapSize[0]*0.125, this.mapSize[1]*0.125)
+        //this.pool.water.repeat.set()
+        //MAT.water.normalScale.set(0.5,0.5)
         this.water = new THREE.Mesh( waterGeo, MAT.water )
         this.scene.add( this.water );
 
@@ -2112,52 +2134,6 @@ export class View {
 		}
 	}
 
-	/*onMouseMove  (e) {
-	    e.preventDefault();
-
-	    let px, py;
-	    if(e.touches){
-	        px = e.clientX || e.touches[ 0 ].pageX;
-	        py = e.clientY || e.touches[ 0 ].pageY;
-	    } else {
-	        px = e.clientX;
-	        py = e.clientY;
-	    }
-	    
-	    if (this.mouse.down) {
-	        if(this.mouse.move || this.mouse.button===2){  
-	        	this.mouse.dragView = false;
-		        document.body.style.cursor = 'crosshair';
-		        this.cam.horizontal = ((px - this.mouse.ox) * 0.3) + this.mouse.h;
-		        this.cam.vertical = (-(py -this. mouse.oy) * 0.3) + this.mouse.v;
-		        this.moveCamera();
-		    }
-		    if(this.mouse.dragView || this.mouse.button===3){
-		    	document.body.style.cursor = 'move';
-		    	this.mouse.move = false;
-		    	this.ease.x = (px - this.mouse.ox)/1000;
-		    	this.ease.z = (py - this. mouse.oy)/1000;
-		    }
-	    } 
-
-	    if(this.currentTool !== null || this.isMenu ){
-			this.rayVector.x = ( px / this.vsize.x ) * 2 - 1;
-		    this.rayVector.y = - ( py / this.vsize.y ) * 2 + 1;
-			this.rayTest();
-		}
-	}
-
-	/*onMouseWheel  (e) { 
-		//e.preventDefault();   
-	    let delta = 0;
-	    if(e.wheelDelta){delta=e.wheelDelta*-1;}
-	    else if(e.detail){delta=e.detail*20;}
-	    this.cam.distance+=(delta/80);
-	    if(this.cam.distance<1)this.cam.distance = 1;
-	    if(this.cam.distance>150)this.cam.distance = 150;
-	    this.moveCamera();
-
-	}*/
 
 	onMouseWheel  (e) {
 		//e.preventDefault();
@@ -2235,8 +2211,18 @@ export class View {
 						//AppState.tilesData[n] = 0 
 					}
 	                if( v > 4 && v < 21 ){ // water border
-	                    this.heightData[ this.findHeightId(x, y) ] *= 0.5;
-	                    //AppState.tilesData[n] = 0 
+
+	                    //this.heightData[ this.findHeightId(x, y) ] *= 0.5;
+	                	let zz = Zone(0,x,y)
+	                	let baseY = this.heightData[ this.findHeightId(x, y) ]
+	                    
+
+	                    let w = zz.length, wn
+	                    while(w--){
+	                    	wn = this.findHeightId(zz[w][0], zz[w][1])
+	                    	if(wn) this.heightData[ wn ] = baseY*0.75// this.heightData[ wn ]+0.5;
+
+	                    }
 	                }
 	            }
 				if( v > 20 && v < 30 ){// tree 44

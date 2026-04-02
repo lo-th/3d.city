@@ -53,7 +53,7 @@ export class Pool {
 		this.geos = {}
 
 		this.modelUrl = [ 'cars.glb', 'world.glb' ];
-		this.textureUrl = [ 'title.png', 'water.png', 'building_nr.png', 'town_nr.png', 'dirt_n.png', 'dirt_ao.png', 'roadx.png', 'road.png', 'feux.png', 'light_a.png' ];
+		this.textureUrl = [ 'title.png', 'water_n.jpg', 'building_nr.png', 'town_nr.png', 'dirt_n.png', 'dirt_ao.png', 'roadx.png', 'road.png', 'feux.png', 'light_a.png' ];
 		this.imageUrl = ['tiles.png','town.png','building.png', 'cars.png', 'border.png' ];
 
 		if( AppState.isWithNormal ) this.imageUrl.push( 'tiles_n.png', 'building_n.png', 'town_n.png' )
@@ -195,7 +195,7 @@ export class Pool {
 			texture.flipY = false;
 			texture.colorSpace = name.search('_')!==-1 ? THREE.NoColorSpace : THREE.SRGBColorSpace;
 
-			if(name === 'dirt_n' || name === 'dirt_ao'){
+			if(name === 'dirt_n' || name === 'dirt_ao'|| name === 'water_n'){
 				texture.wrapS = THREE.RepeatWrapping 
 			    texture.wrapT = THREE.RepeatWrapping
 			    texture.repeat = new THREE.Vector2(4,4);
