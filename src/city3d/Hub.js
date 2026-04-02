@@ -1,4 +1,4 @@
-import * as UIL from '../../build/uil.module.js'
+//import * as UIL from '../../build/uil.module.js'
 
 import { Base } from './Base.js';
 import { AppState } from '../AppState.js'
@@ -50,7 +50,7 @@ export class Hub {
         //this.rrr= null;
 
         //this.colors = ['#ffffff', '#338099'];
-        this.colors = ['rgba(255,255,255,1)', 'rgba(0,0,0,0.2)', 'rgba(0,0,0,1)', 'rgba(0,0,0,0.5)', 'rgba(0,0,0,0.8)', 'rgba(255,255,255,0.5)'];
+        this.colors = ['rgba(255,255,255,1)', 'rgba(63,76,105,0.4)', 'rgba(0,0,0,1)', 'rgba(0,0,0,0.5)', 'rgba(0,0,0,0.8)', 'rgba(255,255,255,0.5)'];
 
         //this.radius = "-moz-border-radius: 20px; -webkit-border-radius: 20px; border-radius: 20px;";
         this.radius = "-moz-border-radius: 6px; -webkit-border-radius: 6px; border-radius: 6px;";
@@ -90,34 +90,35 @@ export class Hub {
 
         
 
-        this.full = document.createElement('div'); 
-        this.full.style.cssText ='position:absolute; top:0px; left:0px; width:100%; height:100%; pointer-events:none; display:block; background:rgba(144,163,183,1); ' //+ this.degrade();
+        //this.full = document.createElement('div'); 
+        //this.full.style.cssText ='position:absolute; top:0px; left:0px; width:100%; height:100%; pointer-events:none; display:block; background:rgba(144,163,183,1); ' //+ this.degrade();
+
+        this.full = document.createElement('div');
+        this.full.id = 'hub-loading';
+        this.full.style.cssText = 'position:absolute; inset:0; display:flex; flex-direction:column;'
+                                + ' align-items:center; justify-content:center; pointer-events:none;'
+                                + ' background:linear-gradient(160deg,#0f1923 0%,#1a2d45 50%,#0d1e2e 100%);';
+
+        this.loadTitle = document.createElement('div');
+        this.loadTitle.className = 'loading-title';
+        this.loadTitle.textContent = '3D.CITY';
+
+        this.loadSub = document.createElement('div');
+        this.loadSub.className = 'loading-subtitle';
+        this.loadSub.textContent = 'City Builder';
 
         this.text = document.createElement('div');
-        this.text.style.cssText = 'position:absolute; font-size:18px; left:calc(50% - 150px); top:calc(50% + 80px); width:300px; height:80px; pointer-events:none; text-align:center; font-weight: bold;';
-        this.text.innerHTML = "Welcome";
+        this.text.className = 'loading-status';
+        this.text.textContent = 'Loading…';
+        //this.text.style.cssText = 'position:absolute; font-size:18px; left:calc(50% - 150px); top:calc(50% + 80px); width:300px; height:80px; pointer-events:none; text-align:center; font-weight: bold;';
+        //this.text.innerHTML = "Welcome";
 
 
-        this.loader = document.getElementById('loader');
-        this.loader.style.cssText = 'pointer-events:none; position:absolute; left:calc(50% - 100px); top:calc(50% - 100px); width:200px; height:200px;';
+        this.loader = document.createElement('div');//document.getElementById('loader');
+        this.loader.className = 'loading-spinner';
+        //this.loader.style.cssText = 'pointer-events:none; position:absolute; left:calc(50% - 100px); top:calc(50% - 100px); width:200px; height:200px;';
 
         
-        /*this.link = document.createElement('div');
-        this.link.style.cssText = 'position:absolute;  left:10px; bottom:10px; width:50px; height:50px; pointer-events:auto; display:block;';
-        this.link.innerHTML = '<a href="https://github.com/lo-th/3d.city" target="_blank">' + UIL.Tools.icon('github', '#DEDEDE', 50) + '</a>';
-        this.hub.appendChild( this.link )*/
-
-        this.link = UIL.add('button', { 
-            target:this.hub, w:64, h:64, pos:{left:'10px', bottom:'10px'}, simple:true, 
-            button:'#8397ac' 
-        }).icon( UIL.Tools.icon('github', '#DEDEDE', 50) ).onChange( function(v){ let w = window.open('https://github.com/lo-th/3d.city','_blank'); } )
-
-        /*this.donate = UIL.add('button', { 
-            target:this.hub, w:64, h:64, pos:{left:'84px', bottom:'10px'}, simple:true, 
-            button:'#8397ac' 
-        }).icon( UIL.Tools.icon('donate', '#DEDEDE', 50) ).onChange( function(v){ let w = window.open('https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=8KTXA987XHYNQ','_blank'); } )
-
-*/
 
         this.version = document.createElement('div');
         this.version.style.cssText = 'position:absolute; font-size:14px; right:10px; bottom:10px; text-align:right; width:100px; pointer-events:none; display:block;';
@@ -130,9 +131,14 @@ export class Hub {
         this.fullMid.appendChild( this.title );
         this.fullMid.appendChild( this.subtitle );*/
 
+        
+
+        this.full.appendChild(this.loadTitle);
+        this.full.appendChild(this.loadSub);
+        this.full.appendChild( this.loader );
+        this.full.appendChild( this.text );
+
         this.hub.appendChild( this.full );
-        this.hub.appendChild( this.loader );
-        this.hub.appendChild( this.text );
     }
 
     message ( s ){
@@ -170,23 +176,47 @@ export class Hub {
 
     }*/
 
+    showError( e ){
+        console.log(e)
+    }
+
     start (){
     	if(this.isIntro){
-    		this.timer = setInterval(this.fadding, 100, this);
+    		this.timer = setInterval(this.fadding, 80, this);
     	}
+    }
+
+    message ( s ){
+
+        if( this.text ) this.text.textContent = s;
+
     }
 
     fadding (t){
 
-    	t.bg -= 0.1;
-    	t.full.style.background = 'rgba(144,163,183,'+t.bg+')';
+        // If generation starts while intro is fading, stop intro fade and keep
+        // the loading overlay fully visible until generation finishes.
+        if (t.isGen) {
+            clearInterval(t.timer);
+            t.timer = null;
+            t.bg = 1;
+            t.full.style.opacity = '1';
+            t.isIntro = false;
+            return;
+        }
+
+    	t.bg -= 0.08;
+        t.full.style.opacity = Math.max(0, t.bg);
+    	//t.full.style.background = 'rgba(144,163,183,'+t.bg+')';
        // background-image:linear-gradient(60deg, white, black);
     	if(t.bg<=0){
     		clearInterval(t.timer);
+            t.timer = null
             //t.loader.style.display = 'none'
-            t.hub.removeChild(t.loader);
-            t.hub.removeChild(t.text);
-    		t.hub.removeChild(t.full);
+            //t.hub.removeChild(t.loader);
+           //t.hub.removeChild(t.text);
+    		// Only remove if not already removed by generate(false) during the fade
+            if (t.full.parentNode === t.hub) t.hub.removeChild(t.full);
 
             //console.log('done')
 
@@ -199,17 +229,26 @@ export class Hub {
 
         if( b ){
             if(!this.isGen) {
+                this.full.style.background = 'none' 
+                this.full.style.opacity = '1';
+                // Guard: only append when not already in the DOM (intro may still be fading)
+                
+                if (this.full.parentNode !== this.hub) this.hub.appendChild( this.full );
+                if(this.loadTitle){this.full.removeChild(this.loadTitle);this.loadTitle = null;}
+                if(this.loadSub){this.full.removeChild(this.loadSub);this.loadSub= null;}
+                this.text.textContent = 'Generating map…'
                 //this.loader.style.display = 'block'
-                this.hub.appendChild( this.loader );
-                this.hub.appendChild( this.text );
-                this.text.innerHTML = 'Generate map...'
+                //this.hub.appendChild( this.loader );
+                //this.hub.appendChild( this.text );
+                //this.text.innerHTML = 'Generating map...'
                 this.isGen = true
             }
         } else {
             if( this.isGen ){
+                if (this.full.parentNode === this.hub) this.hub.removeChild( this.full );
                 //this.loader.style.display = 'none'
-                this.hub.removeChild( this.loader );
-                this.hub.removeChild( this.text );
+                //this.hub.removeChild( this.loader );
+                //this.hub.removeChild( this.text );
                 this.isGen = false
             }
         }
@@ -254,26 +293,61 @@ export class Hub {
 
     }
 
+    removeChilds (node) {
+        var last;
+        while (last = node.lastChild) node.removeChild(last);
+    };
+
     //--------------------------------------start hub
 
     initStartHub() {
 
-       /* this.full = document.createElement('div');
-        this.full.style.cssText ='position:absolute; top:10px; left:50%; margin-left:-150px; width:300px; height:300px; pointer-events:none;';
-        this.full.id = 'fullStart';
+        this.mainmenu = document.createElement('div');
+        this.mainmenu.style.cssText ='position:absolute; bottom:0px; left:50%; margin-left:-130px; width:260px; height:200px; pointer-events:none; display:flex; align-items: center;';
+        //this.full.id = 'fullStart';
 
-        this.hub.appendChild( this.full );
-        var b1 = this.addButton(this.full, 'Play Game', [276,48,40], 'position:absolute; top:10px; left:0px;');
-    	var b2 = this.addButton(this.full, 'New Map',  [120, 26, 22], 'position:absolute; top:150px; left:0px;');
-        var b3 = this.addButton(this.full, 'Height Map',  [120, 26, 22], 'position:absolute; top:150px; right:0px;');
-        var b4 = this.addButton(this.full, 'Load Map',  [276, 26, 22], 'position:absolute; top:90px; left:0px;');
-        this.addSelector("DIFFICULTY", ['LOW', 'MEDIUM', 'HARD'], AppState.main.setDifficulty, 0);
+        this.hub.appendChild( this.mainmenu );
+        const b1 = this.addButton(this.mainmenu, 'New Game', [260, 48, 40], 'position:absolute; top:0px; left:0px;');
+        const b2 = this.addButton(this.mainmenu, 'Load Map', [260, 37, 22], 'position:absolute; top:70px; left:0px;');
+        const b3 = this.addButton(this.mainmenu, 'About',  [180, 26, 22], 'position:absolute; top:129px; left:40px;');
 
-        b1.addEventListener('click',  function ( e ) { e.preventDefault(); AppState.main.playMap(); }, false);
-        b2.addEventListener('click',  function ( e ) { e.preventDefault(); AppState.main.newMap(); }, false);
-        b3.addEventListener('click',  function ( e ) { e.preventDefault(); AppState.main.newHeightMap(); }, false);
-        b4.addEventListener('click',  function ( e ) { e.preventDefault(); AppState.main.loadGame(true); }, false);*/
+        b1.addEventListener('click',  function ( e ) { e.preventDefault(); AppState.view3d.openMap('NEW'); }, false);
+        b2.addEventListener('click',  function ( e ) { e.preventDefault(); AppState.view3d.openMap('LOAD'); }, false);
+        b3.addEventListener('click',  function ( e ) { e.preventDefault(); let w = window.open('https://github.com/lo-th/3d.city','_blank'); }, false);
+        //b4.addEventListener('click',  function ( e ) { e.preventDefault(); AppState.main.loadGame(true); }, false);
 
+    }
+
+    clearStartHub() {
+        if(!this.mainmenu) return;
+        this.removeChilds( this.mainmenu )
+        this.hub.removeChild( this.mainmenu );
+        this.mainmenu = null
+    }
+
+    //--------------------------------------map creation hub
+
+    initMapHub() {
+
+        this.mapmenu = document.createElement('div');
+        this.mapmenu.style.cssText ='position:absolute; top:10px; left:50%; margin-left:-190px; width:380px; height:200px; pointer-events:none; ';
+        this.hub.appendChild( this.mapmenu );
+
+        const s1 = this.addSelector(this.mapmenu, "DIFFICULTY", ['EASY', 'MEDIUM', 'HARD'], AppState.main.setDifficulty, 1, [120,120,120], [24,24,24]);
+        const s2 = this.addSelector(this.mapmenu, "MAP SIZE", ['SMALL', 'MEDIUM', 'LARGE'], AppState.main.setSize, 1, [120,120,120], [24,24,24]);
+
+        const b1 = this.addButton(this.mapmenu, 'GENERATE', [180, 37,22], 'position:absolute; top:118px; left:6px;');
+        const b2 = this.addButton(this.mapmenu, 'PLAY',  [180, 37, 22], 'position:absolute; top:118px; left:194px;');
+
+        b1.addEventListener('click',  function ( e ) { e.preventDefault(); AppState.main.newMap(); }, false);
+        b2.addEventListener('click',  function ( e ) { e.preventDefault(); AppState.main.playMap(); }, false);
+    }
+
+    cleartMaptHub() {
+        if(!this.mapmenu) return;
+        this.removeChilds( this.mapmenu )
+        this.hub.removeChild( this.mapmenu );
+        this.mapmenu = null
     }
 
 
@@ -281,7 +355,12 @@ export class Hub {
 
     initGameHub  (){
 
-        this.link.dispose()
+        if (this._gameHubInit) return;
+        this._gameHubInit = true;
+
+        //return
+
+        //this.link.dispose()
         //this.donate.dispose()
 
         var _this = this;
@@ -317,7 +396,8 @@ export class Hub {
         this.toolSet.appendChild(img);
         img.style.cssText ='position:absolute; margin:0px; padding:0px; top:0px; right:0px; width:198px; height:396px; pointer-events:none;';
 
-        this.addSelector("Speed", ['II', '>', '>>', '>>>', '>>>'], AppState.main.setSpeed, 2, [20,20,20,20,20]);
+        this.addSelectorSpeed(this.hub, "Speed", ['II', '>', '>>', '>>>', '>>>'], AppState.main.setSpeed, 2, [20,20,20,20,20]);
+
 
         var b1 = this.addButton(this.hub, 'Budget', [75,16,14], 'position:absolute; left:10px; top:-7px; font-weight:bold;', true);
         b1.addEventListener('click',  function ( e ) { e.preventDefault(); AppState.main.getBudjet(); }, false);
@@ -416,6 +496,8 @@ export class Hub {
     }
 
     updateCITYinfo  (infos){
+
+        //return
 
         this.date.innerHTML = infos[0];
         this.money.innerHTML = infos[4];
@@ -651,7 +733,7 @@ export class Hub {
             var bg4 = this.addButton(this.exitWindow, 'LOAD', [96,16,14], 'position:absolute; left:10px; top:130px;');
 
             bg1.addEventListener('click',  function(e){ e.preventDefault(); _this.closeExit(); }, false);
-            bg2.addEventListener('click',  function(e){ e.preventDefault(); AppState.main.newGameMap(); }, false);
+            //bg2.addEventListener('click',  function(e){ e.preventDefault(); AppState.main.newGameMap(); }, false);
             bg3.addEventListener('click',  function(e){ e.preventDefault(); AppState.main.saveGame(); }, false);
             bg4.addEventListener('click',  function(e){ e.preventDefault(); AppState.main.loadGame(); }, false);
 
@@ -912,83 +994,7 @@ export class Hub {
         else { this.I.style.bottom =28+(i/100)+'px'; }
     }
 
-    //---------------------------------- SELECTOR 
-
-    addSelector  ( type, names, fun, current, size){
-        var _this = this;
-        var cont = document.createElement('div');
-        //cont.style.cssText = 'position:absolute; width:300px; height:50px; font-size:16px; top:0; left:webkit-clac(50% -150px);';
-        cont.style.cssText = 'font-size:14px; margin-top:10px; color:'+this.colors[0]+';';
-        if(type=='Speed') cont.style.cssText = 'font-size:20px; position:absolute; bottom:8px; left:497px; ';
-        else cont.innerHTML = type+"<br>";
-        cont.id = type;
-        var t = [];
-        for(var i=0; i!==names.length; i++){
-            t[i] = document.createElement( 'div' );
-           // t[i].style.cssText = 'font-size:14px; border:4px solid '+this.colors[1]+'; background:'+this.colors[1]+';'
-           // t[i].style.cssText +=' width:70px; height:16px; margin:4px; padding:4px; pointer-events:auto;  cursor:pointer; display:inline-block; font-weight:bold;' + this.radius;
-            t[i].style.cssText = 'font-size:14px; border:1px solid '+this.colors[5]+'; background:'+this.colors[1]+'; color:'+this.colors[0]+';';
-            if(type=='Speed')t[i].style.cssText +=' width:70px; height:16px; margin-left:2px; padding:6px; pointer-events:auto;  cursor:pointer; display:inline-block; ';
-            else t[i].style.cssText +=' width:70px; height:16px; margin:2px; padding:7px; pointer-events:auto;  cursor:pointer; display:inline-block; ';
-
-            if(i==0) t[i].style.cssText += this.radiusL;
-            if(i==names.length-1)t[i].style.cssText += this.radiusR;
-           // if(type=='Speed'){ if(i>0) t[i].style.width = '16px'; else t[i].style.width = '60px'; }
-            if(size){if(size[i]){t[i].style.width = size[i] + 'px'; t[i].style.height = size[i] + 'px'; t[i].style.padding ='0px'; } else t[i].style.width = '60px';}
-            else t[i].style.width = '60px';
-            t[i].className = "none";
-            if(type!=='Speed')t[i].textContent = names[i];
-            if(i==current){
-                //t[i].style.border = '4px solid '+this.colors[0];
-                t[i].style.backgroundColor = this.colors[5];
-                t[i].style.color = this.colors[2];
-                t[i].className = "select";
-            }
-            t[i].name = i;
-            t[i].id = type+i;
-            cont.appendChild( t[i] );
-            //t[i].addEventListener( 'mouseover', function ( e ) { e.preventDefault(); this.style.border = '4px solid '+_this.colors[0];  }, false );
-            //t[i].addEventListener( 'mouseout', function ( e ) { e.preventDefault();  if(this.className == 'none')this.style.border = '4px solid '+_this.colors[1];  }, false );
-
-            t[i].addEventListener( 'mouseover', function ( e ) { e.preventDefault(); this.style.border = '1px solid '+_this.colors[0];  }, false );
-            t[i].addEventListener( 'mouseout', function ( e ) { e.preventDefault();  this.style.border = '1px solid '+_this.colors[5];  }, false );
-
-            t[i].addEventListener( 'click', function ( e ) { e.preventDefault(); fun( this.name ); _this.setActiveSelector(this.name, type); }, false );
-        }
-        //this.hub.appendChild( cont );
-        if(type=='DIFFICULTY'){this.full.appendChild( cont ); cont.style.position = 'absolute'; cont.style.top = '200px';cont.style.width = '300px';}
-        else this.hub.appendChild( cont );
-    }
-
-    setActiveSelector   (n, type) {
-        var h = 10, def;
-        while(h--){
-            if(document.getElementById(type+h)){
-                def = document.getElementById(type+h);
-                def.style.color = this.colors[0];
-               // def.style.border = '4px solid '+_this.colors[1]; 
-                def.style.backgroundColor = this.colors[1];
-                def.className = "none";
-            }
-        }
-        var select = document.getElementById(type+n);
-        //select.style.border = '4px solid '+_this.colors[0]; 
-        select.style.backgroundColor = this.colors[5];
-        select.style.color = this.colors[2];
-        select.className = "select";
-    }
-
-    removeSelector  (type){
-        var h = 10, def;
-        var target = document.getElementById(type);
-        while(h--){
-            if(document.getElementById(type+h)){
-                def = document.getElementById(type+h);
-                target.removeChild(def);
-            }
-        }
-        this.full.removeChild(target);
-    }
+    
 
     //------------------------------------------ TOOLS MENU
 
@@ -1042,32 +1048,188 @@ export class Hub {
 
     //------------------------------------------ DEF BUTTON
 
-    addButton  (target, name, size, style, top){
-        var _this = this;
-        if(!size) size = [128, 30, 22];
-        //var b = this.createLabel(name, size, true);
-        var b = document.createElement( 'div' );
+    addButton  ( target, name, size= [128, 30, 22], style, top ){
 
-        //var defStyle = 'font-size:'+size[2]+'px; border:4px solid '+this.colors[1]+'; background:'+this.colors[1]+'; width:'+size[0]+'px; height:'+size[1]+'px;'
-        //defStyle += 'margin:4px; padding:4px; pointer-events:auto;  cursor:pointer; display:inline-block; font-weight:bold;' + this.radius;
-
-        var defStyle = 'font-size:'+size[2]+'px;  border:1px solid '+this.colors[5]+'; background:'+this.colors[1]+'; width:'+size[0]+'px; height:'+size[1]+'px; color:'+this.colors[0]+';';
-        if(top)defStyle += 'margin:4px; padding:7px; pointer-events:auto;  cursor:pointer; display:inline-block; ' + this.radiusB;
-        else defStyle += 'margin:4px; padding:7px; pointer-events:auto;  cursor:pointer; display:inline-block; ' + this.radius;
-
+        const b = document.createElement( 'div' );
+        b.className = 'hub-btn';
+        const defStyle = `font-size:${size[2]}px; line-height:${size[1]}px; width:${size[0]}px; height:${size[1]}px;`
         b.textContent = name;
-        if(style) b.style.cssText = defStyle+ style;
-        else b.style.cssText = defStyle+ 'margin-top:20px;';
-        
-       // b.addEventListener( 'mouseover', function ( e ) { e.preventDefault(); this.style.border = '4px solid '+_this.colors[0];  this.style.backgroundColor = _this.colors[0]; this.style.color = _this.colors[1]; }, false );
-       // b.addEventListener( 'mouseout', function ( e ) { e.preventDefault(); this.style.border = '4px solid '+_this.colors[1]; this.style.backgroundColor = _this.colors[1]; this.style.color = _this.colors[0];  }, false );
-
-        b.addEventListener( 'mouseover', function ( e ) { e.preventDefault();  this.style.backgroundColor = _this.colors[5];this.style.color = _this.colors[2]; }, false );
-        b.addEventListener( 'mouseout', function ( e ) { e.preventDefault(); this.style.backgroundColor = _this.colors[1];this.style.color = _this.colors[0]; }, false );
-
+        if(style) b.style.cssText = defStyle + style;
+        else b.style.marginTop = '20px';
         target.appendChild( b );
-
         return b;
+
+    }
+
+
+     //---------------------------------- SPEED SELECTOR 
+
+
+    addSelectorSpeed  ( target, type, names, fun, current, size){
+        var _this = this;
+        var cont = document.createElement('div');
+        //cont.style.cssText = 'position:absolute; width:300px; height:50px; font-size:16px; top:0; left:webkit-clac(50% -150px);';
+        //cont.style.cssText = 'font-size:14px; margin-top:10px; color:'+this.colors[0]+';';
+        cont.style.cssText = 'position:absolute; font-size:20px; bottom:8px; left:497px;';
+        cont.id = type;
+        var t = [];
+        for(var i=0; i!==names.length; i++){
+
+            t[i] = document.createElement( 'div' );
+            t[i].style.cssText = 'font-size:14px; border:1px solid '+this.colors[5]+'; background:'+this.colors[1]+'; color:'+this.colors[0]+';';
+            t[i].style.cssText +=' width:70px; height:16px; margin-left:2px; padding:0px; pointer-events:auto;  cursor:pointer; display:inline-block; ';
+
+            if(i==0) t[i].style.cssText += this.radiusL;
+            if(i==names.length-1) t[i].style.cssText += this.radiusR;
+           // if(type=='Speed'){ if(i>0) t[i].style.width = '16px'; else t[i].style.width = '60px'; }
+            t[i].style.width = 22 + 'px'; 
+            t[i].style.height = 20 + 'px';
+            t[i].className = "none";
+
+            if(i==current){
+                //t[i].style.border = '4px solid '+this.colors[0];
+                t[i].style.backgroundColor = this.colors[5];
+                t[i].style.color = this.colors[2];
+                t[i].className = "select";
+            }
+            t[i].name = i;
+            t[i].id = type+i;
+            cont.appendChild( t[i] );
+            t[i].addEventListener( 'mouseover', function ( e ) { e.preventDefault(); this.style.border = '1px solid '+_this.colors[0];  }, false );
+            t[i].addEventListener( 'mouseout', function ( e ) { e.preventDefault();  this.style.border = '1px solid '+_this.colors[5];  }, false );
+            t[i].addEventListener( 'click', function ( e ) { e.preventDefault(); fun( this.name ); _this.setActiveSelectorSpeed(this.name, type); }, false );
+        }
+
+        target.appendChild( cont );
+        return cont;
+
+    }
+
+    setActiveSelectorSpeed (n, type) {
+        var h = 10, def;
+        while(h--){
+            if(document.getElementById(type+h)){
+                def = document.getElementById(type+h);
+                def.style.color = this.colors[0];
+               // def.style.border = '4px solid '+_this.colors[1]; 
+                def.style.backgroundColor = this.colors[1];
+                def.className = "none";
+            }
+        }
+        var select = document.getElementById(type+n);
+        //select.style.border = '4px solid '+_this.colors[0]; 
+        select.style.backgroundColor = this.colors[5];
+        select.style.color = this.colors[2];
+        select.className = "select";
+    }
+
+    //---------------------------------- SELECTOR 
+
+    addSelector  ( target, type, names, fun, current, size, sizeH ){
+        var _this = this;
+        var cont = document.createElement('div');
+        //cont.style.cssText = 'position:absolute; width:300px; height:50px; font-size:16px; top:0; left:webkit-clac(50% -150px);';
+        //cont.style.cssText = 'font-size:14px; margin-top:10px; color:'+this.colors[0]+';';
+        if(type==='Speed') cont.style.cssText = 'font-size:20px; position:absolute; bottom:8px; left:497px; ';
+        else{ 
+            cont.className = 'selector-title';
+            cont.innerHTML = type+"<br>";
+        }
+        cont.id = type;
+
+        var t = [];
+        for(var i=0; i!==names.length; i++){
+            t[i] = document.createElement( 'div' );
+            t[i].className = 'hub-btn';
+            if(type==='Speed') {
+                t[i].className = 'none';
+                t[i].style.cssText = 'font-size:14px; border:4px solid '+this.colors[1]+'; background:'+this.colors[1]+';'
+            }
+           //
+           // t[i].style.cssText +=' width:70px; height:16px; margin:4px; padding:4px; pointer-events:auto;  cursor:pointer; display:inline-block; font-weight:bold;' + this.radius;
+            //t[i].style.cssText = 'font-size:14px; border:1px solid '+this.colors[5]+'; background:'+this.colors[1]+'; color:'+this.colors[0]+';';
+            t[i].style.cssText = 'font-size:14px;';
+            if(type==='Speed') t[i].style.cssText +=' width:70px; height:16px; margin-left:2px; padding:0px 0px; pointer-events:auto; cursor:pointer; display:inline-block; ';
+            else t[i].style.cssText +=' width:70px; height:16px; margin:2px; padding:7px; pointer-events:auto; cursor:pointer; display:inline-block; ';
+
+            if(i==0) t[i].style.cssText += this.radiusL;
+            if(i==names.length-1) t[i].style.cssText += this.radiusR;
+           // if(type=='Speed'){ if(i>0) t[i].style.width = '16px'; else t[i].style.width = '60px'; }
+            if(size){
+                if(size[i]){
+
+                    t[i].style.width = size[i] + 'px'; 
+                    t[i].style.height = (sizeH ? sizeH[i] : size[i]) + 'px'; 
+                    t[i].style.padding ='0px 0px';  
+                    if(sizeH) t[i].style.lineHeight = ((sizeH[i]))+ 'px';
+                } 
+                else t[i].style.width = '60px';
+             }
+            else t[i].style.width = '60px';
+            //t[i].className = "none";
+            if(type!=='Speed') t[i].textContent = names[i];
+            if(i==current){
+                //t[i].style.border = '4px solid '+this.colors[0];
+                //t[i].style.backgroundColor = this.colors[5];
+                //t[i].style.color = this.colors[2];
+                t[i].className = "hub-btn-select";
+            }
+            t[i].name = i;
+            t[i].id = type+i;
+            cont.appendChild( t[i] );
+
+            if(type==='Speed'){
+                t[i].addEventListener( 'mouseover', function ( e ) { e.preventDefault(); this.style.border = '4px solid '+_this.colors[0];  }, false );
+                t[i].addEventListener( 'mouseout', function ( e ) { e.preventDefault();  if(this.className == 'none')this.style.border = '4px solid '+_this.colors[1];  }, false );
+
+            //t[i].addEventListener( 'mouseover', function ( e ) { e.preventDefault(); this.style.border = '1px solid '+_this.colors[0];  }, false );
+            //t[i].addEventListener( 'mouseout', function ( e ) { e.preventDefault();  this.style.border = '1px solid '+_this.colors[5];  }, false );
+            t[i].addEventListener( 'click', function ( e ) { e.preventDefault(); fun( this.name ); _this.setActiveSelectorSpeed(this.name, type); }, false );
+
+            } else {
+                 t[i].addEventListener( 'click', function ( e ) { e.preventDefault(); fun( this.name ); _this.setActiveSelector(this.name, type); }, false );
+            }
+            //t[i].addEventListener( 'mouseover', function ( e ) { e.preventDefault(); this.style.border = '4px solid '+_this.colors[0];  }, false );
+            //t[i].addEventListener( 'mouseout', function ( e ) { e.preventDefault();  if(this.className == 'none')this.style.border = '4px solid '+_this.colors[1];  }, false );
+
+            //t[i].addEventListener( 'mouseover', function ( e ) { e.preventDefault(); this.style.border = '1px solid '+_this.colors[0];  }, false );
+            //t[i].addEventListener( 'mouseout', function ( e ) { e.preventDefault();  this.style.border = '1px solid '+_this.colors[5];  }, false );
+           
+        }
+        //this.hub.appendChild( cont );
+        //if(type=='DIFFICULTY'){this.full.appendChild( cont ); cont.style.position = 'absolute'; cont.style.top = '200px';cont.style.width = '300px';}
+        target.appendChild( cont );
+        return cont;
+    }
+
+    setActiveSelector   (n, type) {
+        var h = 10, def;
+        while(h--){
+            if(document.getElementById(type+h)){
+                def = document.getElementById(type+h);
+                //def.style.color = this.colors[0];
+               // def.style.border = '4px solid '+_this.colors[1]; 
+                //def.style.backgroundColor = this.colors[1];
+                def.className = "hub-btn";
+            }
+        }
+        var select = document.getElementById(type+n);
+        //select.style.border = '4px solid '+_this.colors[0]; 
+        //select.style.backgroundColor = this.colors[5];
+        //select.style.color = this.colors[2];
+        select.className = "hub-btn-select";
+    }
+
+    removeSelector  (type){
+        var h = 10, def;
+        var target = document.getElementById(type);
+        while(h--){
+            if(document.getElementById(type+h)){
+                def = document.getElementById(type+h);
+                target.removeChild(def);
+            }
+        }
+        this.full.removeChild(target);
     }
 
     clearElement  (id){

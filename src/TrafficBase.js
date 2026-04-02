@@ -1,6 +1,6 @@
-import * as THREE from './three/three.module.min.js'
-import { GLTFLoader } from './jsm/loaders/GLTFLoader.js';
-import { DRACOLoader } from './jsm/loaders/DRACOLoader.js';
+import * as THREE from './three/three.webgpu.js'
+//import { GLTFLoader } from './jsm/loaders/GLTFLoader.js';
+//import { DRACOLoader } from './jsm/loaders/DRACOLoader.js';
 import { mergeGeometries } from './jsm/utils/BufferGeometryUtils.js';
 
 import { Traffic, TrafficWorld } from './traffic/TrafficLib.js';
@@ -10,6 +10,8 @@ export class TrafficBase extends THREE.Group {
     constructor( o = {} ) {
 
         super()
+
+        this.pool = o.pool;
 
         let isStandard = o.isStandard !== undefined ? o.isStandard : true
 
@@ -35,38 +37,42 @@ export class TrafficBase extends THREE.Group {
         	lightsFlip:0
         }
 
-
-
         //const MATYPE = THREE.MeshBasicMaterial
-        const MATYPE = isStandard ? THREE.MeshStandardMaterial : THREE.MeshBasicMaterial
-        let op = isStandard ? { metalness:0.8, roughness:0.2 } : {}
+        const MATYPE = isStandard ? THREE.MeshStandardNodeMaterial : THREE.MeshBasicNodeMaterial
+        let op = isStandard ? { color:0xffffff, metalness:0.6, roughness:0.2, vertexColors:false } : {}
 
-        this.car_geo = {}
-        this.car_mat = [];
+        this.car_geo = this.pool.geos.cars;
 
+        this.car_mat = [
+		    new MATYPE({ map:this.pool.texture('cars_0'), ...op }),
+		    new MATYPE({ map:this.pool.texture('cars_1'), ...op }),
+		    new MATYPE({ map:this.pool.texture('cars_2'), ...op }),
+		    new MATYPE({ map:this.pool.texture('cars_3'), ...op }),
+		]
 
+		//this.feux = this.pool.geos.feux;
+		this.signData = {
 
-	    this.car_mat[0] = new MATYPE( op );
-	    this.car_mat[1] = new MATYPE( op );
-	    this.car_mat[2] = new MATYPE( op );
+			'baseMat' : new MATYPE({map:this.pool.texture('feux'), ...op }),
+			'redMat'  : new THREE.MeshBasicNodeMaterial({ color:0xff0000, transparent:true, alphaMap:this.pool.texture('light_a') }),
+			'greenMat' : new THREE.MeshBasicNodeMaterial({ color:0x00ff00, transparent:true, alphaMap:this.pool.texture('light_a') }),
+			'orangeMat' : new THREE.MeshBasicNodeMaterial({ color:0xff9900, transparent:true, alphaMap:this.pool.texture('light_a') }),
+		
+			'base' : this.pool.geos.feux,
+			'red'  : this.pool.geos.feux_r,
+			'green' : this.pool.geos.feux_g,
+			'orange': this.pool.geos.feux_o
 
-	    let tx;
-		let img = new Image();
-	    img.onload = function(){
-	        this.generateRandomColor( img, this.car_mat[0] );
-	        this.generateRandomColor( img, this.car_mat[1] );
-	        this.generateRandomColor( img, this.car_mat[2] );
-	    }.bind(this)
-	    img.src = this.mapPath + 'cars.png';
+		};
 
 	    this.inter_geo = new THREE.PlaneGeometry( this.grid, this.grid );
 	    this.inter_geo.applyMatrix4(new THREE.Matrix4().makeRotationX(-Math.PI*0.5));
 
 		this.road_geo = new THREE.PlaneGeometry( this.grid, this.grid );
 		this.road_geo.applyMatrix4(new THREE.Matrix4().makeRotationX(-Math.PI*0.5));
-
-		this.mats['inter_mat'] = new MATYPE( { map:loader.load( this.mapPath + 'roadx.png' ), ...op } );
-		this.mats['road_mat'] = new MATYPE( { map:loader.load( this.mapPath + 'road.png' ), ...op } );
+		let op2 = isStandard ? { metalness:0.5, roughness:0.1, vertexColors:false } : {}
+		this.mats['inter_mat'] = new MATYPE( { map:this.pool.texture('roadx'), ...op2 } );
+		this.mats['road_mat'] = new MATYPE( { map:this.pool.texture('road'), ...op2 } );
 
 		let debug = false 
 
@@ -79,10 +85,9 @@ export class TrafficBase extends THREE.Group {
 			if(this.withShadow) this.gridMesh.receiveShadow = true;
 		}
 		
+		//this.loadCarsModel()
 
-
-		this.loadCarsModel()
-
+		this.init()
 
     }
 
@@ -109,13 +114,15 @@ export class TrafficBase extends THREE.Group {
 
     	this.car_mat[0].dispose()
     	this.car_mat[1].dispose()
-    	this.car_mat[2]
+    	this.car_mat[2].dispose()
+    	this.car_mat[3].dispose()
 
     	this.mats['inter_mat'].dispose()
     	this.mats['road_mat'].dispose()
 
     	this.cars = [];
         this.roads = [];
+        this.signal = [];
         this.inter = [];
         this.mats = {}
 
@@ -201,59 +208,15 @@ export class TrafficBase extends THREE.Group {
 	    // window.requestAnimationFrame(update);
 	}
 
-    generateRandomColor( img, mat ) {
-
-		const canvas = document.createElement( 'canvas' );
-		canvas.width = canvas.height = 1024;
-		const ctx = canvas.getContext('2d');
-		let i, n=0, j=0;
-
-		for( i=0; i<16; i++ ){
-			ctx.beginPath();
-			if(i!==11 && i!==15) ctx.fillStyle = this.randCarColor();
-			ctx.rect(n*256, j*256, 256, 256);
-			ctx.fill();
-			n++
-			if(n==4){ n=0; j++; }
-		}
-
-		ctx.drawImage(img, 0, 0, 1024,1024);
-	    let tx = new THREE.Texture(canvas);
-	    tx.needsUpdate = true;
-	    tx.flipY = false;
-	    mat.map = tx;
-	    mat.needsUpdate = true;
-
-	}
-
-	loadCarsModel() {
-
-		let geo = this.car_geo
-	    let glbLoader = new GLTFLoader();
-		let dracoLoader = new DRACOLoader().setDecoderPath( './build/draco/' )
-		glbLoader.setDRACOLoader( dracoLoader )
-
-		glbLoader.load( this.modelPath + 'cars.glb', function ( gltf ) {
-
-			gltf.scene.traverse( function ( node ) {
-
-				if( node.isMesh ) geo[node.name] = node.geometry
-
-			})
-
-			this.init()
-
-		}.bind(this))
-
-	}
 
 	addRoad( road ) {
 
 		if ((road.source == null) || (road.target == null)) throw Error('invalid road');
-		let id = road.id.substring(4);
+		//let id = road.id.substring(4);
+		let id = road.idx;
 		if(this.roads[id]==null){
-			//var sourceSide = road.sourceSide;
-		   // var targetSide = road.targetSide
+
+
 			
 			let p0 = road.source.rect.pos();
 			let p1 = road.target.rect.pos();
@@ -336,16 +299,21 @@ export class TrafficBase extends THREE.Group {
 		//(sourceSide.source, sourceSide.target, targetSide.source, targetSide.target)
 	}
 
-	addSignals(cc, id) {
+	addSignals(sign) {
+
+
+
+
 	}
 
 
 	addCar( car ) {
 
-		let id = car.id.substring(3);
+		//let id = car.id.substring(3);
+		let id = car.idx;
 		if( this.cars[id]==null ){
-			let r = this.randInt(0,2);
-			let c = new THREE.Mesh( this.car_geo[ Traffic.TYPE_OF_CARS[ car.type].m ], this.car_mat[r] );
+			let r = this.randInt(0,3);
+			let c = new THREE.Mesh( this.car_geo[ Traffic.TYPE_OF_CARS[car.type].id ], this.car_mat[r] );
 			/*if(this.withShadow){
 	        	c.receiveShadow = true;
 	        	c.castShadow = true;
@@ -374,34 +342,63 @@ export class TrafficBase extends THREE.Group {
 
 	}
 
+	addFeux(m, n, u){
+		
+		const res = [null,null,null,null]
+		let id, f, s, sw = [1,3]
+
+		while(n--){
+			id = u[n]
+			s = id
+			if(s===sw[0]) s = sw[1]
+			else if(s===sw[1])s = sw[0]
+			f = new Signal( this.signData )
+			f.rotation.y = (Math.PI*0.5)*s
+			m.add(f)
+			res[id] = f
+		}
+
+		return res 
+		
+	}
+
 	addInter( intersection ) {//intersection
 
-		let id = intersection.id.substring(12);
+		//let id = intersection.id.substring(12);
+		let id = intersection.idx;
 		if( this.inter[id]==null ){
+
 			this.inter[id] = new THREE.Mesh( this.inter_geo, this.mats['inter_mat'] );
 			if(this.withShadow){
 	        	this.inter[id].receiveShadow = true;
 			}
 			this.add( this.inter[id] );
 			let type = intersection.roads.length;
-			// console.log(intersection.inRoads.length)
-			/*var i = type;
-			while(i){
-				var sideId = intersection.roads[i].targetSideId;
-				console.log(sideId)
-			}*/
-			/*switch(type){
-				case 4: inter[id].material = inter_matx; break;
-				case 3: inter[id].material = inter_maty; break;
-				case 2: inter[id].material = inter_matz; break;
-				case 1: inter[id].material = inter_mate; break;
-			}*/
+			let i = type, u = []
+			while(i--){
+				u.push( intersection.roads[i].targetSideId )
+			}
+			
+			switch(type){
+				case 1: this.inter[id].userData['sign'] = [null,null,null,null]; break;
+				case 2: this.inter[id].userData['sign'] = this.addFeux(this.inter[id], 2, u); break;
+				case 3: this.inter[id].userData['sign'] = this.addFeux(this.inter[id], 3, u); break;
+				case 4: this.inter[id].userData['sign'] = this.addFeux(this.inter[id], 4, u); break;
+			}
 			let c = intersection.rect.pos();
 			this.inter[id].position.set(c.x,0,c.y);
 			//inter[id].scale.set(1, 1, 1).multiplyScalar(scaler);
 		} else {
 			//var c = cc.rect;
-			let l = intersection.controlSignals.state[0];
+			let res = this.inter[id].userData.sign;
+			let l = intersection.controlSignals.stateString;
+			for(let i = 0; i<4; i++){
+				if(res[i] !== null) res[i].setState(l[i])
+			}
+
+			//if(id===10){
+				//console.log(l)
+			//}
 			//if(l[0]==1)inter[id].material = inter_mat;
 			//else inter[id].material = inter_mat0;
 
@@ -409,48 +406,55 @@ export class TrafficBase extends THREE.Group {
 
 	}
 
-	// some math function
-
-	randColor() { return '#'+Math.floor(Math.random()*16777215).toString(16); }
-
-	randCarColor () {
-
-		let carcolors = [
-		[0xFFFFFF, 0xD0D1D3, 0XEFEFEF, 0xEEEEEE],//white
-		[0x252122, 0x302A2B, 0x27362B, 0x2F312B],//black
-		[0x8D9495, 0xC1C0BC, 0xCED4D4, 0xBEC4C4],//silver
-		[0x939599, 0x424242, 0x5A5A5A, 0x747675],//gray
-		[0xC44920, 0xFF4421, 0x600309, 0xD9141E],//red
-		[0x4AD1FB, 0x275A63, 0x118DDC, 0x2994A6],//blue
-		[0xA67936, 0x874921, 0xD7A56B, 0x550007],//brown
-		[0x5FF12C, 0x188047, 0x8DAE29, 0x1AB619],//green
-		[0xFFF10A, 0xFFFFBD, 0xFCFADF, 0xFFBD0A],//yellow/gold
-		[0xB92968, 0x5C1A4F, 0x001255, 0xFFB7E7]//other
-		];
-
-		let l, p = this.randInt(0,100), n = this.randInt(0,3);
-
-		if(p<23)l=0;
-		else if(p<44)l=1;
-		else if(p<62)l=2;
-		else if(p<76)l=3;
-		else if(p<84)l=4;
-		else if(p<90)l=5;
-		else if(p<96)l=6;
-		else if(p<97)l=7;
-		else if(p<98)l=8;
-		else l=9;
-
-		let base = carcolors[l][n];
-
-	    let resl = base.toString(16);
-	    if(resl.length<6) resl = '#0'+resl;
-	    else resl = '#'+resl;
-		return resl;
-	}
 
 	randInt( low, high ) { return low + Math.floor( Math.random() * ( high - low + 1 ) ); }
 
+
+
+
+}
+
+
+
+class Signal extends THREE.Mesh {
+
+	constructor( data ){
+
+		super( data.base, data.baseMat )
+		this.red = new THREE.Mesh( data.red, data.redMat )
+		this.green = new THREE.Mesh( data.green, data.greenMat )
+		this.orange = new THREE.Mesh( data.orange, data.orangeMat )
+
+		this.add(this.red)
+		this.add(this.green)
+		this.add(this.orange)
+
+		this.green.visible = false
+		this.orange.visible = false
+		this.red.visible = false
+
+	}
+
+	setState( value ){
+
+		this.green.visible = false
+		this.orange.visible = false
+		this.red.visible = true
+		switch(value){
+			case 'LFR':
+			this.red.visible = true
+			break;
+			case 'L':
+			this.red.visible = false
+			this.orange.visible = true
+			break;
+			case 'FR':
+			this.green.visible = true
+			this.red.visible = false
+			break;
+		}
+
+	}
 
 
 

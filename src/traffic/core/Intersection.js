@@ -9,6 +9,7 @@ export class Intersection {
         this.rect = rect;
         this.key = this.rect.key()
         this.id = Traffic.uniqueId('intersection');
+        this.idx = this.id.substring(12);
         this.roads = [];
         this.inRoads = [];
         this.controlSignals = new ControlSignals( this );

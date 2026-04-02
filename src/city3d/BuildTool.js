@@ -1,11 +1,10 @@
-import * as THREE from '../three/three.module.min.js'
+import * as THREE from '../three/three.webgpu.js';
 
 export class BuildTool extends THREE.Object3D {
 
 	constructor () {
 
 		super()
-
 
 		this.space = 0.075;
 

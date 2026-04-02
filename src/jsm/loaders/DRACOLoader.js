@@ -9,7 +9,7 @@ import {
 	SRGBColorSpace,
 	InterleavedBuffer,
 	InterleavedBufferAttribute
-} from '../../three/three.module.min.js';
+} from '../../three/three.webgpu.js';
 
 const _taskCache = new WeakMap();
 

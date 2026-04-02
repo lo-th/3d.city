@@ -20,6 +20,19 @@ export class ControlSignals {
 
     }
 
+    get stateString() {
+
+        let i, len, results;
+        let stringState = this.states[this.stateNum % this.states.length];
+        if (this.intersection.roads.length <= 2) { stringState = ['LFR', 'LFR', 'LFR', 'LFR']; }
+       /* results = [];
+        for (i = 0, len = stringState.length; i < len; i++) {
+            results.push( this._decode( stringState[i] ) );
+        }*/
+        return stringState;
+        
+    }
+
     get state() {
 
         let i, len, results;

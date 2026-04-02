@@ -9,6 +9,7 @@ export class Car {
 		this.type = Traffic.rand(Traffic.TYPE_OF_CARS.length-1);
 
 	    this.id = Traffic.uniqueId('car');
+	    this.idx = this.id.substring(3);
 	    this.color = (300 + 240 * Traffic.random() | 0) % 360;
 	    this._speed = 0;
 	    

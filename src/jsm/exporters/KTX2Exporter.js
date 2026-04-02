@@ -14,7 +14,7 @@ import {
 	SRGBTransfer,
 	DataTexture,
 	REVISION,
-} from '../../three/three.module.min.js';
+} from '../../three/three.webgpu.js';
 
 import {
 	createDefaultContainer,

@@ -1,6 +1,4 @@
-import {
-	MeshStandardMaterial,
-} from '../three/three.module.min.js'
+import { MeshStandardMaterial } from '../three/three.module.js'
   
 
 export class GroundShader extends MeshStandardMaterial {

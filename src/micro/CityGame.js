@@ -61,7 +61,7 @@ export class CityGame {
         }
 
 
-         
+        if( p == "NEWMAP" ) Game.newMap( e.data.mapSize );
         if( p == "PLAYMAP" ) Game.playMap();
         if( p == "TOOL" ) Game.tool(e.data.name);
         if( p == "MAPCLICK" ) Game.mapClick(e.data.x, e.data.y, e.data.single || false);
@@ -69,8 +69,8 @@ export class CityGame {
         //if( p == "DESTROY" ) Game.destroy(e.data.x, e.data.y);
 
         //if( p == "RUN" && trans) updateTrans(e.data);
-        if( p == "NEWMAP" ) Game.newMap();
-        if( p == "MAPSIZE" ) Game.changeMapSize(e.data.n);
+        
+        //if( p == "MAPSIZE" ) Game.changeMapSize(e.data.n);
         if( p == "DIFFICULTY" ) Game.changeDifficulty(e.data.n);
         
         if( p == "SPEED" ) Game.changeSpeed(e.data.n);
@@ -184,7 +184,9 @@ export class MainGame {
 
     }
 
-    newMap () {
+    newMap ( mapSize ) {
+
+        if(mapSize) this.mapSize = mapSize;
 
         this.map = this.mapGen.construct( this.mapSize[0], this.mapSize[1] );
         CityGame.post({ tell:"NEWMAP", tilesData:this.map.tilesData, mapSize:this.mapSize, island:this.map.isIsland, trans:trans });
@@ -231,7 +233,6 @@ export class MainGame {
         }else{
             this.simulation = new Simulation( this.map, this.difficulty, this.speed, true);
             messageMgr.sendMessage(Messages.WELCOME);
-
         }
 
         this.simulation.budget.setFunds(money);

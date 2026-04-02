@@ -8,6 +8,7 @@ export class Road {
         this.source = source;
         this.target = target;
         this.id = Traffic.uniqueId('road');
+        this.idx = this.id.substring(4);
         this.lanes = [];
         this.lanesNumber = null;
         this.update();

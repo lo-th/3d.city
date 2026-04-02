@@ -1,48 +1,43 @@
-import * as THREE from '../three/three.module.min.js';
+import * as THREE from '../three/three.webgpu.js';
 import { GLTFLoader } from '../jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from '../jsm/loaders/DRACOLoader.js';
 import { HDRLoader } from '../jsm/loaders/HDRLoader.js';
+
+import { LUTCubeLoader } from '../jsm/loaders/LUTCubeLoader.js';
+import { LUT3dlLoader } from '../jsm/loaders/LUT3dlLoader.js';
+import { LUTImageLoader } from '../jsm/loaders/LUTImageLoader.js';
+
 import { AppState } from '../AppState.js'
 //import { KTX2Loader } from '../jsm/loaders/KTX2Loader.js';
 //import { KTX2Exporter } from '../jsm/exporters/KTX2Exporter.js';
+const lutMap = {
+	//'Bourbon 64.CUBE': null,
+	'Warm_Runner.CUBE': null,
+	'Cold_Runner.CUBE': null,
+	'Dark_Runner.CUBE': null,
+	'FILM1.CUBE': null,
+	'FILM2.CUBE': null,
+	//'Chemical 168.CUBE': null,
+	'Clayton 33.CUBE': null,
+	'Cubicle 99.CUBE': null,
+	'Remy 24.CUBE': null,
+	'Presetpro-Cinematic.3dl': null,
+	'NeutralLUT': null,
+	'B&WLUT': null,
+	'NightLUT': null,
+	'premium.cube': null,
+	'LDmono1.cube': null,
+	'LDmono2.cube': null,
+	'LDmono3.cube': null,
+	'art.cube': null,
+};
 
+const mapPath = './assets/textures/'
+const modelPath = './assets/models/'
 
 export class Pool {
 
-	constructor( callback, tileSize=64, normal=true, roughness=false, pixel=false ) {
-
-		this.sky = 'day';
-
-		this.callback = callback;
-
-		this.tileSize = tileSize
-		this.isWithNormal = normal 
-		this.isWithRoughness = roughness
-		this.isPixelStyle = pixel
-
-		this.loaderGLB = new GLTFLoader();
-
-		let type = 'js'
-		if ( navigator.userAgentData ) type = 'wasm'
-        else {
-            let ua = navigator.userAgent.toLowerCase()
-            type = (ua.indexOf('safari') !== -1 && ua.indexOf('chrome') === -1) ? 'js' : 'wasm'
-        }
-
-    	let dracoLoader = new DRACOLoader().setDecoderPath( './build/draco/' )
-    	dracoLoader.setDecoderConfig( { type: type } )
-    	this.loaderGLB.setDRACOLoader( dracoLoader )
-
-		this.mapPath = './assets/textures/'
-		this.modelPath = './assets/models/'
-
-		this.modelSrc = [ 'cars', 'world' ];
-
-		this.imgSrc = ['tiles.png','town.png','building.png', 'cars.png' ];
-
-		if( this.isWithNormal ) this.imgSrc.push( 'tiles_n.png', 'building_n.png', 'town_n.png' )
-		if( this.isWithRoughness ) this.imgSrc.push( 'tiles_r.png', 'building_r.png', 'town_r.png' )
-		this.imgSrc.push( 'border.png' )
+	constructor(  ) {
 
 		this.imgs = [];
 		this.num = 0;
@@ -53,20 +48,48 @@ export class Pool {
 			texture:[],
 		}
 
-		this.color = {
-			ground:'#c68564',
-			normal:'#8080ff',
-			snow:'#e6f0ff',
-			white:'#ffffff',
-			lightGrey:'#CCCCCC',
-			metal:'#808080',
-			sky:'#8397ac',
-		}
-
+		this.color = AppState.color;
 		this.textures = {}
 		this.geos = {}
 
-		this.loadEnvmap()
+		this.modelUrl = [ 'cars.glb', 'world.glb' ];
+		this.textureUrl = [ 'title.png', 'water.png', 'building_nr.png', 'town_nr.png', 'dirt_n.png', 'dirt_ao.png', 'roadx.png', 'road.png', 'feux.png', 'light_a.png' ];
+		this.imageUrl = ['tiles.png','town.png','building.png', 'cars.png', 'border.png' ];
+
+		if( AppState.isWithNormal ) this.imageUrl.push( 'tiles_n.png', 'building_n.png', 'town_n.png' )
+		if( AppState.isWithRoughness ) this.imageUrl.push( 'tiles_r.png', 'building_r.png', 'town_r.png' )
+
+		let type = 'js'
+		if ( navigator.userAgentData ) type = 'wasm'
+        else {
+            let ua = navigator.userAgent.toLowerCase()
+            type = (ua.indexOf('safari') !== -1 && ua.indexOf('chrome') === -1) ? 'js' : 'wasm'
+        }
+
+    	let dracoLoader = new DRACOLoader().setDecoderPath( './build/draco/' )
+    	dracoLoader.setDecoderConfig( { type: type } )
+
+    	this.loaderGLB = new GLTFLoader().setDRACOLoader( dracoLoader ).setPath( modelPath );
+    	this.loaderHDR = new HDRLoader();
+    	this.loaderHDR = new HDRLoader();
+    	this.loaderTexture = new THREE.TextureLoader().setPath( mapPath );
+    	this.loaderImage = new THREE.ImageLoader().setPath( mapPath );
+		
+	}
+
+	async load( callback ){
+
+		//this.callback = callback;
+
+		if( AppState.activeLUT ) await this.loadLUT();
+		await this.loadEnvmap()
+		await this.loadTexture()
+		await this.loadImage()
+		await this.loadModel()
+
+		//console.log(this.textures)
+
+		//this.callback()
 
 	}
 
@@ -75,46 +98,187 @@ export class Pool {
 		AppState.hub.message( str )
 
 	}
+
+	//----------------------------------- LUT
+
+	async loadLUT(){
+
+		this.displayMessage( 'Loading Lut ...' )
+
+		const path = './assets/luts/'
+
+		const lutCubeLoader = new LUTCubeLoader();
+		const lutImageLoader = new LUTImageLoader();
+		const lut3dlLoader = new LUT3dlLoader();
+
+		for ( const name in lutMap ) {
+
+			if ( /\.CUBE$/i.test( name ) ) {
+
+				lutMap[ name ] = lutCubeLoader.loadAsync( path + name );
+
+			} else if ( /\LUT$/i.test( name ) ) {
+
+				lutMap[ name ] = lutImageLoader.loadAsync( path + `${name}.png` );
+
+			} else {
+
+				lutMap[ name ] = lut3dlLoader.loadAsync( path + name );
+
+			}
+
+		}
+
+		const pendings = Object.values( lutMap );
+		await Promise.all( pendings );
+
+		for ( const name in lutMap ) {
+
+			lutMap[ name ] = await lutMap[ name ];
+
+		}
+
+	}
+
+	getLUT(){
+		return lutMap;
+	}
  
 
 	//----------------------------------- ENVMAP
 
-	loadEnvmap() {
+	async loadEnvmap() {
 
 		this.displayMessage( 'Loading envmap ...' )
 
-		new HDRLoader().load( this.mapPath + this.sky + '.hdr', function ( texture ) {
+		const envmap = {
+			'background': this.loaderHDR.loadAsync( mapPath + AppState.envmap + '.hdr' ),
+			'environment': this.loaderHDR.loadAsync( mapPath + AppState.envmap2 + '.hdr' )
+		}
 
-			this.env = texture;
-			this.loadImages();
+		const pendings = Object.values( envmap );
+		await Promise.all( pendings );
 
-		}.bind(this))
+		for ( const name in envmap ) {
+			envmap[ name ] = await envmap[ name ];
+			envmap[ name ].mapping = THREE.EquirectangularReflectionMapping;
+		}
+
+		this.envmap = envmap;
 
 	}
 
 
 	//----------------------------------- TEXTURES
 
-	loadImages() {
+	async loadTexture() {
+
+		this.displayMessage( 'Loading texture ...' )
+
+		let name, url, texture;
+
+		for( let i = 0; i<this.textureUrl.length; i++ ){
+
+			url = this.textureUrl[i];
+			name = url.substring( url.lastIndexOf('/')+1, url.lastIndexOf('.') );
+			this.textures[name] = this.loaderTexture.loadAsync( url );
+
+		}
+
+		const pendings = Object.values( this.textures );
+		await Promise.all( pendings );
+
+		for ( const name in this.textures ) {
+			this.textures[ name ] = await this.textures[ name ];
+
+			texture = this.textures[ name ]
+			texture.flipY = false;
+			texture.colorSpace = name.search('_')!==-1 ? THREE.NoColorSpace : THREE.SRGBColorSpace;
+
+			if(name === 'dirt_n' || name === 'dirt_ao'){
+				texture.wrapS = THREE.RepeatWrapping 
+			    texture.wrapT = THREE.RepeatWrapping
+			    texture.repeat = new THREE.Vector2(4,4);
+			}
+
+		}
+
+	}
+
+	//----------------------------------- IMAGES
+
+	async loadImage() {
 
 		this.displayMessage( 'Loading images ...' )
 
-		let n = this.num;
-		let url = this.imgSrc[n]
-		let name = url.substring( url.lastIndexOf('/')+1, url.lastIndexOf('.') );
+		let name, url;
 
+		for( let i = 0; i<this.imageUrl.length; i++ ){
 
-    	this.imgs[name] = new Image();
-    	this.imgs[name].onload = function(){ 
-    		this.num++;
-    		if( this.num === this.imgSrc.length ) this.defineCanvas();
-    		else this.loadImages();
-    	}.bind(this);
-        this.imgs[name].src = this.mapPath + url; 
+			url = this.imageUrl[i];
+			name = url.substring( url.lastIndexOf('/')+1, url.lastIndexOf('.') );
+			this.imgs[name] = this.loaderImage.loadAsync( url );
+
+		}
+
+		const pendings = Object.values( this.imgs );
+		await Promise.all( pendings );
+
+		for ( const name in this.imgs ) {
+			this.imgs[ name ] = await this.imgs[ name ];
+		}
+
+		this.defineCanvas();
+
+	}
+
+	//----------------------------------- 3d MODEL
+
+	async loadModel() {
+
+		this.displayMessage( 'Loading 3d models ...' )
+
+		const self = this;
+		const models = {}
+		const geometry = {}
+		let name, url;
+
+		for( let i = 0; i<this.modelUrl.length; i++ ){
+
+			url = this.modelUrl[i];
+			name = url.substring( url.lastIndexOf('/')+1, url.lastIndexOf('.') );
+			models[name] = this.loaderGLB.loadAsync( url );
+
+		}
+
+		const pendings = Object.values( models );
+		await Promise.all( pendings );
+
+		for ( const name in models ) {
+
+			models[ name ] = await models[ name ];
+
+			models[ name ].scene.traverse( function ( node ) {
+				if(node.isMesh){
+					if( node.name === 'title' ) self.title = node;
+		    		else if( node.name === 'border' ) self.border = node;
+					else if( !geometry[node.name] ) {
+						node.geometry.name = node.name;
+						geometry[node.name] = node.geometry;
+					}
+				}
+			})
+
+			this.defineGeometry( geometry, name );
+
+		}
 
 	}
 
 
+
+
+	//----------------------------------- CANVAS TO TEXTURE
 
 	defineCanvas() {
 
@@ -126,22 +290,22 @@ export class Pool {
 			tiles: this.makeCanvas( 'tiles', true ),
 		}
 
-		if( this.isWithNormal ) this.canvas[ 'tiles_n' ] = this.makeCanvas( 'tiles_n', true )
-		if( this.isWithRoughness ) {
+		if( AppState.isWithNormal ) this.canvas[ 'tiles_n' ] = this.makeCanvas( 'tiles_n', true )
+		if( AppState.isWithRoughness ) {
 			this.canvas[ 'tiles_r' ] = this.makeCanvas( 'tiles_r', true )
 			this.canvas[ 'town_r' ] = this.makeCanvas( 'town_r' )
 			this.canvas[ 'building_r' ] = this.makeCanvas( 'building_r' )
 		}
 
+		this.makeCarColor()
 	    this.drawCanvas()
-
-	    this.makeCarColor()
+	    
 
 	}
 
 	makeCanvas( name, resize ) {
 
-		let r = resize && this.tileSize === 32 ? 0.5 : 1;
+		let r = resize && AppState.tileSize === 32 ? 0.5 : 1;
 
 		let img = this.imgs[name];
 		let c = document.createElement("canvas")
@@ -176,11 +340,40 @@ export class Pool {
 				ctx.fillRect( 0, 0, c.width, c.height )
 			}
 
+			//ctx.filter = 'hue-rotate(120deg) grayscale(10%) brightness(150%)';
 			ctx.drawImage( this.imgs[ name ], 0, 0, c.width, c.height );
 		
 		}
 
+		//this.changeColor('tiles',[ 130, 130, 183 ], [ 152, 135, 91 ]  )
+
 		this.defineTextures()
+
+	}
+
+	changeColor( name, c1, c2, rr=1.1 ){
+
+		const canvas = this.canvas[ name ];
+		const ctx = canvas.getContext('2d', )
+		const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height )
+		const data = imageData.data;
+		let i = data.length/4, n, r, g, b
+
+		while(i--){
+			n = i*4
+			r = data[n]/c1[0]
+			g = data[n+1]/c1[1]
+			b = data[n+2]/c1[2]
+
+			if(r<rr && g<rr && b<rr ){
+				data[n] = c2[0]
+				data[n+1] = c2[1]
+				data[n+2] = c2[2]
+			}
+		
+		}
+
+		ctx.putImageData(imageData, 0, 0 );
 
 	}
 
@@ -198,7 +391,7 @@ export class Pool {
         this.textures['building'] = new THREE.Texture( this.canvas.building );
         this.filterTexture( this.textures['building'], { flip:false } )
 
-        if( this.isWithNormal ){
+        if( AppState.isWithNormal ){
 
         	this.makePixelData( 'tiles_n' )
 
@@ -210,7 +403,7 @@ export class Pool {
 
         }
 
-        if( this.isWithRoughness ){
+        if( AppState.isWithRoughness ){
 
         	this.makePixelData( 'tiles_r' )
 
@@ -227,7 +420,7 @@ export class Pool {
 
 		
 
-        this.loadModel()
+        //this.loadModel()
 
 	}
 
@@ -235,16 +428,19 @@ export class Pool {
 
     	if( !o.normal ) texture.colorSpace = THREE.SRGBColorSpace;//texture.encoding = THREE.sRGBEncoding
     	if( o.flip !== undefined ) texture.flipY = o.flip
-    	if( o.midmap !== undefined ) texture.generateMipmaps = o.midmap;
-    	if( o.alpha !== undefined ) texture.premultiplyAlpha = o.alpha;
+    	//if( o.midmap !== undefined ) texture.generateMipmaps = o.midmap;
+    	//if( o.alpha !== undefined ) texture.premultiplyAlpha = o.alpha;
 
-    	if( this.isPixelStyle ){
+    	/*if( AppState.isPixelStyle ){
     		texture.magFilter = THREE.NearestFilter;
     	    texture.minFilter = THREE.LinearMipMapLinearFilter;
-    	} else {
+    	} else {*/
     		texture.magFilter = THREE.LinearFilter;
-    	    texture.minFilter = THREE.LinearMipmapLinearFilter;
-    	}
+    	    texture.minFilter = THREE.LinearFilter;//LinearMipmapLinearFilter;
+    	//}
+
+    	texture.generateMipmaps = false;
+    	//texture.unpackAlignment = 4
 
     	//texture.format = THREE.FloatType;
 
@@ -262,23 +458,34 @@ export class Pool {
     makePixelData( name ) {
 
 		let ctx = this.canvas[ name ].getContext('2d', { willReadFrequently: true })
-		let pix = this.tileSize, x, y
+		let pix = AppState.tileSize, x, y
+
+		let data, texture;
+		let n, lng = pix * pix
 
 		for ( let i = 0; i < 240; i++ ){
-
+			
 			x = ( i % 32 ) * pix;
 			y = Math.floor( i / 32 ) * pix;
-			let data = ctx.getImageData(x, y, pix, pix).data;
-			if ( name === 'tiles_n' ) this.tiles.normal[i] = new THREE.DataTexture( data, pix, pix, THREE.RGBAFormat, THREE.FloatType );
-			else if ( name === 'tiles_r' ) this.tiles.roughness[i] = new THREE.DataTexture( data, pix, pix, THREE.RGBAFormat, THREE.FloatType );
-			else this.tiles.texture[i] = new THREE.DataTexture( data, pix, pix, THREE.RGBAFormat, THREE.FloatType );
+			data = ctx.getImageData(x, y, pix, pix).data;
+		    texture = new THREE.DataTexture( data, pix, pix )
+
+		    //if(i===0 ) console.log(data)
+
+			texture.flipY = true
+			texture.needsUpdate = true;
+			
+			//const data2 = new Uint8Array( data );
+			if ( name === 'tiles_n' ) this.tiles.normal[i] = texture;
+			else if ( name === 'tiles_r' ) this.tiles.roughness[i] = texture;
+			else this.tiles.texture[i] = texture;
 
 		}
 
 	}
 
 
-	tint( canvas, image, supImage ) {
+	/*tint( canvas, image, supImage ) {
 
 		let data, i, n;
 		let pixels = canvas.width*canvas.height;
@@ -336,11 +543,12 @@ export class Pool {
 		    }
 		}
 
-	}
+	}*/
 
 	//----------------------------------- TITLE
 
 	rand ( low, high ) { return low + Math.random() * ( high - low ); }
+	randInt( low, high ) { return low + Math.floor( Math.random() * ( high - low + 1 ) ); }
 
 	makeTitleTexture ( n = 0 ) {
 
@@ -382,28 +590,32 @@ export class Pool {
 
 	makeCarColor () {
 
-		let c = document.createElement( 'canvas' );
-		c.width = c.height = 1024;
-		let ctx = c.getContext('2d');
-		let i, n=0, j=0, k = 3;
+		let k = 4, c, ctx, i, n=0, j=0, tx, s = 0.25;
 
 		while(k--){
-
-			ctx.clearRect ( 0 , 0, c.width, c.height );
+			c = document.createElement( 'canvas' );
+			c.width = c.height = 1024*s;
+			ctx = c.getContext('2d');
+			n = 0
+			j = 0
 
 			for( i=0; i<16; i++ ){
 				ctx.beginPath();
 				if(i!==11 && i!==15) ctx.fillStyle = this.carColor();
-				ctx.rect(n*256, j*256, 256, 256);
+				ctx.rect(n*256*s, j*256*s, 256*s, 256*s);
 				ctx.fill();
 				n++
 				if(n==4){ n=0; j++; }
 			}
 
-			ctx.drawImage( this.imgs.cars, 0, 0 );
+			ctx.drawImage( this.imgs.cars, 0, 0, 1024*s, 1024*s );
 			let name = 'cars_' + k
-			this.textures[name] = new THREE.Texture( c );
-	        this.filterTexture( this.textures[name], { flip:false } )
+			tx = new THREE.CanvasTexture( c );
+			tx.flipY = false;
+			tx.colorSpace = THREE.SRGBColorSpace;
+			tx.needsUpdate = true;
+
+			this.textures[name] = tx;
 
 		}
 
@@ -433,7 +645,7 @@ export class Pool {
 
 	}
 
-	randInt( low, high ) { return low + Math.floor( Math.random() * ( high - low + 1 ) ); }
+	//randInt( low, high ) { return low + Math.floor( Math.random() * ( high - low + 1 ) ); }
 
 	tile( type, id ) {
 		return this.tiles[type][id];
@@ -446,38 +658,7 @@ export class Pool {
 
 	//----------------------------------- 3D MODEL
 
-	loadModel() {
-
-		this.displayMessage( 'Loading 3d model ...' )
-
-		let n = this.num;
-		let name = this.modelSrc[n]
-
-	    this.loaderGLB.load( this.modelPath + name + '.glb', function ( gltf ) {
-
-	    	let o = {}, b1, b2, t;
-	    	gltf.scene.traverse( function ( node ) {
-	    		if( node.name === 'title' ) t = node;
-	    		if( node.name === 'border' ) b1 = node;
-	    		//if( node.name === 'border_min' ) b2 = node;
-				if( node.isMesh && !o[node.name] ) o[node.name] = node.geometry;
-			})
-			if(b1) this.border = b1;
-			//if(b2) this.border_min = b2;
-			if(t) this.title = t;
-			this.defineGeometry( o, name )
-
-	    	this.num++;
-			if( this.num === this.modelSrc.length ){ 
-				this.displayMessage( '...' )
-				this.callback()
-			} else {
-				this.loadModel()
-			}
-
-	    }.bind(this))
-
-	}
+	
 
 	defineGeometry ( o, name ){
 
@@ -508,6 +689,11 @@ export class Pool {
 					sprite:[
 					   o.train, o.elico.clone(), o.plane.clone()
 					],
+
+					feux:o.feux,
+					feux_r:o.feux_r,
+					feux_g:o.feux_g,
+					feux_o:o.feux_o,
 
 					residential:[],
 					commercial:[],

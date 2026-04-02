@@ -203,9 +203,6 @@ export class TrafficWorld {
     }
 
 
-
-
-
     refreshCars() {
 
         if (this.cars.length < this.carsNumber) this.addRandomCar();

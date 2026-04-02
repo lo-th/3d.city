@@ -43,7 +43,7 @@ import {
 	UnsignedByteType,
 	UnsignedInt5999Type,
 	UnsignedInt101111Type
-} from '../../three/three.module.min.js';
+} from '../../three/three.webgpu.js';
 import { WorkerPool } from '../utils/WorkerPool.js';
 import {
 	read,
