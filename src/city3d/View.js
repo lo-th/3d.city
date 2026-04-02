@@ -7,11 +7,11 @@ import { ImprovedNoise } from '../jsm/math/ImprovedNoise.js';
 
 import { AppState } from '../AppState.js'
 import { Material, MAT, MAT_LAND } from './Material.js'
-import { Base } from './Base.js';
-import { BuildTool } from './BuildTool.js';
+import { Base, Zone } from './Base.js';
+import { BuildTool, Markers } from './BuildTool.js';
 import { PostEffect } from './PostEffect.js';
 import { Pool } from './Pool.js';
-import { Inspector } from '../jsm/inspector/Inspector.js';
+//import { Inspector } from '../jsm/inspector/Inspector.js';
 
 import { TrafficBase } from '../TrafficBase.js'
 
@@ -224,7 +224,7 @@ export class View {
     	renderer.toneMapping = THREE.NeutralToneMapping;
     	renderer.toneMappingExposure = AppState.exposure;
 
-    	if( AppState.inspector ) renderer.inspector = new Inspector();
+    	//if( AppState.inspector ) renderer.inspector = new Inspector();
 
     	this.container.appendChild( renderer.domElement );
     	await renderer.init(); // MUST await before using
@@ -249,14 +249,14 @@ export class View {
 			this.postEffect.LutPass()
 			//this.postEffect.AoPass()
 
-			if(AppState.inspector){
+			/*if(AppState.inspector){
 				const gui = renderer.inspector.createParameters( 'Viewport' );
 				gui.add( AppState, 'exposure', 0,2  ).onChange(()=>{ renderer.toneMappingExposure = AppState.exposure });
 				gui.add( AppState, 'environmentIntensity', 0, 6 ).onChange(()=>{this.scene.environmentIntensity = AppState.environmentIntensity;});
 				gui.add( AppState, 'backgroundIntensity', 0, 6 ).onChange(()=>{this.scene.backgroundIntensity = AppState.backgroundIntensity;});
 				gui.add( AppState, 'backgroundBlurriness', 0, 1 ).onChange(()=>{this.scene.backgroundBlurriness = AppState.backgroundBlurriness;});
 				gui.add( AppState, 'direct', 0, 20 ).onChange(()=>{ sun.intensity = AppState.direct;});
-			}
+			}*/
 
 		}
 
@@ -697,6 +697,13 @@ export class View {
         this.scene.add( this.tool );
         this.tool.visible = false;
 
+        this.markers = new Markers();
+        this.scene.add( this.markers );
+
+        // Construction animation group
+        //this.constructionGroup = new THREE.Group();
+        //this.scene.add( this.constructionGroup );
+
 	    // active key
 	    if(!AppState.isMobile) this.bindKeys();
 
@@ -715,6 +722,7 @@ export class View {
 
         //requestAnimationFrame( this.loop.bind(this) );
 
+
     	if( this.needResize ) this.doResize()
 
     	if( this.onEase ) this.easing()
@@ -724,6 +732,7 @@ export class View {
 	    
 	    this.applyZoomInertia();
 	    this.applyOrbitMomentum();
+	    if(this.markers) this.markers.update();
 
 	    if( this.postEffect.pipeline !== null ) this.postEffect.pipeline.render();
 	    else renderer.render( scene, camera )
@@ -1624,33 +1633,34 @@ export class View {
 
             if( AppState.withHeight ) py = this.heightData[ this.findHeightId(x,y) ];
 
-			let zone; 
-			if(size == 1 ) zone = [ [x, y] ];
-			else if(size == 3) zone = [ [x, y], [x-1, y], [x+1, y],  [x, y-1], [x-1, y-1], [x+1, y-1],   [x, y+1], [x-1, y+1], [x+1, y+1] ];
-			else if(size == 4) zone = [ [x, y], [x-1, y], [x+1, y],  [x, y-1], [x-1, y-1], [x+1, y-1],   [x, y+1], [x-1, y+1], [x+1, y+1],       [x+2, y-1],  [x+2, y] , [x+2, y+1] , [x+2, y+2], [x-1, y+2], [x, y+2], [x+1, y+2]   ];
-			else if(size == 6) zone = [ [x, y], [x-1, y], [x+1, y],  [x, y-1], [x-1, y-1], [x+1, y-1],   [x, y+1], [x-1, y+1], [x+1, y+1],       [x+2, y-1],  [x+2, y] , [x+2, y+1] , [x+2, y+2],   [x-1, y+2], [x, y+2], [x+1, y+2], 
-				[x+3, y-1], [x+4, y-1],   [x+3, y], [x+4, y], [x+3, y+1], [x+4, y+1], [x+3, y+2], [x+4, y+2], [x+3, y+3], [x+4, y+3], [x+3, y+4], [x+4, y+4], 
-				[x-1, y+3], [x-1, y+4], [x, y+3], [x, y+4],  [x+1, y+3], [x+1, y+4], [x+2, y+3], [x+2, y+4]
-			];
+            // get full position of zone tiles
+            const zone = Zone( size, x, y );
 
-			this.removeTreePack(zone);
+            // clear tree if existe in this zone
+			this.removeTreePack( zone );
 
+			// flat terrain 
 			if( AppState.withHeight && size !== 1 ) this.makePlanar( zone, py );
 
 			let v = this.currentTool.geo;
 
 			// standard building
 			if(v<4 && v!==0){
-				this.addBaseBuilding(x, py, y, v, zone);
 				this.snd_layzone.play();
+				///this._spawnConstructionMarker(x, py, y, size);
+				this.markers.spawn( this.tool )
+				this.addBaseBuilding(x, py, y, v, zone);
 			}
 			// town building
-			if(v==8 || v==9 || v==4 || v==5 || v==7 || v==10 || v==11 || v==12){
+			if(v==8 || v==9 || v==4 || v==5 || v==7 || v==10 || v==11 || v==12){	
+				this.snd_layzone.play();
+				//this._spawnConstructionMarker(x, py, y, size)
+				this.markers.spawn( this.tool )
 				this.addBaseTown(x,py,y,v,zone);
-			    this.snd_layzone.play();
 			}
 
 		} else {
+
 			this.removeTree(x,y);
 			if( AppState.withHeight ){
                 let py = this.heightData[this.findHeightId(x,y)];
@@ -1663,7 +1673,6 @@ export class View {
 		    }
 		}
 	}
-
 
 
 	//--------------------------------------------------TEST DESTRUCT
@@ -1761,6 +1770,7 @@ export class View {
 		if(!this.townLists[layer]) this.townLists[layer]=[];
     	this.townLists[layer].push([x,y,z,v,zone]);
     	this.rebuildTownLayer(layer);
+    	;
 
 	}
 
@@ -1773,7 +1783,7 @@ export class View {
 	//--------------------------------------------------HOUSE CREATE/UPDATE/DELETE
 
 	addBaseHouse(x,y,z) {
-		//console.log('h add !!')
+
 		let layer = this.findLayer(x,z);
 		let pos = [ [x, z], [x-1, z], [x+1, z], [x, z-1], [x-1, z-1], [x+1, z-1], [x, z+1], [x-1, z+1], [x+1, z+1] ];
 
@@ -1819,6 +1829,7 @@ export class View {
     	this.buildingLists[layer].push([x,y,z,c, zone, 0 ]);
 
     	this.rebuildBuildingLayer(layer);
+
     }
 
     rebuildBuildingLayer ( l ) {
@@ -1826,6 +1837,11 @@ export class View {
         this.buildMeshLayer( l, 'building' );
 
     }
+
+    
+
+
+
 
     //---------------------------------------------------BUILDING LISTING
 
@@ -2019,6 +2035,7 @@ export class View {
 	    if(this.currentTool && this.mouse.button<2){// only for tool
 	    	this.mouse.click = true;
 	        if(this.currentTool.drag){ this.mouse.drag = true;}
+	        this.rayTest();
 
 	    }
 

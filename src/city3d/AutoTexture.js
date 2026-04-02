@@ -56,7 +56,7 @@ export const AutoTexture = {
 	    // draw windows
 	    let topData = null;
 	    let newImg = null;
-	    if(supImage && this.dayTime!==0 && this.dayTime!==1){
+	    if(supImage && dayTime!==0 && dayTime!==1){
 	    	ctx.clearRect ( 0 , 0 , canvas.width, canvas.height );
 	        ctx.drawImage(supImage, 0, 0);
 	        topData = ctx.getImageData(0, 0, canvas.width, canvas.height);

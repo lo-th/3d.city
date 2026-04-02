@@ -73,3 +73,70 @@ export class BuildTool extends THREE.Object3D {
 
 }
 
+
+// CONSTRUCTION ANIMATION
+
+export class Markers extends THREE.Group {
+
+	constructor () {
+
+		super()
+
+		this.duration = 600; // ms
+		this.queue = []
+
+	}
+
+	spawn( tool ){
+
+		const m = tool.mesh.clone()
+		m.material = tool.mesh.material.clone()
+		m.position.copy(tool.position)
+		m.visible = true
+		m.material.depthTest = true;
+		m.material.transparent = true;
+		m.material.opacity = 0.95;
+		m.startTime = Date.now()
+		m.startY = m.position.y
+		this.add(m)
+		this.queue.push(m)
+
+	}
+
+	ease(t, b, c, d){
+		t /= d;
+        return -c * t * (t - 2) + b;
+	}
+
+	update(){
+		if (!this.queue.length) return;
+		const now = Date.now();
+		let i = this.queue.length, m, age;
+		while(i--){
+			m = this.queue[i];
+			age = now - m.startTime;
+			if (age >= this.duration) {
+				this.remove(m);
+                m.geometry.dispose();
+                m.material.dispose();
+                this.queue.splice(i, 1);
+			} else {
+				const t = age / this.duration;
+				//const e = this.ease(now, 1, 1.4, this.duration)
+                // Pulse scale
+                //const scale = 1 + Math.sin(t * Math.PI * 6) * 0.1;
+
+                //const e = 0.4 + Math.sin(t * Math.PI * 10 ) * 0.4;
+                //const scale = 1 + Math.sin(t * Math.PI * 6) * 0.2;
+                m.scale.setScalar(1 + (t*0.1));
+                m.position.y = m.startY + (t*0.6) 
+                // Fade out in last 40%
+                m.material.opacity = t < 0.6 ? 0.95 : 0.95 * (1 - (t - 0.6) / 0.4);
+			}
+
+		}
+
+	}
+
+}
+

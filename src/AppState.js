@@ -18,7 +18,7 @@ export const AppState = {
     activeLUT:      true,
     activeFOG:      true,
 
-    forceWebGL:      false,
+    forceWebGL:      true,
 
     debugTime:       false,
 

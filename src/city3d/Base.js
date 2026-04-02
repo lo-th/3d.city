@@ -7,7 +7,7 @@ export const Base = {
 		{id:3,  tool:'industrial',  geo:3,    name:'I', build:1, size:3, sy:0.2,  price:100,   color:'yellow'     ,drag:1  },
 
 		{id:4,  tool:'police',      geo:4,    name:'',  build:1, size:3, sy:1.2,  price:500,   color:'blue'       ,drag:0  },
-		{id:5,  tool:'park',        geo:5,    name:'',  build:1, size:1, sy:0.02, price:10,    color:'darkgreen'  ,drag:0  },
+		{id:5,  tool:'park',        geo:5,    name:'',  build:1, size:1, sy:0.02, price:10,    color:'green'      ,drag:0  },
 		{id:6,  tool:'fire',        geo:7,    name:'',  build:1, size:3, sy:1.2,  price:500,   color:'red'        ,drag:0  },
 
 		{id:7,  tool:'road',        geo:0,    name:'',  build:0, size:1, sy:0.1,  price:10,    color:'black'      ,drag:1  },
@@ -33,3 +33,51 @@ export const Base = {
 	I: [ 616, 625, 634, 643, 652, 661, 670, 679, 688 ],
 
 }
+
+export const Zone = (size, x,y) => {
+
+	let zone;
+
+	switch(size){
+		case 1: 
+		zone = [ 
+			[x, y] 
+		];
+		break;
+		case 2: 
+		zone = [
+			[x, y], [x+1, y],
+			[x, y+1], [x+1, y+1]
+		];
+		break;
+		case 3: 
+		zone = [ 
+		    [x, y], [x-1, y], [x+1, y], 
+		    [x, y-1], [x-1, y-1], [x+1, y-1], 
+		    [x, y+1], [x-1, y+1], [x+1, y+1]
+		];
+		break;
+		case 4: 
+		zone = [ 
+			[x, y], [x-1, y], [x+1, y], [x, y-1], 
+			[x-1, y-1], [x+1, y-1], [x, y+1], [x-1, y+1], 
+			[x+1, y+1], [x+2, y-1], [x+2, y], [x+2, y+1],
+			[x+2, y+2], [x-1, y+2], [x, y+2], [x+1, y+2]  
+		];
+		break;
+		case 6: 
+		zone = [ 
+			[x, y], [x-1, y], [x+1, y], [x, y-1], [x-1, y-1], [x+1, y-1],   
+			[x, y+1], [x-1, y+1], [x+1, y+1], [x+2, y-1], [x+2, y] , [x+2, y+1] , 
+			[x+2, y+2], [x-1, y+2], [x, y+2], [x+1, y+2], [x+3, y-1], [x+4, y-1],   
+			[x+3, y], [x+4, y], [x+3, y+1], [x+4, y+1], [x+3, y+2], [x+4, y+2], 
+			[x+3, y+3], [x+4, y+3], [x+3, y+4], [x+4, y+4], [x-1, y+3], [x-1, y+4], 
+			[x, y+3], [x, y+4],  [x+1, y+3], [x+1, y+4], [x+2, y+3], [x+2, y+4]
+		];
+		break;
+	}
+
+	return zone;
+
+}
+
