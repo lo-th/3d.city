@@ -1,7 +1,5 @@
 export const Base = {
 
-	version: '0.9.0',
-
     toolSet: [
         {id:0,  tool:'none',        geo:0,    name:'',  build:0, size:0, sy:0,    price:0,     color:'none'       ,drag:0  },
 		{id:1,  tool:'residential', geo:1,    name:'R', build:1, size:3, sy:0.2,  price:100,   color:'lime'       ,drag:1  },

@@ -1,6 +1,8 @@
 export const AppState = {
 
-    inspector:false,
+    version:      '0.9.5',
+
+    inspector:      false,
 
 
     envmap:'envmap',
