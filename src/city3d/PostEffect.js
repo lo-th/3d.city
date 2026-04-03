@@ -6,10 +6,10 @@ import {
 
 import { AppState } from '../AppState.js'
 import { lut3D } from '../jsm/tsl/display/Lut3DNode.js';
-import { ao } from '../jsm/tsl/display/GTAONode.js';
-import { traa } from '../jsm/tsl/display/TRAANode.js';
+//import { ao } from '../jsm/tsl/display/GTAONode.js';
+//import { traa } from '../jsm/tsl/display/TRAANode.js';
 
-const params = {
+/*const params = {
 	lut: 'FILM2.CUBE',
 	intensity: 1,
 
@@ -21,7 +21,7 @@ const params = {
 	thickness: 1,
 	aoOnly: true,
 	transparentOpacity: 0.3
-};
+};*/
 
 let lutPass, aoPass, traaPass, transparentMesh;
 
@@ -52,29 +52,30 @@ export class PostEffect {
 		// use renderOutput() for control the sequence
 		this.pipeline.outputColorTransform = false;
 
-		const lut = this.pool.getLUT()[params.lut] ;
+		const lut = AppState.LUT_Map['FILM2.CUBE'] ;
 
 		const scenePass = pass( this.scene, this.camera );
 		const outputPass = renderOutput( scenePass );
-		lutPass = lut3D( outputPass, texture3D( lut.texture3D ), lut.texture3D.image.width, uniform( params.intensity ) );
+		lutPass = lut3D( outputPass, texture3D( lut.texture3D ), lut.texture3D.image.width, uniform( AppState.LUT_intensity ) );
 		this.pipeline.outputNode = lutPass;
-
-		// options
-		if( AppState.inspector ){
-
-			const gui = this.renderer.inspector.createParameters( 'Settings' );
-			gui.add( params, 'lut', Object.keys( this.pool.getLUT() ) ).onChange(()=>{ 
-					const lut = this.pool.getLUT()[ params.lut ];
-					lutPass.lutNode.value = lut.texture3D;
-					lutPass.size.value = lut.texture3D.image.width;
-			});
-			gui.add( params, 'intensity', 0, 1 ).onChange(()=>{ lutPass.intensityNode.value = params.intensity; });
-		
-		}
 
 	}
 
-	AoPass(){
+	setLut(){
+
+		const lut = AppState.LUT_Map[ AppState.LUT_current ];
+		lutPass.lutNode.value = lut.texture3D;
+		lutPass.size.value = lut.texture3D.image.width;
+
+	}
+
+	setLutIntensity(){
+
+		lutPass.intensityNode.value = AppState.LUT_intensity;
+
+	}
+
+	/*AoPass(){
 
 		// pre-pass
 
@@ -118,7 +119,7 @@ export class PostEffect {
 		aoPass.scale.value = params.scale;
 		aoPass.thickness.value = params.thickness;*/
 
-		const aoPassOutput = aoPass.getTextureNode();
+		/*const aoPassOutput = aoPass.getTextureNode();
 
 		// scene context
 
@@ -192,6 +193,6 @@ export class PostEffect {
 
 		//transparentMesh.material.opacity = params.transparentOpacity;
 
-	}
+	}*/
 
 }

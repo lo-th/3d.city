@@ -10,27 +10,7 @@ import { LUTImageLoader } from '../jsm/loaders/LUTImageLoader.js';
 import { AppState } from '../AppState.js'
 //import { KTX2Loader } from '../jsm/loaders/KTX2Loader.js';
 //import { KTX2Exporter } from '../jsm/exporters/KTX2Exporter.js';
-const lutMap = {
-	//'Bourbon 64.CUBE': null,
-	'Warm_Runner.CUBE': null,
-	'Cold_Runner.CUBE': null,
-	'Dark_Runner.CUBE': null,
-	'FILM1.CUBE': null,
-	'FILM2.CUBE': null,
-	//'Chemical 168.CUBE': null,
-	'Clayton 33.CUBE': null,
-	'Cubicle 99.CUBE': null,
-	'Remy 24.CUBE': null,
-	'Presetpro-Cinematic.3dl': null,
-	'NeutralLUT': null,
-	'B&WLUT': null,
-	'NightLUT': null,
-	'premium.cube': null,
-	'LDmono1.cube': null,
-	'LDmono2.cube': null,
-	'LDmono3.cube': null,
-	'art.cube': null,
-};
+
 
 const mapPath = './assets/textures/'
 const modelPath = './assets/models/'
@@ -81,7 +61,7 @@ export class Pool {
 
 		//this.callback = callback;
 
-		if( AppState.activeLUT ) await this.loadLUT();
+		if( AppState.LUT_on ) await this.loadLUT();
 		await this.loadEnvmap()
 		await this.loadTexture()
 		await this.loadImage()
@@ -111,6 +91,8 @@ export class Pool {
 		const lutImageLoader = new LUTImageLoader();
 		const lut3dlLoader = new LUT3dlLoader();
 
+		const lutMap = AppState.LUT_Map
+
 		for ( const name in lutMap ) {
 
 			if ( /\.CUBE$/i.test( name ) ) {
@@ -138,10 +120,6 @@ export class Pool {
 
 		}
 
-	}
-
-	getLUT(){
-		return lutMap;
 	}
  
 

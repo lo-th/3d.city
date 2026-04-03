@@ -11,7 +11,9 @@ import { Base, Zone } from './Base.js';
 import { BuildTool, Markers } from './BuildTool.js';
 import { PostEffect } from './PostEffect.js';
 import { Pool } from './Pool.js';
+
 //import { Inspector } from '../jsm/inspector/Inspector.js';
+//import { TSLGraphLoader } from '../jsm/inspector/extensions/tsl-graph/TSLGraphLoader.js';
 
 import { TrafficBase } from '../TrafficBase.js'
 
@@ -241,22 +243,13 @@ export class View {
 		
 		this.init();
 
-		if(AppState.activeLUT){ 
+		if(AppState.LUT_on){ 
 
 			// testing post effect 
 
 			this.postEffect.init( renderer, scene, camera, this.pool );
 			this.postEffect.LutPass()
 			//this.postEffect.AoPass()
-
-			/*if(AppState.inspector){
-				const gui = renderer.inspector.createParameters( 'Viewport' );
-				gui.add( AppState, 'exposure', 0,2  ).onChange(()=>{ renderer.toneMappingExposure = AppState.exposure });
-				gui.add( AppState, 'environmentIntensity', 0, 6 ).onChange(()=>{this.scene.environmentIntensity = AppState.environmentIntensity;});
-				gui.add( AppState, 'backgroundIntensity', 0, 6 ).onChange(()=>{this.scene.backgroundIntensity = AppState.backgroundIntensity;});
-				gui.add( AppState, 'backgroundBlurriness', 0, 1 ).onChange(()=>{this.scene.backgroundBlurriness = AppState.backgroundBlurriness;});
-				gui.add( AppState, 'direct', 0, 20 ).onChange(()=>{ sun.intensity = AppState.direct;});
-			}*/
 
 		}
 
@@ -265,6 +258,8 @@ export class View {
 		AppState.main.start();
 
 	}
+
+	getRenderer(){ return renderer; }
 
 	preIntro() {
 
@@ -623,6 +618,8 @@ export class View {
 			sun.castShadow = true;
 			this.scene.add( sun );
 			this.scene.add( sun.target );
+
+			this.sun = sun
 
 			if(AppState.withShadow){
 

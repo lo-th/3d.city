@@ -2,7 +2,7 @@ export const AppState = {
 
     version:      '0.9.5',
 
-    inspector:      false,
+    inspector:      null,   // active editor
 
 
     envmap:'envmap',
@@ -15,7 +15,9 @@ export const AppState = {
     direct: 6,
     directColor: 0xbcae9a,
 
-    activeLUT:      true,
+    
+
+
     activeFOG:      true,
 
     forceWebGL:      true,
@@ -69,6 +71,7 @@ export const AppState = {
     workerBridge:  null,    // WorkerBridge instance
     debugOverlay:  null,    // DebugOverlay instance
 
+
     // ── traffic component references (set during intro ) ──────────────────
     traffic:       null,
 
@@ -83,6 +86,33 @@ export const AppState = {
         sky:'#8397ac',
         border:'#505050',
         fog:'#7d7470',//'#667791',
+    },
+
+
+    LUT_on:                 true,
+    LUT_current:    'FILM2.CUBE',
+    LUT_intensity:             1,
+
+    LUT_Map: {
+        //'Bourbon 64.CUBE': null,
+        'Warm_Runner.CUBE': null,
+        'Cold_Runner.CUBE': null,
+        'Dark_Runner.CUBE': null,
+        'FILM1.CUBE': null,
+        'FILM2.CUBE': null,
+        //'Chemical 168.CUBE': null,
+        'Clayton 33.CUBE': null,
+        'Cubicle 99.CUBE': null,
+        'Remy 24.CUBE': null,
+        'Presetpro-Cinematic.3dl': null,
+        'NeutralLUT': null,
+        'B&WLUT': null,
+        'NightLUT': null,
+        'premium.cube': null,
+        'LDmono1.cube': null,
+        'LDmono2.cube': null,
+        'LDmono3.cube': null,
+        'art.cube': null,
     },
 
 };

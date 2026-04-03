@@ -98,7 +98,7 @@ export class Material {
         MAT['water'] = new Type({ 
 	        //map:this.water, 
 	        normalMap:this.water,
-	        normalScale:new THREE.Vector2(1,-1), 
+	        normalScale:new THREE.Vector2(0.6,-0.6), 
 	        alphaToCoverage:true, 
 	        //premultipliedAlpha:true,
 	        color:AppState.color.water, transparent:true, opacity:0.8,  ...option 
