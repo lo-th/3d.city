@@ -649,7 +649,7 @@ export class View {
 				shadowCam.right = shadowCam.top	= s;
 				shadowCam.left = shadowCam.bottom = - s;
 				// debug shadow
-			    this.scene.add(  new THREE.CameraHelper(shadowCam) );
+			    //this.scene.add(  new THREE.CameraHelper(shadowCam) );
 
 			}
 
