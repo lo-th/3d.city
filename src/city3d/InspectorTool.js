@@ -5,7 +5,6 @@ import { AppState } from '../AppState.js';
 import { Inspector } from '../jsm/inspector/Inspector.js';
 import { TSLGraphLoader } from '../jsm/inspector/extensions/tsl-graph/TSLGraphLoader.js';
 
-
 let renderer
 
 export const InspectorTool = {
@@ -17,7 +16,7 @@ export const InspectorTool = {
 
 		const gui = renderer.inspector.createParameters( 'Viewport' );
 		gui.add( AppState, 'exposure', 0,2  ).onChange(()=>{ renderer.toneMappingExposure = AppState.exposure });
-		gui.add( AppState, 'environmentIntensity', 0, 6 ).onChange(()=>{AppState.view3d.scene.environmentIntensity = AppState.environmentIntensity;});
+		gui.add( AppState, 'environmentIntensity', 0, 6 ).onChange(()=>{AppState.view3d.scene.environmentIntensity = AppState.environmentIntensity;  AppState.view3d.forceUP();});
 		gui.add( AppState, 'backgroundIntensity', 0, 6 ).onChange(()=>{AppState.view3d.scene.backgroundIntensity = AppState.backgroundIntensity;});
 		gui.add( AppState, 'backgroundBlurriness', 0, 1 ).onChange(()=>{AppState.view3d.scene.backgroundBlurriness = AppState.backgroundBlurriness;});
 		gui.add( AppState, 'direct', 0, 20 ).onChange(()=>{ AppState.view3d.sun.intensity = AppState.direct;});

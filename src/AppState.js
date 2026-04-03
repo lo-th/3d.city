@@ -11,9 +11,9 @@ export const AppState = {
     exposure: 0.6,
     backgroundBlurriness: 0.0,
     backgroundIntensity:  1.8,
-    environmentIntensity: 2.0,
-    direct: 6,
-    directColor: 0xbcae9a,
+    environmentIntensity: 1.5,
+    direct: 10,
+    directColor: 0xffffff,//0xbcae9a
 
     
 
@@ -31,7 +31,7 @@ export const AppState = {
     isBestMaterial:  true,    // use Standard or Basic material
 
     isPixelStyle:   false,
-    withShadow:     false,
+    withShadow:      true,
     isWithLight:     true,
     isWithTree:      true,
 

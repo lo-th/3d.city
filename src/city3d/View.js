@@ -344,6 +344,17 @@ export class View {
 
 	}
 
+	forceUP(){
+		let i = 144;
+	    while(i--){
+	    	//MAT_LAND[i].needsUpdate = true;
+	    	MAT_LAND[i].envMapIntensity = this.scene.environmentIntensity
+	    }
+
+	    MAT['building'].envMapIntensity = this.scene.environmentIntensity
+	    MAT['town'].envMapIntensity = this.scene.environmentIntensity
+	}
+
 	clearIntro(){
 
 		let i = 144, pp//.length
@@ -502,6 +513,8 @@ export class View {
 		this.resizeBorder( size )
 		let p = 19*0.5
 		this.center.x = this.center.z = p + ( (size*0.5) - p ) * 1;
+
+		this.updateSunPosition()
 		/*if(this.plane){
 			this.plane.position.copy(this.center)
 		    this.plane.position.y = 4
@@ -517,6 +530,7 @@ export class View {
         this.border.position.set( 0, 0, 0 );
         this.border.material = MAT.border;
         this.scene.add( this.border );
+        this.border.frustumCulled = false;
         if(AppState.withShadow) this.border.receiveShadow = true;
 		
 	}
@@ -630,12 +644,12 @@ export class View {
 				shadow.bias = - 0.0005;
 				shadow.intensity = 1;
 				const shadowCam = shadow.camera, s = 100;
-				shadowCam.near = 50;
-				shadowCam.far = 150;
+				shadowCam.near = 60;
+				shadowCam.far = 170;
 				shadowCam.right = shadowCam.top	= s;
 				shadowCam.left = shadowCam.bottom = - s;
 				// debug shadow
-			    //this.scene.add(  new THREE.CameraHelper(shadowCam) );
+			    this.scene.add(  new THREE.CameraHelper(shadowCam) );
 
 			}
 
@@ -707,6 +721,11 @@ export class View {
 	    const animate = this.animate.bind(this)
 		renderer.setAnimationLoop( animate );
 
+    }
+
+    updateSunPosition(){
+    	sun.position.set( this.center.x+10 , 100, this.center.z+50 );
+		sun.target.position.set( this.center.x, this.center.y, this.center.z );
     }
 
      //----------------------------------- RENDER
@@ -1256,7 +1275,7 @@ export class View {
                     while( k-- ) colors[k] = 1.0
                     geo.setAttribute( 'color', new THREE.Float32BufferAttribute( colors, 3 ) );
 
-                    MAT_LAND[ n ].needsUpdate = true 
+                    //MAT_LAND[ n ].needsUpdate = true 
                     mesh = new THREE.Mesh( geo, MAT_LAND[ n ] )
 
                     if(AppState.withShadow){
@@ -2172,6 +2191,7 @@ export class View {
 			this.mapSize = mapSize;
 			this.layerW = Math.ceil(mapSize[0] / 16);
 			this.layerH = Math.ceil(mapSize[1] / 16);
+
 		}
 
 		if( this.basePlane ) this.scene.remove( this.basePlane )
