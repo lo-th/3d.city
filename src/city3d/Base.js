@@ -34,16 +34,49 @@ export const Base = {
 
 }
 
-export const Zone = (size, x,y) => {
+export const Zone = ( size, x, y, v ) => {
 
 	let zone;
 
+    
+	//      -Y
+	//      |
+	// -X --+-- +X
+	//      |
+	//     +Y
+
+	//      N
+	//      |
+	//  W --+-- E
+	//      |
+	//      S
+
+	//   +----
+	//   |   |
+	//   -----
+
 	switch(size){
 		case 0: 
-		zone = [
+ zone = []
+		/*zone = [
 			[x, y], [x+1, y],[x, y-1],
-			//[x, y-1], [x+1, y-1]
-		];
+			[x, y-1], [x+1, y-1]
+		];*/
+		if(v===5 || v===6) zone = [[x, y], [x+1, y]] // S
+		//if(v===9 || v===10) zone = [[x, y]]
+		if(v===13 || v===14) zone = [] // N
+		//if(v===17 || v===18) zone = [[x, y]]
+
+		if(v===7 || v===8) zone = [[x, y],  [x+1, y+1]]
+		//if(v===11 || v===12) zone = [ [x+1, y], [x, y+1]]
+		if(v===17 || v===18) zone = [[x, y], [x, y+1]]
+	    if(v===19 || v===20) zone = [ [x+1, y], [x, y+1]]
+		//if(v===19 || v===20) zone = [[x, y], [x, y+1], [x-1, y], [x-1, y+1] ]
+			
+		
+		
+
+		
 		break;
 		case 1: 
 		zone = [ 

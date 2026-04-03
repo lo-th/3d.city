@@ -2229,15 +2229,36 @@ export class View {
 					}
 	                if( v > 4 && v < 21 ){ // water border
 
+	                	id = this.findHeightId(x, y)
 	                    //this.heightData[ this.findHeightId(x, y) ] *= 0.5;
-	                	let zz = Zone(0,x,y)
+	                	let zz = Zone(0,x,y,v)
 	                	let baseY = this.heightData[ this.findHeightId(x, y) ]
-	                    
 
+	                	if(v===13 || v===14){
+	                		this.heightData[ id ] = -0.2
+	                		this.heightData[ id+1 ] = -0.2
+	                	}
+	                	if(v===9 || v===10){
+	                		this.heightData[ id ] = -0.2
+	                		this.heightData[ this.findHeightId(x, y+1) ] = -0.2
+	                	}
+	                	if(v===11 || v===12){
+	                		this.heightData[ id ] = -0.2
+	                	}
+
+	                	if(v===7 || v===8){
+	                		this.heightData[ this.findHeightId(x, y+1) ] = 0
+	                	}
+
+	                	if(v===15 || v===16){
+	                		this.heightData[ this.findHeightId(x+1, y) ] = 0
+	                	}
+
+	                	
 	                    let w = zz.length, wn
 	                    while(w--){
 	                    	wn = this.findHeightId(zz[w][0], zz[w][1])
-	                    	if(wn) this.heightData[ wn ] = baseY*0.75// this.heightData[ wn ]+0.5;
+	                    	if(wn) this.heightData[ wn ] = 0.2//*0.75// this.heightData[ wn ]+0.5;
 
 	                    }
 	                }

@@ -124,8 +124,6 @@ export class Material {
         })
 
 
-        
-
         if( AppState.isBestMaterial ){
 
         	if( AppState.isWithRoughness ){
