@@ -253,7 +253,7 @@ export class Material {
 
 	}
 
-	resetLandMaterial() {
+	resetLandMaterial( numLayer ) {
 
 		if( AppState.firstDraw ) return
 
@@ -263,7 +263,7 @@ export class Material {
 		const renderer = AppState.view3d.getRenderer()
 		const render = AppState.isWebGPU ? renderer : renderer.backend; 
 
-		let i = 144; // max num layer
+		let i = numLayer; // max num layer
 		let pos = new THREE.Vector2( 0, 0 )
 
 		while(i--){

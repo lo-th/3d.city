@@ -14,7 +14,7 @@ export class Hub {
 
         this.mapPath = './assets/textures/'
 
-        this.round = [
+        /*this.round = [
         '<svg height="66" width="66">',
         '<circle cx="33" cy="33" r="27" stroke="rgb(255,255,255)" stroke-width="1" stroke-opacity="0.0" fill="rgb(0,0,0)" fill-opacity="0.1"/>',
         '</svg>'
@@ -30,7 +30,7 @@ export class Hub {
         '<svg height="66" width="66">',
         '<circle cx="33" cy="33" r="30" stroke="rgb(255,255,255)" stroke-width="4" stroke-opacity="1" fill="rgb(0,0,0)" fill-opacity="0.5"/>',
         '</svg>'
-        ].join("\n");
+        ].join("\n");*/
 
     	this.hub = document.getElementById('hub');
     	this.full = null;
@@ -74,8 +74,8 @@ export class Hub {
         this.aboutWindow = null;
 
 
-        this.selector = null;
-        this.select = null;
+        this.toolOver = null;
+        this.toolSelect = null;
 
         this.currentToolName = 0;
 
@@ -140,6 +140,7 @@ export class Hub {
 
         this.hub.appendChild( this.full );
     }
+
 
     message ( s ){
 
@@ -302,6 +303,7 @@ export class Hub {
 
     initStartHub() {
 
+        this.version.innerHTML = "V:" + AppState.version + (AppState.isWebGPU?' | GPU' : ' | GL2')+(AppState.isWorker ? ' | W' : ' | D')
         this.mainmenu = document.createElement('div');
         this.mainmenu.style.cssText ='position:absolute; bottom:0px; left:50%; margin-left:-130px; width:260px; height:200px; pointer-events:none; display:flex; align-items: center;';
         //this.full.id = 'fullStart';
@@ -377,19 +379,23 @@ export class Hub {
 
         var b;
         for(var i = 0; i<18; i++){
-            b = this.addSVGButton(this.toolSet);
+            b = this.addToolButton(this.toolSet);
             b.name = i+1;
         }
 
-        this.selector = document.createElement('div');
-        this.selector.style.cssText = "position:absolute; top:0px; left:0px; pointer-events:none; display:none;"
-        this.selector.innerHTML = this.roundSelected;
-        this.toolSet.appendChild( this.selector );
+        // b.style.cssText =" margin:0px; padding:0px; width:66px; height:66px; pointer-events:auto; cursor:pointer; display:inline-block; line-height:0px;  vertical-align: top; border-radius:33px";
+        //b.innerHTML = this.round;
 
-        this.select = document.createElement('div');
-        this.select.style.cssText = "position:absolute; top:0px; left:0px; pointer-events:none; display:none;"
-        this.select.innerHTML = this.roundSelect;
-        this.toolSet.appendChild( this.select );
+        this.toolOver = document.createElement('div');
+        this.toolOver.style.cssText = "position:absolute; top:0px; left:0px; margin:2px 2px; pointer-events:none; display:none; width:62px; height:62px; border-radius:31px; border:3px dashed #ffffff; background:rgba(0,0,0,0.25);"
+        this.toolSet.appendChild( this.toolOver );
+
+       
+
+        this.toolSelect = document.createElement('div');
+        this.toolSelect.style.cssText = "position:absolute; top:0px; left:0px; pointer-events:none; display:none; width:66px; height:66px; border-radius:33px; border:5px solid #ffffff; background:rgba(0,0,0,0.5);"
+        //this.toolSelect.innerHTML = this.roundSelect;
+        this.toolSet.appendChild( this.toolSelect );
 
         var img = document.createElement("img");
         img.src = this.mapPath + "interface.png";
@@ -998,18 +1004,28 @@ export class Hub {
 
     //------------------------------------------ TOOLS MENU
 
+    resetTool (){
+
+        this.toolSelect.style.display = 'none';
+        this.currentToolName = 0;
+        AppState.main.selectTool(this.currentToolName);
+
+    }
+
     showToolSelect  (id){
         if(id.name !==  this.currentToolName){
             this.currentToolName = id.name;
            // var px = (id.getBoundingClientRect().left - _this.toolSet.getBoundingClientRect().left );
             //var py= (id.getBoundingClientRect().top - _this.toolSet.getBoundingClientRect().top );
             var px = (id.getBoundingClientRect().left - this.toolSet.getBoundingClientRect().left );
-            var py= (id.getBoundingClientRect().top - this.toolSet.getBoundingClientRect().top );
-            this.select.style.left = px + 'px'; 
-            this.select.style.top = py + 'px';
-            this.select.style.display = 'block';
+            var py = (id.getBoundingClientRect().top - this.toolSet.getBoundingClientRect().top );
+            this.toolSelect.style.left = px + 'px'; 
+            this.toolSelect.style.top = py + 'px';
+            this.toolSelect.style.display = 'block';
+            this.toolSelect.style.borderColor = Base.toolSet[id.name].color
+
         } else {
-            this.select.style.display = 'none';
+            this.toolSelect.style.display = 'none';
             this.currentToolName = 0;
         }
 
@@ -1018,6 +1034,7 @@ export class Hub {
     }
 
     showToolInfo  (id, t){
+        this.toolOver.style.borderColor = Base.toolSet[id.name].color
         var name = Base.toolSet[id.name].tool;
         name = name.charAt(0).toUpperCase() + name.substring(1).toLowerCase();
         if(id.name===16) t.toolInfo.innerHTML = 'Drag view';
@@ -1026,21 +1043,22 @@ export class Hub {
         else t.toolInfo.innerHTML = name+'<br>'+ Base.toolSet[id.name].price+"$";
     }
 
-    addSVGButton  (target){
+    addToolButton  (target){
         var _this = this;
         var b = document.createElement( 'div' );
-        b.style.cssText =" margin:0px; padding:0px; width:66px; height:66px; pointer-events:auto; cursor:pointer; display:inline-block; line-height:0px; vertical-align: top;";
-        b.innerHTML = this.round;
+        b.style.cssText =" margin:0px; padding:0px; width:66px; height:66px; pointer-events:auto; cursor:pointer; display:inline-block; line-height:0px;  vertical-align: top; border-radius:33px";
+        //b.innerHTML = this.round;
         b.addEventListener( 'mouseover', function ( e ) { 
             e.preventDefault();
             var px = (this.getBoundingClientRect().left - _this.toolSet.getBoundingClientRect().left );
-            var py= (this.getBoundingClientRect().top - _this.toolSet.getBoundingClientRect().top )
-            _this.selector.style.left = px+ 'px'; 
-            _this.selector.style.top = py + 'px';
-            _this.selector.style.display = 'block';
+            var py = (this.getBoundingClientRect().top - _this.toolSet.getBoundingClientRect().top )
+            _this.toolOver.style.left = px + 'px'; 
+            _this.toolOver.style.top = py + 'px';
+            _this.toolOver.style.display = 'block';
+
             _this.showToolInfo(this, _this);
         }, false );
-        b.addEventListener( 'mouseout', function ( e ) { e.preventDefault(); _this.selector.style.display = 'none';}, false );
+        b.addEventListener( 'mouseout', function ( e ) { e.preventDefault(); _this.toolOver.style.display = 'none';}, false );
         b.addEventListener('click',  function(e){ e.preventDefault();  _this.showToolSelect(this); }, false);
         target.appendChild( b );
         return b;

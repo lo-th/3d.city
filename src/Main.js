@@ -76,7 +76,7 @@ export class Main {
 
     static start (){
 
-        console.log(AppState.isWorker ? 'is Worker !!' : 'is Direct !!', AppState.isWebGPU ? 'is WebGPU !!' : 'is WebGl2 !!');
+        //console.log(AppState.isWorker ? 'is Worker !!' : 'is Direct !!', AppState.isWebGPU ? 'is WebGPU !!' : 'is WebGl2 !!');
 
         AppState.hub.start();
 

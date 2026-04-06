@@ -213,6 +213,8 @@ export class View {
 		this.spriteMeshs = [];
 		this.spriteObjs = {};
 
+		this.cameraNeedUpdate = false;
+
 	}
 
 	async initRenderer(){
@@ -293,8 +295,6 @@ export class View {
 
         this.title.position.copy( this.center )
         this.scene.add( this.title )
-
-        
 
 	    // add random building 
 	    this.buildings = new THREE.Group()
@@ -752,6 +752,7 @@ export class View {
 	    
 	    this.applyZoomInertia();
 	    this.applyOrbitMomentum();
+	    this.updateCamera()
 	    if(this.markers) this.markers.update();
 
 	    if( this.postEffect.pipeline !== null ) this.postEffect.pipeline.render();
@@ -1218,8 +1219,6 @@ export class View {
 
     	//this.disposeTerrainMaterial()
 
-
-
 		if( this.miniTerrain.length > 0 ){
 			let i = this.miniTerrain.length;
 			while(i--){
@@ -1242,6 +1241,10 @@ export class View {
 		this.layerW = Math.ceil(this.mapSize[0] / 16);
 		this.layerH = Math.ceil(this.mapSize[1] / 16);
 		this.nlayers = this.layerW * this.layerH;
+
+		// reset to default texture
+		this.material.resetLandMaterial( this.nlayers )
+		AppState.firstDraw = false;
 
 		let recreate = this.nlayers !== this.currentLayerSize
 
@@ -1661,7 +1664,7 @@ export class View {
 
 	build( x, y ) {
 		
-		if( this.currentTool.tool==='query' ) return;
+		if( this.currentTool.tool === 'query' ) return;
 
 		if( this.currentTool.build ){
 
@@ -1877,10 +1880,6 @@ export class View {
 
     }
 
-    
-
-
-
 
     //---------------------------------------------------BUILDING LISTING
 
@@ -1943,14 +1942,21 @@ export class View {
 	}
 
 	moveCamera () {
+		this.cameraNeedUpdate = true
+	}
+
+	updateCamera () {
+
+		if(!this.cameraNeedUpdate) return;
+
+		let far = this.cam.distance*4;
+	    far = this.clamp(far, 20, 1000)
+	    if(this.fog) this.fog.far = far
 
 	    this.camera.position.copy(this.Orbit(this.center, this.cam.horizontal, this.cam.vertical, this.cam.distance));
 	    this.camera.lookAt(this.center);
 
-	    if(AppState.activeFOG){
-	        this.fog.far=this.cam.distance*4;
-	        if(this.fog.far<20)this.fog.far=20;
-	    }
+	    this.cameraNeedUpdate = false;
 
 	}
 
@@ -1967,6 +1973,7 @@ export class View {
 	    this.orbitVelocityV *= 0.88;
 	    if( Math.abs(this.orbitVelocityH) < 0.01 ) this.orbitVelocityH = 0;
 	    if( Math.abs(this.orbitVelocityV) < 0.01 ) this.orbitVelocityV = 0;
+
 	    this.moveCamera();
 
 	}
@@ -2071,6 +2078,7 @@ export class View {
 	    this.mouse.v = this.cam.vertical;
 	    this.mouse.down = true;
 
+
 	    if(this.currentTool && this.mouse.button<2){// only for tool
 	    	this.mouse.click = true;
 	        if(this.currentTool.drag){ this.mouse.drag = true;}
@@ -2078,10 +2086,19 @@ export class View {
 
 	    }
 
+	    
+
 	}
 
 	onMouseUp  (e) {
+
 		e.preventDefault();
+
+		if(this.currentTool && this.mouse.button===3 && this.ease.x===0 && this.ease.y === 0 ){
+	    	this.tool.position.set(-1, -1, -1);
+	    	AppState.hub.resetTool()
+	    }
+
 		this.mouse.button = 0;
 	    this.mouse.down = false;
 	    this.mouse.drag = false;
@@ -2092,6 +2109,7 @@ export class View {
 	    this.pinchMidX = 0;
 	    this.pinchMidY = 0;
 	    document.body.style.cursor = 'auto';
+
 	}
 
 	onMouseMove  (e) {
@@ -2186,8 +2204,8 @@ export class View {
 		if(AppState.debugTime) console.time("PaintMap");
 
 		// reset to default texture
-		this.material.resetLandMaterial()
-		AppState.firstDraw = false;
+		//this.material.resetLandMaterial()
+		//AppState.firstDraw = false;
 		
 		this.isIsland = island;
 
@@ -2292,18 +2310,10 @@ export class View {
 			}
 		}
 
-		//this.updateBackground();
 
 		this.initTerrain();
 
-		// add some delay to wait texture creation
 
-	/*	if( this.firstDraw ) setTimeout( () => { AppState.view3d.drawdelay(); this.firstDraw = false }, 300);
-		else this.drawdelay()
-
-	}
-
-	drawdelay() {*/
 
 		if(AppState.debugTime) console.time("drawLayer");
 		//this.pauseRender = true;
@@ -2382,6 +2392,8 @@ export class View {
 
                 	if(g<1) draw = false // not ground 
                 	if(g>20 && g<30) draw = false // not tree
+
+                	if( this.currentTool ) draw = true
 
                 	if(draw){
                 		tmpPos.x = x*mid*this.mu;
