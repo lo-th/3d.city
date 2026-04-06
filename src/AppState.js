@@ -59,7 +59,13 @@ export const AppState = {
     isWebGPU:      false,   // true if three renderer is webgpu
     isMobile:      false,   // true when running on a mobile device
     isWorker:      true,    // true → use Web Worker; false → directMessage mode
+
     withHeight:    true,   // current map was generated with a height map
+    heightMulty:      1,   // increase height of map // 1.5
+    heightPow:        1,   // smooth height of map  // 2
+    seaMulty:         1.5,
+    seaPow:           3,
+    heightBorder:    0.2,
 
     // ── Worker mode: direct-call callback (non-worker mode only) ──────────
     directMessage: null,    // Function used when simulation runs on main thread
@@ -70,6 +76,8 @@ export const AppState = {
     view3d:        null,    // View instance – Three.js renderer
     workerBridge:  null,    // WorkerBridge instance
     debugOverlay:  null,    // DebugOverlay instance
+
+    firstDraw:      true,   // not redraw full map if first 
 
 
     // ── traffic component references (set during intro ) ──────────────────

@@ -1,11 +1,11 @@
-3d.city v 0.9.0
+3d.city v 0.9.5
 =======
 
 3d city builder [LAUNCH](https://lo-th.github.io/3d.city/index.html)<br>
 
-The goal is create 3d city builder to test performance for three.js webgl games<br>
+The goal is create high-performing 3d city builder with three.js webgl & webgpu<br>
 With minimum size impact and maximum speed.<br>
-3d side use [Three.js](https://github.com/mrdoob/three.js), GLSL 3d model made by me.<br>
+3d side use [Three.js](https://github.com/mrdoob/three.js), GLB 3d model made by me.<br>
 
 This game use simulation source micropolisJS by Graememcc, full convert to ES6<br>
 [https://github.com/graememcc/micropolisJS](https://github.com/graememcc/micropolisJS)<br>

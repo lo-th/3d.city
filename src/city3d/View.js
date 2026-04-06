@@ -7,7 +7,7 @@ import { ImprovedNoise } from '../jsm/math/ImprovedNoise.js';
 
 import { AppState } from '../AppState.js'
 import { Material, MAT, MAT_LAND } from './Material.js'
-import { Base, Zone } from './Base.js';
+import { Base, Zone, ZoneExtand } from './Base.js';
 import { BuildTool, Markers } from './BuildTool.js';
 import { PostEffect } from './PostEffect.js';
 import { Pool } from './Pool.js';
@@ -239,9 +239,9 @@ export class View {
     	this.pool = new Pool();
     	await this.pool.load();
 
-		this.material = new Material(this.pool);
-		
 		this.init();
+
+		this.material = new Material(this.pool);
 
 		if(AppState.LUT_on){ 
 
@@ -347,7 +347,6 @@ export class View {
 	forceUP(){
 		let i = 144;
 	    while(i--){
-	    	//MAT_LAND[i].needsUpdate = true;
 	    	MAT_LAND[i].envMapIntensity = this.scene.environmentIntensity
 	    }
 
@@ -1219,6 +1218,8 @@ export class View {
 
     	//this.disposeTerrainMaterial()
 
+
+
 		if( this.miniTerrain.length > 0 ){
 			let i = this.miniTerrain.length;
 			while(i--){
@@ -1342,8 +1343,8 @@ export class View {
 			x = i % d;
             y = Math.floor( i * r );
             noise = (perlin.noise( x * quality, 0, y * quality ) + 1)*0.5;
-            //noise *= 1.5;
-            noise = Math.pow( noise, 2 );
+            noise *= AppState.heightMulty;
+            noise = Math.pow( noise, AppState.heightPow );
 			this.heightData[ i ] = noise
 
 			if(noise<min) min = noise
@@ -1673,12 +1674,13 @@ export class View {
 
             // get full position of zone tiles
             const zone = Zone( size, x, y );
+            const zoneExtand = ZoneExtand( size, x, y );
 
             // clear tree if existe in this zone
 			this.removeTreePack( zone );
 
 			// flat terrain 
-			if( AppState.withHeight && size !== 1 ) this.makePlanar( zone, py );
+			if( AppState.withHeight && size !== 1 ) this.makePlanar( zoneExtand, py );
 
 			let v = this.currentTool.geo;
 
@@ -1808,7 +1810,6 @@ export class View {
 		if(!this.townLists[layer]) this.townLists[layer]=[];
     	this.townLists[layer].push([x,y,z,v,zone]);
     	this.rebuildTownLayer(layer);
-    	;
 
 	}
 
@@ -2183,6 +2184,10 @@ export class View {
 	paintMap ( mapSize, island = false ) {
 
 		if(AppState.debugTime) console.time("PaintMap");
+
+		// reset to default texture
+		this.material.resetLandMaterial()
+		AppState.firstDraw = false;
 		
 		this.isIsland = island;
 
@@ -2199,6 +2204,8 @@ export class View {
 		//this.clearTerrain()
 		this.clearAllTrees()
 		this.clearHeight()
+
+
 
 		if( AppState.withHeight ) this.generateHeight()
 
@@ -2222,12 +2229,15 @@ export class View {
 
 					if( v > 1 && v < 5 ){ // water
 						id = this.findHeightId(x, y)
-						this.heightData[ id ] *= -1;
+						this.heightData[ id ] = -Math.pow(this.heightData[ id ]* AppState.seaMulty, AppState.seaPow) 
+						//this.heightData[ id ] *= -1;
 						if( x === this.mapSize[0]-1 ) this.heightData[ id+1 ] *= -1;
 						if( y === this.mapSize[1]-1 ) this.heightData[ id+this.mapSize[1] ] *= -1;
 						//AppState.tilesData[n] = 0 
 					}
 	                if( v > 4 && v < 21 ){ // water border
+
+	                	let d = AppState.heightBorder
 
 	                	id = this.findHeightId(x, y)
 	                    //this.heightData[ this.findHeightId(x, y) ] *= 0.5;
@@ -2235,15 +2245,15 @@ export class View {
 	                	let baseY = this.heightData[ this.findHeightId(x, y) ]
 
 	                	if(v===13 || v===14){
-	                		this.heightData[ id ] = -0.2
-	                		this.heightData[ id+1 ] = -0.2
+	                		this.heightData[ id ] = -d
+	                		this.heightData[ id+1 ] = -d
 	                	}
 	                	if(v===9 || v===10){
-	                		this.heightData[ id ] = -0.2
-	                		this.heightData[ this.findHeightId(x, y+1) ] = -0.2
+	                		this.heightData[ id ] = -d
+	                		this.heightData[ this.findHeightId(x, y+1) ] = -d
 	                	}
 	                	if(v===11 || v===12){
-	                		this.heightData[ id ] = -0.2
+	                		this.heightData[ id ] = -d
 	                	}
 
 	                	if(v===7 || v===8){
@@ -2258,7 +2268,7 @@ export class View {
 	                    let w = zz.length, wn
 	                    while(w--){
 	                    	wn = this.findHeightId(zz[w][0], zz[w][1])
-	                    	if(wn) this.heightData[ wn ] = 0.2//*0.75// this.heightData[ wn ]+0.5;
+	                    	if(wn) this.heightData[ wn ] = d//*0.75// this.heightData[ wn ]+0.5;
 
 	                    }
 	                }
@@ -2368,13 +2378,25 @@ export class View {
 
                 if( g < 240 ){
 
-                	tmpPos.x = x*mid*this.mu;
-                	tmpPos.y = (240 - y*mid)*this.mu;
+                	let draw = true
 
-                	// apply tile change
-                	render.copyTextureToTexture( this.pool.tile('texture', g), MAT_LAND[layer].map, null, tmpPos );
-                	if( AppState.isWithNormal ) render.copyTextureToTexture( this.pool.tile('normal', g), MAT_LAND[layer].normalMap, null, tmpPos );
-            		if( AppState.isWithRoughness ) render.copyTextureToTexture( this.pool.tile('roughness', g), MAT_LAND[layer].roughnessMap, null, tmpPos );
+                	if(g<1) draw = false // not ground 
+                	if(g>20 && g<30) draw = false // not tree
+
+                	if(draw){
+                		tmpPos.x = x*mid*this.mu;
+	                	tmpPos.y = (240 - y*mid)*this.mu;
+
+	                	// apply tile change
+	                	render.copyTextureToTexture( this.pool.tile('texture', g), MAT_LAND[layer].map, null, tmpPos );
+	                	if( AppState.isWithNormal ) render.copyTextureToTexture( this.pool.tile('normal', g), MAT_LAND[layer].normalMap, null, tmpPos );
+	            		if( AppState.isWithRoughness ) render.copyTextureToTexture( this.pool.tile('roughness', g), MAT_LAND[layer].roughnessMap, null, tmpPos );
+
+
+	            		//if(layer === 1) console.log(MAT_LAND[layer].map)
+                	}
+
+                	
             		/*
             		render.copyTextureToTexture( this.pool.tile('texture', g), this.terrainTxt[layer], null, tmpPos );
                 	if( AppState.isWithNormal ) render.copyTextureToTexture( this.pool.tile('normal', g), this.terrainTxtN[layer], null, tmpPos );

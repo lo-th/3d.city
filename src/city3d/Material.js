@@ -114,12 +114,17 @@ export class Material {
         if( AppState.isBestMaterial ) { option.roughness = 0.4;  option.metalness = 0.2 }
         MAT['border'] = new Type({ color:AppState.color.border, alphaMap:this.pool.texture('border'), transparent:true, side:THREE.DoubleSide, ...option })
 
-        if( AppState.isBestMaterial ) { option.roughness = 0.8;  option.metalness = 0.2 }
+        const baseTexture = this.pool.texture(AppState.tileSize === 64 ?'ground2k':'ground1k')
+		const baseNormal = this.pool.texture(AppState.tileSize === 64 ?'ground2k_n':'ground1k_n')
+
+        if( AppState.isBestMaterial ) { option.roughness = 0.5;  option.metalness = 0.5 }
         MAT['plane'] = new Type({ 
-        	color:AppState.color.ground, 
-        	depthWrite:false, 
-        	normalMap:this.pool.texture('dirt_n'), 
-        	aoMap:this.pool.texture('dirt_ao'), 
+        	//color:AppState.color.ground, 
+        	//depthWrite:false, 
+        	map:baseTexture,
+        	normalMap:baseNormal, //this.pool.texture('dirt_n'), 
+        	//normalScale:new THREE.Vector2(2,-2),
+        	//aoMap:this.pool.texture('dirt_ao'), 
         	...option 
         })
 
@@ -164,34 +169,107 @@ export class Material {
 
 	createLandMaterial() {
 
-		let i = 144; // max num layer
+		const baseTexture = this.pool.texture(AppState.tileSize === 64 ?'ground2k':'ground1k')
+		const baseNormal = this.pool.texture(AppState.tileSize === 64 ?'ground2k_n':'ground1k_n')
+		//baseTexture.colorSpace = THREE.SRGBColorSpace;
+		//baseTexture.flipY = true;
+
+		/*const w = AppState.tileSize === 64 ? 1024:512;
+		this.ground = new THREE.DataTexture(baseTexture.image, w, w);
+
+		this.ground.colorSpace = THREE.SRGBColorSpace;
+		//txt.minFilter = THREE.LinearFilter;
+		this.ground.flipY = true;
+		//txt_n.flipY = true;*/
+
+		
+
+		 // max num layer
 		let option = AppState.isBestMaterial ? { roughness:0.5, metalness:0.5 } : {}
 		let Type = AppState.isBestMaterial ? THREE.MeshStandardNodeMaterial : THREE.MeshBasicNodeMaterial;
 
-		const baseMat = new Type({ ...option });
+		const baseMat = new Type({ color:0xffffff,  ...option });
+		baseMat.map = baseTexture;
 		if(AppState.withHeight) baseMat.vertexColors = true
 
-		const w = AppState.tileSize === 64 ? 1024:512;
-		const data = new Uint8Array( w * w * 4 );
+		/*let groundColor = new THREE.Color( AppState.color.ground ).convertLinearToSRGB()
+		let RGB = [
+			Math.floor(groundColor.r * 255),
+			Math.floor(groundColor.g * 255),
+			Math.floor(groundColor.b * 255)
+		]
+		console.log(RGB)*/
+
+		/*const w = AppState.tileSize === 64 ? 1024:512;
+	    const lng = w * w
+		const data = new Uint8Array( lng * 4 );
+		let j = lng, n
+		while(j--){
+			n = j*4
+			data[n] = RGB[0]
+			data[n+1] = RGB[1]
+			data[n+2] = RGB[2]
+			data[n+3] = 1
+		}
+
+		const data2 = new Uint8Array( lng * 4 );
+		j = lng
+		while(j--){
+			n = j*4
+			data2[n] = 128
+			data2[n+1] = 128
+			data2[n+2] = 255
+			data2[n+3] = 1
+		}
 		const txt = new THREE.DataTexture(data, w, w);
+		const txt_n = new THREE.DataTexture(data2, w, w);
+		//const txt = this.pool.texture('land512')
+		txt.colorSpace = THREE.SRGBColorSpace;
 		//txt.minFilter = THREE.LinearFilter;
 		txt.flipY = true;
+		txt_n.flipY = true;*/
 		//txt.needsUpdate = true;
 
+		//const txt0 = this.pool.texture('land512_n')
+		//txt0.flipY = true;
+		//
+
+
+		let i = 144;
 		let mat;
 
 		while(i--){
 
 			mat = baseMat.clone();
 
-			mat.map = txt.clone();
-			mat.map.colorSpace = THREE.SRGBColorSpace;
-            if( AppState.isWithNormal ) mat.normalMap = txt.clone();
-            if( AppState.isWithRoughness ) mat.roughnessMap = txt.clone();
+			mat.map = baseTexture.clone();;
+            if( AppState.isWithNormal ) mat.normalMap = baseNormal.clone();
+            //if( AppState.isWithRoughness ) mat.roughnessMap = txt.clone();
 
             //mat.needsUpdate = true;
 			MAT_LAND[i] = mat
 
+		}
+
+	}
+
+	resetLandMaterial() {
+
+		if( AppState.firstDraw ) return
+
+		const baseTexture = this.pool.texture(AppState.tileSize === 64 ?'ground2k':'ground1k')
+		const baseNormal = this.pool.texture(AppState.tileSize === 64 ?'ground2k_n':'ground1k_n')
+
+		const renderer = AppState.view3d.getRenderer()
+		const render = AppState.isWebGPU ? renderer : renderer.backend; 
+
+		let i = 144; // max num layer
+		let pos = new THREE.Vector2( 0, 0 )
+
+		while(i--){
+
+			render.copyTextureToTexture( baseTexture, MAT_LAND[i].map, null, pos );
+		    if( AppState.isWithNormal ) render.copyTextureToTexture( baseNormal, MAT_LAND[i].normalMap, null, pos );
 		}
 
 	}

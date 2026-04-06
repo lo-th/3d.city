@@ -57,7 +57,7 @@ export const Zone = ( size, x, y, v ) => {
 
 	switch(size){
 		case 0: 
- zone = []
+        zone = []
 		/*zone = [
 			[x, y], [x+1, y],[x, y-1],
 			[x, y-1], [x+1, y-1]
@@ -73,10 +73,6 @@ export const Zone = ( size, x, y, v ) => {
 	    if(v===19 || v===20) zone = [ [x+1, y], [x, y+1]]
 		//if(v===19 || v===20) zone = [[x, y], [x, y+1], [x-1, y], [x-1, y+1] ]
 			
-		
-		
-
-		
 		break;
 		case 1: 
 		zone = [ 
@@ -120,3 +116,51 @@ export const Zone = ( size, x, y, v ) => {
 
 }
 
+export const ZoneExtand = ( size, x, y, v ) => {
+
+	let zone;
+
+
+	switch(size){
+		case 1: 
+		zone = [ 
+			[x, y] 
+		];
+		break;
+		case 2: 
+		zone = [
+			[x, y], [x+1, y],
+			[x, y+1], [x+1, y+1]
+		];
+		break;
+		case 3: 
+		zone = [ 
+		    [x-1, y], [x, y], [x+1, y], [x+2, y],
+		    [x, y-1], [x-1, y-1], [x+1, y-1], [x+2, y-1],
+		    [x, y+1], [x-1, y+1], [x+1, y+1], [x+2, y+1],
+		    [x, y+2], [x-1, y+2], [x+1, y+2], [x+2, y+2]
+		];
+		break;
+		case 4: 
+		zone = [ 
+			[x, y], [x-1, y], [x+1, y], [x+2, y], 
+			[x, y-1], [x-1, y-1], [x+1, y-1], [x, y+1], [x-1, y+1], 
+			[x+1, y+1], [x+2, y-1], [x+2, y+1],
+			[x+2, y+2], [x-1, y+2], [x, y+2], [x+1, y+2]  
+		];
+		break;
+		case 6: 
+		zone = [ 
+			[x, y], [x-1, y], [x+1, y], [x, y-1], [x-1, y-1], [x+1, y-1],   
+			[x, y+1], [x-1, y+1], [x+1, y+1], [x+2, y-1], [x+2, y] , [x+2, y+1] , 
+			[x+2, y+2], [x-1, y+2], [x, y+2], [x+1, y+2], [x+3, y-1], [x+4, y-1],   
+			[x+3, y], [x+4, y], [x+3, y+1], [x+4, y+1], [x+3, y+2], [x+4, y+2], 
+			[x+3, y+3], [x+4, y+3], [x+3, y+4], [x+4, y+4], [x-1, y+3], [x-1, y+4], 
+			[x, y+3], [x, y+4],  [x+1, y+3], [x+1, y+4], [x+2, y+3], [x+2, y+4]
+		];
+		break;
+	}
+
+	return zone;
+
+}
