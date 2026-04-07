@@ -126,7 +126,7 @@ export class Hub {
         this.hub.appendChild( this.version )
 
         this.fps = document.createElement('div');
-        this.fps.style.cssText = 'position:absolute; font-size:14px; left:10px; bottom:10px; text-align:left; width:150px; pointer-events:none; display:block; font-weight: bold;';
+        this.fps.style.cssText = 'position:absolute; font-size:14px; right:125px; bottom:10px; text-align:right; width:150px; pointer-events:none; display:block; font-weight: bold;';
         this.fps.innerHTML = "v " + AppState.version;
         this.hub.appendChild( this.fps )
 
@@ -148,17 +148,22 @@ export class Hub {
 
     upFps( v ){
 
-        this.fps.innerHTML = v + ' f/s'
-
+        this.fps.innerHTML = v + ' F/S | '
 
     }
-
 
     message ( s ){
 
-        if( this.text ) this.text.innerHTML = s;
+        if( this.text ) this.text.textContent = s;
 
     }
+
+
+    /*message ( s ){
+
+        if( this.text ) this.text.innerHTML = s;
+
+    }*/
 
     /*intro (){
 
@@ -199,11 +204,7 @@ export class Hub {
     	}
     }
 
-    message ( s ){
-
-        if( this.text ) this.text.textContent = s;
-
-    }
+    
 
     fadding (t){
 
@@ -607,9 +608,9 @@ export class Hub {
 
     }
 
-    upStats  (fps, memory){
+    /*upStats  (fps, memory){
         this.fps.innerHTML = 'Fps: '+ fps + ' <br> geometry: ' + memory;
-    }
+    }*/
 
     closeAbout  (){
         AppState.main.hideStats();
