@@ -121,9 +121,14 @@ export class Hub {
         
 
         this.version = document.createElement('div');
-        this.version.style.cssText = 'position:absolute; font-size:14px; right:10px; bottom:10px; text-align:right; width:150px; pointer-events:none; display:block;';
+        this.version.style.cssText = 'position:absolute; font-size:14px; right:10px; bottom:10px; text-align:right; width:150px; pointer-events:none; display:block;font-weight: bold;';
         this.version.innerHTML = "v " + AppState.version;
         this.hub.appendChild( this.version )
+
+        this.fps = document.createElement('div');
+        this.fps.style.cssText = 'position:absolute; font-size:14px; left:10px; bottom:10px; text-align:left; width:150px; pointer-events:none; display:block; font-weight: bold;';
+        this.fps.innerHTML = "v " + AppState.version;
+        this.hub.appendChild( this.fps )
 
 
 
@@ -139,6 +144,13 @@ export class Hub {
         this.full.appendChild( this.text );
 
         this.hub.appendChild( this.full );
+    }
+
+    upFps( v ){
+
+        this.fps.innerHTML = v + ' f/s'
+
+
     }
 
 

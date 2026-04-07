@@ -20,7 +20,7 @@ import { TrafficBase } from '../TrafficBase.js'
 
 //let Audio;
 let renderer, camera, scene, timer, sun;
-
+const tm = { tmp:0, n:0, fps:0 };
 const tmpPos = new THREE.Vector2( 0, 0 );
 
 export class View {
@@ -733,6 +733,8 @@ export class View {
 
     	timer.update( time );
 
+    	this.getFps()
+
 		AppState.delta = timer.getDelta();
 
         //requestAnimationFrame( this.loop.bind(this) );
@@ -760,6 +762,20 @@ export class View {
 	    
 
     }
+
+
+
+	getFps(){
+
+		if ( timer._currentTime - 1000 > tm.tmp ){ 
+	        tm.tmp = timer._currentTime;
+	        tm.fps = tm.n;
+	        tm.n = 0;
+	        AppState.hub.upFps(tm.fps);
+	    }
+	    tm.n++;
+
+	}
 
 
     //----------------------------------- RESIZE
