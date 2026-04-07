@@ -37,7 +37,7 @@ AppState.debugOverlay = new DebugOverlay();
 
 export class Main {
 
-    static async init ( DirectMessage ){
+    static async init ( DirectMessage, enableGPU = false ){
 
         if( DirectMessage !== undefined ){ 
 
@@ -45,6 +45,8 @@ export class Main {
             AppState.isWorker = false
 
         }
+
+        if(enableGPU) AppState.forceWebGL = false;
         
         AppState.isMobile = testMobile();
 

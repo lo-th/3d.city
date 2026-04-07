@@ -1,6 +1,6 @@
 export const AppState = {
 
-    version:      '0.9.5',
+    version:      '0.9.6',
 
     inspector:      null,   // active editor
 

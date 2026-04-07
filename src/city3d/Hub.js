@@ -121,7 +121,7 @@ export class Hub {
         
 
         this.version = document.createElement('div');
-        this.version.style.cssText = 'position:absolute; font-size:14px; right:10px; bottom:10px; text-align:right; width:100px; pointer-events:none; display:block;';
+        this.version.style.cssText = 'position:absolute; font-size:14px; right:10px; bottom:10px; text-align:right; width:150px; pointer-events:none; display:block;';
         this.version.innerHTML = "v " + AppState.version;
         this.hub.appendChild( this.version )
 
