@@ -217,6 +217,57 @@ export class View {
 
 	}
 
+	//----------------------------------- RENDER
+
+    animate( time ) {
+
+    	timer.update( time );
+
+    	this.getFps()
+
+		AppState.delta = timer.getDelta();
+
+        //requestAnimationFrame( this.loop.bind(this) );
+
+        if(this.material.water){
+        	this.material.water.offset.x += 0.0001
+        	this.material.water.offset.y -= 0.00008
+        }
+
+
+    	if( this.needResize ) this.doResize()
+
+    	if( this.onEase ) this.easing()
+
+	    if( this.dragMode() ) this.dragCenterposition();
+	    else this.updateKey();
+	    
+	    this.applyZoomInertia();
+	    this.applyOrbitMomentum();
+	    this.updateCamera()
+	    if(this.markers) this.markers.update();
+
+	    if( this.postEffect.pipeline !== null ) this.postEffect.pipeline.render();
+	    else renderer.render( scene, camera )
+	    
+
+    }
+
+	getFps(){
+
+		if ( timer._currentTime - 1000 > tm.tmp ){ 
+	        tm.tmp = timer._currentTime;
+	        tm.fps = tm.n;
+	        tm.n = 0;
+	        AppState.hub.upFps(tm.fps);
+	    }
+	    tm.n++;
+
+	}
+	
+
+	//----------------------------------- INIT RENDER
+
 	async initRenderer(){
 
 		renderer = new THREE.WebGPURenderer({ antialias:true, forceWebGL:AppState.forceWebGL });
@@ -233,7 +284,7 @@ export class View {
     	this.container.appendChild( renderer.domElement );
     	await renderer.init(); // MUST await before using
 
-    	AppState.isWebGPU = renderer.backend.isWebGLBackend !== undefined ? false : true;;
+    	AppState.isWebGPU = renderer.backend.isWebGLBackend !== undefined ? false : true;
 
     	this.postEffect = new PostEffect()
 
@@ -727,55 +778,7 @@ export class View {
 		sun.target.position.set( this.center.x, this.center.y, this.center.z );
     }
 
-     //----------------------------------- RENDER
 
-    animate( time ) {
-
-    	timer.update( time );
-
-    	this.getFps()
-
-		AppState.delta = timer.getDelta();
-
-        //requestAnimationFrame( this.loop.bind(this) );
-
-        if(this.material.water){
-        	this.material.water.offset.x += 0.0001
-        	this.material.water.offset.y -= 0.00008
-        }
-
-
-    	if( this.needResize ) this.doResize()
-
-    	if( this.onEase ) this.easing()
-
-	    if( this.dragMode() ) this.dragCenterposition();
-	    else this.updateKey();
-	    
-	    this.applyZoomInertia();
-	    this.applyOrbitMomentum();
-	    this.updateCamera()
-	    if(this.markers) this.markers.update();
-
-	    if( this.postEffect.pipeline !== null ) this.postEffect.pipeline.render();
-	    else renderer.render( scene, camera )
-	    
-
-    }
-
-
-
-	getFps(){
-
-		if ( timer._currentTime - 1000 > tm.tmp ){ 
-	        tm.tmp = timer._currentTime;
-	        tm.fps = tm.n;
-	        tm.n = 0;
-	        AppState.hub.upFps(tm.fps);
-	    }
-	    tm.n++;
-
-	}
 
 
     //----------------------------------- RESIZE

@@ -14,24 +14,6 @@ export class Hub {
 
         this.mapPath = './assets/textures/'
 
-        /*this.round = [
-        '<svg height="66" width="66">',
-        '<circle cx="33" cy="33" r="27" stroke="rgb(255,255,255)" stroke-width="1" stroke-opacity="0.0" fill="rgb(0,0,0)" fill-opacity="0.1"/>',
-        '</svg>'
-        ].join("\n");
-
-        this.roundSelected = [
-        '<svg height="66" width="66">',
-        '<circle cx="33" cy="33" r="27" stroke="rgb(255,255,255)" stroke-width="2" stroke-opacity="0.5" fill="rgb(0,0,0)" fill-opacity="0.3"/>',
-        '</svg>'
-        ].join("\n");
-
-        this.roundSelect = [
-        '<svg height="66" width="66">',
-        '<circle cx="33" cy="33" r="30" stroke="rgb(255,255,255)" stroke-width="4" stroke-opacity="1" fill="rgb(0,0,0)" fill-opacity="0.5"/>',
-        '</svg>'
-        ].join("\n");*/
-
     	this.hub = document.getElementById('hub');
     	this.full = null;
     	this.title = null;
@@ -86,18 +68,8 @@ export class Hub {
         this.overlaysButtons =  [];
                                                     
 
-        //this.intro();
-
-        
-
-        //this.full = document.createElement('div'); 
-        //this.full.style.cssText ='position:absolute; top:0px; left:0px; width:100%; height:100%; pointer-events:none; display:block; background:rgba(144,163,183,1); ' //+ this.degrade();
-
         this.full = document.createElement('div');
         this.full.id = 'hub-loading';
-        this.full.style.cssText = 'position:absolute; inset:0; display:flex; flex-direction:column;'
-                                + ' align-items:center; justify-content:center; pointer-events:none;'
-                                + ' background:linear-gradient(160deg,#0f1923 0%,#1a2d45 50%,#0d1e2e 100%);';
 
         this.loadTitle = document.createElement('div');
         this.loadTitle.className = 'loading-title';
@@ -110,45 +82,30 @@ export class Hub {
         this.text = document.createElement('div');
         this.text.className = 'loading-status';
         this.text.textContent = 'Loading…';
-        //this.text.style.cssText = 'position:absolute; font-size:18px; left:calc(50% - 150px); top:calc(50% + 80px); width:300px; height:80px; pointer-events:none; text-align:center; font-weight: bold;';
-        //this.text.innerHTML = "Welcome";
 
-
-        this.loader = document.createElement('div');//document.getElementById('loader');
+        this.loader = document.createElement('div');
         this.loader.className = 'loading-spinner';
-        //this.loader.style.cssText = 'pointer-events:none; position:absolute; left:calc(50% - 100px); top:calc(50% - 100px); width:200px; height:200px;';
-
-        
 
         this.version = document.createElement('div');
-        this.version.style.cssText = 'position:absolute; font-size:14px; right:10px; bottom:10px; text-align:right; width:150px; pointer-events:none; display:block;font-weight: bold;';
-        this.version.innerHTML = "v " + AppState.version;
-        this.hub.appendChild( this.version )
-
-        this.fps = document.createElement('div');
-        this.fps.style.cssText = 'position:absolute; font-size:14px; right:125px; bottom:10px; text-align:right; width:150px; pointer-events:none; display:block; font-weight: bold;';
-        this.fps.innerHTML = "v " + AppState.version;
-        this.hub.appendChild( this.fps )
-
-
-
-        /*this.fullMid.appendChild( this.logo );
-        this.fullMid.appendChild( this.title );
-        this.fullMid.appendChild( this.subtitle );*/
-
+        this.version.className = 'hub-version';
         
-
+        this.fps = document.createElement('div');
+        this.fps.className = 'hub-fps';
+       
         this.full.appendChild(this.loadTitle);
         this.full.appendChild(this.loadSub);
-        this.full.appendChild( this.loader );
-        this.full.appendChild( this.text );
-
+        this.full.appendChild(this.loader);
+        this.full.appendChild(this.text);
+        
         this.hub.appendChild( this.full );
+        this.hub.appendChild( this.version )
+        this.hub.appendChild( this.fps )
+
     }
 
     upFps( v ){
 
-        this.fps.innerHTML = v + ' F/S | '
+        this.fps.innerHTML = v + 'F/S|'
 
     }
 
@@ -158,41 +115,6 @@ export class Hub {
 
     }
 
-
-    /*message ( s ){
-
-        if( this.text ) this.text.innerHTML = s;
-
-    }*/
-
-    /*intro (){
-
-    	this.full = document.createElement('div'); 
-    	this.full.style.cssText ='position:absolute; top:0px; left:0px; width:100%; height:100%; pointer-events:none; display:block; background:rgba(102,102,230,1); ' //+ this.degrade();
-
-        this.fullMid = document.createElement('div'); 
-        this.fullMid.style.cssText ='position:absolute; top:10px; left:50%; width:300px; height:300px; margin-left:-150px; pointer-events:none; display:block;';
-
-        this.title = document.createElement('div');
-        this.title.innerHTML = "3D.CITY";
-    	this.title.style.cssText = 'position:absolute; font-size:44px; top:50%; left:0; margin-top:-30px; width:300px; height:60px; pointer-events:none; text-align:center;';
-        
-        this.subtitle = document.createElement('div');
-        this.subtitle.style.cssText = 'position:absolute; font-size:14px; top:50%; left:0; margin-top:20px; width:300px; height:80px; pointer-events:none; text-align:center;';
-        this.subtitle.innerHTML = "Generating world...";
-
-        this.logo = document.getElementById('logo');
-        this.logo.style.display = 'block';
-
-        this.full.appendChild( this.fullMid );
-
-        this.fullMid.appendChild( this.logo );
-    	this.fullMid.appendChild( this.title );
-        this.fullMid.appendChild( this.subtitle );
-
-    	this.hub.appendChild( this.full );
-
-    }*/
 
     showError( e ){
         console.log(e)
@@ -205,7 +127,6 @@ export class Hub {
     }
 
     
-
     fadding (t){
 
         // If generation starts while intro is fading, stop intro fade and keep
@@ -269,44 +190,6 @@ export class Hub {
         
     }
 
-
-
-    /*degrade  (){
-        var a = -160;
-        var p = [0, 30, 100]
-        var c0 = '#BFDDFF';
-        var c1 = '#3C89CD';
-        var c2 = '#214F77';
-        var deg = [
-            'background:-webkit-gradient(linear, top, bottom, color-stop('+p[0]+'%,'+c0+'),  color-stop('+p[1]+'%,'+c1+'), color-stop('+p[2]+'%,'+c2+'));',
-            'background:-moz-linear-gradient('+a+'deg, '+c0+' '+p[0]+'%, '+c1+' '+p[1]+'%, '+c2+' '+p[2]+'%);',
-            'background:-webkit-linear-gradient('+a+'deg, '+c0+' '+p[0]+'%, '+c1+' '+p[1]+'%, '+c2+' '+p[2]+'%);',
-            'background:-o-linear-gradient('+a+'deg, '+c0+' '+p[0]+'%, '+c1+' '+p[1]+'%, '+c2+' '+p[2]+'%);',
-            'background:linear-gradient('+a+'deg, '+c0+' '+p[0]+'%, '+c1+' '+p[1]+'%, '+c2+' '+p[2]+'%);'
-        ].join("\n");
-        return deg;
-    },*/
-
-    initPrevHub() {
-
-        /*this.full = document.createElement('div');
-        this.full.style.cssText ='position:absolute; top:10px; left:50%; margin-left:-150px; width:300px; height:300px; pointer-events:none;';
-        this.full.id = 'fullStart';*/
-
-        //this.hub.appendChild( this.full );
-        //var b1 = this.addButton(this.full, 'Play Game', [276,48,40], 'position:absolute; top:10px; left:0px;');
-        //let b2 = this.addButton(this.full, 'New Map',  [276, 26, 22], 'position:absolute; top:150px; left:0px;');
-        //var b3 = this.addButton(this.full, 'Height Map',  [120, 26, 22], 'position:absolute; top:150px; right:0px;');
-        //let b4 = this.addButton(this.full, 'Load Map',  [276, 26, 22], 'position:absolute; top:90px; left:0px;');
-        //this.addSelector("DIFFICULTY", ['LOW', 'MEDIUM', 'HARD'], AppState.main.setDifficulty, 0);
-
-        //b1.addEventListener('click',  function ( e ) { e.preventDefault(); AppState.main.playMap(); }, false);
-        //b2.addEventListener('click',  function ( e ) { e.preventDefault(); AppState.main.newMap(); }, false);
-       // b3.addEventListener('click',  function ( e ) { e.preventDefault(); AppState.main.newHeightMap(); }, false);
-        //b4.addEventListener('click',  function ( e ) { e.preventDefault(); AppState.main.loadGame(true); }, false);
-
-    }
-
     removeChilds (node) {
         var last;
         while (last = node.lastChild) node.removeChild(last);
@@ -316,7 +199,8 @@ export class Hub {
 
     initStartHub() {
 
-        this.version.innerHTML = "V:" + AppState.version + (AppState.isWebGPU?' | GPU' : ' | GL2')+(AppState.isWorker ? ' | W' : ' | D')
+        this.version.innerHTML = "V" + AppState.version + (AppState.isWebGPU?'|GPU' : '|GL2')+(AppState.isWorker ? '|W' : '|D')
+        if(AppState.isWebGPU) this.fps.style.right = '130px'
         this.mainmenu = document.createElement('div');
         this.mainmenu.style.cssText ='position:absolute; bottom:0px; left:50%; margin-left:-130px; width:260px; height:200px; pointer-events:none; display:flex; align-items: center;';
         //this.full.id = 'fullStart';

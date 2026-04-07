@@ -6,6 +6,7 @@
   --c-border:      rgba(100, 160, 220, 0.22);
   --c-border-hi:   rgba(140, 200, 255, 0.55);
   --c-text:        #dce8f5;
+  --c-text-info:   #C0CAD6;
   --c-text-dim:    rgba(180, 210, 240, 0.60);
   --c-accent:      #4a9edd;
   --c-accent-hi:   #74bfff;
@@ -247,6 +248,28 @@ body { background: var(--c-bg); font: 12px/1.4 var(--font-ui); width:100%; heigh
   color: var(--c-warn);
   pointer-events: none;
   text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+}
+
+.hub-version {
+  position:absolute;
+  right:10px; 
+  bottom:10px;
+  text-align:right;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.25em;
+  color: var(--c-text-info);
+}
+
+.hub-fps {
+  position:absolute;
+  right:125px; 
+  bottom:10px;
+  text-align:right;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.25em;
+  color: var(--c-text-info);
 }
 
 /* ── Loading overlay ─────────────────────────────────────────── */
