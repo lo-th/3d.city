@@ -11,18 +11,18 @@
 - **[Three.js](https://github.com/mrdoob/three.js)** — high-performance 3d rendering of the city in real time, including custom made shaders, texture and 3D models.
 - **[micropolisJS](https://github.com/graememcc/micropolisJS)**  open-source city simulation engine (itself descended from the original SimCity source). The simulation runs in a dedicated **Web Worker** so the 3D rendering stays smooth.
 
-The long-term vision is to grow this into a feature-rich city builder.
-fully open-source and playable in any modern browser.
-
-## Mini tutorial
-
-<a target='_blank' href='https://lo-th.github.io/3d.city/index.html'><img src="https://lo-th.github.io/3d.city/assets/img/tuto.png"/></a><br>
+The long-term vision is to grow this into a feature-rich city builder.<br>
+Fully open-source and playable in any modern browser.
 
 ## Screenshots
 
 <a target='_blank' href='https://lo-th.github.io/3d.city/index.html'><img src="https://lo-th.github.io/3d.city/assets/img/preview01.jpg"/></a><br>
 <a target='_blank' href='https://lo-th.github.io/3d.city/index.html'><img src="https://lo-th.github.io/3d.city/assets/img/preview02.jpg"/></a><br>
 <a target='_blank' href='https://lo-th.github.io/3d.city/index.html'><img src="https://lo-th.github.io/3d.city/assets/img/preview03.jpg"/></a><br>
+
+## Mini tutorial
+
+<a target='_blank' href='https://lo-th.github.io/3d.city/index.html'><img src="https://lo-th.github.io/3d.city/assets/img/tuto.png"/></a><br>
 
 ## Roadmap
 
