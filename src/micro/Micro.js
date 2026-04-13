@@ -11,6 +11,8 @@
 
 export const Micro = {
 
+    onError: false,
+
     haveMapAnimation: true,
 
     localStorage : null,
@@ -23,7 +25,10 @@ export const Micro = {
                ],
     BudgetProps : ['autoBudget', 'totalFunds', 'policePercent', 'roadPercent', 'firePercent', 'roadSpend',
                    'policeSpend', 'fireSpend', 'roadMaintenanceBudget', 'policeMaintenanceBudget',
-                   'fireMaintenanceBudget', 'cityTax', 'roadEffect', 'policeEffect', 'fireEffect'
+                   'fireMaintenanceBudget', 'cityTax', 'roadEffect', 'policeEffect', 'fireEffect',
+                   'resTaxRate', 'comTaxRate', 'indTaxRate', 'bondDebt',
+                   'waterPercent', 'waterSpend', 'waterMaintenanceBudget', 'waterEffect',
+                   'educationPercent', 'educationSpend', 'educationMaintenanceBudget', 'educationEffect'
                    ],
     // eval
     PROBLEMS : ['CVP_CRIME', 'CVP_POLLUTION', 'CVP_HOUSING', 'CVP_TAXES', 'CVP_TRAFFIC', 'CVP_UNEMPLOYMENT', 'CVP_FIRE'],
@@ -44,19 +49,19 @@ export const Micro = {
     MAP_WIDTH : 128,
     MAP_HEIGHT : 128,
     
-    //MAP_DEFAULT_WIDTH : 128*3, //Micro.MAP_WIDTH*3,
-    //MAP_DEFAULT_HEIGHT : 128*3, //Micro.MAP_HEIGHT*3,
-    //MAP_BIG_DEFAULT_WIDTH : 128*16, //Micro.MAP_WIDTH*16,
-    //MAP_BIG_DEFAULT_HEIGHT : 128*16, //Micro.MAP_HEIGHT*16,
-    //MAP_BIG_DEFAULT_ID : "bigMap",
-    //MAP_PARENT_ID : "splashContainer",
-    //MAP_DEFAULT_ID : "SplashCanvas",
+    /*MAP_DEFAULT_WIDTH : 128*3, //Micro.MAP_WIDTH*3,
+    MAP_DEFAULT_HEIGHT : 128*3, //Micro.MAP_HEIGHT*3,
+    MAP_BIG_DEFAULT_WIDTH : 128*16, //Micro.MAP_WIDTH*16,
+    MAP_BIG_DEFAULT_HEIGHT : 128*16, //Micro.MAP_HEIGHT*16,
+    MAP_BIG_DEFAULT_ID : "bigMap",
+    MAP_PARENT_ID : "splashContainer",
+    MAP_DEFAULT_ID : "SplashCanvas",
 
     //GameCanvas
-    //DEFAULT_WIDTH : 400,
-    //DEFAULT_HEIGHT : 400,
-    //DEFAULT_ID : "MicropolisCanvas",
-    //RCI_DEFAULT_ID : "RCICanvas",
+    DEFAULT_WIDTH : 400,
+    DEFAULT_HEIGHT : 400,
+    DEFAULT_ID : "MicropolisCanvas",
+    RCI_DEFAULT_ID : "RCICanvas",*/
 
     // Simulation
     LEVEL_EASY : 0,
@@ -119,8 +124,14 @@ export const Micro = {
     fireMaintenanceCost : 100,
     roadMaintenanceCost : 1,
     railMaintenanceCost : 2,
+    waterMaintenanceCost : 5,    // cost per 1000 residents per cycle
+    MAX_WATER_EFFECT : 32,       // scales water infrastructure quality (matches road effect scale)
+
+    educationMaintenanceCost : 50, // cost per hospital/school per tax cycle
+    MAX_EDUCATION_EFFECT : 32,     // scales education quality (same scale as water/road)
 
     // PowerManager
+    EOL_POWER_STRENGTH : 50,
     COAL_POWER_STRENGTH : 700,
     NUCLEAR_POWER_STRENGTH : 2000,
 
@@ -132,9 +143,11 @@ export const Micro = {
     DISASTER_CRASH:'Crash',
     DISASTER_MELTDOWN:'Meltdown',
     DISASTER_TORNADO:'Tornado',
+    DISASTER_EARTHQUAKE:'Earthquake',
 
     // storage
     CURRENT_VERSION : 3,
+    SAVE_VERSION : 1,
     KEY : 'micropolisJSGame',
 
     // disasters
@@ -157,6 +170,23 @@ export const Micro = {
 
     SMOOTH_NEIGHBOURS_THEN_BLOCK: 0,
     SMOOTH_ALL_THEN_CLAMP : 1,
+
+    // Seasons
+    SEASON_SPRING: 0,
+    SEASON_SUMMER: 1,
+    SEASON_AUTUMN: 2,
+    SEASON_WINTER: 3,
+
+    // Education & Health thresholds
+    EDUCATION_EFFECT_RANGE: 200,
+    HEALTH_EFFECT_RANGE: 200,
+
+    // Industry Specialization types
+    INDUSTRY_MIXED:         'MIXED',
+    INDUSTRY_TECH:          'TECH',
+    INDUSTRY_MANUFACTURING: 'MANUFACTURING',
+    INDUSTRY_TOURISM:       'TOURISM',
+    INDUSTRY_FARMING:       'FARMING',
 
     simData:null,
     messageManager:null,

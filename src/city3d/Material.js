@@ -100,6 +100,7 @@ export class Material {
 	        normalMap:this.water,
 	        normalScale:new THREE.Vector2(0.6,-0.6), 
 	        alphaToCoverage:true, 
+	        allowOverride:false,
 	        //premultipliedAlpha:true,
 	        color:AppState.color.water, transparent:true, opacity:0.8,  ...option 
         })//

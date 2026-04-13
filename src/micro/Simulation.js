@@ -17,7 +17,7 @@ import { MessageManager } from './MessageManager.js';
 import { TXT } from './Text.js';
 import { SpriteManager } from './sprite/SpriteManager.js';
 
-import { Evaluation } from './game/Evaluation.js';
+import { Evaluation, EvaluationUtils } from './game/Evaluation.js';
 import { Valves } from './game/Valves.js';
 import { Budget } from './game/Budget.js';
 import { Census } from './game/Census.js';
@@ -38,6 +38,11 @@ import { MiscTiles } from './zone/MiscTiles.js';
 import { Stadia } from './zone/Stadia.js';
 
 import { MapUtils } from './map/MapUtils.js';
+import { Achievements } from './game/Achievements.js';
+import { CityHistory, HistoryEventType } from './game/CityHistory.js';
+import { SeasonManager } from './game/SeasonManager.js';
+import { Ordinances } from './game/Ordinances.js';
+import { IndustrySpecialization } from './game/IndustrySpecialization.js';
 
 export class Simulation {
 
@@ -90,6 +95,11 @@ export class Simulation {
         this.repairManager = new RepairManager(this.map);
         this.traffic = new Traffic(this.map, this.spriteManager);
         this.disasterManager = new DisasterManager(this.map, this.spriteManager, this.gameLevel);
+        this.achievements = new Achievements();
+        this.cityHistory = new CityHistory();
+        this.seasonManager = new SeasonManager();
+        this.ordinances = new Ordinances();
+        this.industrySpec = new IndustrySpecialization();
 
         this.messageManager = new MessageManager();
         Micro.messageManager = this.messageManager;
@@ -165,20 +175,26 @@ export class Simulation {
         this.valves.save(saveData);
         this.budget.save(saveData);
         this.census.save(saveData);
+        this.achievements.save(saveData);
+        this.cityHistory.save(saveData);
+        this.ordinances.save(saveData);
+        this.industrySpec.save(saveData);
 
     }
 
     load (saveData) {
-        //console.log(saveData)
         this.messageManager.clear();
         for (let i = 0, l = Micro.savePropsVar.length; i < l; i++)
             this[Micro.savePropsVar[i]] = saveData[Micro.savePropsVar[i]];
 
-        //this.map.load(saveData);
         this.evaluation.load(saveData);
         this.valves.load(saveData);
         this.budget.load(saveData);
         this.census.load(saveData);
+        this.achievements.load(saveData);
+        this.cityHistory.load(saveData);
+        this.ordinances.load(saveData);
+        this.industrySpec.load(saveData);
 
     }
 
@@ -217,7 +233,7 @@ export class Simulation {
 
         this.infos[0] = [TXT.months[ this._cityMonthLast ], this._cityYearLast].join(' ');
 
-        this.infos[1] = TXT.cityClass[this.evaluation.cityScore];
+        this.infos[1] = TXT.cityClass[this.evaluation.cityClass];
         this.infos[2] = this.evaluation.cityScore;
         this.infos[3] = this.evaluation.cityPop;
 
@@ -231,7 +247,139 @@ export class Simulation {
         this.infos[9] = this.map.powerChange;
         this.map.powerChange = false;
 
+        this.infos[10] = this.census.crimeAverage;
+        this.infos[11] = this.census.pollutionAverage;
+        this.infos[12] = EvaluationUtils.getTrafficAverage(this.blockMaps, this.census);
+        this.infos[13] = this.evaluation.cityYes;
+
+        // New info slots
+        this.infos[14] = this.census.educationLevel;
+        this.infos[15] = this.census.healthLevel;
+        this.infos[16] = this.census.happinessLevel;
+        this.infos[17] = this.seasonManager.getSeason();
+
+        // Bond / debt info
+        this.infos[18] = this.budget.bondDebt;
+        this.infos[19] = this.budget.getBondAnnualPayment();
+
+        // Water supply coverage percentage (0–100)
+        var waterPct = this.budget.waterMaintenanceBudget > 0
+            ? Math.round((this.budget.waterEffect / Micro.MAX_WATER_EFFECT) * 100)
+            : 100; // no population yet → full coverage by default
+        this.infos[20] = waterPct;
+
+        // Industry specialization
+        this.infos[21] = this.industrySpec.getCurrentDef();
+
+        // Hospital and school (church) counts
+        this.infos[22] = this.census.hospitalPop;
+        this.infos[23] = this.census.churchPop;
+
+        // Education funding rate (0–100)
+        var educationPct = this.budget.educationMaintenanceBudget > 0
+            ? Math.round((this.budget.educationEffect / Micro.MAX_EDUCATION_EFFECT) * 100)
+            : 100;
+        this.infos[24] = educationPct;
+
         return this.infos
+
+    }
+
+    // Compute education level from infrastructure
+    updateEducationHealth () {
+        let census = this.census;
+        let fx = this.ordinances.getEffects();
+        let indFx = this.industrySpec.getEffects();
+
+        // Count placed park tiles (WOODS2-WOODS5 = tile values 40–43; FOUNTAIN = 840).
+        // These tiles have values below the MapScanner skip threshold (Tile.FLOOD = 48),
+        // so they are never visited during mapScan and must be counted with a direct scan.
+        let parkCount = 0;
+        let map = this.map;
+        for (let x = 0; x < map.width; x++) {
+            for (let y = 0; y < map.height; y++) {
+                let tv = map.getTileValue(x, y);
+                if ((tv >= 40 && tv <= 43) || tv === 840) parkCount++;
+            }
+        }
+        census.parkCount = parkCount;
+
+        // Education: derived from hospitals and schools (churches), scaled by funding level,
+        // land value, and industry specialization
+        let educationFundScale = this.budget.educationEffect / Micro.MAX_EDUCATION_EFFECT;
+        let educationBase = (census.hospitalPop * 40 + census.churchPop * 20) * educationFundScale;
+        let landValueFactor = Math.min(census.landValueAverage, 150);
+        let popFactor = census.totalPop > 0 ? Math.min(census.totalPop / 100, 50) : 0;
+
+        census.educationLevel = Math.min(
+            Math.floor(educationBase + landValueFactor * 0.3 + popFactor * 0.2 + fx.educationBonus + indFx.educationMod),
+            Micro.EDUCATION_EFFECT_RANGE
+        );
+
+        // Health: hospitals + ordinances + water supply funding + industry effects
+        let healthBase = census.hospitalPop * 50 + fx.healthBonus + indFx.healthMod;
+        let effectivePollution = Math.max(0, census.pollutionAverage + fx.pollutionMod + indFx.pollutionMod);
+        let pollutionPenalty = effectivePollution * 0.8;
+        let crimeHealthPenalty = census.crimeAverage * 0.3;
+
+        // Water supply: underfunded water infrastructure degrades health
+        let waterCoverage = this.budget.waterMaintenanceBudget > 0
+            ? (this.budget.waterEffect / Micro.MAX_WATER_EFFECT)
+            : 1.0;
+        let waterHealthBonus = Math.round(waterCoverage * 30); // up to +30 health from full water funding
+
+        census.healthLevel = Math.min(Math.max(
+            Math.floor(healthBase - pollutionPenalty - crimeHealthPenalty + 20 + waterHealthBonus),
+            0), Micro.HEALTH_EFFECT_RANGE);
+
+        // Happiness: composite score (0-100)
+        let happyScore = 50; // baseline
+        happyScore += (this.evaluation.cityScore - 500) * 0.02;  // score factor
+        happyScore -= census.crimeAverage * 0.1;                  // crime hurts
+        happyScore -= effectivePollution * 0.08;                  // pollution hurts
+        happyScore += (census.educationLevel / Micro.EDUCATION_EFFECT_RANGE) * 15; // education helps
+        happyScore += (census.healthLevel / Micro.HEALTH_EFFECT_RANGE) * 10;       // health helps
+        happyScore += this.seasonManager.happinessMod;            // season effect
+        // Park bonus from specialization (tourism/farming value parks more)
+        if (indFx.parkBonus > 0) happyScore += Math.min(parkCount * indFx.parkBonus * 0.1, 10);
+
+        // Unemployment penalty (including specialization modifier)
+        let unemployment = EvaluationUtils.getUnemployment(census);
+        let effectiveUnemploy = Math.max(0, unemployment + indFx.unemployMod);
+        happyScore -= effectiveUnemploy * 0.05;
+
+        // Tax penalty
+        if (this.budget.cityTax > 10) happyScore -= (this.budget.cityTax - 10) * 2;
+
+        census.happinessLevel = Math.round(Math.max(0, Math.min(100, happyScore)));
+    }
+
+    // Compute percentage of populated land covered by police/fire stations.
+    // A block is "covered" when the relevant effect map value exceeds a threshold.
+    // COVERAGE_THRESHOLD: minimum effect-map value to consider a block "covered"
+    // (effect maps range 0–1000; 10 represents light but meaningful station presence).
+    
+    _computeCoverage () {
+
+        let policeMap = this.blockMaps.policeStationEffectMap;
+        let fireMap   = this.blockMaps.fireStationEffectMap;
+        let landMap   = this.blockMaps.landValueMap;
+        let coveredPolice = 0, coveredFire = 0, landCells = 0;
+        var COVERAGE_THRESHOLD = 10;
+        for (let x = 0; x < landMap.gameMapWidth; x += landMap.blockSize) {
+            for (let y = 0; y < landMap.gameMapHeight; y += landMap.blockSize) {
+                if (landMap.worldGet(x, y) > 0) {
+                    landCells++;
+                    if (policeMap.worldGet(x, y) > COVERAGE_THRESHOLD) coveredPolice++;
+                    if (fireMap.worldGet(x, y)   > COVERAGE_THRESHOLD) coveredFire++;
+                }
+            }
+        }
+        if (landCells === 0) return { police: 0, fire: 0 };
+        return {
+            police: Math.round((coveredPolice / landCells) * 100),
+            fire:   Math.round((coveredFire   / landCells) * 100)
+        };
 
     }
 
@@ -317,14 +465,56 @@ export class Simulation {
             case 9:
                 if (this.cityTime % Micro.CENSUS_FREQUENCY_10 === 0) this.census.take10Census(this.budget);
                 if (this.cityTime % Micro.CENSUS_FREQUENCY_120 === 0) this.census.take120Census(this.budget);
-                if (this.cityTime % Micro.TAX_FREQUENCY === 0) { this.budget.collectTax( this.gameLevel, this.census ); this.evaluation.cityEvaluation(); };
+                if (this.cityTime % Micro.TAX_FREQUENCY === 0) {
+                    let ordFx = this.ordinances.getEffects();
+                    let indFx = this.industrySpec.getEffects();
+                    this.budget.collectTax( this.gameLevel, this.census, ordFx.comTaxMod, indFx );
+                    // Deduct annual ordinance costs from city funds
+                    let ordCost = this.ordinances.getAnnualCost();
+                    if (ordCost > 0) this.budget.spend(ordCost);
+                    // Deduct annual bond interest payments
+                    let bondPayment = this.budget.getBondAnnualPayment();
+                    if (bondPayment > 0) {
+                        this.budget.spend(bondPayment);
+                        this.messageManager.sendMessage(Messages.BOND_PAYMENT_DUE);
+                    }
+                    this.evaluation.cityEvaluation();
+                };
+
+                // Update season based on current month
+                if (this.seasonManager.update(this._cityMonthLast)) {
+                    //this.messageManager.sendMessage(Messages.SEASON_CHANGED);
+                    //this.cityHistory.addEvent('season', 'Season changed to ' + this.seasonManager.getSeasonName(), this.cityTime, this.startingYear);
+                }
+                if (this.seasonManager.heatWave) {
+                    this.messageManager.sendMessage(Messages.HEAT_WAVE);
+                    this.disasterManager.setFire(3, false);
+                }
+                if (this.seasonManager.blizzard) {
+                    this.messageManager.sendMessage(Messages.BLIZZARD);
+                }
+
+                // Update education, health, happiness
+                this.updateEducationHealth();
+
+                // Check achievements
+                if ((this.simCycle & 15) === 0) {
+                    let newAchs = this.achievements.checkAll(this);
+                    for (let a = 0; a < newAchs.length; a++) {
+                        this.messageManager.sendMessage(Messages.ACHIEVEMENT_UNLOCKED);
+                        this.cityHistory.addEvent('achievement', newAchs[a].name + ': ' + newAchs[a].desc, this.cityTime, this.startingYear);
+                    }
+                }
             break;
             case 10: if ((this.simCycle % 5) === 0){ MapUtils.neutraliseRateOfGrowthMap(this.blockMaps);};  MapUtils.neutraliseTrafficMap(this.blockMaps); this.sendMessages(); break;
             case 11: if ((this.simCycle % Micro.speedPowerScan[speedIndex]) === 0) this.powerManager.doPowerScan(this.census); break;
             case 12: if ((this.simCycle % Micro.speedPollutionTerrainLandValueScan[speedIndex]) === 0) MapUtils.pollutionTerrainLandValueScan(this.map, this.census, this.blockMaps); break;
             case 13: if ((this.simCycle % Micro.speedCrimeScan[speedIndex]) === 0) MapUtils.crimeScan(this.census, this.blockMaps); break;
             case 14: if ((this.simCycle % Micro.speedPopulationDensityScan[speedIndex]) === 0) MapUtils.populationDensityScan(this.map, this.blockMaps); break;
-            case 15: if ((this.simCycle % Micro.speedFireAnalysis[speedIndex]) === 0) MapUtils.fireAnalysis(this.blockMaps); this.disasterManager.doDisasters(this.census ); break;
+            case 15:
+                if ((this.simCycle % Micro.speedFireAnalysis[speedIndex]) === 0) MapUtils.fireAnalysis(this.blockMaps);
+                this.disasterManager.doDisasters(this.census, this.seasonManager.fireRiskMod);
+            break;
         }
         // Go on the the next phase.
         this.phaseCycle = (this.phaseCycle + 1) & 15;
@@ -344,17 +534,20 @@ export class Simulation {
             case 22: if (totalZonePop > 10 && powerPop == 0) this.messageManager.sendMessage(Messages.NEED_ELECTRICITY); break;
             case 26: if (this.census.resPop > 500 && this.census.stadiumPop === 0) { this.messageManager.sendMessage(Messages.NEED_STADIUM); this.valves.resCap = true; } else { this.valves.resCap = false;}; break;
             case 28: if (this.census.indPop > 70 && this.census.seaportPop === 0) { this.messageManager.sendMessage(Messages.NEED_SEAPORT); this.valves.indCap = true; } else { this.valves.indCap = false; }; break;
-            case 30: if (this.census.comPop > 100 && this.census.airportPop === 0) { this.messageManager.sendMessage(Messages._NEED_AIRPORT); this.valves.comCap = true; } else { this.valves.comCap = false; }; break;
+            case 30: if (this.census.comPop > 100 && this.census.airportPop === 0) { this.messageManager.sendMessage(Messages.NEED_AIRPORT); this.valves.comCap = true; } else { this.valves.comCap = false; }; break;
             case 32: let zoneCount = this.census.unpoweredZoneCount + this.census.poweredZoneCount; if (zoneCount > 0) { if (this.census.poweredZoneCount / zoneCount < 0.7) this.messageManager.sendMessage(Messages.BLACKOUTS_REPORTED);}; break;
             case 35: if (this.census.pollutionAverage > 60) this.messageManager.sendMessage(Messages.HIGH_POLLUTION); break;
             case 42: if (this.census.crimeAverage > 100) this.messageManager.sendMessage(Messages.HIGH_CRIME); break;
             case 45: if (this.census.totalPop > 60 && this.census.fireStationPop === 0) this.messageManager.sendMessage(Messages.NEED_FIRE_STATION); break;
+            case 47: if (this.census.needHospital > 0) this.messageManager.sendMessage(Messages.NEED_HOSPITAL); break;
             case 48: if (this.census.totalPop > 60 && this.census.policeStationPop === 0) this.messageManager.sendMessage(Messages.NEED_POLICE_STATION); break;
+            case 50: if (this.census.totalPop > 200 && this.census.educationLevel < 30) this.messageManager.sendMessage(Messages.NEED_SCHOOLS); break;
             case 51: if (this.budget.cityTax > 12) this.messageManager.sendMessage(Messages.TAX_TOO_HIGH); break;
-            case 54: if (this.budget.roadEffect < Math.floor(5 * this.budget.MAX_ROAD_EFFECT / 8) && this.census.roadTotal > 30) this.messageManager.sendMessage(Messages.ROAD_NEEDS_FUNDING); break;
-            case 57: if (this.budget.fireEffect < Math.floor(7 * this.budget.MAX_FIRE_STATION_EFFECT / 10) && this.census.totalPop > 20) this.messageManager.sendMessage(Messages.FIRE_STATION_NEEDS_FUNDING); break;
-            case 60: if (this.budget.policeEffect < Math.floor(7 * this.budget.MAX_POLICE_STATION_EFFECT / 10) && this.census.totalPop > 20) this.messageManager.sendMessage(Messages.POLICE_NEEDS_FUNDING); break;
-            case 63: if (this.census.trafficAverage > 60) this.messageManager.sendMessage(Messages.TRAFFIC_JAMS, -1, -1, true); break;
+            case 52: if (this.budget.bondDebt > this.budget.MAX_BOND_DEBT * 0.8) this.messageManager.sendMessage(Messages.BOND_HIGH_DEBT); break;
+            case 54: if (this.budget.roadEffect < Math.floor(5 * Micro.MAX_ROAD_EFFECT / 8) && this.census.roadTotal > 30) this.messageManager.sendMessage(Messages.ROAD_NEEDS_FUNDING); break;
+            case 57: if (this.budget.fireEffect < Math.floor(7 * Micro.MAX_FIRESTATION_EFFECT / 10) && this.census.totalPop > 20) this.messageManager.sendMessage(Messages.FIRE_STATION_NEEDS_FUNDING); break;
+            case 60: if (this.budget.policeEffect < Math.floor(7 * Micro.MAX_POLICESTATION_EFFECT / 10) && this.census.totalPop > 20) this.messageManager.sendMessage(Messages.POLICE_NEEDS_FUNDING); break;
+            case 63: if (EvaluationUtils.getTrafficAverage(this.blockMaps, this.census) > 60) this.messageManager.sendMessage(Messages.TRAFFIC_JAMS, -1, -1, true); break;
         }
     }
 
@@ -385,9 +578,11 @@ export class Simulation {
         if (message !== '' && message !== this.messageLast) {
             this.messageManager.sendMessage(message);
             this.messageLast = message;
+            // Log growth milestone to history
+            this.cityHistory.addEvent('growth', 'City reached population ' + cityPop, this.cityTime, this.startingYear);
         }
         this.cityPopLast = cityPop;
-    
+
     }
 
     // update date 

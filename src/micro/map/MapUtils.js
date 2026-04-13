@@ -304,7 +304,8 @@ export class MapUtils {
         let totalCrime = 0;
         let crimeZoneCount = 0;
 
-        let x, y, width = crimeRateMap.mapWidth, height = crimeRateMap.mapHeight, value;
+        let blockSize = crimeRateMap.blockSize;
+        let x, y, width = crimeRateMap.gameMapWidth, height = crimeRateMap.gameMapHeight, value;
 
         // Scan the map, looking for developed land, as it can attract crime.
         for ( x = 0; x < width; x += blockSize ) {

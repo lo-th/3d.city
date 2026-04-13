@@ -11,6 +11,7 @@ import { AnimationManager } from './game/AnimationManager.js';
 
 import { GameMap } from './map/GameMap.js';
 import { MapGenerator} from './map/MapGenerator.js';
+import { Storage } from './Storage.js';
 
 // game TOOL
 import { BuildingTool } from './tool/BuildingTool.js';
@@ -32,6 +33,8 @@ var pcount = 0;
 var power;
 var isWorker = true;
 var returnMessage
+
+let messageCount = 0;
 
 //var ab = new ArrayBuffer( 1 );
 //CityGame.post( ab, [ab] );
@@ -69,10 +72,8 @@ export class CityGame {
         //if( p == "DESTROY" ) Game.destroy(e.data.x, e.data.y);
 
         //if( p == "RUN" && trans) updateTrans(e.data);
-        
-        //if( p == "MAPSIZE" ) Game.changeMapSize(e.data.n);
+
         if( p == "DIFFICULTY" ) Game.changeDifficulty(e.data.n);
-        
         if( p == "SPEED" ) Game.changeSpeed(e.data.n);
 
         if( p == "BUDGET") Game.handleBudgetRequest();
@@ -81,8 +82,20 @@ export class CityGame {
         if( p == "DISASTER") Game.setDisaster(e.data.disaster);
 
         if( p == "EVAL") Game.getEvaluation();
+        if( p == "ACHIEVEMENTS") Game.getAchievements();
+        if( p == "HISTORY") Game.getHistory();
 
-        if( p == "SAVEGAME") Game.saveGame(e.data.saveCity);
+        if( p == "GETORDINANCES") Game.getOrdinances();
+        if( p == "SETORDINANCE")  Game.setOrdinance(e.data.id);
+
+        if( p == "ISSUEBOND")     Game.issueBond(e.data.amount);
+
+        if( p == "GETINDUSTRYSPEC") Game.getIndustrySpec();
+        if( p == "SETINDUSTRYSPEC") Game.setIndustrySpec(e.data.id);
+
+        if( p == "GETOVERLAY") Game.getOverlayMap(e.data.type);
+
+        if( p == "SAVEGAME") Game.saveGame(e.data.saveCity, e.data.silent);
         if( p == "LOADGAME") Game.loadGame(e.data.isStart);
         if( p == "MAKELOADGAME") Game.makeLoadGame(e.data.savegame, e.data.isStart);
 
@@ -135,6 +148,8 @@ export class MainGame {
         this.animsData = null;
         //this.tilesData = null;
 
+        this.lastSeason  = '';
+
         this.spritesData  = [];
 
         this.power = null;
@@ -152,8 +167,8 @@ export class MainGame {
     stop (){
 
         if( this.timer === null ) return;
-        clearInterval( this.timer );
-        this.timer = null
+        clearTimeout( this.timer );
+        this.timer = null;
 
     }
 
@@ -161,33 +176,53 @@ export class MainGame {
 
         //if ( this.isPaused ) return
 
-        let up = this.simulation.simTick();
+        try {
 
-        if( up ) { 
+            let up = this.simulation.simTick();
 
-            this.infos = this.simulation.infos;
+            if( up ) {
 
-            this.processMessages( Game.simulation.messageManager.getMessages() );
+                this.infos = this.simulation.infos;
 
-            if( Micro.haveMapAnimation ) this.animatedTiles()
+                this.processMessages( Game.simulation.messageManager.getMessages() );
 
-            this.simulation.spriteManager.moveObjects();
-            this.calculateSprites();
+                if( Micro.haveMapAnimation ) this.animatedTiles()
 
-            CityGame.post({ tell:"RUN", infos:this.infos, tilesData:this.map.tilesData, powerData:this.map.powerData, sprites:this.spritesData, layer:this.map.layer });
+                this.simulation.spriteManager.moveObjects();
+                this.calculateSprites();
 
-            this.map.resetLayer();
+                CityGame.post({ tell:"RUN", infos:this.infos, tilesData:this.map.tilesData, powerData:this.map.powerData, sprites:this.spritesData, layer:this.map.layer });
+
+                // update all info on each season
+                // TODO if too heavy get only info for open pannel !!!
+                if( this.infos[17] !== this.lastSeason ){
+                    this.lastSeason = this.infos[17];
+                    CityGame.post({ tell:"UPDATE_INFO", budgetData:this.getData('budget'), evalData:this.getData('eval') });
+                }
+
+                this.map.resetLayer();
+
+            }
+
+            this.next();
+
+        } catch ( err ) {
+
+            // Halt the loop so the broken state does not persist.
+            // Report the failure to the main thread so the UI can inform the user.
+            var msg = ( err && err.message ) ? err.message : String( err );
+            var stack = ( err && err.stack )  ? err.stack  : '';
+            console.error( '3d city simulation tick error:', err );
+            CityGame.post({ tell: 'TICKERROR', message: msg, stack: stack });
+            // Do NOT call this.next() — loop is intentionally stopped.
 
         }
-
-        this.next()
 
     }
 
     newMap ( mapSize ) {
 
-        if(mapSize) this.mapSize = mapSize;
-
+        if( mapSize ) this.mapSize = mapSize;
         this.map = this.mapGen.construct( this.mapSize[0], this.mapSize[1] );
         CityGame.post({ tell:"NEWMAP", tilesData:this.map.tilesData, mapSize:this.mapSize, island:this.map.isIsland, trans:trans });
 
@@ -206,6 +241,7 @@ export class MainGame {
             coal: new BuildingTool(3000, Tile.POWERPLANT, this.map, 4, false),
             commercial: new BuildingTool(100, Tile.COMCLR, this.map, 3, false),
             fire: new BuildingTool(500, Tile.FIRESTATION, this.map, 3, false),
+            hospital: new BuildingTool(500, Tile.HOSPITAL, this.map, 3, false),
             industrial: new BuildingTool(100, Tile.INDCLR, this.map, 3, false),
             nuclear: new BuildingTool(5000, Tile.NUCLEAR, this.map, 4, true),
             park: new ParkTool(this.map),
@@ -215,6 +251,7 @@ export class MainGame {
             residential: new BuildingTool(100, Tile.FREEZ, this.map, 3, false),
             road: new RoadTool(this.map),
             query: new QueryTool(this.map),
+            school: new BuildingTool(500, Tile.CHURCH, this.map, 3, false),
             stadium: new BuildingTool(5000, Tile.STADIUM, this.map, 4, false),
             wire: new WireTool(this.map),
         };
@@ -233,6 +270,7 @@ export class MainGame {
         }else{
             this.simulation = new Simulation( this.map, this.difficulty, this.speed, true);
             messageMgr.sendMessage(Messages.WELCOME);
+
         }
 
         this.simulation.budget.setFunds(money);
@@ -280,19 +318,6 @@ export class MainGame {
 
         }
 
-        
-
-        /*if(this.speed === 4){
-            
-            this.simulation.setSpeed(this.speed-1);
-        } else {
-            
-            this.simulation.setSpeed(this.speed);
-        }*/
-    }
-
-    changeMapSize(n){
-        this.mapSize = [n,n];
     }
 
     changeDifficulty(n){
@@ -324,6 +349,18 @@ export class MainGame {
 
     processMessages ( messages ) {
 
+
+
+        // Clear any message left over from the previous tick so the HUD doesn't
+        // display stale text when no new message arrives this tick.
+
+        if(messageCount>0) messageCount--
+        else {
+            messageCount = 0;
+            this.infos[8] = '';
+        }
+        
+
         var messageOutput = false;
 
         for (var i = 0, l = messages.length; i < l; i++) {
@@ -352,6 +389,8 @@ export class MainGame {
                     }
             }
         }
+
+        if(this.infos[8]) messageCount = 30
     }
 
     tool (name){
@@ -364,16 +403,6 @@ export class MainGame {
 
     destroy (x,y){
 
-        console.log('isDestroy')
-
-        //console.log( 'destuct ', x, y )
-
-       //this.mapClick(x,y);
-        //this.map.powerData[this.findId(x,y)] = 1;
-
-       // this.simulation.powerManager.setTilePower(x,y);
-      //  var messageMgr = new Micro.MessageManager();
-       // this.gameTools["bulldozer"].doTool(x, y, messageMgr, this.simulation.blockMaps );
     }
 
     findId (x, y){
@@ -415,32 +444,155 @@ export class MainGame {
             case Micro.DISASTER_CRASH: this.simulation.disasterManager.makeCrash(m); break;
             case Micro.DISASTER_MELTDOWN: this.simulation.disasterManager.makeMeltdown(m); break;
             case Micro.DISASTER_TORNADO: this.simulation.spriteManager.makeTornado(m); break;
+            case Micro.DISASTER_EARTHQUAKE: this.simulation.disasterManager.makeEarthquake(); break;
         }
+        // Log disaster to city history
+        this.simulation.cityHistory.addEvent('disaster', disaster + ' struck the city!', this.simulation.cityTime, this.simulation.startingYear);
+        // Trigger "survive disaster" achievement after a delay (checked next cycle)
+        this.simulation.achievements.trigger('survive_disaster');
         this.processMessages(m.getMessages());
     }
 
     setBudget (budgetData){
-        this.simulation.budget.cityTax = budgetData[0];
-        this.simulation.budget.roadPercent = budgetData[1]/100;
-        this.simulation.budget.firePercent = budgetData[2]/100;
-        this.simulation.budget.policePercent = budgetData[3]/100;
+        // Format: [resTax, comTax, indTax, roadRate, fireRate, policeRate, waterRate]
+        // Legacy: [resTax, comTax, indTax, roadRate, fireRate, policeRate]
+        // Old:    [taxRate, roadRate, fireRate, policeRate]
+        if (Array.isArray(budgetData) && budgetData.length >= 6) {
+            this.simulation.budget.setZoneTax(budgetData[0], budgetData[1], budgetData[2]);
+            this.simulation.budget.roadPercent   = budgetData[3] / 100;
+            this.simulation.budget.firePercent   = budgetData[4] / 100;
+            this.simulation.budget.policePercent = budgetData[5] / 100;
+            if (budgetData.length >= 7) {
+                this.simulation.budget.waterPercent = budgetData[6] / 100;
+            }
+            if (budgetData.length >= 8) {
+                this.simulation.budget.educationPercent = budgetData[7] / 100;
+            }
+        } else {
+            this.simulation.budget.setTax(budgetData[0]);
+            this.simulation.budget.roadPercent   = budgetData[1] / 100;
+            this.simulation.budget.firePercent   = budgetData[2] / 100;
+            this.simulation.budget.policePercent = budgetData[3] / 100;
+        }
+    }
+
+    getData( name ){
+
+        let data = {}
+        let b
+
+        switch ( name ){
+
+            case 'budget':
+                b = this.simulation.budget;
+                data = {
+                    roadFund:       b.roadFund,
+                    roadRate:       Math.floor(b.roadPercent * 100),
+                    fireFund:       b.fireFund,
+                    fireRate:       Math.floor(b.firePercent * 100),
+                    policeFund:     b.policeFund,
+                    policeRate:     Math.floor(b.policePercent * 100),
+                    resTaxRate:     b.resTaxRate,
+                    comTaxRate:     b.comTaxRate,
+                    indTaxRate:     b.indTaxRate,
+                    totalFunds:     b.totalFunds,
+                    taxesCollected: b.taxFund,
+                    bondDebt:            b.bondDebt,
+                    bondAnnualPayment:   b.getBondAnnualPayment(),
+                    bondMaxDebt:         b.MAX_BOND_DEBT,
+                    waterFund:      b.waterFund,
+                    waterRate:      Math.floor(b.waterPercent * 100),
+                    educationFund:  b.educationFund,
+                    educationRate:  Math.floor(b.educationPercent * 100)
+                };
+            break;
+
+            case 'eval':
+
+                let evaluation = this.simulation.evaluation;
+                let problemes = "";
+                for (var i = 0; i < 4; i++) {
+                    let problemNo = evaluation.getProblemNumber(i);
+                    let text = '';
+                    if (problemNo !== -1) text = TXT.problems[problemNo];
+                    problemes += text+"<br>";
+                }
+
+                let census = this.simulation.census;
+                let crimeAvg = census.crimeAverage;
+                let pollutionAvg = census.pollutionAverage;
+                let trafficAvg = this.infos[12] || 0;
+
+                // Enhanced eval data with education, health, happiness, unemployment, season, coverage
+                let unemployment = Math.round(this._getUnemploymentPct());
+                let season = this.simulation.seasonManager.getSeasonName();
+                let coverage = this.simulation._computeCoverage();
+
+                b = this.simulation.budget;
+                let waterCoverage = b.waterMaintenanceBudget > 0
+                    ? Math.round((b.waterEffect / Micro.MAX_WATER_EFFECT) * 100)
+                    : 100;
+                let educationCoverage = b.educationMaintenanceBudget > 0
+                    ? Math.round((b.educationEffect / Micro.MAX_EDUCATION_EFFECT) * 100)
+                    : 100;
+
+                let indDef = this.simulation.industrySpec.getCurrentDef();
+
+                data = [
+                    evaluation.cityYes,   // 0
+                    problemes,            // 1
+                    crimeAvg,             // 2
+                    pollutionAvg,         // 3
+                    Math.round(trafficAvg), // 4
+                    census.educationLevel,  // 5
+                    census.healthLevel,     // 6
+                    census.happinessLevel,  // 7
+                    unemployment,           // 8
+                    season,                 // 9
+                    coverage.police,        // 10
+                    coverage.fire,          // 11
+                    census.parkCount,       // 12
+                    waterCoverage,          // 13
+                    indDef,                 // 14
+                    census.hospitalPop,     // 15
+                    census.churchPop,       // 16
+                    educationCoverage       // 17
+                ];
+
+            break;
+
+        }
+
+        return data
+
     }
 
     handleBudgetRequest () {
 
         this.budgetShowing = true;
 
-        let budgetData = {
-            roadFund: this.simulation.budget.roadMaintenanceBudget,//roadFund,
-            roadRate: Math.floor(this.simulation.budget.roadPercent * 100),
-            fireFund: this.simulation.budget.fireMaintenanceBudget,//fireFund,
-            fireRate: Math.floor(this.simulation.budget.firePercent * 100),
-            policeFund: this.simulation.budget.policeMaintenanceBudget,//policeFund,
-            policeRate: Math.floor(this.simulation.budget.policePercent * 100),
-            taxRate: this.simulation.budget.cityTax,
-            totalFunds: this.simulation.budget.totalFunds,
-            taxesCollected: this.simulation.budget.taxFund
-        };
+        //let b = this.simulation.budget;
+        let budgetData = this.getData('budget')
+        /*{
+            roadFund:       b.roadFund,
+            roadRate:       Math.floor(b.roadPercent * 100),
+            fireFund:       b.fireFund,
+            fireRate:       Math.floor(b.firePercent * 100),
+            policeFund:     b.policeFund,
+            policeRate:     Math.floor(b.policePercent * 100),
+            resTaxRate:     b.resTaxRate,
+            comTaxRate:     b.comTaxRate,
+            indTaxRate:     b.indTaxRate,
+            totalFunds:     b.totalFunds,
+            taxesCollected: b.taxFund,
+            bondDebt:            b.bondDebt,
+            bondAnnualPayment:   b.getBondAnnualPayment(),
+            bondMaxDebt:         b.MAX_BOND_DEBT,
+            waterFund:      b.waterFund,
+            waterRate:      Math.floor(b.waterPercent * 100),
+            educationFund:  b.educationFund,
+            educationRate:  Math.floor(b.educationPercent * 100)
+        };*/
 
         CityGame.post({ tell:"BUDGET", budgetData:budgetData});
 
@@ -451,16 +603,13 @@ export class MainGame {
             this.simulation.budget.updateFundEffects();
         }
 
-
-
-        
         //this.budgetWindow.open(this.handleBudgetClosed.bind(this), budgetData);
         // Let the input know we handled this request
         //this.inputStatus.budgetHandled();
     }
 
     getEvaluation (){
-        let evaluation = this.simulation.evaluation;
+        /*let evaluation = this.simulation.evaluation;
         let problemes = "";
         for (var i = 0; i < 4; i++) {
             let problemNo = evaluation.getProblemNumber(i);
@@ -469,17 +618,123 @@ export class MainGame {
             problemes += text+"<br>";
         }
 
-        let evalData = [ evaluation.cityYes, problemes];
+        let census = this.simulation.census;
+        let crimeAvg = census.crimeAverage;
+        let pollutionAvg = census.pollutionAverage;
+        let trafficAvg = this.infos[12] || 0;
+
+        // Enhanced eval data with education, health, happiness, unemployment, season, coverage
+        let unemployment = Math.round(this._getUnemploymentPct());
+        let season = this.simulation.seasonManager.getSeasonName();
+        let coverage = this.simulation._computeCoverage();
+
+        let b = this.simulation.budget;
+        let waterCoverage = b.waterMaintenanceBudget > 0
+            ? Math.round((b.waterEffect / Micro.MAX_WATER_EFFECT) * 100)
+            : 100;
+        let educationCoverage = b.educationMaintenanceBudget > 0
+            ? Math.round((b.educationEffect / Micro.MAX_EDUCATION_EFFECT) * 100)
+            : 100;
+
+        let indDef = this.simulation.industrySpec.getCurrentDef();
+
+        let evalData = [
+            evaluation.cityYes,   // 0
+            problemes,            // 1
+            crimeAvg,             // 2
+            pollutionAvg,         // 3
+            Math.round(trafficAvg), // 4
+            census.educationLevel,  // 5
+            census.healthLevel,     // 6
+            census.happinessLevel,  // 7
+            unemployment,           // 8
+            season,                 // 9
+            coverage.police,        // 10
+            coverage.fire,          // 11
+            census.parkCount,       // 12
+            waterCoverage,          // 13
+            indDef,                 // 14
+            census.hospitalPop,     // 15
+            census.churchPop,       // 16
+            educationCoverage       // 17
+        ];*/
+
+        let evalData = this.getData('eval')
 
         CityGame.post({ tell:"EVAL", evalData:evalData});
+    }
 
+    _getUnemploymentPct () {
+        let census = this.simulation.census;
+        let jobs = (census.comPop + census.indPop) * 8;
+        if (jobs === 0) return 0;
+        let ratio = census.resPop / jobs;
+        return Math.min(Math.max((ratio - 1) * 100, 0), 100);
+    }
+
+    getAchievements () {
+        let data = this.simulation.achievements.getAll();
+        let progress = this.simulation.achievements.getProgress();
+        CityGame.post({ tell:"ACHIEVEMENTS", achData: data, progress: progress });
+    }
+
+    getHistory () {
+        let events = this.simulation.cityHistory.getRecent(20);
+        CityGame.post({ tell:"HISTORY", historyData: events });
+    }
+
+    getOrdinances () {
+        let list = this.simulation.ordinances.getList();
+        let annualCost = this.simulation.ordinances.getAnnualCost();
+        CityGame.post({ tell:"ORDINANCES", ordinances: list, annualCost: annualCost });
+    }
+
+    setOrdinance (id) {
+        let active = this.simulation.ordinances.toggle(id);
+        // Re-send the full updated list so the UI stays in sync
+        this.getOrdinances();
+    }
+
+    issueBond (amount) {
+        let issued = this.simulation.budget.issueBond(amount);
+        if (issued) {
+            this.simulation.messageManager.sendMessage(Messages.BOND_ISSUED);
+            this.simulation.cityHistory.addEvent(
+                'economic',
+                'Issued municipal bond of $' + amount + ' (total debt: $' + this.simulation.budget.bondDebt + ')',
+                this.simulation.cityTime,
+                this.simulation.startingYear
+            );
+        }
+        // Refresh budget panel so the UI shows updated debt
+        this.handleBudgetRequest();
+    }
+
+    getIndustrySpec () {
+        let list = this.simulation.industrySpec.getList();
+        let current = this.simulation.industrySpec.getCurrentDef();
+        CityGame.post({ tell:"INDUSTRYSPEC", list: list, current: current });
+    }
+
+    setIndustrySpec (id) {
+        let changed = this.simulation.industrySpec.setSpecialization(id);
+        if (changed) {
+            this.simulation.cityHistory.addEvent(
+                'economic',
+                'City industry focus changed to ' + this.simulation.industrySpec.getCurrentDef().name,
+                this.simulation.cityTime,
+                this.simulation.startingYear
+            );
+        }
+        // Re-send updated list
+        this.getIndustrySpec();
     }
 
 
     //______________________________________ SAVE
 
 
-    saveGame (cityData){
+    saveGame (cityData, silent){
         //this.oldSpeed = this.speed;
         //this.changeSpeed(0);
 
@@ -487,12 +742,13 @@ export class MainGame {
         gameData.speed = this.speed;
         gameData.difficulty = this.difficulty;
         gameData.version = Micro.CURRENT_VERSION;
+        gameData.saveVersion = Micro.SAVE_VERSION;
         gameData.city = cityData;
         this.simulation.save(gameData);
 
         gameData = JSON.stringify(gameData);
-        
-        CityGame.post({ tell:"SAVEGAME", gameData:gameData, key:Micro.KEY });
+
+        CityGame.post({ tell:"SAVEGAME", gameData:gameData, key:Micro.KEY, silent:silent||false });
 
         //this.changeSpeed(this.oldSpeed);
     }
@@ -513,31 +769,30 @@ export class MainGame {
 
 
         let isStart = atStart || false;
-        clearInterval(this.timer);
-        this.savedGame = JSON.parse(gameData);
+        clearTimeout(this.timer);
 
+        try {
+            this.savedGame = JSON.parse(gameData);
+        } catch (e) {
+            console.error('3d.city: failed to parse save data — cannot load game.', e);
+            CityGame.post({ tell:"LOADERROR", message:"Save data is corrupt or unreadable." });
+            return;
+        }
 
+        Storage.migrate(this.savedGame);
 
-        //this.simulation.load(this.savedGame);
-        //this.map = this.simulation.map;
-       // this.everClicked = savedGame.everClicked;
-        //if (savedGame.version !== Micro.CURRENT_VERSION) this.transitionOldSave(savedGame);
-        //savedGame.isSavedGame = true;
-        /*if(this.map){
-            this.map.load(this.savedGame);
-        }else{*/
-        this.map = new GameMap(Micro.MAP_WIDTH, Micro.MAP_HEIGHT);
+        const savedW = this.savedGame.width  || Micro.MAP_WIDTH;
+        const savedH = this.savedGame.height || Micro.MAP_HEIGHT;
+        this.mapSize = [ savedW, savedH ];
+        this.map = new GameMap( savedW, savedH );
         this.map.load(this.savedGame);
-        //}
-        
-        //
-
-        //this.playMap(true);
-        //this.simulation.map = this.map;//return
-        //
-        //this.map = this.simulation.map;
 
         CityGame.post({ tell:"FULLREBUILD", tilesData:this.map.tilesData, mapSize:this.mapSize, island:this.map.isIsland, cityData:this.savedGame.city, isStart:isStart });
+
+        // Re-create the simulation from the loaded save data and restart the tick loop.
+        // Without this the city is visually rebuilt on the main thread but the simulation
+        // remains halted because clearTimeout above killed the previous loop.
+        this.playMap(true);
     }
 
     transitionOldSave  (savedGame) {
@@ -552,6 +807,75 @@ export class MainGame {
             break;
             //default: throw new Error('Unknown save version!');
         }
+    }
+
+
+    getOverlayMap(type) {
+
+        let data = []
+
+        // data = this.map.getTileValues(0,0,Micro.MAP_WIDTH, Micro.MAP_HEIGHT)
+
+        switch( type ){
+            case 'Density':
+                data = this.getTileType( this.simulation.blockMaps.populationDensityMap )
+                //data = this.simulation.blockMaps.populationDensityMap.data;
+            break;
+            case 'Growth':
+                data = this.getTileType( this.simulation.blockMaps.rateOfGrowthMap )
+                //data = this.simulation.blockMaps.rateOfGrowthMap.data;
+            break;
+            case 'Land value':
+                data = this.getTileType( this.simulation.blockMaps.landValueMap )
+                //data = this.simulation.blockMaps.landValueMap.data;
+            break;
+            case 'Crime Rate':
+                data = this.getTileType( this.simulation.blockMaps.crimeRateMap )
+                //data = this.simulation.blockMaps.crimeRateMap.data;
+            break;
+            case 'Pollution':
+                data = this.getTileType( this.simulation.blockMaps.pollutionDensityMap )
+            break;
+            case 'Traffic':
+                data = this.getTileType( this.simulation.blockMaps.trafficDensityMap )
+                //data = this.simulation.blockMaps.trafficDensityMap.data;
+            break;
+            case 'Power Grid': // ??
+                //data = this.simulation.blockMaps.pollutionDensityMap.data;
+            break;
+            case 'Fire':
+                data = this.getTileType( this.simulation.blockMaps.fireStationEffectMap )
+                //data = this.simulation.blockMaps.fireStationEffectMap.data;
+            break;
+            case 'Police':
+                data = this.getTileType( this.simulation.blockMaps.policeStationEffectMap )
+                //data = this.simulation.blockMaps.policeStationEffectMap.data;
+            break;
+
+        }
+
+        
+
+        CityGame.post({ tell:"SHOWOVERLAY", type:type, data:data });
+
+    }
+
+    getTileType( base ) {
+
+        let result = [];
+        let w = Micro.MAP_WIDTH;
+        let h = Micro.MAP_HEIGHT;
+
+        for (let y = 0, ylim = h; y < ylim; y++) {
+            for (let x = 0, xlim = w; x < xlim; x++) {
+               
+                let i =  x + y * w;
+                result[ i ] = base.worldGet(x,y);
+            }
+        }
+
+        return result;
+
     }
 
 }

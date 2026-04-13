@@ -76,6 +76,14 @@ export class Census {
         this.nuclearPowerPop = 0;
         this.seaportPop = 0;
         this.airportPop = 0;
+        this.parkCount = 0;
+
+        // Education is derived from hospitals + churches + land value
+        this.educationLevel = 0;
+        // Health is derived from hospitals + pollution (inverse)
+        this.healthLevel = 0;
+        // Happiness combines many factors
+        this.happinessLevel = 50;
 
     }
 
@@ -99,9 +107,9 @@ export class Census {
 
         var resPopScaled = this.resPop >> 8;
 
-        if (this.hospitalPop < this.resPopScaled) this.needHospital = 1;
-        else if (this.hospitalPop > this.resPopScaled) this.needHospital = -1;
-        else if (this.hospitalPop === this.resPopScaled) this.needHospital = 0;
+        if (this.hospitalPop < resPopScaled) this.needHospital = 1;
+        else if (this.hospitalPop > resPopScaled) this.needHospital = -1;
+        else this.needHospital = 0;
 
         this.changed = true;
 

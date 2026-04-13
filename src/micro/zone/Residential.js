@@ -18,7 +18,9 @@ export const Residential = {
     registerHandlers: function ( mapScanner, repairManager ) {
         mapScanner.addAction(ZoneUtils.isResidentialZone, Residential.residentialFound);
         mapScanner.addAction(ZoneUtils.HOSPITAL, Residential.hospitalFound);
+        mapScanner.addAction(ZoneUtils.CHURCH, Residential.churchFound);
         repairManager.addAction(Tile.HOSPITAL, 15, 3);
+        repairManager.addAction(Tile.CHURCH, 15, 3);
     },
 
     // Residential tiles have 'populations' of 16, 24, 32 or 40
@@ -62,6 +64,10 @@ export const Residential = {
         if (!map.testBounds(x, y)) return -1;
 
         let tileValue = map.getTileValue(x, y);
+
+        //if (tileValue === Tile.HOSPITAL) return -1;
+        //if (tileValue === Tile.CHURCH) return -1;
+
         if (tileValue < Tile.RESBASE || tileValue > Tile.RESBASE + 8) return -1;
 
         let score = 1, i, edgeX, edgeY;
@@ -115,6 +121,10 @@ export const Residential = {
 
         let tileValue = map.getTileValue(x, y);
 
+        //if (tileValue === Tile.HOSPITAL)return;
+        //if (tileValue === Tile.HOSPITALBASE)return;
+        //if (tileValue === Tile.CHURCH)return;
+
         if (tileValue === Tile.FREEZ) {
             if (population < 8) {
                 // Zone capacity not yet reached: build another house
@@ -139,7 +149,16 @@ export const Residential = {
     },
 
     degradeZone: function ( map, x, y, blockMaps, population, lpValue, zonePower ) {
+
         let xx, yy;
+
+        /*let tileValue = map.getTileValue(x, y);
+
+        if (tileValue === Tile.HOSPITAL)return;
+        if (tileValue === Tile.CHURCH)return;*/
+
+
+
         if (population === 0) return;
 
         if (population > 16) {
@@ -212,6 +231,8 @@ export const Residential = {
 
         let trafficOK = Micro.ROUTE_FOUND;
 
+
+
         // Occasionally check to see if the zone is connected to the road network. The chance of this happening increases
         // as the zone's population increases. Note: we will never execute this conditional if the zone is empty, as zero
         // will never be be bigger than any of the values Random will generate
@@ -248,11 +269,12 @@ export const Residential = {
             //if (trafficOK && (zoneScore > -350) && ((zoneScore - 26380) > math.getRandom16Signed())) {
             if (zoneScore > -350 && (zoneScore - 26380) > math.getRandom16Signed()) {
                 // If this zone is empty, and residential demand is strong, we might make a hospital
-                //if (population === 0 && ((math.getRandom16() & 3) === 0)) {
-                if (population === 0 && math.getChance(3)) {
+                // no more auto hospital !!!!
+                /*if (population === 0 && math.getChance(3)) {
                     Residential.makeHospital(map, x, y, simData, zonePower);
                     return;
-                }
+                }*/
+
                 // Get an index in the range 0-3 scoring the land desirability and pollution, and grow the zone to the next
                 // population rank
                 lpValue = ZoneUtils.getLandPollutionValue(simData.blockMaps, x, y);
@@ -273,6 +295,8 @@ export const Residential = {
     },
 
     makeHospital: function ( map, x, y, simData, zonePower ) {
+
+        return
         if(!simData) simData = Micro.simData
         // We only build a hospital if the population requires it
         if (simData.census.needHospital > 0) {
@@ -284,12 +308,18 @@ export const Residential = {
 
     hospitalFound: function ( map, x, y, simData ) {
         if(!simData) simData = Micro.simData
-            
+
         simData.census.hospitalPop += 1;
+        // hospitazl no more degrad !!!
         // Degrade to an empty zone if a hospital is no longer sustainable
-        if (simData.census.needHospital === -1) {
+        /*if (simData.census.needHospital === -1) {
             if (math.getRandom(20) === 0) ZoneUtils.putZone(map, x, y, Tile.FREEZ, map.getTile(x, y).isPowered());
-        }
+        }*/
+    },
+
+    churchFound: function ( map, x, y, simData ) {
+        if(!simData) simData = Micro.simData
+        simData.census.churchPop += 1;
     }
 
 }

@@ -32,7 +32,7 @@ export class BuildTool extends THREE.Object3D {
 
 		this.current = 0
 
-		let option = AppState.isBestMaterial ? { roughness:0, metalness:0 } : {}
+		let option = AppState.isBestMaterial ? { roughness:0, metalness:0, allowOverride:false } : {allowOverride:false}
 		let material = AppState.isBestMaterial ? new THREE.MeshStandardMaterial(option) : new THREE.MeshBasicMaterial(option);
 
 		this.mesh = new THREE.Mesh( geo, material )

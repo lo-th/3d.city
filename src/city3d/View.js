@@ -1,4 +1,3 @@
-//import * as THREE from '../three/three.module.min.js'
 import * as THREE from '../three/three.webgpu.js'
 import { exponentialHeightFogFactor, uniform, fog, color, mul } from '../three/three.tsl2.js';
 
@@ -10,7 +9,10 @@ import { Material, MAT, MAT_LAND } from './Material.js'
 import { Base, Zone, ZoneExtand } from './Base.js';
 import { BuildTool, Markers } from './BuildTool.js';
 import { PostEffect } from './PostEffect.js';
+import { Vignette } from './Vignette.js'
 import { Pool } from './Pool.js';
+
+import { OverlayCanvas } from './OverlayCanvas.js'
 
 //import { Inspector } from '../jsm/inspector/Inspector.js';
 //import { TSLGraphLoader } from '../jsm/inspector/extensions/tsl-graph/TSLGraphLoader.js';
@@ -76,6 +78,8 @@ export class View {
 
 		this.isComputeVertex = true;
 		this.isTransGeo = true;
+
+		this.isValidRoad = false
 
 		//this.tmpCanvas = null;
 		//this.AppState.tilesDataNormal = [];
@@ -623,7 +627,12 @@ export class View {
     	
     	camera = new THREE.PerspectiveCamera( 50, this.vsize.z, 0.1, 1000 );
     	this.scene.add( camera );
-    	this.camera = camera
+    	this.camera = camera;
+
+    	this.vignette = new Vignette();
+		this.camera.add( this.vignette );
+
+
 
     	this.rayVector = new THREE.Vector2( 0, 0 );
     	this.raycaster = new THREE.Raycaster();
@@ -1471,27 +1480,96 @@ export class View {
 
         }
 
-        if(debugHeight){
-        	const bigPreview = new THREE.Mesh(big, new THREE.MeshBasicMaterial({color:0x000000, wireframe:true }))
+
+        // keep big for overlay
+        this.bigGeo = big
+
+        /*if(debugHeight){
+        	const bigPreview = new THREE.Mesh( big, new THREE.MeshBasicMaterial({color:0x000000, wireframe:true }))
             scene.add(bigPreview )
         }else{
         	big.dispose();
         	big = null;
-        }
+        }*/
 
 
         // add water mesh
 
-        let waterGeo = new THREE.PlaneGeometry( this.mapSize[0], this.mapSize[1], 1, 1 );
+        let waterGeo = new THREE.PlaneGeometry( this.mapSize[0], this.mapSize[1], 2, 2 );
         waterGeo.rotateX( -Math.PI * 0.5 );
-        waterGeo.translate( this.center.x-0.5, 0, this.center.z-0.5 );
-
+        waterGeo.translate( (this.mapSize[0]*0.5)-0.5, 0, (this.mapSize[0]*0.5)-0.5 );
 
         this.material.water.repeat.set(this.mapSize[0]*0.125, this.mapSize[1]*0.125)
-        //this.pool.water.repeat.set()
-        //MAT.water.normalScale.set(0.5,0.5)
+     
         this.water = new THREE.Mesh( waterGeo, MAT.water )
+        this.water.renderOrder = 9999
         this.scene.add( this.water );
+
+	}
+
+	getUnderSea( ar ) {
+
+		let id, i = ar.length, under = false;
+    	while( i-- ) {
+    		id = this.findHeightId(ar[i][0], ar[i][1])
+    		if(this.heightData[ id ]<0) under = true;
+    	}
+        return under;
+
+	}
+
+	getLowY( ar, y ) {
+
+		let v, x, z, id;
+		let i = ar.length;
+		let ny = y
+    	while( i-- ) {
+    		x = ar[i][0];
+    		z = ar[i][1]; 
+    		id = this.findHeightId(x, z)
+    		if(this.heightData[ id ]<ny) ny = this.heightData[ id ];
+    		if(ny<0.25) ny = 0.25  
+
+    	}
+
+        return ny;
+
+	}
+
+	getMaxY( ar, y ) {
+
+		let layer, v, x, z, id;
+		let i = ar.length;
+		let ny = y
+    	while( i-- ) {
+    		x = ar[i][0];
+    		z = ar[i][1]; 
+    		id = this.findHeightId(x, z)
+    		if(this.heightData[ id ]>ny) ny = this.heightData[ id ];  
+
+    	}
+
+        return ny;
+
+	}
+
+	getAverageY( ar, y ) {
+
+		let layer, v, x, z, id, n=0;
+		let i = ar.length, ty;
+		let ny = 0
+    	while( i-- ) {
+    		x = ar[i][0];
+    		z = ar[i][1]; 
+    		id = this.findHeightId(x, z)
+    		ty = this.heightData[ id ]
+    		if(ty<0.2) ty = 0.2
+    		
+    		ny += ty
+    	    n++
+    	}
+
+        return ny/n;
 
 	}
 
@@ -1507,7 +1585,7 @@ export class View {
     		z = ar[i][1]; 
     		id = this.findHeightId(x, z)  
 
-    		this.heightData[ id ] = y      
+    		this.heightData[ id ] = y;
     		
     		layer = this.findLayer(x, z);
 
@@ -1531,7 +1609,7 @@ export class View {
 
         let v = g.attributes.position.array;
         let c = g.attributes.color.array;
-        let i = v.length/3, n, id;
+        let i = v.length/3, n, id, deep;
 
         while(i--){ 
 
@@ -1539,14 +1617,21 @@ export class View {
         	id = this.findHeightId( v[n]+0.5, v[n+2]+0.5 )
         	v[n+1] = this.heightData[ id ];
 
+        	deep = 0.5 + this.clamp( this.heightData[ id ]/3, -1, 1) * 0.5;
 
-        	/*v[n+1] = ar[i]; 
-        	c[n+1] = 0; 	
-        	c[n+2] = 0;*/ 
+        	// color
+            c[n] = c[n+1] = c[n+2] = deep;
+
+            
+            if( v[n+1]<0 ){ // under sea
+            	 c[n] -= deep * 0.5
+            	 c[n+1] -= deep * 0.25
+            }
+
         }
  
         g.attributes.position.needsUpdate = true;
-        //g.attributes.color.needsUpdate = true;
+        g.attributes.color.needsUpdate = true;
         //g.computeBoundingSphere();
         g.computeVertexNormals();
 
@@ -1655,11 +1740,11 @@ export class View {
 		this.raypos.x = -1;
 		this.raypos.z = -1;
 
-		if( id === 0 || id === 18){
+		if( id === 0 || id === 21){
 			this.currentTool = null;
         	this.mouse.dragView = false;
         	this.mouse.move = true;
-		} else if ( id === 16 ){
+		} else if ( id === 19 ){
 			this.currentTool = null;
         	this.mouse.move = false;
         	this.mouse.dragView = true;
@@ -1690,9 +1775,7 @@ export class View {
 			let size = this.currentTool.size;
 			let sizey = this.currentTool.sy;
 
-			let py = 0;
-
-            if( AppState.withHeight ) py = this.heightData[ this.findHeightId(x,y) ];
+			let py = this.heightData[ this.findHeightId(x,y) ];
 
             // get full position of zone tiles
             const zone = Zone( size, x, y );
@@ -1702,12 +1785,19 @@ export class View {
 			this.removeTreePack( zone );
 
 			// flat terrain 
-			if( AppState.withHeight && size !== 1 ) this.makePlanar( zoneExtand, py );
+			if( AppState.withHeight && size !== 1 ){ 
+				py = this.getLowY(zone, py);
+				//py = this.getAverageY(zoneExtand, py);
+				this.makePlanar( zoneExtand, py );
+			}
+
+
 
 			let v = this.currentTool.geo;
 
 			// standard building
-			if(v<4 && v!==0){
+			//if(v<4 && v!==0){
+			if( v===1 || v===2 || v===3 || v===13 || v===14 ){
 				this.snd_layzone.play();
 				///this._spawnConstructionMarker(x, py, y, size);
 				this.markers.spawn( this.tool )
@@ -1724,10 +1814,21 @@ export class View {
 		} else {
 
 			this.removeTree(x,y);
-			if( AppState.withHeight ){
-                let py = this.heightData[this.findHeightId(x,y)];
-			    this.makePlanar( [[x,y]],  py );
+
+			// high road for bridge !!
+			if( this.currentTool.tool === 'road' && this.isValidRoad ){
+
+				let py = this.heightData[this.findHeightId(x,y)];
+			    const zoneExtand = ZoneExtand( 1, x, y );
+				
+				if(this.getUnderSea(zoneExtand)) {
+					py = 0.25;
+					this.makePlanar( zoneExtand,  py );
+				}
+
 			}
+
+
 			if( this.currentTool.tool === 'bulldozer' ){
 				this.forceUpdate.x = x;
 		        this.forceUpdate.y = y;
@@ -2372,14 +2473,16 @@ export class View {
 	    while(i--){ 
 
 	    	if( AppState.layerData[i] === 1 ) this.drawLayer( i )
-	    	if(this.tempHouseLayers[i] === 1){ this.rebuildHouseLayer(i); this.tempHouseLayers[i] = 0 }
-	    	if(this.tempBuildingLayers[i] === 1){ this.rebuildBuildingLayer(i); this.tempBuildingLayers[i] = 0; }
+	    	if( this.tempHouseLayers[i] === 1 ){ this.rebuildHouseLayer(i); this.tempHouseLayers[i] = 0 }
+	    	if( this.tempBuildingLayers[i] === 1 ){ this.rebuildBuildingLayer(i); this.tempBuildingLayers[i] = 0; }
 
 	    }
 
 	}
 
 	drawLayer ( layer, full = false ){
+
+		this.isValidRoad = false
 
 		let y = 16, x, v, n, cy, cx, ar, i, vx, vy, g;
 		const ly = Math.floor(layer/this.layerW);
@@ -2412,9 +2515,15 @@ export class View {
                 	if(g<1) draw = false // not ground 
                 	if(g>20 && g<30) draw = false // not tree
 
+                	
+                	
+
                 	if( this.currentTool ) draw = true
 
                 	if(draw){
+
+                		if(g>63 && g<68) this.isValidRoad = true
+
                 		tmpPos.x = x*mid*this.mu;
 	                	tmpPos.y = (240 - y*mid)*this.mu;
 
@@ -2708,10 +2817,60 @@ export class View {
 	// Switch the active map overlay (power, crime, pollution, traffic, none).
 	// Currently the power overlay is always visible when power data is present;
 	// this method stores the requested mode and extends that logic in future.
-	setOverlayMode ( type ) {
+	setOverlayMode ( type, data ) {
 
-		this.overlayMode = type || 'none';
+		if( type === 'None'){
+			if(this.bigPreview){
+				scene.remove( this.bigPreview )
+				scene.overrideMaterial = null;
+				this.bigPreview = null;
+			}
+		} else {
 
+			if( !this.bigCanvas ){
+				this.bigCanvas = new OverlayCanvas();
+			}
+
+			if( !this.bigPreview ){
+
+				scene.overrideMaterial = new THREE.MeshStandardMaterial({ color:0x909090, /* opacity:0.8*/ })
+				this.bigMaterial = new THREE.MeshStandardMaterial({
+					color:0x909090,
+					map:this.bigCanvas.texture, 
+					allowOverride:false, 
+					//transparent:true, 
+					//blending:THREE.MultiplyBlending, 
+					//premultipliedAlpha:true,
+					//depthTest:false,
+					//depthWrite:false,
+					//fog:false,
+
+
+				})
+
+				/*let planeGeo = new THREE.PlaneGeometry( this.mapSize[0], this.mapSize[1], 1, 1 );
+		        planeGeo.rotateX( -Math.PI * 0.5 );
+		        planeGeo.translate( (this.mapSize[0]*0.5)-0.5, 0, (this.mapSize[1]*0.5)-0.5 );*/
+
+                //this.bigGeo
+
+				this.bigPreview = new THREE.Mesh( this.bigGeo, this.bigMaterial )
+				this.bigPreview.position.y = 0.05
+				this.bigPreview.frustumCulled = false
+				this.bigPreview.renderOrder = 10000
+				this.bigPreview.receiveShadow = true
+				scene.add( this.bigPreview );
+
+			}
+
+
+			this.bigCanvas.draw( type, data );
+
+		}
+
+		this.overlayMode = type || 'None';
+
+		
 	}
 
 

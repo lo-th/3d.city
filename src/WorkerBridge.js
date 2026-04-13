@@ -164,6 +164,7 @@ export class WorkerBridge {
         }
 
         if ( phase === 'RUN' ) {
+
             AppState.tilesData  = d.tilesData;
             AppState.powerData  = d.powerData;
             AppState.spriteData = d.sprites;
@@ -184,13 +185,18 @@ export class WorkerBridge {
             this._lastRunTime = Date.now();
         }
 
-        if ( phase === 'BUDGET' )       AppState.hub.openBudget( d.budgetData );
+        if ( phase === 'UPDATE_INFO' )  AppState.hub.updatePannels( d.budgetData, d.evalData ); //openBudget( d.budgetData );
+
+        if ( phase === 'BUDGET' )       AppState.hub.updateBudget( d.budgetData );
+        if ( phase === 'EVAL' )         AppState.hub.updateEval( d.evalData );
+        if ( phase === 'ACHIEVEMENTS' ) AppState.hub.updateAwards( d.achData, d.progress );
+        if ( phase === 'HISTORY' )      AppState.hub.updateHistory( d.historyData );
+        if ( phase === 'ORDINANCES' )   AppState.hub.updateOrdinances( d.ordinances, d.annualCost );
+        if ( phase === 'INDUSTRYSPEC' ) AppState.hub.updateEconomy( d.list, d.current );
+
+        if ( phase === 'SHOWOVERLAY' ) AppState.view3d.setOverlayMode( d.type, d.data );
+
         if ( phase === 'QUERY' )        AppState.hub.openQuery( d.queryTxt );
-        if ( phase === 'EVAL' )         AppState.hub.openEval( d.evalData );
-        if ( phase === 'ACHIEVEMENTS' ) AppState.hub.openAchievements( d.achData, d.progress );
-        if ( phase === 'HISTORY' )      AppState.hub.openHistory( d.historyData );
-        if ( phase === 'ORDINANCES' )   AppState.hub.openOrdinances( d.ordinances, d.annualCost );
-        if ( phase === 'INDUSTRYSPEC' ) AppState.hub.openIndustrySpec( d.list, d.current );
 
         if ( phase === 'SAVEGAME' ) this._makeGameSave( d.gameData, d.key, d.silent );
         if ( phase === 'LOADGAME' ) this._makeLoadGame( d.key, d.isStart );

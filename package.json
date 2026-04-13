@@ -1,6 +1,6 @@
 {
   "name": "3d.city",
-  "version": "0.9.5",
+  "version": "1.0.0",
   "description": "JavaScript city builder game",
   "main": "./build/Main.js",
   "repository": "lo-th/3d.city",

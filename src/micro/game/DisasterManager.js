@@ -39,7 +39,7 @@ export class DisasterManager {
         //Object.defineProperty(this, 'disastersEnabled', MiscUtils.mcd(false));
     }
 
-    doDisasters ( census ) {
+    doDisasters ( census, fireRiskMod ) {
 
         if (this._floodCount) this._floodCount--;
 
@@ -47,7 +47,11 @@ export class DisasterManager {
 
         if (!this.disastersEnabled) return;
 
-        if (math.getRandom(Micro.DisChance[this._gameLevel])) {
+        let disasterChance = Micro.DisChance[this._gameLevel];
+        // Season modifier makes disasters more/less likely
+        if (fireRiskMod && fireRiskMod > 1) disasterChance = Math.floor(disasterChance / fireRiskMod);
+
+        if (!math.getRandom(disasterChance)) {
             switch (math.getRandom(8)) {
                 case 0:
                 case 1: this.setFire(); break;
@@ -61,8 +65,7 @@ export class DisasterManager {
                 case 5: this._spriteManager.makeTornado(); break;
 
                 case 6:
-                    // TODO Earthquakes
-                    //this.makeEarthquake();
+                    this.makeEarthquake();
                 break;
 
                 case 7:
@@ -93,9 +96,8 @@ export class DisasterManager {
     makeEarthquake () {
 
         let strength = math.getRandom(700) + 300;
-        this.doEarthquake(strength);
 
-        EventEmitter.emitEvent(Messages.EARTHQUAKE, {x: this._map.cityCenterX, y: this._map.cityCenterY});
+        EventEmitter.emitEvent(Messages.EARTHQUAKE, {showable: true, x: this._map.cityCentreX, y: this._map.cityCentreY});
 
         let i, x, y;
 
@@ -175,7 +177,7 @@ export class DisasterManager {
                     tile = this._map.getTile(xx, yy);
                     tileValue = tile.getValue();
 
-                    if (tile === Tile.DIRT || (tile.isBulldozable() && tile.isCombustible)) {
+                    if (tile === Tile.DIRT || (tile.isBulldozable() && tile.isCombustible())) {
                         this._map.setTo(xx, yy, new Tiles(Tile.FLOOD));
                         this._floodCount = 30;
                         EventEmitter.emitEvent(Messages.FLOODING_REPORTED, {showable: true, x: xx, y: yy});

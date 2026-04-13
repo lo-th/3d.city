@@ -667,7 +667,9 @@ export class Pool {
 					town:[
 						null, null, null, null,
 						o.police, o.park_1, o.park_2, o.fire,
-						o.coal, o.nuclear, o.port, o.stadium, o.airport
+						o.coal, o.nuclear, o.port, o.stadium, o.airport, 
+						o.r_17, o.r_18, o.eol
+
 					],
 					tree:[
 					    o.ttt3, o.ttt3, o.ttt4, o.ttt4,

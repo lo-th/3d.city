@@ -42,6 +42,7 @@ var messageData = {
   NEED_AIRPORT: MiscUtils.mcd('Airport needed'),
   NEED_ELECTRICITY: MiscUtils.mcd('More power needed'),
   NEED_FIRE_STATION: MiscUtils.mcd('Fire station needed'),
+  NEED_HOSPITAL: MiscUtils.mcd('Hospital needed'),
   NEED_MORE_COMMERCIAL: MiscUtils.mcd('More commercial zones needed'),
   NEED_MORE_INDUSTRIAL: MiscUtils.mcd('More industrial zones needed'),
   NEED_MORE_RAILS: MiscUtils.mcd('More railways needed'),
@@ -90,7 +91,27 @@ var messageData = {
   TRAIN_CRASHED: MiscUtils.mcd('Train crashed'),
   VALVES_UPDATED: MiscUtils.mcd('Valves updated'),
   WELCOME: MiscUtils.mcd('Welcome to micropolisJS'),
-  WELCOMEBACK: MiscUtils.mcd('Welcome back to your 3D city')
+  WELCOMEBACK: MiscUtils.mcd('Welcome back to your 3D city'),
+
+  // Achievements
+  ACHIEVEMENT_UNLOCKED: MiscUtils.mcd('Achievement unlocked'),
+
+  // Seasons
+  SEASON_CHANGED: MiscUtils.mcd('Season changed'),
+  HEAT_WAVE: MiscUtils.mcd('Heat wave warning'),
+  BLIZZARD: MiscUtils.mcd('Blizzard warning'),
+
+  // Education
+  LOW_EDUCATION: MiscUtils.mcd('Education levels are low'),
+  NEED_SCHOOLS: MiscUtils.mcd('Citizens demand schools'),
+
+  // History
+  HISTORY_EVENT: MiscUtils.mcd('Historic event recorded'),
+
+  // Bonds
+  BOND_PAYMENT_DUE: MiscUtils.mcd('Annual bond payment deducted'),
+  BOND_ISSUED: MiscUtils.mcd('Municipal bond issued'),
+  BOND_HIGH_DEBT: MiscUtils.mcd('Warning: high municipal debt')
 };
 
 export const Messages = Object.defineProperties({}, messageData);

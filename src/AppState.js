@@ -1,6 +1,6 @@
 export const AppState = {
 
-    version:      '0.9.6',
+    version:      '1.0.0',
 
     inspector:      null,   // active editor
 
@@ -14,9 +14,6 @@ export const AppState = {
     environmentIntensity: 1.5,
     direct: 10,
     directColor: 0xffffff,//0xbcae9a
-
-    
-
 
     activeFOG:      true,
 
@@ -61,10 +58,10 @@ export const AppState = {
     isWorker:      true,    // true → use Web Worker; false → directMessage mode
 
     withHeight:    true,   // current map was generated with a height map
-    heightMulty:      1,   // increase height of map // 1.5
-    heightPow:        1,   // smooth height of map  // 2
-    seaMulty:         1.5,
-    seaPow:           3,
+    heightMulty:      1,   // increase height of map // 1
+    heightPow:        1,   // smooth height of map  // 1
+    seaMulty:         1.5, //1.5
+    seaPow:           3,    //3
     heightBorder:    0.2,
 
     // ── Worker mode: direct-call callback (non-worker mode only) ──────────
@@ -98,21 +95,18 @@ export const AppState = {
 
 
     LUT_on:                 true,
-    LUT_current:    'FILM2.CUBE',
+    LUT_current:    'Cinematic.3dl',
     LUT_intensity:             1,
 
     LUT_Map: {
-        //'Bourbon 64.CUBE': null,
-        'Warm_Runner.CUBE': null,
-        'Cold_Runner.CUBE': null,
-        'Dark_Runner.CUBE': null,
+        'realism.3dl':null,
+        'Cinematic.3dl':null,
         'FILM1.CUBE': null,
         'FILM2.CUBE': null,
-        //'Chemical 168.CUBE': null,
+        
         'Clayton 33.CUBE': null,
         'Cubicle 99.CUBE': null,
         'Remy 24.CUBE': null,
-        'Presetpro-Cinematic.3dl': null,
         'NeutralLUT': null,
         'B&WLUT': null,
         'NightLUT': null,
@@ -120,7 +114,7 @@ export const AppState = {
         'LDmono1.cube': null,
         'LDmono2.cube': null,
         'LDmono3.cube': null,
-        'art.cube': null,
+
     },
 
 };

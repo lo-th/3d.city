@@ -87,7 +87,7 @@ export class Main {
     static sendTool( name ) {
 
         AppState.workerBridge.post({tell:"TOOL", name:name});
-        //post({tell:"TOOL", name:name});
+        
     }
 
     static destroy( x, y ) {
@@ -185,29 +185,19 @@ export class Main {
         //post({tell:"SPEED", n:n });
     }
 
-    static getBudjet() {
+    static getBudget() {
         AppState.workerBridge.post({ tell:"BUDGET" });
-        //post({ tell:"BUDGET" });
     }
 
-    static setBudjet( budgetData ) {
-
-        AppState.workerBridge.post({ tell:"BUDGET" });
-        //post({ tell:"NEWBUDGET", budgetData:budgetData });
+    static setBudget( budgetData ) {
+        AppState.workerBridge.post({ tell:"NEWBUDGET", budgetData:budgetData });
     }
 
     static getEval() {
-
         AppState.workerBridge.post({ tell:"EVAL" });
-        //post({ tell:"EVAL" });
     }
 
-    /*static setDisaster(disaster){
-        console.log(disaster);
-        post({ tell:"DISASTER", disaster:disaster });
-    }*/
-
-    static getAchievements() {
+    static getAwards() {
         AppState.workerBridge.post({ tell:"ACHIEVEMENTS" });
     }
 
@@ -240,7 +230,8 @@ export class Main {
     }
 
     static setOverlays( type ) {
-        AppState.view3d.setOverlayMode( type );
+        AppState.workerBridge.post({ tell:"GETOVERLAY", type:type });
+        //AppState.view3d.setOverlayMode( type );
     }
 
     static saveGame() {
