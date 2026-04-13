@@ -2,7 +2,7 @@
 
 > A **3D, browser-playable** city building game — no download, no install, just open a tab and build.
 
-[![Launch Game](https://img.shields.io/badge/Play%20Now-Launch%20Game%20webGL2-4a9edd?style=for-the-badge)](https://lo-th.github.io/3d.city/index.html)
+[![Launch Game](https://img.shields.io/badge/Play%20Now-Launch%20Game%20webGL2-4a9edd?style=for-the-badge)](https://lo-th.github.io/3d.city/index.html)<br>
 [![Launch Game](https://img.shields.io/badge/Play%20Now-Launch%20Game%20webGPU-84DD4A?style=for-the-badge)](https://lo-th.github.io/3d.city/index_gpu.html)
 
 ## About
@@ -14,7 +14,6 @@
 The long-term vision is to grow this into a feature-rich city builder.
 fully open-source and playable in any modern browser.
 
----
 ## Mini tutorial
 
 <a target='_blank' href='https://lo-th.github.io/3d.city/index.html'><img src="https://lo-th.github.io/3d.city/assets/img/tuto.png"/></a><br>
@@ -33,12 +32,10 @@ Best destruction effect.
 Fixe save and loading 
 Add more option and building
 
----
 ## Sponsor
 
 This is a long-term project; if you enjoy the game and want more updates, help me by sponsoring it.
 
----
 ## License
 
 MIT — see [LICENSE](LICENSE)
