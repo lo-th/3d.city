@@ -26,11 +26,11 @@ fully open-source and playable in any modern browser.
 
 ## Roadmap
 
-Add different environement: snow, night... 
-Add more sound effect.
-Best destruction effect.
-Fixe save and loading 
-Add more option and building
+Fixe save and loading <br>
+Add different environement: snow, night...<br> 
+Add more sound effect.<br>
+Best destruction effect and fixe disaster<br>
+Add more option and building<br>
 
 ## Sponsor
 
