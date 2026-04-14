@@ -93,11 +93,13 @@ export class View {
 		
 
 		if(AppState.isMobile){ 
+			document.getElementById('hub').style.zoom = "70%";
 			this.pix = 1
 	        AppState.isWithTree = false;
-	        this.isWithEnv = false;
+	        //AppState.isBestMaterial = false;
+	        this.isWithEnv = true;
 	        AppState.isWithNormal = false;
-	        AppState.isWithLight = false;
+	        AppState.isWithLight = true;
 	        AppState.withShadow = false;
 	        AppState.tileSize = 32;
 	    }

@@ -38,13 +38,7 @@ export class Hub {
     	this.timer = null;
     	this.bg = 1;
 
-        this.R=null;
-        this.C=null;
-        this.I=null;
-
-        this.isGen = false
-
-        //this.rrr= null;
+        this.isGen = false;
 
         //this.colors = ['#ffffff', '#338099'];
         this.colors = ['rgba(255,255,255,1)', 'rgba(63,76,105,0.4)', 'rgba(0,0,0,1)', 'rgba(0,0,0,0.5)', 'rgba(0,0,0,0.8)', 'rgba(255,255,255,0.5)'];
@@ -58,33 +52,6 @@ export class Hub {
 
         this.radiusB = "-moz-border-bottom-left-radius: 6px; -webkit-border-bottom-left-radius: 6px; border-bottom-left-radius: 6px;";
         this.radiusB += "-moz-border-bottom-right-radius: 6px; -webkit-border-bottom-right-radius: 6px; border-bottom-right-radius: 6px;";
-
-        //this.windowsStyle = ' top:40px; left:10px; border:1px solid '+this.colors[1]+'; background:'+this.colors[3]+';';
-
-        /*this.budgetWindow       = null;
-        this.evaluationWindow   = null;
-        this.disasterWindow     = null;
-        this.exitWindow         = null;
-        this.newMapWindow       = null;
-        this.queryWindow        = null;
-        this.overlaysWindow     = null;
-        this.aboutWindow        = null;
-        this.achievementsWindow = null;
-        this.historyWindow      = null;
-        this.ordinancesWindow   = null;
-        this.industrySpecWindow = null;
-
-        this.toolOver = null;
-        this.toolSelect = null;
-
-        this.currentToolName = 0;
-
-        this.disasterTypes = ['None', 'Monster', 'Fire', 'Flood', 'Crash', 'Meltdown', 'Tornado'];
-        this.disasterButtons = [];
-
-        this.overlaysTypes = ['None', 'Density', 'Growth', 'Land value', 'Crime Rate', 'Pollution', 'Traffic', 'Power Grid', 'Fire', 'Police'];
-        this.overlaysButtons =  [];*/
-                                                    
 
         this.full = document.createElement('div');
         this.full.id = 'hub-loading';
@@ -123,7 +90,6 @@ export class Hub {
         bottomBar.appendChild( this.fps )
         bottomBar.appendChild( this.version )
         
-
     }
 
     upFps( v ) {
@@ -176,7 +142,7 @@ export class Hub {
             t.timer = null
             //t.loader.style.display = 'none'
             //t.hub.removeChild(t.loader);
-           //t.hub.removeChild(t.text);
+            //t.hub.removeChild(t.text);
     		// Only remove if not already removed by generate(false) during the fade
             if (t.full.parentNode === t.hub) t.hub.removeChild(t.full);
 
@@ -209,8 +175,10 @@ export class Hub {
     }
 
     removeChilds( node ) {
+
         var last;
         while (last = node.lastChild) node.removeChild(last);
+
     };
 
     //--------------------------------------start hub
@@ -301,45 +269,46 @@ export class Hub {
 
     updatePannels( budgetData, evalData ) {
 
-        this.topHub.pannels.Budget.update( budgetData )
-        this.topHub.pannels.Eval.update( evalData )
+        this.topHub.pannels.Budget.update( budgetData );
+        this.topHub.pannels.Eval.update( evalData );
+
     }
 
     ///
 
     updateBudget( data ){
 
-        this.topHub.pannels.Budget.update( data )
+        this.topHub.pannels.Budget.update( data );
     
     }
 
     updateEval( data ){
 
-        this.topHub.pannels.Eval.update( data )
+        this.topHub.pannels.Eval.update( data );
     
     }
 
     updateEconomy( list, current ) {
 
-        this.topHub.pannels.Economy.update( list, current )
+        this.topHub.pannels.Economy.update( list, current );
         
     }
 
     updateHistory( data ) {
 
-        this.topHub.pannels.History.update( data )
+        this.topHub.pannels.History.update( data );
 
     }
 
     updateAwards( data, progress ) {
 
-        this.topHub.pannels.Awards.update( data, progress )
+        this.topHub.pannels.Awards.update( data, progress );
 
     }
 
     updateOrdinances ( ordinances, annualCost ) {
         
-        this.topHub.pannels.Orders.update( ordinances, annualCost )
+        this.topHub.pannels.Orders.update( ordinances, annualCost );
 
     }
 
@@ -350,32 +319,14 @@ export class Hub {
 
     }
 
-    
-
-
-    
-
-    /*hideoldSel() {
-
-        for(var i = 0; i<4; i++){
-            this.H[i].style.background = 'none';
-        }
-
-    }*/
-
-    //-----------------------------------CITY INFO
-
-    
-
-    
-
     //-----------------------------------SLIDER
 
     addSlider  (target, py, name, value, v2, color, max){
-        var _this = this;
-        var txt = document.createElement( 'div' );
-        var bg  = document.createElement( 'div' );
-        var sel = document.createElement( 'div' );
+
+        const _this = this;
+        let txt = document.createElement( 'div' );
+        let sel = document.createElement( 'div' );
+        let bg  = document.createElement( 'div' );
 
         sel.style.cssText = 'border-radius:6px; position:absolute; pointer-events:none;'
                           + ' margin:4px 4px; height:6px; background:' + color + '; opacity:0.8;';
@@ -390,7 +341,6 @@ export class Hub {
                           + ' transition:border-color 150ms; margin-top:20px; margin-bottom:6px;';
         target.appendChild( bg );
        
-
         bg.appendChild( sel );
         bg.appendChild( txt );
         bg.name = name;
@@ -410,24 +360,28 @@ export class Hub {
         bg.addEventListener( 'mouseup',    function(e){ e.preventDefault(); this.className='up'; }, false );
         bg.addEventListener( 'mousedown',  function(e){ e.preventDefault(); this.className='down'; _this.dragSlider(this, e.clientX, max); }, false );
         bg.addEventListener( 'mousemove',  function(e){ e.preventDefault(); _this.dragSlider(this, e.clientX, max); }, false );
+
     }
 
     setSliderValue (name, value, max, v2){
-        var slide = document.getElementById(name);
-        var children = slide.childNodes;
+
+        let slide = document.getElementById(name);
+        let children = slide.childNodes;
         children[0].style.width = 170*(value/max)+'px';
         if(v2!==null){
             children[1].innerHTML = name+' '+value+'% of '+v2+'$ = '+Math.floor(v2*(value/100))+'$';
         } else {
             children[1].innerHTML = name+' '+value+'%';
         }
+
     }
 
     dragSlider  (t, x, max){
+
         if(t.className == 'down'){
-            var children = t.childNodes;
-            var rect  = t.getBoundingClientRect();
-            var value = Math.round(((x-rect.left)/170)*max);
+            let children = t.childNodes;
+            let rect  = t.getBoundingClientRect();
+            let value = Math.round(((x-rect.left)/170)*max);
             if(value<0)   value = 0;
             if(value>max) value = max;
             children[0].style.width = 170*(value/max)+'px';
@@ -444,8 +398,8 @@ export class Hub {
                 case 'Education': children[1].innerHTML = t.name+' '+value+'% of '+(this.topHub.pannels.Budget.educationFund||0)+'$ = '+Math.floor((this.topHub.pannels.Budget.educationFund||0)*(value/100))+'$'; this.topHub.pannels.Budget.educationRate=value; this.topHub.pannels.Budget.apply();break;
             }
         }
-    }
 
+    }
 
 
     //------------------------------------------ DEF BUTTON
@@ -468,14 +422,14 @@ export class Hub {
 
     addSelector( target, type, names, fun, current, size, sizeH ) {
 
-        var _this = this;
-        var cont = document.createElement('div');
+        const _this = this;
+        let cont = document.createElement('div');
         cont.className = 'selector-title';
         cont.innerHTML = type+"<br>";
         cont.id = type;
 
-        var t = [];
-        for(var i=0; i!==names.length; i++){
+        let t = [];
+        for( let i=0; i!==names.length; i++ ){
             t[i] = document.createElement( 'div' );
             t[i].className = 'hub-btn';
             t[i].style.cssText = 'font-size:14px;';
@@ -508,22 +462,22 @@ export class Hub {
 
     setActiveSelector( n, type ) {
 
-        var h = 10, def;
+        let h = 10, def;
         while(h--){
             if(document.getElementById(type+h)){
                 def = document.getElementById(type+h);
                 def.className = "hub-btn";
             }
         }
-        var select = document.getElementById(type+n);
+        let select = document.getElementById(type+n);
         select.className = "hub-btn-select";
 
     }
 
     removeSelector( type ) {
 
-        var h = 10, def;
-        var target = document.getElementById(type);
+        let h = 10, def;
+        let target = document.getElementById(type);
         while(h--){
             if(document.getElementById(type+h)){
                 def = document.getElementById(type+h);
@@ -536,9 +490,9 @@ export class Hub {
 
     clearElement( id ) {
 
-        var el = document.getElementById(id);
-        var children = el.childNodes;
-        var i = children.length;
+        let el = document.getElementById(id);
+        let children = el.childNodes;
+        let i = children.length;
         while(i--) el.removeChild( children[i] );
         this.hub.removeChild( el );
 
