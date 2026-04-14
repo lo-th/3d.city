@@ -7,6 +7,7 @@ export class Hub_Eval extends Hub_Pannel {
 
 		super( hub, 'Eval', isRight  );
         this.updateFunction = AppState.main.getEval
+        this.happiness = 50;
 
 	}
 
@@ -19,12 +20,15 @@ export class Hub_Eval extends Hub_Pannel {
 
 	update( data ) {
 
+        
+        this.happiness = data[7] || 50;
+
+
 		if(this.state === 'none') return;
+        if(this.state === 'close') return;
 
 		this.evaltYes.innerHTML = 'YES: ' + data[0] + '%';
         this.evaltNo.innerHTML  = 'NO: ' + (100 - data[0]) + '%';
-
-       
 
         var lblStyle = 'display:inline-block; width:120px; color:rgba(180,210,240,1); text-align:left; ';
         var titleStyle = 'display:inline-block; width:100%; font-size:10px; letter-spacing:0.08em; color:rgba(180,210,240,0.6);'
@@ -41,7 +45,7 @@ export class Hub_Eval extends Hub_Pannel {
         // Extended statistics
         let eduLevel = data[5] || 0;
         let healthLevel = data[6] || 0;
-        let happiness = data[7] || 50;
+        //let happiness = data[7] || 50;
         let unemployment = data[8] || 0;
         let season = data[9] || 'Spring';
         let policeCoverage = data[10] !== undefined ? data[10] : 0;
@@ -53,7 +57,7 @@ export class Hub_Eval extends Hub_Pannel {
         let schoolCount    = data[16] !== undefined ? data[16] : 0;
         let eduCoverage    = data[17] !== undefined ? data[17] : 100;
 
-        let happyColor = happiness >= 70 ? '#4bcc7a' : happiness >= 40 ? '#f0b84a' : '#e05555';
+        let happyColor = this.happiness >= 70 ? '#4bcc7a' : this.happiness >= 40 ? '#f0b84a' : '#e05555';
         let eduStr = this._getLevelString(eduLevel, 200, ['None', 'Poor', 'Basic', 'Good', 'Excellent']);
         let healthStr = this._getLevelString(healthLevel, 200, ['Critical', 'Poor', 'Fair', 'Good', 'Excellent']);
         let policeColor = policeCoverage >= 70 ? '#4bcc7a' : policeCoverage >= 40 ? '#f0b84a' : '#e05555';
@@ -68,7 +72,7 @@ export class Hub_Eval extends Hub_Pannel {
             + '<span style="' + lblStyle + '">👨‍🎓 Education:</span>' + eduStr + '<br>'
             + '<span style="' + lblStyle + '">❤️ Health:</span>' + healthStr + '<br>'
             + '<span style="' + lblStyle + '">😵 Unemployment:</span>' + unemployment + '%<br>'
-            + '<span style="' + lblStyle + '">😊 Happiness:</span><span style="color:' + happyColor + '; font-weight:bold;">' + happiness + '%</span><br>'
+            + '<span style="' + lblStyle + '">😊 Happiness:</span><span style="color:' + happyColor + '; font-weight:bold;">' + this.happiness + '%</span><br>'
             
             + '<span style="' + titleStyle + '">COVERAGE &amp; AMENITIES</span><br>'
             //+ '<br><b style="font-size:10px; letter-spacing:0.08em; color:rgba(180,210,240,0.6); text-align:center;">COVERAGE &amp; AMENITIES</b><br>'

@@ -11,6 +11,10 @@ import {
 	InterleavedBufferAttribute
 } from '../../three/three.webgpu.js';
 
+
+//import * as nom1 from "../draco/draco_decoder.js";
+//import * as nom2 from "../draco/draco_wasm_wrapper.js";
+
 const _taskCache = new WeakMap();
 
 /**
@@ -360,14 +364,20 @@ class DRACOLoader extends Loader {
 
 		if ( useJS ) {
 
+			
 			librariesPending.push( this._loadLibrary( 'draco_decoder.js', 'text' ) );
+;
 
 		} else {
 
+			
 			librariesPending.push( this._loadLibrary( 'draco_wasm_wrapper.js', 'text' ) );
 			librariesPending.push( this._loadLibrary( 'draco_decoder.wasm', 'arraybuffer' ) );
 
+
 		}
+
+		
 
 		this.decoderPending = Promise.all( librariesPending )
 			.then( ( libraries ) => {

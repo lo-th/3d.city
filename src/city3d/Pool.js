@@ -46,7 +46,7 @@ export class Pool {
             type = (ua.indexOf('safari') !== -1 && ua.indexOf('chrome') === -1) ? 'js' : 'wasm'
         }
 
-    	let dracoLoader = new DRACOLoader().setDecoderPath( './build/draco/' )
+    	let dracoLoader = new DRACOLoader().setDecoderPath( './assets/draco/' )
     	dracoLoader.setDecoderConfig( { type: type } )
 
     	this.loaderGLB = new GLTFLoader().setDRACOLoader( dracoLoader ).setPath( modelPath );

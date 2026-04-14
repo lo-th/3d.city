@@ -59,9 +59,9 @@ export class Hub {
         this.radiusB = "-moz-border-bottom-left-radius: 6px; -webkit-border-bottom-left-radius: 6px; border-bottom-left-radius: 6px;";
         this.radiusB += "-moz-border-bottom-right-radius: 6px; -webkit-border-bottom-right-radius: 6px; border-bottom-right-radius: 6px;";
 
-        this.windowsStyle = ' top:40px; left:10px; border:1px solid '+this.colors[1]+'; background:'+this.colors[3]+';';
+        //this.windowsStyle = ' top:40px; left:10px; border:1px solid '+this.colors[1]+'; background:'+this.colors[3]+';';
 
-        this.budgetWindow       = null;
+        /*this.budgetWindow       = null;
         this.evaluationWindow   = null;
         this.disasterWindow     = null;
         this.exitWindow         = null;
@@ -83,7 +83,7 @@ export class Hub {
         this.disasterButtons = [];
 
         this.overlaysTypes = ['None', 'Density', 'Growth', 'Land value', 'Crime Rate', 'Pollution', 'Traffic', 'Power Grid', 'Fire', 'Police'];
-        this.overlaysButtons =  [];
+        this.overlaysButtons =  [];*/
                                                     
 
         this.full = document.createElement('div');
@@ -277,22 +277,33 @@ export class Hub {
 
     }
 
+
+    //--------------------------------------game hub
+
+    initGameHub() {
+
+        if (this._gameHubInit) return;
+        this._gameHubInit = true;
+
+        this.topHub = new Hub_Top(this);
+        this.buildHub = new Hub_Build(this);
+
+    }
+
+
+    //-------------------------------------- in game update
+
     updateRCI( r, c, i ) {
 
         this.buildHub.updateRCI( r, c, i );
 
     }
 
-
-
     updatePannels( budgetData, evalData ) {
 
         this.topHub.pannels.Budget.update( budgetData )
         this.topHub.pannels.Eval.update( evalData )
     }
-
-
-
 
     ///
 
@@ -332,75 +343,29 @@ export class Hub {
 
     }
 
-    
-
-
-    //--------------------------------------game hub
-
-    initGameHub() {
-
-        if (this._gameHubInit) return;
-        this._gameHubInit = true;
-
-        this.topHub = new Hub_Top(this);
-        this.buildHub = new Hub_Build(this);
-
-
-        // new pannel
-
-        /*this.topHub.pannelsIcon =['💰', '🔍', '🏆', '🏛️', '⚖️', '👁️', '⚠️', '💡', '💾', '❓']
-        let n = 0
-
-        this.topHub.pannels = {
-
-            Budget :      new Hub_Budget(this),
-            Eval:         new Hub_Eval(this),
-            Awards:       new Hub_Awards(this),
-            History:      new Hub_History(this),
-            Ordinances:   new Hub_Ordinances(this),
-            Overlays:     new Hub_Overlays(this),
-            Disaster:     new Hub_Disaster(this),
-            Economy:      new Hub_Economy(this), 
-            'Save/Load':  new Hub_Save_Load(this), 
-            About:        new Hub_About(this),
-        
-        }
-        
-        // ── Top menu bar ──────────────────────────────────────────────
-
-        const topBar = document.createElement('div');
-        topBar.className = 'hub-topmenu';
-        this.hub.appendChild( topBar );
-        //topBar.style.top = '100px'
-
-        let button; 
-
-        for( let m in this.topHub.pannels ){
-
-            button = this.addButton(topBar, this.topHub.pannelsIcon[n], [90,26,14], '', true);
-            button.addEventListener('click',  ( e ) => { e.preventDefault(); this.closePannel( m ); this.topHub.pannels[m].open(); }, false);
-            n++
-
-        }*/
-
-    }
-
-    hideoldSel() {
-
-        for(var i = 0; i<4; i++){
-            this.H[i].style.background = 'none';
-        }
-
-    }
-
-    //-----------------------------------CITY INFO
-
     updateCITYinfo( infos ) {
 
         this.topHub.updateInfo( infos );
         this.updateRCI( infos[5], infos[6], infos[7] );
 
     }
+
+    
+
+
+    
+
+    /*hideoldSel() {
+
+        for(var i = 0; i<4; i++){
+            this.H[i].style.background = 'none';
+        }
+
+    }*/
+
+    //-----------------------------------CITY INFO
+
+    
 
     
 

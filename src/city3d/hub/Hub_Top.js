@@ -11,10 +11,21 @@ import { Hub_Ordinances } from './Hub_Ordinances.js'
 import { Hub_Economy } from './Hub_Economy.js'
 import { Hub_Save_Load } from './Hub_Save_Load.js'
 import { Hub_About } from './Hub_About.js'
+
+
 //------------------------------------------------------//
 //              HUB TOP INFO INTERFACE                  //
 //------------------------------------------------------//
+const cityIcon = { 
+    Village:'🛖',
+    Town:'🏡', 
+    City:'🏢', 
+    Capital:'🏦', 
+    Metropolos:'🗽', 
+    Megalopolis:'🗼' 
+}
 
+const seasonIcons = ['🌱', '☀', '🍂', '❄'];
 
 export class Hub_Top {
 
@@ -122,7 +133,7 @@ export class Hub_Top {
         this.inner2.appendChild( this.statusBar2 );
 
 		var stats = [
-		    { key:'class',      label:'class',        ref:'class'       },
+		    { key:'class',      label:'class',       ref:'class'       },
             { key:'date',       label:'Date',        ref:'date'       },
             { key:'population', label:'Population',  ref:'population' },
             { key:'money',      label:'money',       ref:'money', color:'#00d26a'      },
@@ -160,18 +171,8 @@ export class Hub_Top {
 		let type = infos[1].toLowerCase();
 		type = type.charAt(0).toUpperCase() + type.slice(1);
 
-		const cityIcon = { 
-			Village:'🛖',
-			Town:'🏡', 
-			City:'🏢', 
-			Capital:'🏦', 
-			Metropolos:'🗽', 
-			Megalopolis:'🗼' 
-		}
-
-		const seasonIcons = ['🌱', '☀', '🍂', '❄'];
 		const seasonIdx = infos[17];
-		const happiness = infos[16];
+		const happiness = this.pannels.Eval.happiness;//infos[16];
         const happyColor = happiness >= 70 ? '#4bcc7a' : happiness >= 40 ? '#f0b84a' : '#e05555';
         const happyIcon = happiness >= 70 ? '😆' : happiness >= 40 ? '😊' : '😞';
 

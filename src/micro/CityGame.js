@@ -743,6 +743,8 @@ export class MainGame {
         gameData.difficulty = this.difficulty;
         gameData.version = Micro.CURRENT_VERSION;
         gameData.saveVersion = Micro.SAVE_VERSION;
+        gameData.width = Micro.MAP_WIDTH;
+        gameData.height = Micro.MAP_HEIGHT;
         gameData.city = cityData;
         this.simulation.save(gameData);
 
@@ -781,10 +783,13 @@ export class MainGame {
 
         Storage.migrate(this.savedGame);
 
-        const savedW = this.savedGame.width  || Micro.MAP_WIDTH;
-        const savedH = this.savedGame.height || Micro.MAP_HEIGHT;
-        this.mapSize = [ savedW, savedH ];
-        this.map = new GameMap( savedW, savedH );
+        if( this.savedGame.width !== undefined ) Micro.MAP_WIDTH = this.savedGame.width;
+        if( this.savedGame.height !== undefined ) Micro.MAP_HEIGHT = this.savedGame.height;
+
+        //const savedW = this.savedGame.width  || Micro.MAP_WIDTH;
+        //const savedH = this.savedGame.height || Micro.MAP_HEIGHT;
+        this.mapSize = [ Micro.MAP_WIDTH, Micro.MAP_HEIGHT ];
+        this.map = new GameMap(  Micro.MAP_WIDTH, Micro.MAP_HEIGHT );
         this.map.load(this.savedGame);
 
         CityGame.post({ tell:"FULLREBUILD", tilesData:this.map.tilesData, mapSize:this.mapSize, island:this.map.isIsland, cityData:this.savedGame.city, isStart:isStart });
