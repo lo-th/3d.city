@@ -33,7 +33,7 @@ export class Pool {
 		this.geos = {}
 
 		this.modelUrl = [ 'cars.glb', 'world.glb' ];
-		this.textureUrl = [ 'ground1k.png','ground2k.png', 'ground1k_n.png','ground2k_n.png','title.png', 'water_n.jpg', 'building_nr.png', 'town_nr.png',  'roadx.png', 'road.png', 'feux.png', 'light_a.png' ];
+		this.textureUrl = [ 'monster.png', 'monster_n.png', 'fire.png', 'ground1k.png','ground2k.png', 'ground1k_n.png','ground2k_n.png','title.png', 'water_n.jpg', 'building_nr.png', 'town_nr.png',  'roadx.png', 'road.png', 'feux.png', 'light_a.png' ];
 		this.imageUrl = ['tiles.png','town.png','building.png', 'cars.png', 'border.png' ];
 
 		if( AppState.isWithNormal ) this.imageUrl.push( 'tiles_n.png', 'building_n.png', 'town_n.png' )
@@ -676,7 +676,7 @@ export class Pool {
 					    o.ttt0, o.ttt1, o.ttt2, o.ttt5
 					],
 					sprite:[
-					   o.train, o.elico.clone(), o.plane.clone()
+					   o.train, o.elico, o.plane, o.monster,
 					],
 
 					feux:o.feux,

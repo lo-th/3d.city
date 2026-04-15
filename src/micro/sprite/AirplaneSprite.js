@@ -95,7 +95,8 @@ export class AirplaneSprite extends BaseSprite {
     explodeSprite (messageManager) {
         this.frame = 0;
         this.spriteManager.makeExplosionAt(this.x, this.y);
-        messageManager.sendMessage(Messages.PLANE_CRASHED);
+        // problem's if call directlly !!
+        if( messageManager ) messageManager.sendMessage(Messages.PLANE_CRASHED);
     }
 
 }

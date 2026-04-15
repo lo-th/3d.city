@@ -70,13 +70,13 @@ export class TornadoSprite extends BaseSprite {
             }
         }
 
-        frame = Random.getRandom(5);
+        frame = math.getRandom(5);
         this.x += this.xDelta[frame];
         this.y += this.yDelta[frame];
 
         if (this.spriteNotInBounds()) this.frame = 0;
 
-        if (this.count !== 0 && Random.getRandom(500) === 0) this.frame = 0;
+        if (this.count !== 0 && math.getRandom(500) === 0) this.frame = 0;
 
         SpriteUtils.destroyMapTile(this.spriteManager, this.map, blockMaps, this.x, this.y);
     }

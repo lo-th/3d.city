@@ -3,7 +3,7 @@ import { exponentialHeightFogFactor, uniform, fog, color, mul } from '../three/t
 
 import { ImprovedNoise } from '../jsm/math/ImprovedNoise.js';
 
-
+import { Sprites } from './Sprites.js';
 import { AppState } from '../AppState.js'
 import { Material, MAT, MAT_LAND } from './Material.js'
 import { Base, Zone, ZoneExtand } from './Base.js';
@@ -2516,6 +2516,10 @@ export class View {
 
                 	if(g<1) draw = false // not ground 
                 	if(g>20 && g<30) draw = false // not tree
+                	if(g>55 && g<64) { // fire
+                		 //draw = false
+                		 this.addFire(n)
+                    }
 
                 	
                 	
@@ -2612,7 +2616,7 @@ export class View {
             
 
 			if( c[0] == 2) pos.y += 5;
-			if( c[0] == 3){
+			if( c[0] == 3){// plane
 				if(frame==11)pos.y += 0;
 				else if(frame==10)pos.y += 1;
 				else if (frame==9)pos.y += 3;
@@ -2659,6 +2663,8 @@ export class View {
 			else if(f===9) r = -90*this.ToRad;
 			else if(f===10) r = -90*this.ToRad;
 			else if(f===11) r = -90*this.ToRad;
+		}else if( v==5){
+			
 		}
 		return r
 
@@ -2667,32 +2673,77 @@ export class View {
 	addSprite ( v, p ) {
 
 		let m;
-		if(v===1){// train
-			m = new THREE.Mesh(this.pool.geo('sprite',0), MAT.town );
-            //m.scale.set(1, 1, -1 )
-			m.position.copy(p);
-		    this.scene.add(m);
-		    //this.spriteMeshs[i] = m;
-		    //this.spriteObjs[this.spriteLists[v]] = m;
-		}else if(v===2){// elico
-			m = new THREE.Mesh(this.pool.geo('sprite',1), MAT.town );
-			m.position.copy(p);
-		    this.scene.add(m);
-		    //this.spriteMeshs[i] = m;
-		}else if(v===3){// plane
-			m = new THREE.Mesh(this.pool.geo('sprite',2), MAT.town );
-			m.position.copy(p);
-		    this.scene.add(m);
-		    //this.spriteMeshs[i] = m;
-		} else {
-			m = new THREE.Mesh(new THREE.BoxGeometry(1,1,1), MAT.town );
-			m.position.copy(p);
-		    this.scene.add(m);
-		    //this.spriteMeshs[i] = m;
-		}
-		return m;
 
-		//this.spriteObjs[this.spriteLists[v]] = m;
+		switch(v){
+			case 1 :// train
+			    m = new THREE.Mesh(this.pool.geo('sprite',0), MAT.town );
+			break;
+			case 2 :// elico
+			    m = new THREE.Mesh(this.pool.geo('sprite',1), MAT.town );
+			break;
+			case 3 :// plane
+			    m = new THREE.Mesh(this.pool.geo('sprite',2), MAT.town );
+			break;
+			case 4 :// ship
+			    m = new THREE.Mesh(this.pool.geo('sprite',3), MAT.town );
+			break;
+			case 5 :// monster
+			    m = new THREE.Mesh(this.pool.geo('sprite',3), MAT.monster );
+			break;
+			case 6 :// tornado
+			    m = new THREE.Mesh(new THREE.BoxGeometry(1,1,1), MAT.town );
+			break;
+			case 7 :// explosion
+			    m = new THREE.Mesh(new THREE.BoxGeometry(1,1,1), MAT.town );
+			break;
+		}
+
+		if(m){ 
+			this.scene.add(m);
+			m.position.copy(p);
+			return m;
+		}
+	}
+
+	// -----------------------
+	//  FIRE SPRITE                                                  
+	// -----------------------
+
+	/*showFire (){
+
+		if( !this.power ) {
+			this.power = new Sprites('power')
+			this.scene.add( this.power );
+		}
+
+		let i = AppState.powerData.length, n;
+		while(i--){
+			n = AppState.powerData[i]
+			if(n===2) this.addPower( i );
+			if(n===1) this.removePower( i );
+		}
+
+	}*/
+
+	addFire ( i ) {
+
+		if( !this.fire ) {
+			this.fire = new Sprites('fire')
+			this.scene.add( this.fire );
+		}
+
+		if(this.fire.hasItem(i)) return
+
+		let ar = this.findPosition(i);
+		let py = AppState.withHeight ? this.heightData[ this.findHeightId(ar[0],ar[1])] : 0;
+        this.fire.addItem( i, ar[0], py+0.5, ar[1] );
+
+	}
+
+	removeFire ( i ) {
+
+		this.fire.removeItem( i );
+	
 	}
 
 
@@ -2703,20 +2754,51 @@ export class View {
 
 	showPower (){
 
-		let i = AppState.powerData.length, pos;
+		if( !this.power ) {
+			this.power = new Sprites('power')
+			this.scene.add( this.power );
+		}
+
+		let i = AppState.powerData.length, n;
 		while(i--){
-			if(AppState.powerData[i]===0) continue;//{ if( this.powerMeshs[i] !== null ) this.removePowerMesh(i); }
-			else if(AppState.powerData[i]===2){ if(this.powerMeshs[i] == null) this.addPowerMesh(i, this.findPosition(i)); }
-			else if(AppState.powerData[i]===1){ if(this.powerMeshs[i] !== null) this.removePowerMesh(i); }
+			n = AppState.powerData[i]
+			if(n===2) this.addPower( i );
+			if(n===1) this.removePower( i );
 		}
 
 	}
 
-	addPowerMesh ( i, ar ) {
+	addPower ( i ) {
+
+		if(this.power.hasItem(i)) return
+
+		let ar = this.findPosition(i);
+		let py = AppState.withHeight ? this.heightData[ this.findHeightId(ar[0],ar[1])] : 0;
+        this.power.addItem( i, ar[0], py+1, ar[1] );
+
+	}
+
+	removePower ( i ) {
+
+		this.power.removeItem( i );
+	
+	}
+
+	/*addPowerMesh ( i, ar ) {
 
 		let py = 0;
 
         if( AppState.withHeight ) py = this.heightData[ this.findHeightId(ar[0],ar[1])];
+
+
+        if(!this.powerTest) {
+			this.powerTest = new Sprites('power')
+			this.scene.add( this.powerTest );
+		}
+
+        this.powerTest.addItem( i, ar[0], py, ar[1] );
+
+        ///
 
 		let m = new THREE.Sprite( MAT.power );
 		//m.scale.set( 2, 2, 1 );
@@ -2726,9 +2808,10 @@ export class View {
 	}
 
 	removePowerMesh ( i ) {
+		this.powerTest.removeItem( i );
 		this.scene.remove(this.powerMeshs[i]);
      	this.powerMeshs[i] = null;
-	}
+	}*/
 
 
 	// -----------------------

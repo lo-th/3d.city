@@ -420,9 +420,9 @@ export const Tile = {
     UNUSED_TRASH5  : 55,
 
     /* Fire animation (8 tiles) */
-    FIRE           : 56-8,
-    FIREBASE       : 56-8, //FIRE,
-    LASTFIRE       : 63-8,
+    FIRE           : 56,//-8,
+    FIREBASE       : 56,//-8, //FIRE,
+    LASTFIRE       : 63,//-8,
 
     HBRIDGE        : 64, // Horizontal bridge
     ROADBASE       : 64, // HBRIDGE,

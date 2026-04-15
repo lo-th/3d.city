@@ -111,7 +111,7 @@ export class TrainSprite extends BaseSprite {
         }
     }
 
-    explodeSprite (messageManager) {
+    explodeSprite ( messageManager ) {
         this.frame = 0;
         this.spriteManager.makeExplosionAt(this.x, this.y);
         messageManager.sendMessage(Messages.TRAIN_CRASHED);

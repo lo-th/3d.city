@@ -82,13 +82,13 @@ export class SeasonManager {
         this.heatWave = false;
         this.blizzard = false;
 
-        if (this.currentSeason === Micro.SEASON_SUMMER && math.getRandom(100) < 3) {
+        if (this.currentSeason === Micro.SEASON_SUMMER && math.getRandom(1000) < 3) {
             this.heatWave = true;
             this.fireRiskMod = 2.5;
             this.happinessMod = -5;
         }
 
-        if (this.currentSeason === Micro.SEASON_WINTER && math.getRandom(100) < 5) {
+        if (this.currentSeason === Micro.SEASON_WINTER && math.getRandom(1000) < 5) {
             this.blizzard = true;
             this.roadDecayMod = 2.0;
             this.happinessMod = -10;

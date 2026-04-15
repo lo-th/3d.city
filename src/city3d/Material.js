@@ -28,6 +28,8 @@ export class Material {
 		let option = AppState.isBestMaterial ? { roughness:0, metalness:0 } : {}
 		const Type = AppState.isBestMaterial ? THREE.MeshStandardNodeMaterial : THREE.MeshBasicNodeMaterial;
 
+		MAT['monster'] = new Type( { map: this.pool.texture('monster'), ...option } );
+
         MAT['town'] = new Type( { map: this.pool.texture('town'), ...option } );
         //this.modifyShader2( this.townMaterial )
         MAT['building'] = new Type( { map: this.pool.texture('building'), ...option } ) 
@@ -139,6 +141,8 @@ export class Material {
 	        }
 
 	        if( AppState.isWithNormal ){
+
+	        	MAT.monster.normalMap = this.pool.texture('monster_n')//);*/
 
 	        	const n1 = texture(this.pool.texture('town_nr')).toVar();
 	        	const n2 = texture(this.pool.texture('building_nr'));

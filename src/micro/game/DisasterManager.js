@@ -115,6 +115,8 @@ export class DisasterManager {
 
     setFire ( times = 1, zonesOnly = false ) {
 
+        console.log('fire')
+
         let i, x, y, tile, lowerLimit;
 
         for ( i = 0; i < times; i++) {

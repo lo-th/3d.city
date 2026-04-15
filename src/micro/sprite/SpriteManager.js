@@ -32,8 +32,6 @@ constructors[Micro.SPRITE_TORNADO] = TornadoSprite;
 constructors[Micro.SPRITE_EXPLOSION] = ExplosionSprite;
 
 
-
-
 export class SpriteManager {
 
     constructor ( map ) {
@@ -206,7 +204,7 @@ export class SpriteManager {
         let sprite = this.getSprite(Micro.SPRITE_MONSTER);
         if (sprite !== null) {
             sprite.soundCount = 1;
-           sprite.count = 1000;
+            sprite.count = 1000;
             sprite.destX = SpriteUtils.worldToPix(this.map.pollutionMaxX);
             sprite.destY = SpriteUtils.worldToPix(this.map.pollutionMaxY);
         }

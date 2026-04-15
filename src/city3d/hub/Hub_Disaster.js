@@ -7,8 +7,8 @@ export class Hub_Disaster extends Hub_Pannel {
 
 		super( hub, 'Disaster', isRight );
 
-		this.type = ['None', 'Monster', 'Fire', 'Flood', 'Crash', 'Meltdown', 'Tornado'];
-		this.icon = ['', '🦖 ', '🔥 ', '🌊 ', '✈︎ ', '💥 ', '🌪️ '];	
+		this.type = ['None', 'Monster', 'Fire', 'Flood', 'Crash', 'Meltdown', 'Tornado', 'Earthquake'];
+		this.icon = ['', '🦖 ', '🔥 ', '🌊 ', '✈︎ ', '💥 ', '🌪️ ', '♒︎ '];	
 		this.buttons = [];
 
 	}
