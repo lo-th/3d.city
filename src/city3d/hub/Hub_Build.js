@@ -178,7 +178,7 @@ export class Hub_Build {
         var b = document.createElement( 'div' );
         b.id = id
         b.style.cssText ="margin:3px 3px; width:100px; height:100px; border:2px solid #284766; pointer-events:auto; cursor:pointer; border-radius:6px";
-        b.addEventListener( 'mouseover', function ( e ) { e.preventDefault(); self.overId(id) }, false );
+        b.addEventListener('mouseover', function ( e ) { e.preventDefault(); self.overId(id) }, false );
         b.addEventListener('mouseout', function ( e ) { e.preventDefault(); self.toolOver.style.display = 'none'; self.toolInfo.innerHTML = ''}, false );
         b.addEventListener('click',  function(e){ e.preventDefault();  self.selectId(id); }, false);
         target.appendChild( b );
@@ -198,6 +198,12 @@ export class Hub_Build {
     selectId( id ) {
 
     	let tid = this.tool[id];
+
+        // if same remove desactive tool !
+        if( this.currentToolName === tid ){
+            this.resetTool()
+            return
+        }
 
     	this.toolSelect.style.display = 'block';
     	this.toolSelect.style.left = 20 + (id*106) + 'px';

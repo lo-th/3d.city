@@ -223,6 +223,8 @@ export class WorkerBridge {
 
     _makeGameSave ( gameData, key, silent ) {
 
+        console.log(key)
+
         window.localStorage.setItem( key, gameData );
 
         if ( !silent && !AppState.isMobile ) {

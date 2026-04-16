@@ -2,7 +2,7 @@ import * as THREE from '../three/three.webgpu.js'
 import { uniform, time, instanceIndex, instancedBufferAttribute } from '../three/three.tsl2.js';
 
 import { AutoTexture } from './AutoTexture.js';
-
+import { AppState } from '../AppState.js';
 
 export class Sprites extends THREE.Sprite {
 
@@ -23,7 +23,13 @@ export class Sprites extends THREE.Sprite {
 		this.pos = new THREE.InstancedBufferAttribute( new Float32Array( max*3 ), 3 );
 		this.pos.usage = THREE.DynamicDrawUsage
 
-		const map = AutoTexture.powerTexture();
+		let map; 
+		if(name==='power') map = AutoTexture.powerTexture();
+		if(name==='fire'){ 
+			map = AppState.pool.texture('fire');
+			map.offset.x = 0.125* AppState.randInt(1,8)
+			//map.repeat(0.125,1)
+		}
 		map.colorSpace = THREE.SRGBColorSpace;
 
 		this.material = new THREE.SpriteNodeMaterial( { sizeAttenuation: true, map, alphaTest: 0.1 } );

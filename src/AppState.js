@@ -68,6 +68,7 @@ export const AppState = {
     directMessage: null,    // Function used when simulation runs on main thread
 
     // ── Core component references (set during Main.init) ──────────────────
+    pool:          null,    // pool for texture and model 
     main:          null,    // main instance – DOM UI manager
     hub:           null,    // Hub instance – DOM UI manager
     view3d:        null,    // View instance – Three.js renderer
@@ -116,5 +117,12 @@ export const AppState = {
         'LDmono3.cube': null,
 
     },
+
+    // MATH
+    
+    rand: ( low = 0, high = 1 ) => ( low + Math.random() * ( high - low ) ),
+    randInt: ( low, high ) => ( low + Math.floor( Math.random() * ( high - low + 1 ) ) ),
+
+
 
 };

@@ -148,7 +148,7 @@ export const Micro = {
     // storage
     CURRENT_VERSION : 3,
     SAVE_VERSION : 1,
-    KEY : 'micropolisJSGame',
+    KEY : '3DcityJSGame',
 
     // disasters
     DisChance: [479, 239, 59],

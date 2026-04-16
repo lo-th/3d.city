@@ -298,6 +298,8 @@ export class View {
     	this.pool = new Pool();
     	await this.pool.load();
 
+    	AppState.pool = this.pool;
+
 		this.init();
 
 		this.material = new Material(this.pool);
@@ -460,12 +462,19 @@ export class View {
 
 	}
 
-	openMap( type ){
+	openMap( type, savegame ){
 
-		if( AppState.isMobile && type === 'LOAD' ){ 
-			if( window.localStorage.getItem( 'micropolisJSGame' ) ) type = 'LOADDONE'
+		/*if( AppState.isMobile && type === 'LOAD' ){ 
+			if( window.localStorage.getItem( '3DcityJSGame' ) ) type = 'LOADDONE'
 			else return
-		}
+		}*/
+
+	    if( type==='LOADLOCAL' ){
+
+	    	this.tmpGameData = savegame;
+	    	type = 'LOADDONE';
+
+	    }
 
 		if( type==='LOAD' ){
 
@@ -2688,19 +2697,21 @@ export class View {
 			    m = new THREE.Mesh(this.pool.geo('sprite',3), MAT.town );
 			break;
 			case 5 :// monster
-			    m = new THREE.Mesh(this.pool.geo('sprite',3), MAT.monster );
+			    m = new THREE.Mesh(this.pool.geo('sprite',4), MAT.monster );
 			break;
 			case 6 :// tornado
-			    m = new THREE.Mesh(new THREE.BoxGeometry(1,1,1), MAT.town );
+			    m = new THREE.Mesh(this.pool.geo('sprite',5), MAT.monster );
 			break;
 			case 7 :// explosion
-			    m = new THREE.Mesh(new THREE.BoxGeometry(1,1,1), MAT.town );
+			    m = new THREE.Mesh(this.pool.geo('sprite',6), MAT.monster );
 			break;
 		}
 
 		if(m){ 
 			this.scene.add(m);
 			m.position.copy(p);
+			m.receiveShadow = true;
+		    m.castShadow = true;
 			return m;
 		}
 	}

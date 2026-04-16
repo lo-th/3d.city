@@ -185,19 +185,32 @@ export class Hub {
 
     initStartHub() {
 
+        const savegame = window.localStorage.getItem( '3DcityJSGame' );
+
         let textbase = '<span style="color:#909A96; font-size:10px; ">&nbsp;FPS</span>'
         this.version.innerHTML = textbase + ' . v ' + AppState.version  + (AppState.isWebGPU?' . GPU' : ' . GL2')+(AppState.isWorker ? ' . W' : ' . D');
        
         this.mainmenu = document.createElement('div');
-        this.mainmenu.style.cssText ='position:absolute; bottom:0px; left:50%; margin-left:-130px; width:260px; height:200px; pointer-events:none; display:flex; align-items: center;';
+        this.mainmenu.style.cssText ='position:absolute; bottom:100px; left:50%; margin-left:-130px; width:260px;  pointer-events:none; '
+        +'display:flex; align-items: center; justify-content: center; flex-direction: column; gap: 20px 0px;';
+
+
+        let b0, b1, b2, b3;
+
+
 
         this.hub.appendChild( this.mainmenu );
-        const b1 = this.addButton(this.mainmenu, 'New Game', [260, 48, 40], 'position:absolute; top:0px; left:0px;');
-        const b2 = this.addButton(this.mainmenu, 'Load Map', [260, 37, 22], 'position:absolute; top:70px; left:0px;');
-        const b3 = this.addButton(this.mainmenu, 'About',  [180, 26, 22], 'position:absolute; top:129px; left:40px;');
+        b0 = this.addButton(this.mainmenu, 'New Game', [260, 48, 40], null);
+        if( savegame ) b1 = this.addButton(this.mainmenu, 'Continue...', [260, 37, 22], null);
+        if( !AppState.isMobile ) b2 = this.addButton(this.mainmenu, 'Load Map', [260, 37, 22], null);
+        b3 = this.addButton(this.mainmenu, 'About',  [180, 37, 22], null);
 
-        b1.addEventListener('click',  function ( e ) { e.preventDefault(); AppState.view3d.openMap('NEW'); }, false);
-        b2.addEventListener('click',  function ( e ) { e.preventDefault(); AppState.view3d.openMap('LOAD'); }, false);
+        
+
+
+        b0.addEventListener('click',  function ( e ) { e.preventDefault(); AppState.view3d.openMap('NEW'); }, false);
+        if(b1) b1.addEventListener('click',  function ( e ) { e.preventDefault(); AppState.view3d.openMap('LOADLOCAL', savegame ); }, false);
+        if(b2) b2.addEventListener('click',  function ( e ) { e.preventDefault(); AppState.view3d.openMap('LOAD'); }, false);
         b3.addEventListener('click',  function ( e ) { e.preventDefault(); let w = window.open('https://github.com/lo-th/3d.city','_blank'); }, false);
 
     }
@@ -495,6 +508,30 @@ export class Hub {
         let i = children.length;
         while(i--) el.removeChild( children[i] );
         this.hub.removeChild( el );
+
+    }
+
+    flashAutoSave(){
+
+        if(!this.autoSaveIndicator){
+            this.autoSaveIndicator = document.createElement('div');
+            this.autoSaveIndicator.style.cssText = 'position:absolute; top:36px; left:50%; transform:translateX(-50%);'
+                + ' background:rgba(20,30,48,0.88); color:rgba(74,200,140,0.9);'
+                + ' font-size:20px; font-weight:600; letter-spacing:0.06em;'
+                + ' padding:4px 12px; border-radius:20px; pointer-events:none;'
+                + ' border:1px solid rgba(74,200,140,0.35); opacity:0; transition:opacity 0.4s;';
+            this.autoSaveIndicator.textContent = '✔ Auto-saved';
+            this.hub.appendChild(this.autoSaveIndicator);
+        }
+        var el = this.autoSaveIndicator;
+        el.style.transition = 'none';
+        el.style.opacity = '1';
+        clearTimeout(this._autoSaveTimer);
+
+        this._autoSaveTimer = setTimeout(function(){
+            el.style.transition = 'opacity 1.5s';
+            el.style.opacity = '0';
+        }, 1500);
 
     }
 

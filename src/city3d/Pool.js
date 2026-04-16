@@ -173,6 +173,13 @@ export class Pool {
 			texture.flipY = false;
 			texture.colorSpace = name.search('_')!==-1 ? THREE.NoColorSpace : THREE.SRGBColorSpace;
 
+			if( name.search('fire')!==-1){
+				texture.flipY = true;
+				texture.repeat.set(0.125, 1)
+				texture.wrapS = THREE.RepeatWrapping 
+			    texture.wrapT = THREE.RepeatWrapping
+			}
+
 			if( name.search('ground')!==-1){
 				texture.flipY = true;
 				texture.generateMipmaps = false;
@@ -676,7 +683,7 @@ export class Pool {
 					    o.ttt0, o.ttt1, o.ttt2, o.ttt5
 					],
 					sprite:[
-					   o.train, o.elico, o.plane, o.monster,
+					   o.train, o.elico, o.plane, o.ship, o.monster, o.tornado, o.explosion,
 					],
 
 					feux:o.feux,
