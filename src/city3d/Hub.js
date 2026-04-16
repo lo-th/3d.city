@@ -191,22 +191,17 @@ export class Hub {
         this.version.innerHTML = textbase + ' . v ' + AppState.version  + (AppState.isWebGPU?' . GPU' : ' . GL2')+(AppState.isWorker ? ' . W' : ' . D');
        
         this.mainmenu = document.createElement('div');
-        this.mainmenu.style.cssText ='position:absolute; bottom:100px; left:50%; margin-left:-130px; width:260px;  pointer-events:none; '
+        this.mainmenu.style.cssText ='position:absolute; bottom:30px; left:50%; margin-left:-130px; width:260px;  pointer-events:none; '
         +'display:flex; align-items: center; justify-content: center; flex-direction: column; gap: 20px 0px;';
 
 
         let b0, b1, b2, b3;
-
-
 
         this.hub.appendChild( this.mainmenu );
         b0 = this.addButton(this.mainmenu, 'New Game', [260, 48, 40], null);
         if( savegame ) b1 = this.addButton(this.mainmenu, 'Continue...', [260, 37, 22], null);
         if( !AppState.isMobile ) b2 = this.addButton(this.mainmenu, 'Load Map', [260, 37, 22], null);
         b3 = this.addButton(this.mainmenu, 'About',  [180, 37, 22], null);
-
-        
-
 
         b0.addEventListener('click',  function ( e ) { e.preventDefault(); AppState.view3d.openMap('NEW'); }, false);
         if(b1) b1.addEventListener('click',  function ( e ) { e.preventDefault(); AppState.view3d.openMap('LOADLOCAL', savegame ); }, false);

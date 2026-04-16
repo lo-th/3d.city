@@ -2526,8 +2526,9 @@ export class View {
                 	if(g<1) draw = false // not ground 
                 	if(g>20 && g<30) draw = false // not tree
                 	if(g>55 && g<64) { // fire
-                		 //draw = false
+                		 //
                 		 this.addFire(n)
+                		 draw = false
                     }
 
                 	
