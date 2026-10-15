@@ -39,3 +39,7 @@ This is a long-term project; if you enjoy the game and want more updates, help m
 ## License
 
 MIT — see [LICENSE](LICENSE)
+
+## Play online
+
+Also playable on [WASM Arcade](https://www.wasmarcade.online/arcade/3d-city/) — free, no download.
